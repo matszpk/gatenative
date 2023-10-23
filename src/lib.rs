@@ -7,10 +7,11 @@ pub enum InstrOp {
     Nand = 1,
     Or = 2,
     Nor = 3,
-    Nimpl = 4,
-    Xor = 5,
-    Equal = 6,
-    BNot = 7,
+    Impl = 4,
+    Nimpl = 5,
+    Xor = 6,
+    Equal = 7,
+    BNot = 8,
 }
 
 pub trait CodeWriter {
@@ -22,6 +23,8 @@ pub trait CodeWriter {
     fn func_end(&self, out: &mut Vec<u8>, name: &str);
     // allocate structures of sizes
     fn alloc(&self, out: &mut Vec<u8>, alloc_size: usize);
+
+    fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize);
     // generate operation
     fn gen_op(
         &self,
@@ -31,7 +34,6 @@ pub trait CodeWriter {
         arg1: usize,
         arg2: Option<usize>,
     );
-    fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize);
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
     fn epilog(&self, out: &mut Vec<u8>);
 }
