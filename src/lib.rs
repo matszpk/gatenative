@@ -1,4 +1,8 @@
+use gatesim::*;
+
 use int_enum::IntEnum;
+use std::fmt::Debug;
+use std::hash::Hash;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
@@ -48,6 +52,16 @@ pub trait CodeWriter {
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
+}
+
+pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
 }
 
 #[cfg(test)]
