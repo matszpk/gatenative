@@ -1,6 +1,8 @@
 use gatesim::*;
 
 use int_enum::IntEnum;
+
+use std::collections::BinaryHeap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -52,6 +54,49 @@ pub trait CodeWriter {
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
+}
+
+pub struct WordAllocator {
+    free_list: BinaryHeap<std::cmp::Reverse<usize>>,
+    alloc_map: Vec<bool>,
+}
+
+impl WordAllocator {
+    fn new() -> Self {
+        Self {
+            free_list: BinaryHeap::new(),
+            alloc_map: vec![],
+        }
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.alloc_map.len()
+    }
+
+    fn alloc(&mut self) -> usize {
+        if let Some(std::cmp::Reverse(index)) = self.free_list.pop() {
+            self.alloc_map[index] = true;
+            index
+        } else {
+            let index = self.alloc_map.len();
+            self.alloc_map.push(true);
+            index
+        }
+    }
+
+    fn free(&mut self, index: usize) {
+        assert!(index < self.len());
+        if self.alloc_map[index] {
+            self.free_list.push(std::cmp::Reverse(index));
+            self.alloc_map[index] = false;
+        }
+    }
+
+    #[inline]
+    fn is_alloc(&self, index: usize) -> bool {
+        self.alloc_map[index]
+    }
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
