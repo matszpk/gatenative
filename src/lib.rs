@@ -17,6 +17,7 @@ pub enum InstrOp {
 pub trait CodeWriter {
     // returns bit mask of where bit position is InstrOp integer value.
     fn supported_ops(&self) -> u64;
+    fn word_len(&self) -> u32;
     // generate prolog
     fn prolog(&self, out: &mut Vec<u8>);
     fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize);
