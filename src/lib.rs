@@ -24,12 +24,12 @@ pub trait CodeWriter {
     /// It returns bit mask of where bit position is InstrOp integer value - support
     // Instr Ops.
     fn supported_ops(&self) -> u64;
-    // Returns Word length in bits
+    // Returns Word length in bits. Single variable have word length.
     fn word_len(&self) -> u32;
-    // Returns maximal possible allocation size in words.
-    fn max_alloc_size(&self) -> usize;
-    // Returns preferred allocation size in words.
-    fn preferred_alloc_size(&self) -> usize;
+    // Returns maximal possible variable number in words.
+    fn max_var_num(&self) -> usize;
+    // Returns preferred variable number in words.
+    fn preferred_var_num(&self) -> usize;
     /// Generates prolog.
     fn prolog(&self, out: &mut Vec<u8>);
     /// Generates epilog;
@@ -38,8 +38,8 @@ pub trait CodeWriter {
     fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize);
     /// Generates function end.
     fn func_end(&self, out: &mut Vec<u8>, name: &str);
-    /// Generates allocation of local words to make operations.
-    fn alloc(&self, out: &mut Vec<u8>, alloc_size: usize);
+    /// Generates allocation of local variables to make operations.
+    fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize);
 
     /// Generates Load instruction from input.
     fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize);
@@ -56,12 +56,12 @@ pub trait CodeWriter {
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
 }
 
-pub struct WordAllocator {
+pub struct VarAllocator {
     free_list: BinaryHeap<std::cmp::Reverse<usize>>,
     alloc_map: Vec<bool>,
 }
 
-impl WordAllocator {
+impl VarAllocator {
     fn new() -> Self {
         Self {
             free_list: BinaryHeap::new(),
@@ -117,31 +117,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_word_allocator() {
-        let mut wacc = WordAllocator::new();
-        assert_eq!(0, wacc.alloc());
-        assert_eq!(1, wacc.alloc());
-        assert_eq!(2, wacc.alloc());
-        assert_eq!(3, wacc.alloc());
-        assert_eq!(4, wacc.alloc());
-        assert!(wacc.free(2));
-        assert!(!wacc.free(2));
-        assert!(wacc.free(1));
-        assert!(!wacc.free(1));
-        assert_eq!(1, wacc.alloc());
-        assert!(wacc.free(0));
-        assert!(!wacc.free(0));
-        assert_eq!(0, wacc.alloc());
-        assert_eq!(2, wacc.alloc());
-        assert_eq!(5, wacc.alloc());
-        assert!(wacc.free(4));
-        assert!(wacc.free(1));
-        assert_eq!(1, wacc.alloc());
-        assert!(wacc.free(3));
-        assert_eq!(3, wacc.alloc());
-        assert!(wacc.free(2));
-        assert_eq!(2, wacc.alloc());
-        assert_eq!(4, wacc.alloc());
-        assert_eq!(6, wacc.alloc());
+    fn test_var_allocator() {
+        let mut vacc = VarAllocator::new();
+        assert_eq!(0, vacc.alloc());
+        assert_eq!(1, vacc.alloc());
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(3, vacc.alloc());
+        assert_eq!(4, vacc.alloc());
+        assert!(vacc.free(2));
+        assert!(!vacc.free(2));
+        assert!(vacc.free(1));
+        assert!(!vacc.free(1));
+        assert_eq!(1, vacc.alloc());
+        assert!(vacc.free(0));
+        assert!(!vacc.free(0));
+        assert_eq!(0, vacc.alloc());
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(5, vacc.alloc());
+        assert!(vacc.free(4));
+        assert!(vacc.free(1));
+        assert_eq!(1, vacc.alloc());
+        assert!(vacc.free(3));
+        assert_eq!(3, vacc.alloc());
+        assert!(vacc.free(2));
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(4, vacc.alloc());
+        assert_eq!(6, vacc.alloc());
     }
 }
