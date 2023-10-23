@@ -15,18 +15,29 @@ pub enum InstrOp {
 }
 
 pub trait CodeWriter {
-    // returns bit mask of where bit position is InstrOp integer value.
+    /// It returns bit mask of where bit position is InstrOp integer value - support
+    // Instr Ops.
     fn supported_ops(&self) -> u64;
+    // Returns Word length in bits
     fn word_len(&self) -> u32;
-    // generate prolog
+    // Returns maximal possible allocation size in words.
+    fn max_alloc_size(&self) -> usize;
+    // Returns preferred allocation size in words.
+    fn preferred_alloc_size(&self) -> usize;
+    /// Generates prolog.
     fn prolog(&self, out: &mut Vec<u8>);
+    /// Generates epilog;
+    fn epilog(&self, out: &mut Vec<u8>);
+    /// Generates function start with definition.
     fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize);
+    /// Generates function end.
     fn func_end(&self, out: &mut Vec<u8>, name: &str);
-    // allocate structures of sizes
+    /// Generates allocation of local words to make operations.
     fn alloc(&self, out: &mut Vec<u8>, alloc_size: usize);
 
+    /// Generates Load instruction from input.
     fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize);
-    // generate operation
+    /// Generates operation.
     fn gen_op(
         &self,
         out: &mut Vec<u8>,
@@ -35,8 +46,8 @@ pub trait CodeWriter {
         arg1: usize,
         arg2: Option<usize>,
     );
+    /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
-    fn epilog(&self, out: &mut Vec<u8>);
 }
 
 #[cfg(test)]
