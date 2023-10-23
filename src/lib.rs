@@ -102,6 +102,8 @@ impl VarAllocator {
     }
 }
 
+// var usage - just counter of usage.
+
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
