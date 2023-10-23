@@ -429,8 +429,9 @@ where
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum VNegs {
     NoNegs,
-    NegArg2,
+    NegArg1,
     NegOut,
+    NegsArg1Out,
 }
 
 #[derive(Clone)]
