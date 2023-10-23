@@ -309,6 +309,137 @@ impl<T: Clone + Copy> VGate<T> {
     }
 }
 
+#[derive(Clone)]
+struct VCircuit<T: Clone + Copy> {
+    input_len: T,
+    gates: Vec<VGate<T>>,
+    outputs: Vec<(T, bool)>,
+}
+
+impl<T> VCircuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn to_op_and_ximpl_circuit(circuit: Circuit<T>, nimpl: bool) -> VCircuit<T> {
+        #[derive(Clone, Copy)]
+        struct StackEntry {
+            node: usize,
+            way: usize,
+        }
+
+        let input_len_t = circuit.input_len();
+        let input_len = usize::try_from(input_len_t).unwrap();
+        let gate_num = circuit.len();
+        let mut gates = circuit
+            .gates()
+            .into_iter()
+            .map(|g| (VGate::from(*g), false))
+            .collect::<Vec<_>>();
+
+        let mut visited = vec![false; gate_num];
+        for (o, on) in circuit.outputs().into_iter() {
+            if *o < input_len_t {
+                continue;
+            }
+            let oidx = usize::try_from(*o).unwrap() - input_len;
+            let mut stack = Vec::new();
+            stack.push(StackEntry { node: oidx, way: 0 });
+
+            while !stack.is_empty() {
+                let top = stack.last_mut().unwrap();
+                let node_index = top.node;
+                let way = top.way;
+
+                if way == 0 {
+                    if !visited[node_index] {
+                        visited[node_index] = true;
+                    } else {
+                        stack.pop();
+                        continue;
+                    }
+
+                    top.way += 1;
+                    let gi0 = gates[node_index].0.i0;
+                    if gi0 >= input_len_t {
+                        stack.push(StackEntry {
+                            node: usize::try_from(gi0).unwrap() - input_len,
+                            way: 0,
+                        });
+                    }
+                } else if way == 1 {
+                    top.way += 1;
+                    let gi1 = gates[node_index].0.i1;
+                    if gi1 >= input_len_t {
+                        stack.push(StackEntry {
+                            node: usize::try_from(gi1).unwrap() - input_len,
+                            way: 0,
+                        });
+                    }
+                } else {
+                    // resolve
+                    let (newg, n) = if nimpl {
+                        gates[node_index].0.to_binop_and_nimpl()
+                    } else {
+                        gates[node_index].0.to_binop_and_impl()
+                    };
+                    let ni0 = if newg.i0 >= input_len_t {
+                        gates[usize::try_from(newg.i0).unwrap() - input_len].1
+                    } else {
+                        false
+                    };
+                    let ni1 = if newg.i1 >= input_len_t {
+                        gates[usize::try_from(newg.i1).unwrap() - input_len].1
+                    } else {
+                        false
+                    };
+                    gates[node_index] = if ni0 || ni1 {
+                        let (newg2, n2) = newg.to_binop_and_ximpl_neg_args(nimpl, ni0, ni1);
+                        (newg2, n ^ n2)
+                    } else {
+                        (newg, n)
+                    };
+                    stack.pop();
+                }
+            }
+        }
+
+        let outputs = circuit
+            .outputs()
+            .into_iter()
+            .map(|(o, on)| {
+                if *o >= input_len_t {
+                    (*o, on ^ gates[usize::try_from(*o).unwrap() - input_len].1)
+                } else {
+                    (*o, *on)
+                }
+            })
+            .collect::<Vec<_>>();
+        VCircuit {
+            input_len: circuit.input_len(),
+            gates: gates.into_iter().map(|(g, _)| g).collect::<Vec<_>>(),
+            outputs,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum VNegs {
+    NoNegs,
+    NegArg2,
+    NegOut,
+}
+
+#[derive(Clone)]
+struct VCircuitStdOp<T: Clone + Copy> {
+    input_len: T,
+    gates: Vec<(VGate<T>, VNegs)>,
+    outputs: Vec<(T, bool)>,
+}
+
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
