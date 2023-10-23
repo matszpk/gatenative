@@ -10,14 +10,11 @@ use std::hash::Hash;
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
 pub enum InstrOp {
     And = 0,
-    Nand = 1,
-    Or = 2,
-    Nor = 3,
-    Impl = 4,
-    Nimpl = 5,
-    Xor = 6,
-    Equal = 7,
-    BNot = 8,
+    Or = 1,
+    Impl = 2,
+    Nimpl = 3,
+    Xor = 4,
+    BNot = 5,
 }
 
 pub trait CodeWriter {
@@ -102,7 +99,11 @@ impl VarAllocator {
     }
 }
 
-// var usage - just counter of usage.
+// var usage - just counter of var usage.
+
+// TODO: binary double-not optimization.
+// if only one type of occurrence of variable: reduce in both sides.
+// if either two type of occurrence of variable:
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
