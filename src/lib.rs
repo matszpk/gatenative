@@ -85,11 +85,14 @@ impl WordAllocator {
         }
     }
 
-    fn free(&mut self, index: usize) {
+    fn free(&mut self, index: usize) -> bool {
         assert!(index < self.len());
         if self.alloc_map[index] {
             self.free_list.push(std::cmp::Reverse(index));
             self.alloc_map[index] = false;
+            true
+        } else {
+            false
         }
     }
 
@@ -112,4 +115,33 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_word_allocator() {
+        let mut wacc = WordAllocator::new();
+        assert_eq!(0, wacc.alloc());
+        assert_eq!(1, wacc.alloc());
+        assert_eq!(2, wacc.alloc());
+        assert_eq!(3, wacc.alloc());
+        assert_eq!(4, wacc.alloc());
+        assert!(wacc.free(2));
+        assert!(!wacc.free(2));
+        assert!(wacc.free(1));
+        assert!(!wacc.free(1));
+        assert_eq!(1, wacc.alloc());
+        assert!(wacc.free(0));
+        assert!(!wacc.free(0));
+        assert_eq!(0, wacc.alloc());
+        assert_eq!(2, wacc.alloc());
+        assert_eq!(5, wacc.alloc());
+        assert!(wacc.free(4));
+        assert!(wacc.free(1));
+        assert_eq!(1, wacc.alloc());
+        assert!(wacc.free(3));
+        assert_eq!(3, wacc.alloc());
+        assert!(wacc.free(2));
+        assert_eq!(2, wacc.alloc());
+        assert_eq!(4, wacc.alloc());
+        assert_eq!(6, wacc.alloc());
+    }
 }
