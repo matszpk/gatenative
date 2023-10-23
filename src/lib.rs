@@ -175,9 +175,19 @@ impl<T: Clone + Copy> VGate<T> {
         }
     }
 
-    // negate argument i0 in gate with conversion to op_and_impl
+    // negate argument i0 in gate with conversion to op_and_impl or op_and_nimpl
     #[inline]
-    fn to_binop_and_impl_neg_args(self: VGate<T>, neg_i0: bool, neg_i1: bool) -> (VGate<T>, bool) {
+    fn to_binop_and_ximpl_neg_args(
+        self: VGate<T>,
+        nimpl: bool,
+        neg_i0: bool,
+        neg_i1: bool,
+    ) -> (VGate<T>, bool) {
+        let (impl_func, impl_neg) = if nimpl {
+            (VGateFunc::Nimpl, true)
+        } else {
+            (VGateFunc::Impl, false)
+        };
         match self.func {
             VGateFunc::And | VGateFunc::Nand => {
                 let neg = self.func == VGateFunc::Nand;
@@ -187,17 +197,17 @@ impl<T: Clone + Copy> VGate<T> {
                         VGate {
                             i0: self.i1,
                             i1: self.i0,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        !neg,
+                        !neg ^ impl_neg,
                     ),
                     (false, true) => (
                         VGate {
                             i0: self.i0,
                             i1: self.i1,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        !neg,
+                        !neg ^ impl_neg,
                     ),
                     (true, true) => (
                         VGate {
@@ -217,17 +227,17 @@ impl<T: Clone + Copy> VGate<T> {
                         VGate {
                             i0: self.i0,
                             i1: self.i1,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        neg,
+                        neg ^ impl_neg,
                     ),
                     (false, true) => (
                         VGate {
                             i0: self.i1,
                             i1: self.i0,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        neg,
+                        neg ^ impl_neg,
                     ),
                     (true, true) => (
                         VGate {
@@ -263,9 +273,9 @@ impl<T: Clone + Copy> VGate<T> {
                         VGate {
                             i0: self.i1,
                             i1: self.i0,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        !neg,
+                        !neg ^ impl_neg,
                     ),
                 }
             }
@@ -297,11 +307,6 @@ impl<T: Clone + Copy> VGate<T> {
             _ => (self, false),
         }
     }
-
-    // negate argument i0 in gate with conversion to op_and_nimpl
-    // #[inline]
-    // fn to_binop_and_nimpl_neg_i0(self: VGate<T>) -> (VGate<T>, bool) {
-    // }
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
