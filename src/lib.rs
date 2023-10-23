@@ -105,6 +105,205 @@ impl VarAllocator {
 // if only one type of occurrence of variable: reduce in both sides.
 // if either two type of occurrence of variable:
 
+struct VarUsage {
+    index: usize,
+    bnot: bool, // if single operation is boolean negation of original gate output.
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum VGateFunc {
+    And,
+    Nand,
+    Or,
+    Nor,
+    Impl,
+    Nimpl,
+    Xor,
+}
+
+impl From<GateFunc> for VGateFunc {
+    #[inline]
+    fn from(gf: GateFunc) -> Self {
+        match gf {
+            GateFunc::And => VGateFunc::And,
+            GateFunc::Nor => VGateFunc::Nor,
+            GateFunc::Nimpl => VGateFunc::Nimpl,
+            GateFunc::Xor => VGateFunc::Xor,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+struct VGate<T: Clone + Copy> {
+    i0: T,
+    i1: T,
+    func: VGateFunc,
+}
+
+impl<T: Clone + Copy> From<Gate<T>> for VGate<T> {
+    fn from(g: Gate<T>) -> Self {
+        Self {
+            i0: g.i0,
+            i1: g.i1,
+            func: VGateFunc::from(g.func),
+        }
+    }
+}
+
+impl<T: Clone + Copy> VGate<T> {
+    // conversion to operation (and,or,xor,not,impl)
+    #[inline]
+    fn to_binop_and_impl(self: VGate<T>) -> (VGate<T>, bool) {
+        match self.func {
+            VGateFunc::Nimpl => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::Impl,
+                },
+                true,
+            ),
+            VGateFunc::Nor => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::Or,
+                },
+                true,
+            ),
+            _ => (self, false),
+        }
+    }
+
+    // negate argument i0 in gate with conversion to op_and_impl
+    #[inline]
+    fn to_binop_and_impl_neg_args(self: VGate<T>, neg_i0: bool, neg_i1: bool) -> (VGate<T>, bool) {
+        match self.func {
+            VGateFunc::And | VGateFunc::Nand => {
+                let neg = self.func == VGateFunc::Nand;
+                match (neg_i0, neg_i1) {
+                    (false, false) => (self, neg),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Impl,
+                        },
+                        !neg,
+                    ),
+                    (false, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Impl,
+                        },
+                        !neg,
+                    ),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        !neg,
+                    ),
+                }
+            }
+            VGateFunc::Or | VGateFunc::Nor => {
+                let neg = self.func == VGateFunc::Nor;
+                match (neg_i0, neg_i1) {
+                    (false, false) => (self, neg),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Impl,
+                        },
+                        neg,
+                    ),
+                    (false, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Impl,
+                        },
+                        neg,
+                    ),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        !neg,
+                    ),
+                }
+            }
+            VGateFunc::Impl | VGateFunc::Nimpl => {
+                let neg = self.func == VGateFunc::Nor;
+                match (neg_i0, neg_i1) {
+                    (false, false) => (self, neg),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        neg,
+                    ),
+                    (false, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        !neg,
+                    ),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Impl,
+                        },
+                        !neg,
+                    ),
+                }
+            }
+            VGateFunc::Xor => (self, neg_i0 ^ neg_i1),
+            _ => (self, false),
+        }
+    }
+
+    // conversion to operation (and,or,xor,not,nimpl)
+    #[inline]
+    fn to_binop_and_nimpl(self: VGate<T>) -> (VGate<T>, bool) {
+        match self.func {
+            VGateFunc::Impl => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::Nimpl,
+                },
+                true,
+            ),
+            VGateFunc::Nor => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::Or,
+                },
+                true,
+            ),
+            _ => (self, false),
+        }
+    }
+
+    // negate argument i0 in gate with conversion to op_and_nimpl
+    // #[inline]
+    // fn to_binop_and_nimpl_neg_i0(self: VGate<T>) -> (VGate<T>, bool) {
+    // }
+}
+
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
