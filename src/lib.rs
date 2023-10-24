@@ -200,7 +200,14 @@ impl<T: Clone + Copy> VGate<T> {
             VGateFunc::And | VGateFunc::Nand => {
                 let neg = self.func == VGateFunc::Nand;
                 match (neg_i0, neg_i1) {
-                    (false, false) => (self, neg),
+                    (false, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        neg,
+                    ),
                     (true, false) => (
                         VGate {
                             i0: self.i1,
@@ -230,7 +237,14 @@ impl<T: Clone + Copy> VGate<T> {
             VGateFunc::Or | VGateFunc::Nor => {
                 let neg = self.func == VGateFunc::Nor;
                 match (neg_i0, neg_i1) {
-                    (false, false) => (self, neg),
+                    (false, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        neg,
+                    ),
                     (true, false) => (
                         VGate {
                             i0: self.i0,
@@ -258,9 +272,16 @@ impl<T: Clone + Copy> VGate<T> {
                 }
             }
             VGateFunc::Impl | VGateFunc::Nimpl => {
-                let neg = self.func == VGateFunc::Nor;
+                let neg = self.func == VGateFunc::Nimpl;
                 match (neg_i0, neg_i1) {
-                    (false, false) => (self, neg),
+                    (false, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Impl,
+                        },
+                        neg,
+                    ),
                     (true, false) => (
                         VGate {
                             i0: self.i0,
@@ -283,12 +304,11 @@ impl<T: Clone + Copy> VGate<T> {
                             i1: self.i0,
                             func: impl_func,
                         },
-                        !neg ^ impl_neg,
+                        neg ^ impl_neg,
                     ),
                 }
             }
             VGateFunc::Xor => (self, neg_i0 ^ neg_i1),
-            _ => (self, false),
         }
     }
 
@@ -532,5 +552,112 @@ mod tests {
         assert_eq!(vgate_nor(3, 5), VGate::from(Gate::new_nor(3, 5)));
         assert_eq!(vgate_nimpl(2, 4), VGate::from(Gate::new_nimpl(2, 4)));
         assert_eq!(vgate_xor(2, 6), VGate::from(Gate::new_xor(2, 6)));
+    }
+
+    #[test]
+    fn test_vgate_to_binop_and_ximpl() {
+        // binop_and_impl
+        assert_eq!(
+            (vgate_and(3, 5), false),
+            vgate_and(3, 5).to_binop_and_impl()
+        );
+        assert_eq!(
+            (vgate_and(3, 5), true),
+            vgate_nand(3, 5).to_binop_and_impl()
+        );
+        assert_eq!((vgate_or(3, 5), false), vgate_or(3, 5).to_binop_and_impl());
+        assert_eq!((vgate_or(3, 5), true), vgate_nor(3, 5).to_binop_and_impl());
+        assert_eq!(
+            (vgate_impl(3, 5), false),
+            vgate_impl(3, 5).to_binop_and_impl()
+        );
+        assert_eq!(
+            (vgate_impl(3, 5), true),
+            vgate_nimpl(3, 5).to_binop_and_impl()
+        );
+        assert_eq!(
+            (vgate_xor(3, 5), false),
+            vgate_xor(3, 5).to_binop_and_impl()
+        );
+
+        // binop_and_nimpl
+        assert_eq!(
+            (vgate_and(3, 5), false),
+            vgate_and(3, 5).to_binop_and_nimpl()
+        );
+        assert_eq!(
+            (vgate_and(3, 5), true),
+            vgate_nand(3, 5).to_binop_and_nimpl()
+        );
+        assert_eq!((vgate_or(3, 5), false), vgate_or(3, 5).to_binop_and_nimpl());
+        assert_eq!((vgate_or(3, 5), true), vgate_nor(3, 5).to_binop_and_nimpl());
+        assert_eq!(
+            (vgate_nimpl(3, 5), true),
+            vgate_impl(3, 5).to_binop_and_nimpl()
+        );
+        assert_eq!(
+            (vgate_nimpl(3, 5), false),
+            vgate_nimpl(3, 5).to_binop_and_nimpl()
+        );
+        assert_eq!(
+            (vgate_xor(3, 5), false),
+            vgate_xor(3, 5).to_binop_and_nimpl()
+        );
+    }
+
+    fn vgate_eval<T: Clone + Copy>(g: VGate<T>, neg_i0: bool, neg_i1: bool) -> u8
+    where
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let i0 = usize::try_from(g.i0).unwrap();
+        let i1 = usize::try_from(g.i1).unwrap();
+        let neg_i0_mask = if neg_i0 { 0b1111 } else { 0 };
+        let neg_i1_mask = if neg_i1 { 0b1111 } else { 0 };
+        let v0 = (if i0 == 0 { 0b1010 } else { 0b1100 }) ^ neg_i0_mask;
+        let v1 = (if i1 == 0 { 0b1010 } else { 0b1100 }) ^ neg_i1_mask;
+        let out = match g.func {
+            VGateFunc::And => v0 & v1,
+            VGateFunc::Nand => !(v0 & v1),
+            VGateFunc::Or => v0 | v1,
+            VGateFunc::Nor => !(v0 | v1),
+            VGateFunc::Impl => !v0 | v1,
+            VGateFunc::Nimpl => !(!v0 | v1),
+            VGateFunc::Xor => v0 ^ v1,
+        };
+        out & 0b1111
+    }
+
+    #[test]
+    fn test_vgate_to_binop_and_ximpl_neg_args() {
+        for func in [
+            VGateFunc::And,
+            VGateFunc::Nand,
+            VGateFunc::Or,
+            VGateFunc::Nor,
+            VGateFunc::Impl,
+            VGateFunc::Nimpl,
+            VGateFunc::Xor,
+        ] {
+            for t in 0..8 {
+                let neg_i0 = (t & 1) != 0;
+                let neg_i1 = (t & 2) != 0;
+                let nimpl = (t & 4) != 0;
+                let orig = VGate { i0: 0, i1: 1, func };
+                let exp_value = vgate_eval(orig, neg_i0, neg_i1);
+                let (trans, neg) = orig.to_binop_and_ximpl_neg_args(nimpl, neg_i0, neg_i1);
+                let res_value = vgate_eval(trans, false, false) ^ (if neg { 0b1111 } else { 0 });
+                assert_eq!(
+                    exp_value,
+                    res_value,
+                    "func:{:?} nimpl:{} n0:{} n1:{}: trans:{:?}",
+                    func,
+                    nimpl,
+                    neg_i0,
+                    neg_i1,
+                    (trans, neg)
+                );
+            }
+        }
     }
 }
