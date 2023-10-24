@@ -728,5 +728,63 @@ mod tests {
                 false
             )
         );
+
+        assert_eq!(
+            VCircuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_impl(0, 1),
+                    vgate_xor(2, 3),
+                    vgate_and(2, 3),
+                    vgate_and(0, 1),
+                    vgate_or(5, 6),
+                ],
+                outputs: vec![(4, false), (7, true)],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1), // not impl(0,1)
+                        Gate::new_xor(2, 3),   // xor(2,not impl(0,1)) = not xor(2,3)
+                        Gate::new_nimpl(2, 3), // nimpl(2,not impl(0,1)) = and(2,3)
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap(),
+                false
+            )
+        );
+
+        assert_eq!(
+            VCircuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_nimpl(0, 1),
+                    vgate_xor(2, 3),
+                    vgate_nimpl(2, 3),
+                    vgate_and(0, 1),
+                    vgate_or(5, 6),
+                ],
+                outputs: vec![(4, true), (7, true)],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap(),
+                true
+            )
+        );
     }
 }
