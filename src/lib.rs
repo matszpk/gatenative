@@ -517,14 +517,7 @@ struct VBinOpCircuit<T: Clone + Copy> {
     outputs: Vec<(T, bool)>,
 }
 
-impl<T> From<Circuit<T>> for VBinOpCircuit<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
+impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     fn from(circuit: Circuit<T>) -> VBinOpCircuit<T> {
         VBinOpCircuit {
             input_len: circuit.input_len(),
