@@ -388,6 +388,37 @@ impl<T: Clone + Copy> VGate<T> {
             _ => (self, NoNegs),
         }
     }
+
+    fn binop_neg(self, negs: VNegs) -> (VGate<T>, VNegs) {
+        match negs {
+            NoNegs => (self, NegOutput),
+            NegInput1 => {
+                match self.func {
+                    VGateFunc::And => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Or,
+                        },
+                        NegInput1,
+                    ),
+                    VGateFunc::Or => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::And,
+                        },
+                        NegInput1,
+                    ),
+                    VGateFunc::Xor => (self, NoNegs), // not xor(..., not...) => xor(...,...)
+                    _ => {
+                        panic!("Unsupported");
+                    }
+                }
+            }
+            NegOutput => (self, NoNegs),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
