@@ -155,6 +155,14 @@ impl<T: Clone + Copy> VGate<T> {
     #[inline]
     fn to_binop_and_impl(self: VGate<T>) -> (VGate<T>, bool) {
         match self.func {
+            VGateFunc::Nand => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::And,
+                },
+                true,
+            ),
             VGateFunc::Nimpl => (
                 VGate {
                     i0: self.i0,
@@ -288,6 +296,14 @@ impl<T: Clone + Copy> VGate<T> {
     #[inline]
     fn to_binop_and_nimpl(self: VGate<T>) -> (VGate<T>, bool) {
         match self.func {
+            VGateFunc::Nand => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::And,
+                },
+                true,
+            ),
             VGateFunc::Impl => (
                 VGate {
                     i0: self.i0,
@@ -482,5 +498,39 @@ mod tests {
         assert_eq!(2, vacc.alloc());
         assert_eq!(4, vacc.alloc());
         assert_eq!(6, vacc.alloc());
+    }
+
+    fn vgate<T: Clone + Copy>(func: VGateFunc, i0: T, i1: T) -> VGate<T> {
+        VGate { i0, i1, func: func }
+    }
+
+    fn vgate_and<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::And, i0, i1)
+    }
+    fn vgate_nand<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Nand, i0, i1)
+    }
+    fn vgate_or<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Or, i0, i1)
+    }
+    fn vgate_nor<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Nor, i0, i1)
+    }
+    fn vgate_impl<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Impl, i0, i1)
+    }
+    fn vgate_nimpl<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Nimpl, i0, i1)
+    }
+    fn vgate_xor<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
+        vgate(VGateFunc::Xor, i0, i1)
+    }
+
+    #[test]
+    fn test_vgate() {
+        assert_eq!(vgate_and(3, 4), VGate::from(Gate::new_and(3, 4)));
+        assert_eq!(vgate_nor(3, 5), VGate::from(Gate::new_nor(3, 5)));
+        assert_eq!(vgate_nimpl(2, 4), VGate::from(Gate::new_nimpl(2, 4)));
+        assert_eq!(vgate_xor(2, 6), VGate::from(Gate::new_xor(2, 6)));
     }
 }
