@@ -786,5 +786,71 @@ mod tests {
                 true
             )
         );
+
+        assert_eq!(
+            VCircuit {
+                input_len: 4,
+                gates: vec![
+                    vgate_impl(0, 1),
+                    vgate_or(2, 3),
+                    vgate_or(1, 3),
+                    vgate_xor(1, 4),
+                    vgate_xor(5, 7),
+                    vgate_xor(6, 8),
+                    vgate_impl(3, 9),
+                ],
+                outputs: vec![(7, false), (8, false), (9, false), (10, true)],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_nor(2, 3),
+                        Gate::new_nor(1, 3),
+                        Gate::new_xor(1, 4),
+                        Gate::new_xor(5, 7),
+                        Gate::new_xor(6, 8),
+                        Gate::new_and(3, 9),
+                    ],
+                    [(7, true), (8, false), (9, true), (10, false)],
+                )
+                .unwrap(),
+                false
+            )
+        );
+
+        assert_eq!(
+            VCircuit {
+                input_len: 4,
+                gates: vec![
+                    vgate_nimpl(0, 1),
+                    vgate_or(2, 3),
+                    vgate_or(1, 3),
+                    vgate_xor(1, 4),
+                    vgate_xor(5, 7),
+                    vgate_xor(6, 8),
+                    vgate_and(3, 9),
+                ],
+                outputs: vec![(7, true), (8, true), (9, true), (10, false)],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_nor(2, 3),
+                        Gate::new_nor(1, 3),
+                        Gate::new_xor(1, 4),
+                        Gate::new_xor(5, 7),
+                        Gate::new_xor(6, 8),
+                        Gate::new_and(3, 9),
+                    ],
+                    [(7, true), (8, false), (9, true), (10, false)],
+                )
+                .unwrap(),
+                true
+            )
+        );
     }
 }
