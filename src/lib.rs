@@ -1112,9 +1112,9 @@ mod tests {
                 Circuit::new(
                     3,
                     [
-                        Gate::new_nimpl(0, 1), // not impl(0,1)
-                        Gate::new_xor(2, 3),   // xor(2,not impl(0,1)) = not xor(2,3)
-                        Gate::new_nimpl(2, 3), // nimpl(2,not impl(0,1)) = and(2,3)
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
                         Gate::new_and(0, 1),
                         Gate::new_nor(5, 6),
                     ],
