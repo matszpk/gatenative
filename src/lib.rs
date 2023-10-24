@@ -345,7 +345,7 @@ impl<T: Clone + Copy> VGate<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 struct VCircuit<T: Clone + Copy> {
     input_len: T,
     gates: Vec<VGate<T>>,
@@ -354,7 +354,7 @@ struct VCircuit<T: Clone + Copy> {
 
 impl<T> VCircuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -377,7 +377,7 @@ where
             .collect::<Vec<_>>();
 
         let mut visited = vec![false; gate_num];
-        for (o, on) in circuit.outputs().into_iter() {
+        for (o, _) in circuit.outputs().into_iter() {
             if *o < input_len_t {
                 continue;
             }
@@ -432,11 +432,9 @@ where
                     } else {
                         false
                     };
-                    gates[node_index] = if ni0 || ni1 {
+                    gates[node_index] = {
                         let (newg2, n2) = newg.to_binop_and_ximpl_neg_args(nimpl, ni0, ni1);
                         (newg2, n ^ n2)
-                    } else {
-                        (newg, n)
                     };
                     stack.pop();
                 }
@@ -674,5 +672,61 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_to_op_and_ximpl_circuit() {
+        for (nimpl, gate, vgate, vout_neg) in [
+            (false, Gate::new_nimpl(0, 1), vgate_impl(0, 1), true),
+            (false, Gate::new_nor(0, 1), vgate_or(0, 1), true),
+            (true, Gate::new_nimpl(0, 1), vgate_nimpl(0, 1), false),
+            (true, Gate::new_nor(0, 1), vgate_or(0, 1), true),
+        ] {
+            assert_eq!(
+                VCircuit {
+                    input_len: 2,
+                    gates: vec![vgate],
+                    outputs: vec![(2, vout_neg)],
+                },
+                VCircuit::to_op_and_ximpl_circuit(
+                    Circuit::new(2, [gate], [(2, false)],).unwrap(),
+                    nimpl
+                ),
+                "{} {:?} {:?} {}",
+                nimpl,
+                gate,
+                vgate,
+                vout_neg
+            );
+        }
+
+        assert_eq!(
+            VCircuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_xor(0, 1),
+                    vgate_xor(2, 3),
+                    vgate_and(2, 3),
+                    vgate_and(0, 1),
+                    vgate_or(5, 6),
+                ],
+                outputs: vec![(4, false), (7, false)],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_and(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, false), (7, true)],
+                )
+                .unwrap(),
+                false
+            )
+        );
     }
 }
