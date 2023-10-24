@@ -464,9 +464,8 @@ where
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum VNegs {
     NoNegs,
-    NegArg1,
+    NegInput1,    // second input in gate
     NegOut,
-    NegsArg1Out,
 }
 
 #[derive(Clone)]
