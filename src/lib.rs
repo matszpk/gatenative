@@ -161,7 +161,6 @@ impl<T: Clone + Copy> From<Gate<T>> for VGate<T> {
 
 impl<T: Clone + Copy> VGate<T> {
     // conversion to operation (and,or,xor,not,impl)
-    #[inline]
     fn to_binop_and_impl(self: VGate<T>) -> (VGate<T>, bool) {
         match self.func {
             VGateFunc::Nand => (
@@ -193,7 +192,6 @@ impl<T: Clone + Copy> VGate<T> {
     }
 
     // negate argument i0 in gate with conversion to op_and_impl or op_and_nimpl
-    #[inline]
     fn to_binop_and_ximpl_neg_args(
         self: VGate<T>,
         nimpl: bool,
@@ -322,7 +320,6 @@ impl<T: Clone + Copy> VGate<T> {
     }
 
     // conversion to operation (and,or,xor,not,nimpl)
-    #[inline]
     fn to_binop_and_nimpl(self: VGate<T>) -> (VGate<T>, bool) {
         match self.func {
             VGateFunc::Nand => (
@@ -354,7 +351,6 @@ impl<T: Clone + Copy> VGate<T> {
     }
 
     // conversion to operation (and,or,xor,not)
-    #[inline]
     fn to_binop(self: VGate<T>) -> (VGate<T>, VNegs) {
         match self.func {
             VGateFunc::Nand => (
