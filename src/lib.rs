@@ -808,10 +808,10 @@ mod tests {
                         Gate::new_nimpl(0, 1),
                         Gate::new_nor(2, 3),
                         Gate::new_nor(1, 3),
-                        Gate::new_xor(1, 4),
-                        Gate::new_xor(5, 7),
-                        Gate::new_xor(6, 8),
-                        Gate::new_and(3, 9),
+                        Gate::new_xor(1, 4), // xor(not,..) = not xor(..,..)
+                        Gate::new_xor(5, 7), // xor(not...,xor(not,..)) = xor(xor(..),..)
+                        Gate::new_xor(6, 8), // xor(not..,xor(not xor(...) = not xor(...)
+                        Gate::new_and(3, 9), // and(..,not..) = not impl(...,...)
                     ],
                     [(7, true), (8, false), (9, true), (10, false)],
                 )
