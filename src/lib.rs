@@ -111,6 +111,15 @@ struct VarUsage {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum VNegs {
+    NoNegs,
+    NegInput1, // second input in gate
+    NegOutput,
+}
+
+use VNegs::*;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum VGateFunc {
     And,
     Nand,
@@ -343,6 +352,46 @@ impl<T: Clone + Copy> VGate<T> {
             _ => (self, false),
         }
     }
+
+    // conversion to operation (and,or,xor,not)
+    #[inline]
+    fn to_binop(self: VGate<T>) -> (VGate<T>, VNegs) {
+        match self.func {
+            VGateFunc::Nand => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::And,
+                },
+                NegOutput,
+            ),
+            VGateFunc::Nor => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::Or,
+                },
+                NegOutput,
+            ),
+            VGateFunc::Impl => (
+                VGate {
+                    i0: self.i1,
+                    i1: self.i0,
+                    func: VGateFunc::Or,
+                },
+                NegInput1,
+            ),
+            VGateFunc::Nimpl => (
+                VGate {
+                    i0: self.i0,
+                    i1: self.i1,
+                    func: VGateFunc::And,
+                },
+                NegInput1,
+            ),
+            _ => (self, NoNegs),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -461,18 +510,32 @@ where
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum VNegs {
-    NoNegs,
-    NegInput1,    // second input in gate
-    NegOut,
-}
-
-#[derive(Clone)]
-struct VCircuitStdOp<T: Clone + Copy> {
+#[derive(Clone, PartialEq, Eq, Debug)]
+struct VBinOpCircuit<T: Clone + Copy> {
     input_len: T,
     gates: Vec<(VGate<T>, VNegs)>,
     outputs: Vec<(T, bool)>,
+}
+
+impl<T> From<Circuit<T>> for VBinOpCircuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn from(circuit: Circuit<T>) -> VBinOpCircuit<T> {
+        VBinOpCircuit {
+            input_len: circuit.input_len(),
+            gates: circuit
+                .gates()
+                .into_iter()
+                .map(|g| VGate::from(*g).to_binop())
+                .collect::<Vec<_>>(),
+            outputs: circuit.outputs().to_vec(),
+        }
+    }
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
@@ -601,6 +664,15 @@ mod tests {
             (vgate_xor(3, 5), false),
             vgate_xor(3, 5).to_binop_and_nimpl()
         );
+
+        // to_binop
+        assert_eq!((vgate_and(3, 5), NoNegs), vgate_and(3, 5).to_binop());
+        assert_eq!((vgate_and(3, 5), NegOutput), vgate_nand(3, 5).to_binop());
+        assert_eq!((vgate_or(3, 5), NoNegs), vgate_or(3, 5).to_binop());
+        assert_eq!((vgate_or(3, 5), NegOutput), vgate_nor(3, 5).to_binop());
+        assert_eq!((vgate_or(5, 3), NegInput1), vgate_impl(3, 5).to_binop());
+        assert_eq!((vgate_and(3, 5), NegInput1), vgate_nimpl(3, 5).to_binop());
+        assert_eq!((vgate_xor(3, 5), NoNegs), vgate_xor(3, 5).to_binop());
     }
 
     fn vgate_eval<T: Clone + Copy>(g: VGate<T>, neg_i0: bool, neg_i1: bool) -> u8
@@ -675,7 +747,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_op_and_ximpl_circuit() {
+    fn test_vcircuit_to_op_and_ximpl_circuit() {
         for (nimpl, gate, vgate, vout_neg) in [
             (false, Gate::new_nimpl(0, 1), vgate_impl(0, 1), true),
             (false, Gate::new_nor(0, 1), vgate_or(0, 1), true),
@@ -1018,6 +1090,37 @@ mod tests {
                 )
                 .unwrap(),
                 false
+            )
+        );
+    }
+
+    #[test]
+    fn test_vbinopcircuit_from() {
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_xor(2, 3), NoNegs),
+                    (vgate_and(2, 3), NegInput1),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(5, 6), NegOutput),
+                ],
+                outputs: vec![(4, true), (7, false)],
+            },
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1), // not impl(0,1)
+                        Gate::new_xor(2, 3),   // xor(2,not impl(0,1)) = not xor(2,3)
+                        Gate::new_nimpl(2, 3), // nimpl(2,not impl(0,1)) = and(2,3)
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
             )
         );
     }
