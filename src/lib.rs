@@ -354,7 +354,7 @@ struct VCircuit<T: Clone + Copy> {
 
 impl<T> VCircuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
