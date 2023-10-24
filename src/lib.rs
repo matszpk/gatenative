@@ -278,9 +278,9 @@ impl<T: Clone + Copy> VGate<T> {
                         VGate {
                             i0: self.i0,
                             i1: self.i1,
-                            func: VGateFunc::Impl,
+                            func: impl_func,
                         },
-                        neg,
+                        neg ^ impl_neg,
                     ),
                     (true, false) => (
                         VGate {
@@ -650,6 +650,21 @@ mod tests {
                 assert_eq!(
                     exp_value,
                     res_value,
+                    "func:{:?} nimpl:{} n0:{} n1:{}: trans:{:?}",
+                    func,
+                    nimpl,
+                    neg_i0,
+                    neg_i1,
+                    (trans, neg)
+                );
+                let ximpl_func = if nimpl {
+                    VGateFunc::Nimpl
+                } else {
+                    VGateFunc::Impl
+                };
+                assert!(
+                    matches!(trans.func, VGateFunc::And | VGateFunc::Or | VGateFunc::Xor)
+                        || trans.func == ximpl_func,
                     "func:{:?} nimpl:{} n0:{} n1:{}: trans:{:?}",
                     func,
                     nimpl,
