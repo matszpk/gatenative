@@ -395,6 +395,7 @@ impl<T: Clone + Copy> VGate<T> {
             NegInput1 => {
                 match self.func {
                     VGateFunc::And => (
+                        // not and(..,not ..) <-> or(not ..., ...)
                         VGate {
                             i0: self.i1,
                             i1: self.i0,
@@ -403,6 +404,7 @@ impl<T: Clone + Copy> VGate<T> {
                         NegInput1,
                     ),
                     VGateFunc::Or => (
+                        // not or(..,not ..) <-> and(not ..., ...)
                         VGate {
                             i0: self.i1,
                             i1: self.i0,
@@ -410,7 +412,7 @@ impl<T: Clone + Copy> VGate<T> {
                         },
                         NegInput1,
                     ),
-                    VGateFunc::Xor => (self, NoNegs), // not xor(..., not...) => xor(...,...)
+                    VGateFunc::Xor => (self, NoNegs), // not xor(..., not...) <-> xor(...,...)
                     _ => {
                         panic!("Unsupported");
                     }
