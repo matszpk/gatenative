@@ -390,6 +390,10 @@ impl<T: Clone + Copy> VGate<T> {
     }
 
     fn binop_neg(self, negs: VNegs) -> (VGate<T>, VNegs) {
+        assert!(matches!(
+            self.func,
+            VGateFunc::And | VGateFunc::Or | VGateFunc::Xor
+        ));
         match negs {
             NoNegs => (self, NegOutput),
             NegInput1 => {
@@ -419,6 +423,167 @@ impl<T: Clone + Copy> VGate<T> {
                 }
             }
             NegOutput => (self, NoNegs),
+        }
+    }
+
+    fn binop_neg_args(self, negs: VNegs, neg_i0: bool, neg_i1: bool) -> (VGate<T>, VNegs) {
+        assert!(matches!(
+            self.func,
+            VGateFunc::And | VGateFunc::Or | VGateFunc::Xor
+        ));
+        match negs {
+            NoNegs => match self.func {
+                VGateFunc::And => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NoNegs),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::And,
+                        },
+                        NegInput1,
+                    ),
+                    (false, true) => (self, NegInput1),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        NegOutput,
+                    ),
+                },
+                VGateFunc::Or => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NoNegs),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Or,
+                        },
+                        NegInput1,
+                    ),
+                    (false, true) => (self, NegInput1),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        NegOutput,
+                    ),
+                },
+                VGateFunc::Xor => (self, if neg_i0 ^ neg_i1 { NegOutput } else { NoNegs }),
+                _ => {
+                    panic!("Unsupported");
+                }
+            },
+            NegInput1 => match self.func {
+                VGateFunc::And => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NegInput1),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        NegOutput,
+                    ),
+                    (false, true) => (self, NoNegs),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::And,
+                        },
+                        NegInput1,
+                    ),
+                },
+                VGateFunc::Or => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NegInput1),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        NegOutput,
+                    ),
+                    (false, true) => (self, NoNegs),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Or,
+                        },
+                        NegInput1,
+                    ),
+                },
+                VGateFunc::Xor => (self, if !neg_i0 ^ neg_i1 { NegOutput } else { NoNegs }),
+                _ => {
+                    panic!("Unsupported");
+                }
+            },
+            NegOutput => match self.func {
+                VGateFunc::And => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NegOutput),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        NegInput1,
+                    ),
+                    (false, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::Or,
+                        },
+                        NegInput1,
+                    ),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::Or,
+                        },
+                        NoNegs,
+                    ),
+                },
+                VGateFunc::Or => match (neg_i0, neg_i1) {
+                    (false, false) => (self, NegOutput),
+                    (true, false) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        NegInput1,
+                    ),
+                    (false, true) => (
+                        VGate {
+                            i0: self.i1,
+                            i1: self.i0,
+                            func: VGateFunc::And,
+                        },
+                        NegInput1,
+                    ),
+                    (true, true) => (
+                        VGate {
+                            i0: self.i0,
+                            i1: self.i1,
+                            func: VGateFunc::And,
+                        },
+                        NoNegs,
+                    ),
+                },
+                VGateFunc::Xor => (self, if !neg_i0 ^ neg_i1 { NegOutput } else { NoNegs }),
+                _ => {
+                    panic!("Unsupported");
+                }
+            },
         }
     }
 }
