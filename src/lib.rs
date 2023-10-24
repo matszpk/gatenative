@@ -417,6 +417,7 @@ where
                     }
                 } else {
                     // resolve
+                    assert!(!gates[node_index].1);
                     let (newg, n) = if nimpl {
                         gates[node_index].0.to_binop_and_nimpl()
                     } else {
