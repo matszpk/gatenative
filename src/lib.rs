@@ -852,5 +852,104 @@ mod tests {
                 true
             )
         );
+
+        // next testcases
+        assert_eq!(
+            VCircuit {
+                input_len: 4,
+                gates: vec![
+                    vgate_impl(0, 1),
+                    vgate_or(2, 3),
+                    vgate_or(1, 3),
+                    vgate_and(1, 4),
+                    vgate_or(5, 7),
+                    vgate_and(6, 8),
+                    vgate_xor(3, 4),
+                    vgate_or(4, 9),
+                ],
+                outputs: vec![
+                    (5, true),
+                    (7, true),
+                    (8, true),
+                    (9, true),
+                    (10, true),
+                    (11, false)
+                ],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1), // -> not :impl(0, 1)
+                        Gate::new_nor(2, 3),   // -> not :or(2, 3)
+                        Gate::new_nor(1, 3),   // -> not :or(1, 3)
+                        Gate::new_nimpl(1, 4), // -> not: or(not 1, not 4) -> and(1, 4)
+                        Gate::new_nimpl(5, 7), // -> not :impl(not 5, 7) -> not: or(5, 7)
+                        Gate::new_nor(6, 8),   // -> not :or(not 6, not 8) -> and(6, 8)
+                        Gate::new_xor(3, 4),   // -> xor(3, not 4) -> not: xor(3, 4)
+                        Gate::new_nimpl(4, 9), // -> not: impl(not 4, 9) -> not: or(4, 9)
+                    ],
+                    [
+                        (5, false),
+                        (7, true),
+                        (8, false),
+                        (9, true),
+                        (10, false),
+                        (11, true)
+                    ],
+                )
+                .unwrap(),
+                false
+            )
+        );
+
+        assert_eq!(
+            VCircuit {
+                input_len: 4,
+                gates: vec![
+                    vgate_nimpl(0, 1),
+                    vgate_or(2, 3),
+                    vgate_or(1, 3),
+                    vgate_nimpl(1, 4),
+                    vgate_or(5, 7),
+                    vgate_and(6, 8),
+                    vgate_xor(3, 4),
+                    vgate_nimpl(4, 9),
+                ],
+                outputs: vec![
+                    (5, true),
+                    (7, true),
+                    (8, true),
+                    (9, true),
+                    (10, false),
+                    (11, true)
+                ],
+            },
+            VCircuit::to_op_and_ximpl_circuit(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_nor(2, 3), // -> not :or(2, 3)
+                        Gate::new_nor(1, 3), // -> not :or(1, 3)
+                        Gate::new_nimpl(1, 4),
+                        Gate::new_nimpl(5, 7), // -> nimpl(not 5, 7) -> not: or(5, 7)
+                        Gate::new_nor(6, 8),   // -> not :or(not 6, not 8) -> and(6, 8)
+                        Gate::new_xor(3, 4),
+                        Gate::new_nimpl(4, 9),
+                    ],
+                    [
+                        (5, false),
+                        (7, true),
+                        (8, false),
+                        (9, true),
+                        (10, false),
+                        (11, true)
+                    ],
+                )
+                .unwrap(),
+                true
+            )
+        );
     }
 }
