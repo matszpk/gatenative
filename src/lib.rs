@@ -531,6 +531,17 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     }
 }
 
+impl<T> VCircuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn optimize_negs(&mut self) {}
+}
+
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
