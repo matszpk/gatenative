@@ -734,7 +734,7 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
-    fn xor_subtrees(&self) -> HashMap<T, T> {
+    fn xor_subtree_map(&self) -> HashMap<T, T> {
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut usage = vec![0u8; self.gates.len()];
         for (g, _) in &self.gates {
@@ -841,9 +841,13 @@ where
                         });
                     }
                 } else {
+                    let node_out_index = T::try_from(node_index + input_len).unwrap();
                     if let Some(xor_index) = top.xor_index {
                         // add to xor_map
-                        xor_map.insert(T::try_from(node_index + input_len).unwrap(), xor_index);
+                        xor_map.insert(node_out_index, xor_index);
+                    } else if self.gates[node_index].0.func == VGateFunc::Xor {
+                        // add same root
+                        xor_map.insert(node_out_index, node_out_index);
                     }
                     stack.pop();
                 }
@@ -1509,6 +1513,28 @@ mod tests {
                 )
                 .unwrap()
             )
+        );
+    }
+
+    #[test]
+    fn test_vbinopcircuit_xor_subtree_map() {
+        assert_eq!(
+            HashMap::from_iter([(4, 4)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
         );
     }
 }
