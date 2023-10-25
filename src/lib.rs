@@ -981,6 +981,11 @@ where
     }
 
     fn propagate_negs_to_xor_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        enum HashKey<T> {
+            Gate(T),
+            Output(T),
+        }
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
@@ -989,18 +994,20 @@ where
             }
             // check whether same type of occurrence (negation)
             let mut other_occur = false;
-            let mut xor_roots_changed = HashMap::<T, bool>::new();
+            let mut xor_roots_changed = HashMap::<HashKey<T>, bool>::new();
             for occur in &occurs[i] {
-                if let VOccur::Gate(x) = occurs[i].first().unwrap() {
-                    if let Some(root_xor) = xor_map.get(&x) {
-                        if let Some(change) = xor_roots_changed.get_mut(&root_xor) {
+                let (x_key, dchange) = match occurs[i].first().unwrap() {
+                    VOccur::Gate(x) => (xor_map.get(x).map(|x| HashKey::Gate(*x)), false),
+                    VOccur::GateDouble(x) => (xor_map.get(x).map(|x| HashKey::Gate(*x)), true),
+                    VOccur::Output(x) => (Some(HashKey::Output(*x)), false),
+                };
+                if let Some(root_xor) = x_key {
+                    if let Some(change) = xor_roots_changed.get_mut(&root_xor) {
+                        if !dchange {
                             *change = !*change;
-                        } else {
-                            xor_roots_changed.insert(*root_xor, true);
                         }
                     } else {
-                        other_occur = true;
-                        break;
+                        xor_roots_changed.insert(root_xor, !dchange);
                     }
                 } else {
                     other_occur = true;
@@ -1011,8 +1018,14 @@ where
                 let negs_removed = xor_roots_changed
                     .iter()
                     .map(|(k, v)| {
-                        let root_negs = self.gates[usize::try_from(*k).unwrap() - input_len].1;
-                        let root_xor_neg = root_negs != NoNegs;
+                        let root_xor_neg = match k {
+                            HashKey::Gate(x) => {
+                                let root_negs =
+                                    self.gates[usize::try_from(*x).unwrap() - input_len].1;
+                                root_negs != NoNegs
+                            }
+                            HashKey::Output(x) => self.outputs[usize::try_from(*x).unwrap()].1,
+                        };
                         if *v {
                             if root_xor_neg {
                                 1
@@ -1028,12 +1041,24 @@ where
                     // apply changes if change remove more negations than added negations.
                     self.gates[i].1 = NoNegs;
                     for (k, v) in xor_roots_changed.into_iter() {
-                        let root_negs = &mut self.gates[usize::try_from(k).unwrap() - input_len].1;
-                        *root_negs = match *root_negs {
-                            NoNegs => NegOutput,
-                            NegInput1 => NoNegs,
-                            NegOutput => NoNegs,
-                        };
+                        if !v {
+                            continue;
+                        }
+                        match k {
+                            HashKey::Gate(k) => {
+                                let root_negs =
+                                    &mut self.gates[usize::try_from(k).unwrap() - input_len].1;
+                                *root_negs = match *root_negs {
+                                    NoNegs => NegOutput,
+                                    NegInput1 => NoNegs,
+                                    NegOutput => NoNegs,
+                                };
+                            }
+                            HashKey::Output(x) => {
+                                let out_negs = &mut self.outputs[usize::try_from(x).unwrap()].1;
+                                *out_negs = !*out_negs;
+                            }
+                        }
                     }
                 }
             }
