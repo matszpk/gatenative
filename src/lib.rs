@@ -727,7 +727,7 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
 
 impl<T> VBinOpCircuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -735,6 +735,7 @@ where
 {
     // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
     fn xor_subtree_map(&self) -> HashMap<T, T> {
+        // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut usage = vec![0u8; self.gates.len()];
         for (g, _) in &self.gates {
@@ -748,6 +749,15 @@ where
                 let i1 = usize::try_from(g.i1).unwrap() - input_len;
                 if usage[i1] < 2 {
                     usage[i1] += 1;
+                }
+            }
+        }
+
+        for (o, _) in self.outputs.iter() {
+            if *o >= self.input_len {
+                let o = usize::try_from(*o).unwrap() - input_len;
+                if usage[o] < 2 {
+                    usage[o] += 1;
                 }
             }
         }
@@ -790,6 +800,8 @@ where
                     top.way += 1;
                     let gi0 = self.gates[node_index].0.i0;
                     if gi0 >= self.input_len {
+                        // println!("To next 0: {:?} {:?} {:?}", node_index + input_len, gi0,
+                        //          self.gates[node_index].0);
                         let new_node_index = usize::try_from(gi0).unwrap() - input_len;
                         // determine xor_index
                         let xor_index = if let Some(xor_index) = top.xor_index {
@@ -801,7 +813,10 @@ where
                             } else {
                                 None
                             }
-                        } else if self.gates[node_index].0.func == VGateFunc::Xor {
+                        } else if self.gates[node_index].0.func == VGateFunc::Xor
+                            && self.gates[new_node_index].0.func == VGateFunc::Xor
+                            && usage[new_node_index] < 2
+                        {
                             // if xor without xor_index then its node index is xor_index
                             Some(T::try_from(node_index + input_len).unwrap())
                         } else {
@@ -817,6 +832,8 @@ where
                     top.way += 1;
                     let gi1 = self.gates[node_index].0.i1;
                     if gi1 >= self.input_len {
+                        // println!("To next 1: {:?} {:?}: {:?}", node_index + input_len, gi1,
+                        //          self.gates[node_index].0);
                         let new_node_index = usize::try_from(gi1).unwrap() - input_len;
                         // determine xor_index
                         let xor_index = if let Some(xor_index) = top.xor_index {
@@ -828,7 +845,10 @@ where
                             } else {
                                 None
                             }
-                        } else if self.gates[node_index].0.func == VGateFunc::Xor {
+                        } else if self.gates[node_index].0.func == VGateFunc::Xor
+                            && self.gates[new_node_index].0.func == VGateFunc::Xor
+                            && usage[new_node_index] < 2
+                        {
                             // if xor without xor_index then its node index is xor_index
                             Some(T::try_from(node_index + input_len).unwrap())
                         } else {
@@ -837,11 +857,13 @@ where
                         stack.push(StackEntry {
                             node: new_node_index,
                             way: 0,
-                            xor_index: None,
+                            xor_index,
                         });
                     }
                 } else {
                     let node_out_index = T::try_from(node_index + input_len).unwrap();
+                    // println!("Top node: {:?} {:?} {:?}", top.node + input_len,
+                    //          top.way, top.xor_index);
                     if let Some(xor_index) = top.xor_index {
                         // add to xor_map
                         xor_map.insert(node_out_index, xor_index);
@@ -1525,6 +1547,62 @@ mod tests {
                     3,
                     [
                         Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
+        assert_eq!(
+            HashMap::from_iter([(4, 4), (3, 3)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1), // used more than once!
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
+
+        assert_eq!(
+            HashMap::from_iter([(4, 4), (3, 4)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 4),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
+
+        assert_eq!(
+            HashMap::from_iter([(4, 4)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(0, 1),
                         Gate::new_xor(2, 3),
                         Gate::new_nimpl(2, 3),
                         Gate::new_and(0, 1),
