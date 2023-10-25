@@ -944,7 +944,7 @@ where
                         }
                         // for GateDouble with NegInput1: double negation doesn't change
                         // value because gate have source connected to two inputs.
-                        VOccur::GateDouble(x) => {}
+                        VOccur::GateDouble(_) => {}
                         VOccur::Output(x) => {
                             self.outputs[usize::try_from(*x).unwrap()].1 = false;
                         }
