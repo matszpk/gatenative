@@ -1553,6 +1553,14 @@ mod tests {
     #[test]
     fn test_vbinopcircuit_xor_subtree_map() {
         assert_eq!(
+            HashMap::from_iter([(4, 4), (3, 4)]),
+            VBinOpCircuit::from(
+                Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_xor(2, 3),], [(4, true)],).unwrap()
+            )
+            .xor_subtree_map()
+        );
+
+        assert_eq!(
             HashMap::from_iter([(4, 4)]),
             VBinOpCircuit::from(
                 Circuit::new(
