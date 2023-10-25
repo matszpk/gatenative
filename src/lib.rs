@@ -926,7 +926,7 @@ where
             // check whether same type of occurrence (negation)
             if occurs[i].iter().all(|occur| match occur {
                 VOccur::Gate(x) => {
-                    let (go, no) = self.gates[usize::try_from(*x).unwrap()];
+                    let (go, no) = self.gates[usize::try_from(*x).unwrap() - input_len];
                     go.i1 == oi && no == NegInput1 && go.func != VGateFunc::Xor
                 }
                 VOccur::GateDouble(x) => false,
@@ -937,7 +937,7 @@ where
                 for occur in &occurs[i] {
                     match occur {
                         VOccur::Gate(x) => {
-                            self.gates[usize::try_from(*x).unwrap()].1 = NoNegs;
+                            self.gates[usize::try_from(*x).unwrap() - input_len].1 = NoNegs;
                         }
                         VOccur::GateDouble(x) => {}
                         VOccur::Output(x) => {
@@ -947,10 +947,9 @@ where
                 }
             }
         }
-        let mut occur_fills = vec![0u8; self.gates.len()];
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
-            if self.gates[i].1 != NegOutput && self.gates[i].0.func != VGateFunc::Xor {
+            if self.gates[i].1 != NegOutput || self.gates[i].0.func != VGateFunc::Xor {
                 continue;
             }
             let gi0 = self.gates[i].0.i0;
@@ -981,7 +980,27 @@ where
         }
     }
 
-    fn propagate_negs_to_xor_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {}
+    fn propagate_negs_to_xor_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for i in 0..self.gates.len() {
+            let oi = T::try_from(i + input_len).unwrap();
+            if self.gates[i].1 != NegOutput || occurs[i].len() != 1 {
+                continue;
+            }
+            // check whether same type of occurrence (negation)
+            if let VOccur::Gate(x) = occurs[i].first().unwrap() {
+                if let Some(root_xor) = xor_map.get(&x) {
+                    self.gates[usize::try_from(*x).unwrap() - input_len].1 = NoNegs;
+                    let root_xor = usize::try_from(*root_xor).unwrap() - input_len;
+                    self.gates[root_xor].1 = match self.gates[root_xor].1 {
+                        NoNegs => NegOutput,
+                        NegInput1 => NoNegs,
+                        NegOutput => NoNegs,
+                    }
+                }
+            }
+        }
+    }
 
     fn optimize_negs(&mut self) {}
 }
