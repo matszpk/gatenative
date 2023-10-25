@@ -970,6 +970,33 @@ mod tests {
     }
 
     #[test]
+    fn test_vgate_binop_neg_args() {
+        for func in [VGateFunc::And, VGateFunc::Or, VGateFunc::Xor] {
+            for negs in [NoNegs, NegInput1, NegOutput] {
+                for t in 0..4 {
+                    let neg_i0 = (t & 1) != 0;
+                    let neg_i1 = (t & 2) != 0;
+                    let orig = VGate { i0: 0, i1: 1, func };
+                    let exp_value = vgate_eval(orig, neg_i0, neg_i1 ^ matches!(negs, NegInput1))
+                        ^ (if matches!(negs, NegOutput) { 0b1111 } else { 0 });
+                    let (trans, tnegs) = orig.binop_neg_args(negs, neg_i0, neg_i1);
+                    let res_value = vgate_eval(trans, false, matches!(tnegs, NegInput1))
+                        ^ (if matches!(tnegs, NegOutput) {
+                            0b1111
+                        } else {
+                            0
+                        });
+                    assert_eq!(
+                        exp_value, res_value,
+                        "func:{:?} negs:{:?} ni0:{} ni1:{}: trans:{:?} tnegs:{:?}",
+                        func, negs, neg_i0, neg_i1, trans, tnegs,
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn test_vcircuit_to_op_and_ximpl_circuit() {
         for (nimpl, gate, vgate, vout_neg) in [
             (false, Gate::new_nimpl(0, 1), vgate_impl(0, 1), true),
