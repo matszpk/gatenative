@@ -917,7 +917,6 @@ where
     // optimize gates with same occurrences signs (negative) further gates.
     fn optimize_same_occur_signs(&mut self, occurs: &[Vec<VOccur<T>>]) {
         let input_len = usize::try_from(self.input_len).unwrap();
-        // TODO: extend to double negation in occurrence. neg_i0=true, neg_i1=true
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
             if self.gates[i].1 != NegOutput {
@@ -944,6 +943,38 @@ where
                             self.outputs[usize::try_from(*x).unwrap()].1 = false;
                         }
                     }
+                }
+            }
+        }
+        let mut occur_fills = vec![0u8; self.gates.len()];
+        for i in 0..self.gates.len() {
+            let oi = T::try_from(i + input_len).unwrap();
+            if self.gates[i].1 != NegOutput && self.gates[i].0.func != VGateFunc::Xor {
+                continue;
+            }
+            let gi0 = self.gates[i].0.i0;
+            let gi1 = self.gates[i].0.i1;
+            if gi0 >= self.input_len && gi1 >= self.input_len {
+                let goi0 = usize::try_from(gi0).unwrap() - input_len;
+                let goi1 = usize::try_from(gi1).unwrap() - input_len;
+                if ((occurs[goi0].len() == 1 && occurs[goi1].len() == 1)
+                    || (goi0 == goi1 && occurs[goi0].len() == 2))
+                    && self.gates[goi0].1 == NegOutput
+                    && self.gates[goi1].1 == NegOutput
+                {
+                    // remove negations from occurrence sources
+                    self.gates[goi0].1 = NoNegs;
+                    self.gates[goi1].1 = NoNegs;
+                    // remove negation from target (this gate)
+                    self.gates[i].1 = NoNegs;
+                    // change gate: not(and(not,not)) = or, not(or(not,not)) = and
+                    self.gates[i].0.func = match self.gates[i].0.func {
+                        VGateFunc::And => VGateFunc::Or,
+                        VGateFunc::Or => VGateFunc::And,
+                        _ => {
+                            panic!("Unexpected gate func");
+                        }
+                    };
                 }
             }
         }
