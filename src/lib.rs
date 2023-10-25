@@ -725,6 +725,13 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     }
 }
 
+#[derive(Clone, Copy)]
+enum VOccur<T: Clone + Copy> {
+    Gate(T),
+    GateDouble(T),
+    Output(T), // circuit output index
+}
+
 impl<T> VBinOpCircuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
@@ -876,6 +883,69 @@ where
             }
         }
         xor_map
+    }
+
+    // returns list of occurrences for all gates (gate index as output index).
+    fn occurrences(&self) -> Vec<Vec<VOccur<T>>> {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        let mut occurs = vec![vec![]; self.gates.len()];
+        for (i, (g, _)) in self.gates.iter().enumerate() {
+            if g.i0 >= self.input_len {
+                let i0 = usize::try_from(g.i0).unwrap() - input_len;
+                occurs[i0].push(VOccur::Gate(T::try_from(i + input_len).unwrap()));
+            }
+            if g.i1 >= self.input_len {
+                let i1 = usize::try_from(g.i1).unwrap() - input_len;
+                let oidx = T::try_from(i + input_len).unwrap();
+                if g.i0 != g.i1 {
+                    occurs[i1].push(VOccur::Gate(oidx));
+                } else {
+                    *occurs[i1].last_mut().unwrap() = VOccur::GateDouble(oidx);
+                }
+            }
+        }
+
+        for (i, (o, _)) in self.outputs.iter().enumerate() {
+            if *o >= self.input_len {
+                let o = usize::try_from(*o).unwrap() - input_len;
+                occurs[o].push(VOccur::Output(T::try_from(i).unwrap()));
+            }
+        }
+        occurs
+    }
+
+    // optimize gates with same occurrences signs (negative) further gates.
+    fn optimize_same_occur_signs(&mut self, occurs: &[Vec<VOccur<T>>]) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for i in 0..self.gates.len() {
+            let oi = T::try_from(i + input_len).unwrap();
+            if self.gates[i].1 != NegOutput {
+                continue;
+            }
+            // check whether same type of occurrence (negation)
+            if occurs[i].iter().all(|occur| match occur {
+                VOccur::Gate(x) => {
+                    let (go, no) = self.gates[usize::try_from(*x).unwrap()];
+                    go.i1 == oi && no == NegInput1
+                }
+                VOccur::GateDouble(x) => false,
+                VOccur::Output(x) => self.outputs[usize::try_from(*x).unwrap()].1,
+            }) {
+                // if yes then remove negations
+                self.gates[i].1 = NoNegs;
+                for occur in &occurs[i] {
+                    match occur {
+                        VOccur::Gate(x) => {
+                            self.gates[usize::try_from(*x).unwrap()].1 = NoNegs;
+                        }
+                        VOccur::GateDouble(x) => {}
+                        VOccur::Output(x) => {
+                            self.outputs[usize::try_from(*x).unwrap()].1 = false;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn optimize_negs(&mut self) {}
