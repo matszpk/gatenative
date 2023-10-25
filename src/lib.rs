@@ -927,7 +927,7 @@ where
             if occurs[i].iter().all(|occur| match occur {
                 VOccur::Gate(x) => {
                     let (go, no) = self.gates[usize::try_from(*x).unwrap()];
-                    go.i1 == oi && no == NegInput1
+                    go.i1 == oi && no == NegInput1 && go.func != VGateFunc::Xor
                 }
                 VOccur::GateDouble(x) => false,
                 VOccur::Output(x) => self.outputs[usize::try_from(*x).unwrap()].1,
