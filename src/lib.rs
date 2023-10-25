@@ -725,7 +725,7 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     }
 }
 
-impl<T> VCircuit<T>
+impl<T> VBinOpCircuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
