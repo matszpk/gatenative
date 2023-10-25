@@ -2,7 +2,7 @@ use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -727,12 +727,131 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
 
 impl<T> VBinOpCircuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
+    fn xor_subtrees(&self) -> HashMap<T, T> {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        let mut usage = vec![0u8; self.gates.len()];
+        for (g, _) in &self.gates {
+            if g.i0 >= self.input_len {
+                let i0 = usize::try_from(g.i0).unwrap() - input_len;
+                if usage[i0] < 2 {
+                    usage[i0] += 1;
+                }
+            }
+            if g.i1 >= self.input_len {
+                let i1 = usize::try_from(g.i1).unwrap() - input_len;
+                if usage[i1] < 2 {
+                    usage[i1] += 1;
+                }
+            }
+        }
+
+        #[derive(Clone, Copy)]
+        struct StackEntry<T> {
+            node: usize,
+            way: usize,
+            xor_index: Option<T>,
+        }
+        let gate_num = self.gates.len();
+        let mut visited = vec![false; gate_num];
+        let mut xor_map = HashMap::new();
+        // traverse through circuit
+        for (o, _) in self.outputs.iter() {
+            if *o < self.input_len {
+                continue;
+            }
+            let oidx = usize::try_from(*o).unwrap() - input_len;
+            let mut stack = Vec::<StackEntry<T>>::new();
+            stack.push(StackEntry {
+                node: oidx,
+                way: 0,
+                xor_index: None,
+            });
+
+            while !stack.is_empty() {
+                let top = stack.last_mut().unwrap();
+                let node_index = top.node;
+                let way = top.way;
+
+                if way == 0 {
+                    if !visited[node_index] {
+                        visited[node_index] = true;
+                    } else {
+                        stack.pop();
+                        continue;
+                    }
+
+                    top.way += 1;
+                    let gi0 = self.gates[node_index].0.i0;
+                    if gi0 >= self.input_len {
+                        let new_node_index = usize::try_from(gi0).unwrap() - input_len;
+                        // determine xor_index
+                        let xor_index = if let Some(xor_index) = top.xor_index {
+                            // propagate xor only to XOR gate with usage<2
+                            if self.gates[new_node_index].0.func == VGateFunc::Xor
+                                && usage[new_node_index] < 2
+                            {
+                                Some(xor_index)
+                            } else {
+                                None
+                            }
+                        } else if self.gates[node_index].0.func == VGateFunc::Xor {
+                            // if xor without xor_index then its node index is xor_index
+                            Some(T::try_from(node_index + input_len).unwrap())
+                        } else {
+                            None
+                        };
+                        stack.push(StackEntry {
+                            node: new_node_index,
+                            way: 0,
+                            xor_index,
+                        });
+                    }
+                } else if way == 1 {
+                    top.way += 1;
+                    let gi1 = self.gates[node_index].0.i1;
+                    if gi1 >= self.input_len {
+                        let new_node_index = usize::try_from(gi1).unwrap() - input_len;
+                        // determine xor_index
+                        let xor_index = if let Some(xor_index) = top.xor_index {
+                            // propagate xor only to XOR gate with usage<2
+                            if self.gates[new_node_index].0.func == VGateFunc::Xor
+                                && usage[new_node_index] < 2
+                            {
+                                Some(xor_index)
+                            } else {
+                                None
+                            }
+                        } else if self.gates[node_index].0.func == VGateFunc::Xor {
+                            // if xor without xor_index then its node index is xor_index
+                            Some(T::try_from(node_index + input_len).unwrap())
+                        } else {
+                            None
+                        };
+                        stack.push(StackEntry {
+                            node: usize::try_from(gi1).unwrap() - input_len,
+                            way: 0,
+                            xor_index: None,
+                        });
+                    }
+                } else {
+                    if let Some(xor_index) = top.xor_index {
+                        // add to xor_map
+                        xor_map.insert(T::try_from(node_index + input_len).unwrap(), xor_index);
+                    }
+                    stack.pop();
+                }
+            }
+        }
+        xor_map
+    }
+
     fn optimize_negs(&mut self) {}
 }
 
