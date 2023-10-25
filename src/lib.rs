@@ -1042,7 +1042,7 @@ where
                         }
                     })
                     .sum::<isize>();
-                if negs_removed >= 0 {
+                if negs_removed >= -1 {
                     // apply changes if change remove more negations than added negations.
                     self.gates[i].1 = NoNegs;
                     for (k, v) in xor_roots_changed.into_iter() {
