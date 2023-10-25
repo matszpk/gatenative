@@ -949,6 +949,8 @@ where
         }
     }
 
+    fn propagate_negs_to_xor_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {}
+
     fn optimize_negs(&mut self) {}
 }
 
