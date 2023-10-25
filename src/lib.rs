@@ -57,7 +57,7 @@ pub trait CodeWriter {
         arg2: usize,
     );
     /// Generates Store instruction into output.
-    fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
+    fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize);
 }
 
 pub struct VarAllocator {
