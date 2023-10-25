@@ -984,7 +984,7 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
-            if self.gates[i].1 != NegOutput || occurs[i].len() != 1 {
+            if self.gates[i].1 != NegOutput {
                 continue;
             }
             // check whether same type of occurrence (negation)
