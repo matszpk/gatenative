@@ -51,10 +51,10 @@ pub trait CodeWriter {
         &self,
         out: &mut Vec<u8>,
         op: InstrOp,
+        negs: VNegs,
         dst_arg: usize,
         arg1: usize,
         arg2: usize,
-        negs: VNegs,
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
