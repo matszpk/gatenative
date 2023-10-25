@@ -6,6 +6,13 @@ use std::collections::BinaryHeap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum VNegs {
+    NoNegs,
+    NegInput1, // second input in gate
+    NegOutput,
+}
+
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
 pub enum InstrOp {
@@ -14,7 +21,6 @@ pub enum InstrOp {
     Impl = 2,
     Nimpl = 3,
     Xor = 4,
-    BNot = 5,
 }
 
 pub trait CodeWriter {
@@ -47,7 +53,8 @@ pub trait CodeWriter {
         op: InstrOp,
         dst_arg: usize,
         arg1: usize,
-        arg2: Option<usize>,
+        arg2: usize,
+        negs: VNegs,
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, output: usize, reg: usize);
@@ -108,13 +115,6 @@ impl VarAllocator {
 struct VarUsage {
     index: usize,
     bnot: bool, // if single operation is boolean negation of original gate output.
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum VNegs {
-    NoNegs,
-    NegInput1, // second input in gate
-    NegOutput,
 }
 
 use VNegs::*;
