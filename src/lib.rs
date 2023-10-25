@@ -1781,5 +1781,42 @@ mod tests {
             )
             .xor_subtree_map()
         );
+        
+        assert_eq!(
+            HashMap::from_iter([(4, 6), (3, 3), (6, 6)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),    // used more than once
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(1, 2),
+                        Gate::new_xor(4, 5),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(3, false), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
+        assert_eq!(
+            HashMap::from_iter([(4, 6), (3, 3), (6, 6)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),    // used more than once
+                        Gate::new_xor(3, 2),
+                        Gate::new_nimpl(1, 2),
+                        Gate::new_xor(4, 5),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(3, false), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
     }
 }
