@@ -1781,14 +1781,14 @@ mod tests {
             )
             .xor_subtree_map()
         );
-        
+
         assert_eq!(
             HashMap::from_iter([(4, 6), (3, 3), (6, 6)]),
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
                     [
-                        Gate::new_xor(0, 1),    // used more than once
+                        Gate::new_xor(0, 1), // used more than once
                         Gate::new_xor(2, 3),
                         Gate::new_nimpl(1, 2),
                         Gate::new_xor(4, 5),
@@ -1806,13 +1806,78 @@ mod tests {
                 Circuit::new(
                     3,
                     [
-                        Gate::new_xor(0, 1),    // used more than once
+                        Gate::new_xor(0, 1), // used more than once
                         Gate::new_xor(3, 2),
                         Gate::new_nimpl(1, 2),
                         Gate::new_xor(4, 5),
                         Gate::new_nor(5, 6),
                     ],
                     [(3, false), (7, false)],
+                )
+                .unwrap()
+            )
+            .xor_subtree_map()
+        );
+
+        // bigger sample
+        assert_eq!(
+            HashMap::from_iter([
+                (13, 19),
+                (14, 19),
+                (15, 19),
+                (16, 19),
+                (17, 19),
+                (18, 19),
+                (19, 19),
+                (27, 31),
+                (28, 31),
+                (31, 31),
+                (29, 32),
+                (30, 32),
+                (32, 32),
+                (33, 36),
+                (35, 36),
+                (36, 36),
+            ]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),   // 4
+                        Gate::new_nimpl(0, 1), // 5
+                        Gate::new_nor(0, 1),   // 6
+                        Gate::new_and(0, 2),   // 7
+                        Gate::new_nimpl(0, 2), // 8
+                        Gate::new_nor(0, 2),   // 9
+                        Gate::new_and(1, 2),   // 10
+                        Gate::new_nimpl(1, 2), // 11
+                        Gate::new_nor(1, 2),   // 12
+                        Gate::new_xor(4, 5),   // 13
+                        Gate::new_xor(6, 7),   // 14
+                        Gate::new_xor(8, 9),   // 15
+                        Gate::new_xor(10, 11), // 16
+                        Gate::new_xor(13, 14), // 17
+                        Gate::new_xor(15, 16), // 18
+                        Gate::new_xor(17, 18), // 19
+                        Gate::new_and(1, 3),   // 20
+                        Gate::new_nimpl(1, 3), // 21
+                        Gate::new_nor(1, 3),   // 22
+                        Gate::new_and(2, 3),   // 23
+                        Gate::new_nimpl(2, 3), // 24
+                        Gate::new_nor(2, 3),   // 25
+                        Gate::new_nor(0, 3),   // 26
+                        Gate::new_xor(12, 20), // 27
+                        Gate::new_xor(21, 22), // 28
+                        Gate::new_xor(23, 24), // 29
+                        Gate::new_xor(25, 26), // 30
+                        Gate::new_xor(27, 28), // 31
+                        Gate::new_xor(29, 30), // 32
+                        Gate::new_xor(31, 32), // 33
+                        Gate::new_and(2, 32),  // 34
+                        Gate::new_xor(3, 34),  // 35
+                        Gate::new_xor(33, 35), // 36
+                    ],
+                    [(19, false), (31, false), (36, false)],
                 )
                 .unwrap()
             )
