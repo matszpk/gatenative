@@ -835,7 +835,7 @@ where
                             None
                         };
                         stack.push(StackEntry {
-                            node: usize::try_from(gi1).unwrap() - input_len,
+                            node: new_node_index,
                             way: 0,
                             xor_index: None,
                         });
