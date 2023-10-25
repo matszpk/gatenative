@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum VNegs {
+pub enum VNegs {
     NoNegs,
     NegInput1, // second input in gate
     NegOutput,
@@ -965,6 +965,14 @@ mod tests {
                     "func:{:?} negs:{:?}: trans:{:?} tnegs:{:?}",
                     func, negs, trans, tnegs,
                 );
+                assert!(
+                    matches!(trans.func, VGateFunc::And | VGateFunc::Or | VGateFunc::Xor),
+                    "func:{:?} negs:{:?}: trans:{:?} tnegs:{:?}",
+                    func,
+                    negs,
+                    trans,
+                    tnegs,
+                );
             }
         }
     }
@@ -990,6 +998,16 @@ mod tests {
                         exp_value, res_value,
                         "func:{:?} negs:{:?} ni0:{} ni1:{}: trans:{:?} tnegs:{:?}",
                         func, negs, neg_i0, neg_i1, trans, tnegs,
+                    );
+                    assert!(
+                        matches!(trans.func, VGateFunc::And | VGateFunc::Or | VGateFunc::Xor),
+                        "func:{:?} negs:{:?} ni0:{} ni1:{}: trans:{:?} tnegs:{:?}",
+                        func,
+                        negs,
+                        neg_i0,
+                        neg_i1,
+                        trans,
+                        tnegs,
                     );
                 }
             }
