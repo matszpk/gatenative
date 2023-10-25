@@ -988,14 +988,52 @@ where
                 continue;
             }
             // check whether same type of occurrence (negation)
-            if let VOccur::Gate(x) = occurs[i].first().unwrap() {
-                if let Some(root_xor) = xor_map.get(&x) {
-                    self.gates[usize::try_from(*x).unwrap() - input_len].1 = NoNegs;
-                    let root_xor = usize::try_from(*root_xor).unwrap() - input_len;
-                    self.gates[root_xor].1 = match self.gates[root_xor].1 {
-                        NoNegs => NegOutput,
-                        NegInput1 => NoNegs,
-                        NegOutput => NoNegs,
+            let mut other_occur = false;
+            let mut xor_roots_changed = HashMap::<T, bool>::new();
+            for occur in &occurs[i] {
+                if let VOccur::Gate(x) = occurs[i].first().unwrap() {
+                    if let Some(root_xor) = xor_map.get(&x) {
+                        if let Some(change) = xor_roots_changed.get_mut(&root_xor) {
+                            *change = !*change;
+                        } else {
+                            xor_roots_changed.insert(*root_xor, true);
+                        }
+                    } else {
+                        other_occur = true;
+                        break;
+                    }
+                } else {
+                    other_occur = true;
+                    break;
+                }
+            }
+            if !other_occur {
+                let negs_removed = xor_roots_changed
+                    .iter()
+                    .map(|(k, v)| {
+                        let root_negs = self.gates[usize::try_from(*k).unwrap() - input_len].1;
+                        let root_xor_neg = root_negs != NoNegs;
+                        if *v {
+                            if root_xor_neg {
+                                1
+                            } else {
+                                -1
+                            }
+                        } else {
+                            0
+                        }
+                    })
+                    .sum::<isize>();
+                if negs_removed >= 0 {
+                    // apply changes if change remove more negations than added negations.
+                    self.gates[i].1 = NoNegs;
+                    for (k, v) in xor_roots_changed.into_iter() {
+                        let root_negs = &mut self.gates[usize::try_from(k).unwrap() - input_len].1;
+                        *root_negs = match *root_negs {
+                            NoNegs => NegOutput,
+                            NegInput1 => NoNegs,
+                            NegOutput => NoNegs,
+                        };
                     }
                 }
             }
