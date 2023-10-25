@@ -942,15 +942,9 @@ where
                         VOccur::Gate(x) => {
                             self.gates[usize::try_from(*x).unwrap() - input_len].1 = NoNegs;
                         }
-                        VOccur::GateDouble(x) => {
-                            let xi = usize::try_from(*x).unwrap() - input_len;
-                            let g = self.gates[xi].0;
-                            self.gates[xi].0 = VGate {
-                                i0: g.i1,
-                                i1: g.i0,
-                                func: g.func,
-                            };
-                        }
+                        // for GateDouble with NegInput1: double negation doesn't change
+                        // value because gate have source connected to two inputs.
+                        VOccur::GateDouble(x) => {}
                         VOccur::Output(x) => {
                             self.outputs[usize::try_from(*x).unwrap()].1 = false;
                         }
