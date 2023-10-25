@@ -917,6 +917,7 @@ where
     // optimize gates with same occurrences signs (negative) further gates.
     fn optimize_same_occur_signs(&mut self, occurs: &[Vec<VOccur<T>>]) {
         let input_len = usize::try_from(self.input_len).unwrap();
+        // TODO: extend to double negation in occurrence. neg_i0=true, neg_i1=true
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
             if self.gates[i].1 != NegOutput {
