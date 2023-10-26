@@ -914,78 +914,7 @@ where
         occurs
     }
 
-    // optimize gates with same occurrences signs (negative) further gates.
-    // reduce negations only if no addition of negations while modifications.
-    fn optimize_same_occur_signs(&mut self, occurs: &[Vec<VOccur<T>>]) {
-        let input_len = usize::try_from(self.input_len).unwrap();
-        for i in 0..self.gates.len() {
-            let oi = T::try_from(i + input_len).unwrap();
-            if self.gates[i].1 != NegOutput {
-                continue;
-            }
-            // check whether same type of occurrence (negation)
-            if occurs[i].iter().all(|occur| match occur {
-                VOccur::Gate(x) => {
-                    let (go, no) = self.gates[usize::try_from(*x).unwrap() - input_len];
-                    go.i1 == oi && no == NegInput1 && go.func != VGateFunc::Xor
-                }
-                VOccur::GateDouble(x) => {
-                    let (go, no) = self.gates[usize::try_from(*x).unwrap() - input_len];
-                    no == NegInput1 && go.func != VGateFunc::Xor
-                }
-                VOccur::Output(x) => self.outputs[usize::try_from(*x).unwrap()].1,
-            }) {
-                // if yes then remove negations
-                self.gates[i].1 = NoNegs;
-                for occur in &occurs[i] {
-                    match occur {
-                        VOccur::Gate(x) => {
-                            self.gates[usize::try_from(*x).unwrap() - input_len].1 = NoNegs;
-                        }
-                        // for GateDouble with NegInput1: double negation doesn't change
-                        // value because gate have source connected to two inputs.
-                        VOccur::GateDouble(_) => {}
-                        VOccur::Output(x) => {
-                            self.outputs[usize::try_from(*x).unwrap()].1 = false;
-                        }
-                    }
-                }
-            }
-        }
-        for i in 0..self.gates.len() {
-            let oi = T::try_from(i + input_len).unwrap();
-            if self.gates[i].1 != NegOutput || self.gates[i].0.func != VGateFunc::Xor {
-                continue;
-            }
-            let gi0 = self.gates[i].0.i0;
-            let gi1 = self.gates[i].0.i1;
-            if gi0 >= self.input_len && gi1 >= self.input_len {
-                let goi0 = usize::try_from(gi0).unwrap() - input_len;
-                let goi1 = usize::try_from(gi1).unwrap() - input_len;
-                if ((occurs[goi0].len() == 1 && occurs[goi1].len() == 1)
-                    || (goi0 == goi1 && occurs[goi0].len() == 2))
-                    && self.gates[goi0].1 == NegOutput
-                    && self.gates[goi1].1 == NegOutput
-                {
-                    // remove negations from occurrence sources
-                    self.gates[goi0].1 = NoNegs;
-                    self.gates[goi1].1 = NoNegs;
-                    // remove negation from target (this gate)
-                    self.gates[i].1 = NoNegs;
-                    // change gate: not(and(not,not)) = or, not(or(not,not)) = and
-                    self.gates[i].0.func = match self.gates[i].0.func {
-                        VGateFunc::And => VGateFunc::Or,
-                        VGateFunc::Or => VGateFunc::And,
-                        _ => {
-                            panic!("Unexpected gate func");
-                        }
-                    };
-                }
-            }
-        }
-    }
-
-    fn propagate_negs_to_xor_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
+    fn propagate_negs_to_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
         #[derive(Clone, Copy, PartialEq, Eq, Hash)]
         enum HashKey<T> {
             Gate(T),
@@ -999,69 +928,79 @@ where
             }
             // check whether same type of occurrence (negation)
             let mut other_occur = false;
-            let mut xor_roots_changed = HashMap::<HashKey<T>, bool>::new();
+            let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
             for occur in &occurs[i] {
-                let (x_key, dchange) = match occurs[i].first().unwrap() {
-                    VOccur::Gate(x) => (xor_map.get(x).map(|x| HashKey::Gate(*x)), false),
-                    VOccur::GateDouble(x) => (xor_map.get(x).map(|x| HashKey::Gate(*x)), true),
-                    VOccur::Output(x) => (Some(HashKey::Output(*x)), false),
-                };
-                if let Some(root_xor) = x_key {
-                    if let Some(change) = xor_roots_changed.get_mut(&root_xor) {
-                        if !dchange {
-                            *change = !*change;
+                let (x_key, neg_i0, neg_i1) = match occurs[i].first().unwrap() {
+                    VOccur::Gate(x) => {
+                        if let Some(xx) = xor_map.get(x) {
+                            (HashKey::Gate(*xx), true, false)
+                        } else {
+                            let xs = usize::try_from(*x).unwrap() - input_len;
+                            if self.gates[xs].0.i0 == oi {
+                                (HashKey::Gate(*x), true, false)
+                            } else {
+                                (HashKey::Gate(*x), false, true)
+                            }
                         }
-                    } else {
-                        xor_roots_changed.insert(root_xor, !dchange);
                     }
+                    VOccur::GateDouble(x) => {
+                        if let Some(xx) = xor_map.get(x) {
+                            (HashKey::Gate(*xx), true, true)
+                        } else {
+                            (HashKey::Gate(*x), true, true)
+                        }
+                    }
+                    VOccur::Output(x) => (HashKey::Output(*x), true, false),
+                };
+
+                if let Some((occur_n0, occur_n1)) = occurs_changed.get_mut(&x_key) {
+                    *occur_n0 ^= neg_i0;
+                    *occur_n1 ^= neg_i1;
                 } else {
-                    other_occur = true;
-                    break;
+                    occurs_changed.insert(x_key, (neg_i0, neg_i1));
                 }
             }
             if !other_occur {
-                let negs_removed = xor_roots_changed
+                let negs_removed = occurs_changed
                     .iter()
-                    .map(|(k, v)| {
-                        let root_xor_neg = match k {
+                    .map(|(k, (neg_i0, neg_i1))| {
+                        // return number of removed negations in occurrence gate.
+                        match k {
                             HashKey::Gate(x) => {
-                                let root_negs =
-                                    self.gates[usize::try_from(*x).unwrap() - input_len].1;
-                                root_negs != NoNegs
+                                let (occur_g, occur_negs) =
+                                    &self.gates[usize::try_from(*x).unwrap() - input_len];
+                                let (_, new_negs) =
+                                    occur_g.binop_neg_args(*occur_negs, *neg_i0, *neg_i1);
+                                isize::from(*occur_negs != NoNegs) - isize::from(new_negs != NoNegs)
                             }
-                            HashKey::Output(x) => self.outputs[usize::try_from(*x).unwrap()].1,
-                        };
-                        if *v {
-                            if root_xor_neg {
-                                1
-                            } else {
-                                -1
+                            HashKey::Output(x) => {
+                                if *neg_i0 {
+                                    let on = self.outputs[usize::try_from(*x).unwrap()].1;
+                                    // on=false -> -1, on=true -> 1
+                                    (isize::from(on) << 1) - 1
+                                } else {
+                                    0
+                                }
                             }
-                        } else {
-                            0
                         }
                     })
                     .sum::<isize>();
                 if negs_removed >= -1 {
                     // apply changes if change remove more negations than added negations.
                     self.gates[i].1 = NoNegs;
-                    for (k, v) in xor_roots_changed.into_iter() {
-                        if !v {
-                            continue;
-                        }
+                    for (k, (neg_i0, neg_i1)) in occurs_changed.into_iter() {
                         match k {
-                            HashKey::Gate(k) => {
-                                let root_negs =
-                                    &mut self.gates[usize::try_from(k).unwrap() - input_len].1;
-                                *root_negs = match *root_negs {
-                                    NoNegs => NegOutput,
-                                    NegInput1 => NoNegs,
-                                    NegOutput => NoNegs,
-                                };
+                            HashKey::Gate(x) => {
+                                let (occur_g, occur_negs) =
+                                    &self.gates[usize::try_from(x).unwrap() - input_len];
+                                self.gates[usize::try_from(x).unwrap() - input_len] =
+                                    occur_g.binop_neg_args(*occur_negs, neg_i0, neg_i1);
                             }
                             HashKey::Output(x) => {
-                                let out_negs = &mut self.outputs[usize::try_from(x).unwrap()].1;
-                                *out_negs = !*out_negs;
+                                if neg_i0 {
+                                    let out_negs = &mut self.outputs[usize::try_from(x).unwrap()].1;
+                                    *out_negs = !*out_negs;
+                                }
                             }
                         }
                     }
