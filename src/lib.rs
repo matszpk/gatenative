@@ -998,7 +998,7 @@ where
             } else {
                 2 // must reduce negation
             };
-            if negs_removed >= -1 {
+            if negs_removed >= min_removed {
                 // apply changes if change remove more negations than added negations.
                 self.gates[i].1 = if g_negs == NegOutput {
                     NoNegs
