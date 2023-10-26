@@ -2151,5 +2151,34 @@ mod tests {
             },
             circuit
         );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NegOutput),
+                (vgate_or(1, 2), NegOutput),
+                (vgate_or(3, 4), NegOutput),
+                (vgate_xor(0, 1), NoNegs),
+                (vgate_xor(2, 6), NegOutput),
+            ],
+            outputs: vec![(5, false), (7, true)],
+        };
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(1, 2), NoNegs),
+                    (vgate_and(3, 4), NoNegs),
+                    (vgate_xor(0, 1), NoNegs),
+                    (vgate_xor(2, 6), NoNegs),
+                ],
+                outputs: vec![(5, false), (7, false)],
+            },
+            circuit
+        );
     }
 }
