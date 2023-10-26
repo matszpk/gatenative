@@ -1010,7 +1010,6 @@ where
             };
             if negs_removed >= -1 {
                 // apply changes if change remove more negations than added negations.
-
                 self.gates[di].1 = if g_negs == NegOutput {
                     NoNegs
                 } else {
