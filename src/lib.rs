@@ -915,11 +915,12 @@ where
     }
 
     fn optimize_negs_to_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
-        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
         enum HashKey<T> {
             Gate(T),
             Output(T),
         }
+        println!("Start optnegs");
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
@@ -935,6 +936,7 @@ where
             if g_negs == NegInput1 {
                 continue;
             }
+            println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
             // check whether same type of occurrence (negation)
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
             for occur in &occurs[i] {
@@ -968,6 +970,7 @@ where
                     occurs_changed.insert(x_key, (neg_i0, neg_i1));
                 }
             }
+            println!("  OccursChanged: {:?}: {:?}", oi, occurs_changed);
             // calculate balance of removed negations
             let negs_removed = occurs_changed
                 .iter()
@@ -998,6 +1001,7 @@ where
             } else {
                 2 // must reduce negation
             };
+            println!("  NegsRemoved: {:?}: {}", oi, negs_removed);
             if negs_removed >= min_removed {
                 // apply changes if change remove more negations than added negations.
                 self.gates[i].1 = if g_negs == NegOutput {
@@ -2084,8 +2088,39 @@ mod tests {
             .occurrences()
         );
     }
-    
+
     #[test]
     fn test_vbinopcircuit_optimize_negs_to_occurs() {
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                3,
+                [
+                    Gate::new_nimpl(0, 1),
+                    Gate::new_xor(2, 3),
+                    Gate::new_nimpl(2, 3),
+                    Gate::new_and(0, 1),
+                    Gate::new_nor(5, 6),
+                ],
+                [(4, true), (7, false)],
+            )
+            .unwrap(),
+        );
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_xor(2, 3), NoNegs),
+                    (vgate_and(2, 3), NegInput1),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(5, 6), NoNegs),
+                ],
+                outputs: vec![(4, true), (7, true)],
+            },
+            circuit
+        );
     }
 }
