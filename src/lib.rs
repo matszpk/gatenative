@@ -923,9 +923,13 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
-            // destination gate
-            if xor_map.contains_key(&oi) {
-                continue;
+            if let Some(doi) = xor_map.get(&oi) {
+                if doi != oi {
+                    // if gate is part of xor subtree and not root.
+                    // because that gate must have one occurrence to xor root
+                    // therefore negation reduction is useless.
+                    continue;
+                }
             };
             let g_negs = self.gates[i].1;
             if g_negs == NegInput1 {
