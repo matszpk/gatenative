@@ -940,7 +940,7 @@ where
             // check whether same type of occurrence (negation)
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
             for occur in &occurs[i] {
-                let (x_key, neg_i0, neg_i1) = match occurs[i].first().unwrap() {
+                let (x_key, neg_i0, neg_i1) = match occur {
                     VOccur::Gate(x) => {
                         if let Some(xx) = xor_map.get(x) {
                             (HashKey::Gate(*xx), true, false)
@@ -1012,10 +1012,11 @@ where
                 for (k, (neg_i0, neg_i1)) in occurs_changed.into_iter() {
                     match k {
                         HashKey::Gate(x) => {
-                            let (occur_g, occur_negs) =
-                                &self.gates[usize::try_from(x).unwrap() - input_len];
-                            self.gates[usize::try_from(x).unwrap() - input_len] =
-                                occur_g.binop_neg_args(*occur_negs, neg_i0, neg_i1);
+                            let xi = usize::try_from(x).unwrap() - input_len;
+                            let (occur_g, occur_negs) = self.gates[xi];
+                            self.gates[xi] = occur_g.binop_neg_args(occur_negs, neg_i0, neg_i1);
+                            // println!("    Change: {:?}: {:?}: {:?} -> {:?}",
+                            //          oi, x, (occur_g, occur_negs), self.gates[xi]);
                         }
                         HashKey::Output(x) => {
                             if neg_i0 {
@@ -2182,11 +2183,12 @@ mod tests {
             circuit
         );
 
+        // reduce by adding negation
         let mut circuit = VBinOpCircuit {
             input_len: 3,
             gates: vec![
-                (vgate_and(0, 1), NoNegs),
-                (vgate_or(1, 2), NoNegs),
+                (vgate_and(0, 1), NoNegs),  // forced reduction
+                (vgate_or(1, 2), NoNegs),   // forced reduction
                 (vgate_and(3, 4), NegOutput),
                 (vgate_or(3, 4), NegOutput),
                 (vgate_xor(0, 3), NegOutput),
@@ -2204,17 +2206,17 @@ mod tests {
             VBinOpCircuit {
                 input_len: 3,
                 gates: vec![
-                    (vgate_and(0, 1), NoNegs),
-                    (vgate_or(1, 2), NoNegs),
-                    (vgate_and(3, 4), NoNegs),
+                    (vgate_and(0, 1), NegOutput),
+                    (vgate_or(1, 2), NegOutput),
                     (vgate_or(3, 4), NoNegs),
+                    (vgate_and(3, 4), NoNegs),
                     (vgate_xor(0, 3), NoNegs),
                     (vgate_xor(1, 3), NoNegs),
-                    (vgate_and(6, 5), NoNegs),
-                    (vgate_and(9, 7), NoNegs),
-                    (vgate_and(10, 8), NoNegs),
+                    (vgate_or(5, 6), NoNegs),
+                    (vgate_or(7, 9), NoNegs),
+                    (vgate_or(8, 10), NoNegs),
                 ],
-                outputs: vec![(11, true)],
+                outputs: vec![(11, false)],
             },
             circuit
         );
