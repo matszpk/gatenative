@@ -934,10 +934,6 @@ where
             };
             let g_negs = self.gates[i].1;
             assert!(g_negs != NegInput1 || self.gates[i].0.func != VGateFunc::Xor);
-            // if g_negs == NegInput1 {
-            //     // TODO: handle some cases with NegInput1 (and,or).
-            //     continue;
-            // }
             println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
             // check whether same type of occurrence (negation)
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
