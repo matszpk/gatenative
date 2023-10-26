@@ -2327,5 +2327,51 @@ mod tests {
             },
             circuit
         );
+
+        // omit negation if too many negation added except gate 4
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NegOutput), // too many negations added
+                (vgate_or(1, 2), NegOutput),  // it reduces one negation
+                (vgate_or(1, 3), NoNegs),
+                (vgate_and(2, 3), NoNegs),
+                (vgate_and(1, 4), NoNegs),
+                (vgate_or(2, 4), NoNegs),
+            ],
+            outputs: vec![
+                (4, true),
+                (4, true),
+                (5, false),
+                (6, false),
+                (7, false),
+                (8, false),
+            ],
+        };
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegOutput), // too many negations added
+                    (vgate_or(1, 2), NoNegs),     // too many negations added
+                    (vgate_or(1, 3), NoNegs),
+                    (vgate_and(2, 3), NoNegs),
+                    (vgate_and(1, 4), NegInput1),
+                    (vgate_or(2, 4), NegInput1),
+                ],
+                outputs: vec![
+                    (4, false),
+                    (4, false),
+                    (5, false),
+                    (6, false),
+                    (7, false),
+                    (8, false)
+                ],
+            },
+            circuit
+        );
     }
 }
