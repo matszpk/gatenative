@@ -933,9 +933,11 @@ where
                 }
             };
             let g_negs = self.gates[i].1;
-            if g_negs == NegInput1 {
-                continue;
-            }
+            assert!(g_negs != NegInput1 || self.gates[i].0.func != VGateFunc::Xor);
+            // if g_negs == NegInput1 {
+            //     // TODO: handle some cases with NegInput1 (and,or).
+            //     continue;
+            // }
             println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
             // check whether same type of occurrence (negation)
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
@@ -996,19 +998,15 @@ where
                     }
                 })
                 .sum::<isize>();
-            let min_removed = if g_negs == NegOutput {
-                -1 // can just propagate negation to further gates
-            } else {
-                2 // must reduce negation
+            let min_removed = match g_negs {
+                NoNegs => 2,
+                NegInput1 => 1,
+                NegOutput => -1,
             };
             println!("  NegsRemoved: {:?}: {}", oi, negs_removed);
             if negs_removed >= min_removed {
                 // apply changes if change remove more negations than added negations.
-                self.gates[i].1 = if g_negs == NegOutput {
-                    NoNegs
-                } else {
-                    NegOutput
-                };
+                self.gates[i] = self.gates[i].0.binop_neg(self.gates[i].1);
                 for (k, (neg_i0, neg_i1)) in occurs_changed.into_iter() {
                     match k {
                         HashKey::Gate(x) => {
@@ -2124,6 +2122,7 @@ mod tests {
             circuit
         );
 
+        // NegInput1 negation
         let mut circuit = VBinOpCircuit {
             input_len: 3,
             gates: vec![
@@ -2142,13 +2141,42 @@ mod tests {
             VBinOpCircuit {
                 input_len: 3,
                 gates: vec![
-                    (vgate_and(0, 1), NegInput1),
+                    (vgate_or(1, 0), NegInput1), // force reduction
                     (vgate_xor(2, 3), NoNegs),
-                    (vgate_and(2, 3), NegInput1),
+                    (vgate_and(2, 3), NoNegs),
                     (vgate_and(0, 1), NoNegs),
                     (vgate_or(5, 6), NoNegs),
                 ],
-                outputs: vec![(4, false), (7, false)],
+                outputs: vec![(4, true), (7, false)],
+            },
+            circuit
+        );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),
+                (vgate_xor(2, 3), NegOutput),
+                (vgate_and(2, 3), NegInput1),
+                (vgate_and(0, 1), NoNegs),
+                (vgate_or(5, 6), NegOutput),
+            ],
+            outputs: vec![(4, true), (7, true)],
+        };
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegOutput),   // force reduction
+                    (vgate_xor(2, 3), NoNegs),
+                    (vgate_and(2, 3), NoNegs),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(5, 6), NoNegs),
+                ],
+                outputs: vec![(4, true), (7, false)],
             },
             circuit
         );
