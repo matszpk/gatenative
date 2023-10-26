@@ -2042,5 +2042,30 @@ mod tests {
             )
             .occurrences()
         );
+
+        assert_eq!(
+            vec![
+                vec![VOccur::Gate(4), VOccur::Gate(5)],
+                vec![VOccur::GateDouble(6), VOccur::Output(0)],
+                vec![VOccur::Gate(7)],
+                vec![VOccur::Gate(7)],
+                vec![VOccur::Output(1)],
+            ],
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(4, 4),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .occurrences()
+        );
     }
 }
