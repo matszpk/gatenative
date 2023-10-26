@@ -924,12 +924,10 @@ where
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
             // destination gate
-            let (doi, di) = if let Some(xor_i) = xor_map.get(&oi) {
-                (*xor_i, usize::try_from(*xor_i).unwrap() - input_len)
-            } else {
-                (T::try_from(i + input_len).unwrap(), i)
+            if xor_map.contains_key(&oi) {
+                continue;
             };
-            let g_negs = self.gates[di].1;
+            let g_negs = self.gates[i].1;
             if g_negs == NegInput1 {
                 continue;
             }
@@ -939,13 +937,7 @@ where
                 let (x_key, neg_i0, neg_i1) = match occurs[i].first().unwrap() {
                     VOccur::Gate(x) => {
                         if let Some(xx) = xor_map.get(x) {
-                            if doi == *xx && di != i {
-                                // if destination Xor gate and root of occurrence are same
-                                // then do not apply change
-                                (HashKey::Gate(*xx), false, false)
-                            } else {
-                                (HashKey::Gate(*xx), true, false)
-                            }
+                            (HashKey::Gate(*xx), true, false)
                         } else {
                             let xs = usize::try_from(*x).unwrap() - input_len;
                             if self.gates[xs].0.i0 == oi {
@@ -957,13 +949,7 @@ where
                     }
                     VOccur::GateDouble(x) => {
                         if let Some(xx) = xor_map.get(x) {
-                            if doi == *xx && di != i {
-                                // if destination Xor gate and root of occurrence are same
-                                // then do not apply change
-                                (HashKey::Gate(*xx), false, false)
-                            } else {
-                                (HashKey::Gate(*xx), true, true)
-                            }
+                            (HashKey::Gate(*xx), true, true)
                         } else {
                             (HashKey::Gate(*x), true, true)
                         }
@@ -1010,7 +996,7 @@ where
             };
             if negs_removed >= -1 {
                 // apply changes if change remove more negations than added negations.
-                self.gates[di].1 = if g_negs == NegOutput {
+                self.gates[i].1 = if g_negs == NegOutput {
                     NoNegs
                 } else {
                     NegOutput
