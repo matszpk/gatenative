@@ -725,7 +725,7 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum VOccur<T: Clone + Copy> {
     Gate(T),
     GateDouble(T),
@@ -2013,6 +2013,34 @@ mod tests {
                 .unwrap()
             )
             .xor_subtree_map()
+        );
+    }
+
+    #[test]
+    fn test_vbinopcircuit_occurrences() {
+        assert_eq!(
+            vec![
+                vec![VOccur::Gate(4), VOccur::Gate(5)],
+                vec![VOccur::Output(0)],
+                vec![VOccur::Gate(7)],
+                vec![VOccur::Gate(7)],
+                vec![VOccur::Output(1)],
+            ],
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .occurrences()
         );
     }
 }
