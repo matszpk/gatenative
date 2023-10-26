@@ -924,7 +924,7 @@ where
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
             if let Some(doi) = xor_map.get(&oi) {
-                if doi != oi {
+                if *doi != oi {
                     // if gate is part of xor subtree and not root.
                     // because that gate must have one occurrence to xor root
                     // therefore negation reduction is useless.
@@ -2083,5 +2083,9 @@ mod tests {
             )
             .occurrences()
         );
+    }
+    
+    #[test]
+    fn test_vbinopcircuit_optimize_negs_to_occurs() {
     }
 }
