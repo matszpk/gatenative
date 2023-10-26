@@ -914,7 +914,7 @@ where
         occurs
     }
 
-    fn propagate_negs_to_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
+    fn optimize_negs_to_occurs(&mut self, occurs: &[Vec<VOccur<T>>], xor_map: HashMap<T, T>) {
         #[derive(Clone, Copy, PartialEq, Eq, Hash)]
         enum HashKey<T> {
             Gate(T),
@@ -923,17 +923,29 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
-            if self.gates[i].1 != NegOutput {
+            // destination gate
+            let (doi, di) = if let Some(xor_i) = xor_map.get(&oi) {
+                (*xor_i, usize::try_from(*xor_i).unwrap() - input_len)
+            } else {
+                (T::try_from(i + input_len).unwrap(), i)
+            };
+            let g_negs = self.gates[di].1;
+            if g_negs == NegInput1 {
                 continue;
             }
             // check whether same type of occurrence (negation)
-            let mut other_occur = false;
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
             for occur in &occurs[i] {
                 let (x_key, neg_i0, neg_i1) = match occurs[i].first().unwrap() {
                     VOccur::Gate(x) => {
                         if let Some(xx) = xor_map.get(x) {
-                            (HashKey::Gate(*xx), true, false)
+                            if doi == *xx && di != i {
+                                // if destination Xor gate and root of occurrence are same
+                                // then do not apply change
+                                (HashKey::Gate(*xx), false, false)
+                            } else {
+                                (HashKey::Gate(*xx), true, false)
+                            }
                         } else {
                             let xs = usize::try_from(*x).unwrap() - input_len;
                             if self.gates[xs].0.i0 == oi {
@@ -945,7 +957,13 @@ where
                     }
                     VOccur::GateDouble(x) => {
                         if let Some(xx) = xor_map.get(x) {
-                            (HashKey::Gate(*xx), true, true)
+                            if doi == *xx && di != i {
+                                // if destination Xor gate and root of occurrence are same
+                                // then do not apply change
+                                (HashKey::Gate(*xx), false, false)
+                            } else {
+                                (HashKey::Gate(*xx), true, true)
+                            }
                         } else {
                             (HashKey::Gate(*x), true, true)
                         }
@@ -960,47 +978,56 @@ where
                     occurs_changed.insert(x_key, (neg_i0, neg_i1));
                 }
             }
-            if !other_occur {
-                let negs_removed = occurs_changed
-                    .iter()
-                    .map(|(k, (neg_i0, neg_i1))| {
-                        // return number of removed negations in occurrence gate.
-                        match k {
-                            HashKey::Gate(x) => {
-                                let (occur_g, occur_negs) =
-                                    &self.gates[usize::try_from(*x).unwrap() - input_len];
-                                let (_, new_negs) =
-                                    occur_g.binop_neg_args(*occur_negs, *neg_i0, *neg_i1);
-                                isize::from(*occur_negs != NoNegs) - isize::from(new_negs != NoNegs)
-                            }
-                            HashKey::Output(x) => {
-                                if *neg_i0 {
-                                    let on = self.outputs[usize::try_from(*x).unwrap()].1;
-                                    // on=false -> -1, on=true -> 1
-                                    (isize::from(on) << 1) - 1
-                                } else {
-                                    0
-                                }
+            // calculate balance of removed negations
+            let negs_removed = occurs_changed
+                .iter()
+                .map(|(k, (neg_i0, neg_i1))| {
+                    // return number of removed negations in occurrence gate.
+                    match k {
+                        HashKey::Gate(x) => {
+                            let (occur_g, occur_negs) =
+                                &self.gates[usize::try_from(*x).unwrap() - input_len];
+                            let (_, new_negs) =
+                                occur_g.binop_neg_args(*occur_negs, *neg_i0, *neg_i1);
+                            isize::from(*occur_negs != NoNegs) - isize::from(new_negs != NoNegs)
+                        }
+                        HashKey::Output(x) => {
+                            if *neg_i0 {
+                                let on = self.outputs[usize::try_from(*x).unwrap()].1;
+                                // on=false -> -1, on=true -> 1
+                                (isize::from(on) << 1) - 1
+                            } else {
+                                0
                             }
                         }
-                    })
-                    .sum::<isize>();
-                if negs_removed >= -1 {
-                    // apply changes if change remove more negations than added negations.
-                    self.gates[i].1 = NoNegs;
-                    for (k, (neg_i0, neg_i1)) in occurs_changed.into_iter() {
-                        match k {
-                            HashKey::Gate(x) => {
-                                let (occur_g, occur_negs) =
-                                    &self.gates[usize::try_from(x).unwrap() - input_len];
-                                self.gates[usize::try_from(x).unwrap() - input_len] =
-                                    occur_g.binop_neg_args(*occur_negs, neg_i0, neg_i1);
-                            }
-                            HashKey::Output(x) => {
-                                if neg_i0 {
-                                    let out_negs = &mut self.outputs[usize::try_from(x).unwrap()].1;
-                                    *out_negs = !*out_negs;
-                                }
+                    }
+                })
+                .sum::<isize>();
+            let min_removed = if g_negs == NegOutput {
+                -1 // can just propagate negation to further gates
+            } else {
+                2 // must reduce negation
+            };
+            if negs_removed >= -1 {
+                // apply changes if change remove more negations than added negations.
+
+                self.gates[di].1 = if g_negs == NegOutput {
+                    NoNegs
+                } else {
+                    NegOutput
+                };
+                for (k, (neg_i0, neg_i1)) in occurs_changed.into_iter() {
+                    match k {
+                        HashKey::Gate(x) => {
+                            let (occur_g, occur_negs) =
+                                &self.gates[usize::try_from(x).unwrap() - input_len];
+                            self.gates[usize::try_from(x).unwrap() - input_len] =
+                                occur_g.binop_neg_args(*occur_negs, neg_i0, neg_i1);
+                        }
+                        HashKey::Output(x) => {
+                            if neg_i0 {
+                                let out_negs = &mut self.outputs[usize::try_from(x).unwrap()].1;
+                                *out_negs = !*out_negs;
                             }
                         }
                     }
