@@ -2275,5 +2275,33 @@ mod tests {
                 circuit
             );
         }
+
+        // optimize not(or(not,not)) -> and(..,..)
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NegOutput),
+                (vgate_or(3, 3), NegOutput), // double usage
+                (vgate_xor(0, 1), NoNegs),
+                (vgate_xor(2, 5), NegOutput),
+            ],
+            outputs: vec![(4, false), (6, true)],
+        };
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_and(3, 3), NoNegs),
+                    (vgate_xor(0, 1), NoNegs),
+                    (vgate_xor(2, 5), NoNegs),
+                ],
+                outputs: vec![(4, false), (6, false)],
+            },
+            circuit
+        );
     }
 }
