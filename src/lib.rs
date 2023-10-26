@@ -2187,8 +2187,8 @@ mod tests {
         let mut circuit = VBinOpCircuit {
             input_len: 3,
             gates: vec![
-                (vgate_and(0, 1), NoNegs),  // forced reduction
-                (vgate_or(1, 2), NoNegs),   // forced reduction
+                (vgate_and(0, 1), NoNegs), // forced reduction
+                (vgate_or(1, 2), NoNegs),  // forced reduction
                 (vgate_and(3, 4), NegOutput),
                 (vgate_or(3, 4), NegOutput),
                 (vgate_xor(0, 3), NegOutput),
@@ -2220,5 +2220,24 @@ mod tests {
             },
             circuit
         );
+
+        // omit negation if too many negation added
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NegOutput), // too many negations added
+                (vgate_or(1, 2), NegOutput),  // too many negations added
+                (vgate_or(1, 3), NoNegs),
+                (vgate_and(2, 3), NoNegs),
+                (vgate_and(1, 4), NoNegs),
+                (vgate_or(2, 4), NoNegs),
+            ],
+            outputs: vec![(5, false), (6, false), (7, false), (8, false)],
+        };
+        let orig_circuit = circuit.clone();
+        let xor_map = circuit.xor_subtree_map();
+        let occurs = circuit.occurrences();
+        circuit.optimize_negs_to_occurs(&occurs, xor_map);
+        assert_eq!(orig_circuit, circuit);
     }
 }
