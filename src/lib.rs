@@ -2239,5 +2239,41 @@ mod tests {
         let occurs = circuit.occurrences();
         circuit.optimize_negs_to_occurs(&occurs, xor_map);
         assert_eq!(orig_circuit, circuit);
+
+        // handling XOR subtrees
+        for t in [false, true] {
+            let mut circuit = VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegOutput),
+                    (vgate_or(0, 2), NegOutput),
+                    (vgate_and(0, 2), if t { NegOutput } else { NoNegs }),
+                    (vgate_or(1, 2), NegOutput),
+                    (vgate_xor(3, 4), NoNegs),
+                    (vgate_xor(5, 6), NoNegs),
+                    (vgate_xor(7, 8), NoNegs),
+                ],
+                outputs: vec![(9, true)],
+            };
+            let xor_map = circuit.xor_subtree_map();
+            let occurs = circuit.occurrences();
+            circuit.optimize_negs_to_occurs(&occurs, xor_map);
+            assert_eq!(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        (vgate_and(0, 1), NoNegs),
+                        (vgate_or(0, 2), NoNegs),
+                        (vgate_and(0, 2), NoNegs),
+                        (vgate_or(1, 2), NoNegs),
+                        (vgate_xor(3, 4), NoNegs),
+                        (vgate_xor(5, 6), NoNegs),
+                        (vgate_xor(7, 8), NoNegs),
+                    ],
+                    outputs: vec![(9, t)],
+                },
+                circuit
+            );
+        }
     }
 }
