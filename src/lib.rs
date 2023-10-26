@@ -2166,7 +2166,7 @@ mod tests {
             VBinOpCircuit {
                 input_len: 3,
                 gates: vec![
-                    (vgate_and(0, 1), NegOutput),   // force reduction
+                    (vgate_and(0, 1), NegOutput), // force reduction
                     (vgate_xor(2, 3), NoNegs),
                     (vgate_and(2, 3), NoNegs),
                     (vgate_and(0, 1), NoNegs),
