@@ -932,6 +932,7 @@ where
                     continue;
                 }
             };
+
             let g_negs = self.gates[i].1;
             assert!(g_negs != NegInput1 || self.gates[i].0.func != VGateFunc::Xor);
             println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
@@ -968,6 +969,7 @@ where
                     occurs_changed.insert(x_key, (neg_i0, neg_i1));
                 }
             }
+
             println!("  OccursChanged: {:?}: {:?}", oi, occurs_changed);
             // calculate balance of removed negations
             let negs_removed = occurs_changed
@@ -994,11 +996,13 @@ where
                     }
                 })
                 .sum::<isize>();
+
             let min_removed = match g_negs {
                 NoNegs => 2,
                 NegInput1 => 1,
                 NegOutput => -1,
             };
+
             println!("  NegsRemoved: {:?}: {}", oi, negs_removed);
             if negs_removed >= min_removed {
                 // apply changes if change remove more negations than added negations.
