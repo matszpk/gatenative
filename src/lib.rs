@@ -931,7 +931,7 @@ where
                     // therefore negation reduction is useless.
                     continue;
                 }
-            };
+            }
 
             let g_negs = self.gates[i].1;
             assert!(g_negs != NegInput1 || self.gates[i].0.func != VGateFunc::Xor);
