@@ -2620,6 +2620,25 @@ mod tests {
         );
         
         assert_eq!(
+            HashMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(3, 2),
+                        Gate::new_nimpl(3, 2),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .subtree_map()
+        );
+        
+        assert_eq!(
             HashMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
             VBinOpCircuit::from(
                 Circuit::new(
