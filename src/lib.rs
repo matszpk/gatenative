@@ -2681,7 +2681,7 @@ mod tests {
                         Gate::new_xor(1, 7),
                         Gate::new_and(8, 9),
                     ],
-                    [(4, true), (7, false), (10, false)],
+                    [(4, true), (10, false)],
                 )
                 .unwrap()
             )
