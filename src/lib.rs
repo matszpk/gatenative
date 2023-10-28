@@ -2589,4 +2589,53 @@ mod tests {
             );
         }
     }
+    
+    #[test]
+    fn test_vbinopcircuit_subtree_map() {
+        assert_eq!(
+            HashMap::from_iter([(4, 4), (3, 4)]),
+            VBinOpCircuit::from(
+                Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_xor(2, 3)], [(4, true)]).unwrap()
+            )
+            .subtree_map()
+        );
+
+        assert_eq!(
+            HashMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, true), (7, false)],
+                )
+                .unwrap()
+            )
+            .subtree_map()
+        );
+        
+        assert_eq!(
+            HashMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_nimpl(2, 4),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(7, false)],
+                )
+                .unwrap()
+            )
+            .subtree_map()
+        );
+    }
 }
