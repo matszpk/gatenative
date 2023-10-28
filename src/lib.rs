@@ -1028,6 +1028,141 @@ where
         }
     }
 
+    // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
+    fn subtree_map(&self) -> HashMap<T, T> {
+        // println!("XorSubtreeStart");
+        let input_len = usize::try_from(self.input_len).unwrap();
+        let mut usage = vec![0u8; self.gates.len()];
+        for (g, _) in &self.gates {
+            if g.i0 >= self.input_len {
+                let i0 = usize::try_from(g.i0).unwrap() - input_len;
+                if usage[i0] < 2 {
+                    usage[i0] += 1;
+                }
+            }
+            if g.i1 >= self.input_len {
+                let i1 = usize::try_from(g.i1).unwrap() - input_len;
+                if usage[i1] < 2 {
+                    usage[i1] += 1;
+                }
+            }
+        }
+
+        for (o, _) in self.outputs.iter() {
+            if *o >= self.input_len {
+                let o = usize::try_from(*o).unwrap() - input_len;
+                if usage[o] < 2 {
+                    usage[o] += 1;
+                }
+            }
+        }
+
+        #[derive(Clone, Copy)]
+        struct StackEntry<T> {
+            node: usize,
+            way: usize,
+            subtree_index: Option<T>,
+        }
+        let gate_num = self.gates.len();
+        let mut visited = vec![false; gate_num];
+        let mut subtree_map = HashMap::new();
+        // traverse through circuit
+        for (o, _) in self.outputs.iter() {
+            if *o < self.input_len {
+                continue;
+            }
+            let oidx = usize::try_from(*o).unwrap() - input_len;
+            let mut stack = Vec::<StackEntry<T>>::new();
+            stack.push(StackEntry {
+                node: oidx,
+                way: 0,
+                subtree_index: None,
+            });
+
+            while !stack.is_empty() {
+                let top = stack.last_mut().unwrap();
+                let node_index = top.node;
+                let way = top.way;
+
+                if way == 0 {
+                    if !visited[node_index] {
+                        visited[node_index] = true;
+                    } else {
+                        stack.pop();
+                        continue;
+                    }
+
+                    top.way += 1;
+                    let gi0 = self.gates[node_index].0.i0;
+                    if gi0 >= self.input_len {
+                        // println!("To next 0: {:?} {:?} {:?}", node_index + input_len, gi0,
+                        //          self.gates[node_index].0);
+                        let new_node_index = usize::try_from(gi0).unwrap() - input_len;
+                        // determine subtree_index
+                        let subtree_index = if let Some(subtree_index) = top.subtree_index {
+                            // propagate only to gate with usage<2
+                            if usage[new_node_index] < 2 {
+                                Some(subtree_index)
+                            } else {
+                                None
+                            }
+                        } else if usage[new_node_index] < 2 {
+                            // if without subtree_index then its node index is subtree_index
+                            Some(T::try_from(node_index + input_len).unwrap())
+                        } else {
+                            None
+                        };
+                        stack.push(StackEntry {
+                            node: new_node_index,
+                            way: 0,
+                            subtree_index,
+                        });
+                    }
+                } else if way == 1 {
+                    top.way += 1;
+                    let gi1 = self.gates[node_index].0.i1;
+                    if gi1 >= self.input_len {
+                        // println!("To next 1: {:?} {:?}: {:?}", node_index + input_len, gi1,
+                        //          self.gates[node_index].0);
+                        let new_node_index = usize::try_from(gi1).unwrap() - input_len;
+                        // determine subtree_index
+                        let subtree_index = if let Some(subtree_index) = top.subtree_index {
+                            // propagate xor only to gate with usage<2
+                            if usage[new_node_index] < 2 {
+                                Some(subtree_index)
+                            } else {
+                                None
+                            }
+                        } else if usage[new_node_index] < 2 {
+                            // if without subtree_index then its node index is subtree_index
+                            Some(T::try_from(node_index + input_len).unwrap())
+                        } else {
+                            None
+                        };
+                        stack.push(StackEntry {
+                            node: new_node_index,
+                            way: 0,
+                            subtree_index,
+                        });
+                    }
+                } else {
+                    let node_out_index = T::try_from(node_index + input_len).unwrap();
+                    // println!("Top node: {:?} {:?} {:?}", top.node + input_len,
+                    //          top.way, top.subtree_index);
+                    if let Some(subtree_index) = top.subtree_index {
+                        // add to subtree_map
+                        subtree_map.insert(node_out_index, subtree_index);
+                    } else {
+                        // add same root
+                        subtree_map.insert(node_out_index, node_out_index);
+                    }
+                    stack.pop();
+                }
+            }
+        }
+        subtree_map
+    }
+
     fn optimize_negs(&mut self) {}
 }
 
