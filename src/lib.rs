@@ -15,6 +15,8 @@ pub enum VNegs {
 
 mod vcircuit;
 use vcircuit::*;
+mod vbinopcircuit;
+use vbinopcircuit::*;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
