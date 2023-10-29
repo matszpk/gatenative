@@ -1087,7 +1087,7 @@ where
             subtree_map,
             subtree_object_map
                 .into_iter()
-                .map(|(k, v)| v)
+                .map(|(_, v)| v)
                 .collect::<Vec<_>>(),
         )
     }
