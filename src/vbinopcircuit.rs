@@ -385,20 +385,6 @@ where
         let mut subtree_map = BTreeMap::new();
         let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
 
-        let mut add_subtree_input_entry = |root, x| {
-            if let Some(st) = subtree_object_map.get_mut(&root) {
-                st.gates.push(x);
-            } else {
-                subtree_object_map.insert(
-                    root,
-                    SubTree {
-                        root,
-                        gates: vec![x],
-                    },
-                );
-            }
-        };
-
         // traverse through circuit
         for (o, _) in self.outputs.iter() {
             if *o < self.input_len {
@@ -435,30 +421,22 @@ where
                         // determine subtree_index
                         let subtree_index = if let Some(subtree_index) = top.subtree_index {
                             // propagate only to gate with usage<2
-                            add_subtree_input_entry(subtree_index, go_index);
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
                                 None
                             }
+                        } else if usage[new_node_index] < 2 {
+                            // if without subtree_index then its node index is subtree_index
+                            Some(go_index)
                         } else {
-                            add_subtree_input_entry(go_index, go_index);
-                            if usage[new_node_index] < 2 {
-                                // if without subtree_index then its node index is subtree_index
-                                Some(go_index)
-                            } else {
-                                None
-                            }
+                            None
                         };
                         stack.push(StackEntry {
                             node: new_node_index,
                             way: 0,
                             subtree_index,
                         });
-                    } else if let Some(subtree_index) = top.subtree_index {
-                        add_subtree_input_entry(subtree_index, go_index);
-                    } else {
-                        add_subtree_input_entry(go_index, go_index);
                     }
                 } else if way == 1 {
                     top.way += 1;
@@ -471,30 +449,22 @@ where
                         // determine subtree_index
                         let subtree_index = if let Some(subtree_index) = top.subtree_index {
                             // propagate xor only to gate with usage<2
-                            add_subtree_input_entry(subtree_index, go_index);
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
                                 None
                             }
+                        } else if usage[new_node_index] < 2 {
+                            // if without subtree_index then its node index is subtree_index
+                            Some(go_index)
                         } else {
-                            add_subtree_input_entry(go_index, go_index);
-                            if usage[new_node_index] < 2 {
-                                // if without subtree_index then its node index is subtree_index
-                                Some(go_index)
-                            } else {
-                                None
-                            }
+                            None
                         };
                         stack.push(StackEntry {
                             node: new_node_index,
                             way: 0,
                             subtree_index,
                         });
-                    } else if let Some(subtree_index) = top.subtree_index {
-                        add_subtree_input_entry(subtree_index, go_index);
-                    } else {
-                        add_subtree_input_entry(go_index, go_index);
                     }
                 } else {
                     let node_out_index = T::try_from(node_index + input_len).unwrap();
@@ -511,6 +481,22 @@ where
                 }
             }
         }
+
+        let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
+        for (&x, &root) in &subtree_map {
+            if let Some(st) = subtree_object_map.get_mut(&root) {
+                st.gates.push(x);
+            } else {
+                subtree_object_map.insert(
+                    root,
+                    SubTree {
+                        root,
+                        gates: vec![x],
+                    },
+                );
+            }
+        }
+
         (
             subtree_map,
             subtree_object_map
