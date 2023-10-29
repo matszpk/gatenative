@@ -2,7 +2,7 @@ use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BTreeMap, BinaryHeap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -732,6 +732,12 @@ enum VOccur<T: Clone + Copy> {
     Output(T), // circuit output index
 }
 
+#[derive(Clone, PartialEq, Eq, Debug)]
+struct SubTree<T> {
+    root: T,
+    inputs: Vec<(T, bool)>,
+}
+
 impl<T> VBinOpCircuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
@@ -1029,7 +1035,7 @@ where
     }
 
     // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
-    fn subtree_map(&self) -> HashMap<T, T> {
+    fn subtrees(&self) -> (BTreeMap<T, T>, Vec<SubTree<T>>) {
         // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut usage = vec![0u8; self.gates.len()];
@@ -1065,7 +1071,23 @@ where
         }
         let gate_num = self.gates.len();
         let mut visited = vec![false; gate_num];
-        let mut subtree_map = HashMap::new();
+        let mut subtree_map = BTreeMap::new();
+        let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
+
+        let mut add_subtree_input_entry = |root, x, first| {
+            if let Some(st) = subtree_object_map.get_mut(&root) {
+                st.inputs.push((x, first));
+            } else {
+                subtree_object_map.insert(
+                    root,
+                    SubTree {
+                        root,
+                        inputs: vec![(x, first)],
+                    },
+                );
+            }
+        };
+
         // traverse through circuit
         for (o, _) in self.outputs.iter() {
             if *o < self.input_len {
@@ -1092,6 +1114,7 @@ where
                         continue;
                     }
 
+                    let go_index = T::try_from(node_index + input_len).unwrap();
                     top.way += 1;
                     let gi0 = self.gates[node_index].0.i0;
                     if gi0 >= self.input_len {
@@ -1104,12 +1127,14 @@ where
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
+                                add_subtree_input_entry(subtree_index, go_index, false);
                                 None
                             }
                         } else if usage[new_node_index] < 2 {
                             // if without subtree_index then its node index is subtree_index
-                            Some(T::try_from(node_index + input_len).unwrap())
+                            Some(go_index)
                         } else {
+                            add_subtree_input_entry(go_index, go_index, false);
                             None
                         };
                         stack.push(StackEntry {
@@ -1117,9 +1142,14 @@ where
                             way: 0,
                             subtree_index,
                         });
+                    } else if let Some(subtree_index) = top.subtree_index {
+                        add_subtree_input_entry(subtree_index, go_index, false);
+                    } else {
+                        add_subtree_input_entry(go_index, go_index, false);
                     }
                 } else if way == 1 {
                     top.way += 1;
+                    let go_index = T::try_from(node_index + input_len).unwrap();
                     let gi1 = self.gates[node_index].0.i1;
                     if gi1 >= self.input_len {
                         // println!("To next 1: {:?} {:?}: {:?}", node_index + input_len, gi1,
@@ -1131,12 +1161,14 @@ where
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
+                                add_subtree_input_entry(subtree_index, go_index, true);
                                 None
                             }
                         } else if usage[new_node_index] < 2 {
                             // if without subtree_index then its node index is subtree_index
-                            Some(T::try_from(node_index + input_len).unwrap())
+                            Some(go_index)
                         } else {
+                            add_subtree_input_entry(go_index, go_index, true);
                             None
                         };
                         stack.push(StackEntry {
@@ -1144,6 +1176,10 @@ where
                             way: 0,
                             subtree_index,
                         });
+                    } else if let Some(subtree_index) = top.subtree_index {
+                        add_subtree_input_entry(subtree_index, go_index, true);
+                    } else {
+                        add_subtree_input_entry(go_index, go_index, true);
                     }
                 } else {
                     let node_out_index = T::try_from(node_index + input_len).unwrap();
@@ -1160,7 +1196,13 @@ where
                 }
             }
         }
-        subtree_map
+        (
+            subtree_map,
+            subtree_object_map
+                .into_iter()
+                .map(|(k, v)| v)
+                .collect::<Vec<_>>(),
+        )
     }
 
     fn optimize_negs(&mut self) {}
@@ -2593,15 +2635,37 @@ mod tests {
     #[test]
     fn test_vbinopcircuit_subtree_map() {
         assert_eq!(
-            HashMap::from_iter([(4, 4), (3, 4)]),
+            (
+                BTreeMap::from_iter([(4, 4), (3, 4)]),
+                vec![SubTree {
+                    root: 4,
+                    inputs: vec![(4, false), (3, false), (3, true)]
+                }]
+            ),
             VBinOpCircuit::from(
                 Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_xor(2, 3)], [(4, true)]).unwrap()
             )
-            .subtree_map()
+            .subtrees()
         );
 
         assert_eq!(
-            HashMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+            (
+                BTreeMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+                vec![
+                    SubTree {
+                        root: 3,
+                        inputs: vec![(3, false), (3, true)],
+                    },
+                    SubTree {
+                        root: 4,
+                        inputs: vec![(4, false), (4, true)],
+                    },
+                    SubTree {
+                        root: 7,
+                        inputs: vec![(5, false), (5, true), (6, false), (6, true)],
+                    },
+                ]
+            ),
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -2616,11 +2680,27 @@ mod tests {
                 )
                 .unwrap()
             )
-            .subtree_map()
+            .subtrees()
         );
 
         assert_eq!(
-            HashMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+            (
+                BTreeMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
+                vec![
+                    SubTree {
+                        root: 3,
+                        inputs: vec![(3, false), (3, true)],
+                    },
+                    SubTree {
+                        root: 4,
+                        inputs: vec![(4, false), (4, true)],
+                    },
+                    SubTree {
+                        root: 7,
+                        inputs: vec![(5, false), (5, true), (6, false), (6, true)],
+                    },
+                ]
+            ),
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -2635,11 +2715,24 @@ mod tests {
                 )
                 .unwrap()
             )
-            .subtree_map()
+            .subtrees()
         );
 
         assert_eq!(
-            HashMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
+            (
+                BTreeMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
+                vec![SubTree {
+                    root: 7,
+                    inputs: vec![
+                        (5, false),
+                        (4, false),
+                        (3, false),
+                        (3, true),
+                        (6, false),
+                        (6, true)
+                    ]
+                }]
+            ),
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -2654,20 +2747,36 @@ mod tests {
                 )
                 .unwrap()
             )
-            .subtree_map()
+            .subtrees()
         );
 
         assert_eq!(
-            HashMap::from_iter([
-                (3, 4),
-                (4, 4),
-                (5, 7),
-                (6, 7),
-                (7, 7),
-                (8, 10),
-                (9, 10),
-                (10, 10)
-            ]),
+            (
+                BTreeMap::from_iter([
+                    (3, 4),
+                    (4, 4),
+                    (5, 7),
+                    (6, 7),
+                    (7, 7),
+                    (8, 10),
+                    (9, 10),
+                    (10, 10)
+                ]),
+                vec![
+                    SubTree {
+                        root: 4,
+                        inputs: vec![(3, false), (3, true), (4, true),]
+                    },
+                    SubTree {
+                        root: 7,
+                        inputs: vec![(5, false), (5, true), (6, false), (6, true),]
+                    },
+                    SubTree {
+                        root: 10,
+                        inputs: vec![(8, false), (8, true), (9, false), (9, true),]
+                    },
+                ]
+            ),
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -2685,7 +2794,7 @@ mod tests {
                 )
                 .unwrap()
             )
-            .subtree_map()
+            .subtrees()
         );
     }
 }
