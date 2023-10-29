@@ -2633,7 +2633,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vbinopcircuit_subtree_map() {
+    fn test_vbinopcircuit_subtrees() {
         assert_eq!(
             (
                 BTreeMap::from_iter([(4, 4), (3, 4)]),
