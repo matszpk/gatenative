@@ -39,7 +39,14 @@ enum VOccur<T: Clone + Copy> {
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct SubTree<T> {
     root: T,
-    inputs: Vec<(T, bool)>,
+    gates: Vec<T>,
+}
+
+impl<T: Clone + Copy + Ord> SubTree<T> {
+    fn sort_and_dedup(&mut self) {
+        self.gates.sort();
+        self.gates.dedup();
+    }
 }
 
 impl<T> VBinOpCircuit<T>
@@ -378,15 +385,15 @@ where
         let mut subtree_map = BTreeMap::new();
         let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
 
-        let mut add_subtree_input_entry = |root, x, first| {
+        let mut add_subtree_input_entry = |root, x| {
             if let Some(st) = subtree_object_map.get_mut(&root) {
-                st.inputs.push((x, first));
+                st.gates.push(x);
             } else {
                 subtree_object_map.insert(
                     root,
                     SubTree {
                         root,
-                        inputs: vec![(x, first)],
+                        gates: vec![x],
                     },
                 );
             }
@@ -428,18 +435,20 @@ where
                         // determine subtree_index
                         let subtree_index = if let Some(subtree_index) = top.subtree_index {
                             // propagate only to gate with usage<2
+                            add_subtree_input_entry(subtree_index, go_index);
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
-                                add_subtree_input_entry(subtree_index, go_index, false);
                                 None
                             }
-                        } else if usage[new_node_index] < 2 {
-                            // if without subtree_index then its node index is subtree_index
-                            Some(go_index)
                         } else {
-                            add_subtree_input_entry(go_index, go_index, false);
-                            None
+                            add_subtree_input_entry(go_index, go_index);
+                            if usage[new_node_index] < 2 {
+                                // if without subtree_index then its node index is subtree_index
+                                Some(go_index)
+                            } else {
+                                None
+                            }
                         };
                         stack.push(StackEntry {
                             node: new_node_index,
@@ -447,9 +456,9 @@ where
                             subtree_index,
                         });
                     } else if let Some(subtree_index) = top.subtree_index {
-                        add_subtree_input_entry(subtree_index, go_index, false);
+                        add_subtree_input_entry(subtree_index, go_index);
                     } else {
-                        add_subtree_input_entry(go_index, go_index, false);
+                        add_subtree_input_entry(go_index, go_index);
                     }
                 } else if way == 1 {
                     top.way += 1;
@@ -462,18 +471,20 @@ where
                         // determine subtree_index
                         let subtree_index = if let Some(subtree_index) = top.subtree_index {
                             // propagate xor only to gate with usage<2
+                            add_subtree_input_entry(subtree_index, go_index);
                             if usage[new_node_index] < 2 {
                                 Some(subtree_index)
                             } else {
-                                add_subtree_input_entry(subtree_index, go_index, true);
                                 None
                             }
-                        } else if usage[new_node_index] < 2 {
-                            // if without subtree_index then its node index is subtree_index
-                            Some(go_index)
                         } else {
-                            add_subtree_input_entry(go_index, go_index, true);
-                            None
+                            add_subtree_input_entry(go_index, go_index);
+                            if usage[new_node_index] < 2 {
+                                // if without subtree_index then its node index is subtree_index
+                                Some(go_index)
+                            } else {
+                                None
+                            }
                         };
                         stack.push(StackEntry {
                             node: new_node_index,
@@ -481,9 +492,9 @@ where
                             subtree_index,
                         });
                     } else if let Some(subtree_index) = top.subtree_index {
-                        add_subtree_input_entry(subtree_index, go_index, true);
+                        add_subtree_input_entry(subtree_index, go_index);
                     } else {
-                        add_subtree_input_entry(go_index, go_index, true);
+                        add_subtree_input_entry(go_index, go_index);
                     }
                 } else {
                     let node_out_index = T::try_from(node_index + input_len).unwrap();
@@ -504,7 +515,10 @@ where
             subtree_map,
             subtree_object_map
                 .into_iter()
-                .map(|(_, v)| v)
+                .map(|(_, mut v)| {
+                    v.sort_and_dedup();
+                    v
+                })
                 .collect::<Vec<_>>(),
         )
     }
@@ -1335,7 +1349,7 @@ mod tests {
                 BTreeMap::from_iter([(4, 4), (3, 4)]),
                 vec![SubTree {
                     root: 4,
-                    inputs: vec![(4, false), (3, false), (3, true)]
+                    gates: vec![3, 4]
                 }]
             ),
             VBinOpCircuit::from(
@@ -1350,15 +1364,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 3,
-                        inputs: vec![(3, false), (3, true)],
+                        gates: vec![3],
                     },
                     SubTree {
                         root: 4,
-                        inputs: vec![(4, false), (4, true)],
+                        gates: vec![4],
                     },
                     SubTree {
                         root: 7,
-                        inputs: vec![(5, false), (5, true), (6, false), (6, true)],
+                        gates: vec![5, 6, 7],
                     },
                 ]
             ),
@@ -1385,15 +1399,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 3,
-                        inputs: vec![(3, false), (3, true)],
+                        gates: vec![3],
                     },
                     SubTree {
                         root: 4,
-                        inputs: vec![(4, false), (4, true)],
+                        gates: vec![4],
                     },
                     SubTree {
                         root: 7,
-                        inputs: vec![(5, false), (5, true), (6, false), (6, true)],
+                        gates: vec![5, 6, 7],
                     },
                 ]
             ),
@@ -1419,14 +1433,7 @@ mod tests {
                 BTreeMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
                 vec![SubTree {
                     root: 7,
-                    inputs: vec![
-                        (5, false),
-                        (4, false),
-                        (3, false),
-                        (3, true),
-                        (6, false),
-                        (6, true)
-                    ]
+                    gates: vec![3, 4, 5, 6, 7]
                 }]
             ),
             VBinOpCircuit::from(
@@ -1445,7 +1452,7 @@ mod tests {
             )
             .subtrees()
         );
-
+        //
         assert_eq!(
             (
                 BTreeMap::from_iter([
@@ -1461,15 +1468,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 4,
-                        inputs: vec![(3, false), (3, true), (4, true),]
+                        gates: vec![3, 4]
                     },
                     SubTree {
                         root: 7,
-                        inputs: vec![(5, false), (5, true), (6, false), (6, true),]
+                        gates: vec![5, 6, 7]
                     },
                     SubTree {
                         root: 10,
-                        inputs: vec![(8, false), (8, true), (9, false), (9, true),]
+                        gates: vec![8, 9, 10]
                     },
                 ]
             ),
