@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::VNegs::{self,*};
+use crate::VNegs::{self, *};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct VBinOpCircuit<T: Clone + Copy> {
@@ -515,7 +515,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn vgate<T: Clone + Copy>(func: VGateFunc, i0: T, i1: T) -> VGate<T> {
         VGate { i0, i1, func: func }
     }
@@ -541,7 +541,7 @@ mod tests {
     fn vgate_xor<T: Clone + Copy>(i0: T, i1: T) -> VGate<T> {
         vgate(VGateFunc::Xor, i0, i1)
     }
-    
+
     #[test]
     fn test_vbinopcircuit_from() {
         assert_eq!(

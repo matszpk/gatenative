@@ -4,7 +4,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use crate::VNegs::{self,*};
+use crate::VNegs::{self, *};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VGateFunc {
@@ -313,7 +313,12 @@ impl<T: Clone + Copy> VGate<T> {
         }
     }
 
-    pub(crate) fn binop_neg_args(self, negs: VNegs, neg_i0: bool, neg_i1: bool) -> (VGate<T>, VNegs) {
+    pub(crate) fn binop_neg_args(
+        self,
+        negs: VNegs,
+        neg_i0: bool,
+        neg_i1: bool,
+    ) -> (VGate<T>, VNegs) {
         assert!(matches!(
             self.func,
             VGateFunc::And | VGateFunc::Or | VGateFunc::Xor
@@ -1098,7 +1103,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     fn vgate<T: Clone + Copy>(func: VGateFunc, i0: T, i1: T) -> VGate<T> {
         VGate { i0, i1, func: func }
     }

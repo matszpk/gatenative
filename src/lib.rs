@@ -2,7 +2,7 @@ use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::{BinaryHeap};
+use std::collections::BinaryHeap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
