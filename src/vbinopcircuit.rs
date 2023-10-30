@@ -538,16 +538,34 @@ where
         )
     }
 
-    // fn optimize_subtree(&mut self, subtree: &SubTree<T>) {
-    //     let input_len = usize::try_from(self.input_len).unwrap();
-    //     for oi in &subtree.gates {
-    //         let oi = usize::try_from(*oi).unwrap() - input_len;
-    //         let(g, neg) = self.gates[oi];
-    //         if neg != NoNegs {
-    //             self.gates[oi] = g.binop_neg(neg);
-    //         }
-    //     }
-    // }
+    fn optimize_negs_in_subtree(&mut self, subtree: &SubTree<T>) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for (i, next_i) in &subtree.gates {
+            let oi = usize::try_from(*i).unwrap() - input_len;
+            let next_oi = usize::try_from(*next_i).unwrap() - input_len;
+            let (g, neg) = self.gates[oi];
+            let (next_g, next_neg) = self.gates[next_oi];
+            if neg != NoNegs {
+                let (new_g, new_neg) = g.binop_neg(neg);
+                let (new_next_g, new_next_neg) = if next_g.i0 == *next_i {
+                    next_g.binop_neg_args(next_neg, true, false)
+                } else {
+                    next_g.binop_neg_args(next_neg, false, true)
+                };
+                let old_neg_count = usize::from(neg != NoNegs) + usize::from(next_neg != NoNegs);
+                let new_neg_count =
+                    usize::from(new_neg != NoNegs) + usize::from(new_next_neg != NoNegs);
+                if old_neg_count > new_neg_count
+                    || (old_neg_count == new_neg_count
+                        && (new_next_neg != NegInput1 || next_neg != NegOutput))
+                {
+                    // apply if negation reduction or negation move forward.
+                    self.gates[oi] = (new_g, new_neg);
+                    self.gates[next_oi] = (new_next_g, new_next_neg);
+                }
+            }
+        }
+    }
 
     fn optimize_negs(&mut self) {}
 }
