@@ -39,13 +39,43 @@ enum VOccur<T: Clone + Copy> {
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct SubTree<T> {
     root: T,
-    gates: Vec<T>,
+    // gates: gate entry: first - index in circuit gates
+    // second - index in circuit gates of successor
+    gates: Vec<(T, T)>,
 }
 
 impl<T: Clone + Copy + Ord> SubTree<T> {
     fn sort_and_dedup(&mut self) {
         self.gates.sort();
         self.gates.dedup();
+    }
+}
+impl<T> SubTree<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    // gates must be ordered by index. last gate MUST BE in root.
+    fn fill_successors(&mut self, circuit: &VBinOpCircuit<T>) {
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        for i in 0..self.gates.len() {
+            let oi = usize::try_from(self.gates[i].0).unwrap() - input_len;
+            let g = circuit.gates[oi].0;
+            if g.i0 >= circuit.input_len {
+                if let Ok(p) = self.gates[0..i].binary_search(&(g.i0, T::default())) {
+                    self.gates[p].1 = self.gates[i].0;
+                }
+            }
+            if g.i1 >= circuit.input_len {
+                if let Ok(p) = self.gates[0..i].binary_search(&(g.i1, T::default())) {
+                    self.gates[p].1 = self.gates[i].0;
+                }
+            }
+        }
+        self.gates.pop();
     }
 }
 
@@ -483,13 +513,13 @@ where
         let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
         for (&x, &root) in &subtree_map {
             if let Some(st) = subtree_object_map.get_mut(&root) {
-                st.gates.push(x);
+                st.gates.push((x, T::default()));
             } else {
                 subtree_object_map.insert(
                     root,
                     SubTree {
                         root,
-                        gates: vec![x],
+                        gates: vec![(x, T::default())],
                     },
                 );
             }
@@ -501,11 +531,23 @@ where
                 .into_iter()
                 .map(|(_, mut v)| {
                     v.sort_and_dedup();
+                    v.fill_successors(self);
                     v
                 })
                 .collect::<Vec<_>>(),
         )
     }
+
+    // fn optimize_subtree(&mut self, subtree: &SubTree<T>) {
+    //     let input_len = usize::try_from(self.input_len).unwrap();
+    //     for oi in &subtree.gates {
+    //         let oi = usize::try_from(*oi).unwrap() - input_len;
+    //         let(g, neg) = self.gates[oi];
+    //         if neg != NoNegs {
+    //             self.gates[oi] = g.binop_neg(neg);
+    //         }
+    //     }
+    // }
 
     fn optimize_negs(&mut self) {}
 }
@@ -1333,7 +1375,7 @@ mod tests {
                 BTreeMap::from_iter([(4, 4), (3, 4)]),
                 vec![SubTree {
                     root: 4,
-                    gates: vec![3, 4]
+                    gates: vec![(3, 4)]
                 }]
             ),
             VBinOpCircuit::from(
@@ -1348,15 +1390,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 3,
-                        gates: vec![3],
+                        gates: vec![],
                     },
                     SubTree {
                         root: 4,
-                        gates: vec![4],
+                        gates: vec![],
                     },
                     SubTree {
                         root: 7,
-                        gates: vec![5, 6, 7],
+                        gates: vec![(5, 7), (6, 7)],
                     },
                 ]
             ),
@@ -1383,15 +1425,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 3,
-                        gates: vec![3],
+                        gates: vec![],
                     },
                     SubTree {
                         root: 4,
-                        gates: vec![4],
+                        gates: vec![],
                     },
                     SubTree {
                         root: 7,
-                        gates: vec![5, 6, 7],
+                        gates: vec![(5, 7), (6, 7)],
                     },
                 ]
             ),
@@ -1417,7 +1459,7 @@ mod tests {
                 BTreeMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
                 vec![SubTree {
                     root: 7,
-                    gates: vec![3, 4, 5, 6, 7]
+                    gates: vec![(3, 4), (4, 5), (5, 7), (6, 7)]
                 }]
             ),
             VBinOpCircuit::from(
@@ -1436,7 +1478,7 @@ mod tests {
             )
             .subtrees()
         );
-        //
+
         assert_eq!(
             (
                 BTreeMap::from_iter([
@@ -1452,15 +1494,15 @@ mod tests {
                 vec![
                     SubTree {
                         root: 4,
-                        gates: vec![3, 4]
+                        gates: vec![(3, 4)]
                     },
                     SubTree {
                         root: 7,
-                        gates: vec![5, 6, 7]
+                        gates: vec![(5, 7), (6, 7)]
                     },
                     SubTree {
                         root: 10,
-                        gates: vec![8, 9, 10]
+                        gates: vec![(8, 10), (9, 10)]
                     },
                 ]
             ),
