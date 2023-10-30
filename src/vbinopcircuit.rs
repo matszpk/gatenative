@@ -1635,5 +1635,58 @@ mod tests {
                 outputs: vec![(4, false)]
             })
         );
+
+        // more complex examples
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NoNegs),
+                    (vgate_or(2, 4), NoNegs)
+                ],
+                outputs: vec![(5, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegOutput),
+                    (vgate_or(2, 4), NegInput1)
+                ],
+                outputs: vec![(5, false)]
+            })
+        );
+
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NoNegs),
+                    (vgate_or(9, 10), NoNegs),
+                    (vgate_and(4, 11), NegInput1),
+                    (vgate_and(12, 5), NoNegs),
+                    (vgate_and(13, 6), NoNegs),
+                    (vgate_and(14, 7), NoNegs),
+                    (vgate_and(15, 8), NegOutput), // fix it: move negation to output!
+                ],
+                outputs: vec![(16, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NegOutput),
+                    (vgate_or(2, 3), NegOutput),
+                    (vgate_and(9, 10), NegOutput),
+                    (vgate_or(11, 4), NegInput1),
+                    (vgate_or(12, 5), NegInput1),
+                    (vgate_or(13, 6), NegInput1),
+                    (vgate_or(14, 7), NegInput1),
+                    (vgate_or(15, 8), NegInput1),
+                ],
+                outputs: vec![(16, false)]
+            })
+        );
     }
 }
