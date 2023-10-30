@@ -237,7 +237,7 @@ where
             Gate(T),
             Output(T),
         }
-        println!("Start optnegs");
+        // println!("Start optnegs");
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let oi = T::try_from(i + input_len).unwrap();
@@ -252,7 +252,7 @@ where
 
             let g_negs = self.gates[i].1;
             assert!(g_negs != NegInput1 || self.gates[i].0.func != VGateFunc::Xor);
-            println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
+            // println!("  Start: {:?}: {:?}: {:?}", oi, self.gates[i], occurs[i]);
             // check whether same type of occurrence (negation)
             let mut occurs_changed = HashMap::<HashKey<T>, (bool, bool)>::new();
             for occur in &occurs[i] {
@@ -287,7 +287,7 @@ where
                 }
             }
 
-            println!("  OccursChanged: {:?}: {:?}", oi, occurs_changed);
+            // println!("  OccursChanged: {:?}: {:?}", oi, occurs_changed);
             // calculate balance of removed negations
             let negs_removed = occurs_changed
                 .iter()
@@ -320,7 +320,7 @@ where
                 NegOutput => -1,
             };
 
-            println!("  NegsRemoved: {:?}: {}", oi, negs_removed);
+            // println!("  NegsRemoved: {:?}: {}", oi, negs_removed);
             if negs_removed >= min_removed {
                 // apply changes if change remove more negations than added negations.
                 self.gates[i] = self.gates[i].0.binop_neg(self.gates[i].1);
