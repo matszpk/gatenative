@@ -1669,7 +1669,7 @@ mod tests {
                     (vgate_and(12, 5), NoNegs),
                     (vgate_and(13, 6), NoNegs),
                     (vgate_and(14, 7), NoNegs),
-                    (vgate_and(15, 8), NegOutput), // fix it: move negation to output!
+                    (vgate_and(15, 8), NegOutput),
                 ],
                 outputs: vec![(16, false)]
             },
@@ -1684,6 +1684,69 @@ mod tests {
                     (vgate_or(13, 6), NegInput1),
                     (vgate_or(14, 7), NegInput1),
                     (vgate_or(15, 8), NegInput1),
+                ],
+                outputs: vec![(16, false)]
+            })
+        );
+        
+        // move negation through XOR subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NoNegs),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_or(6, 7), NegInput1),
+                    (vgate_xor(8, 9), NoNegs),
+                    (vgate_xor(10, 11), NoNegs),
+                    (vgate_xor(12, 13), NoNegs),
+                    (vgate_xor(14, 15), NegOutput),
+                ],
+                outputs: vec![(16, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NegOutput),
+                    (vgate_or(2, 3), NegOutput),
+                    (vgate_and(4, 5), NegOutput),
+                    (vgate_or(6, 7), NegInput1),
+                    (vgate_xor(8, 9), NoNegs),
+                    (vgate_xor(10, 11), NoNegs),
+                    (vgate_xor(12, 13), NoNegs),
+                    (vgate_xor(14, 15), NoNegs),
+                ],
+                outputs: vec![(16, false)]
+            })
+        );
+        // move negation through XOR subtree 2
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_or(6, 7), NegInput1),
+                    (vgate_xor(8, 9), NoNegs),
+                    (vgate_xor(10, 11), NoNegs),
+                    (vgate_xor(12, 13), NoNegs),
+                    (vgate_xor(14, 15), NoNegs),
+                ],
+                outputs: vec![(16, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NegOutput),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                    (vgate_or(6, 7), NegInput1),
+                    (vgate_xor(8, 9), NoNegs),
+                    (vgate_xor(10, 11), NoNegs),
+                    (vgate_xor(12, 13), NoNegs),
+                    (vgate_xor(14, 15), NoNegs),
                 ],
                 outputs: vec![(16, false)]
             })
