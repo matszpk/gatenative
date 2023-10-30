@@ -403,6 +403,7 @@ where
                 let node_index = top.node;
                 let way = top.way;
 
+                let node_out_index = T::try_from(node_index + input_len).unwrap();
                 if way == 0 {
                     if !visited[node_index] {
                         visited[node_index] = true;
@@ -411,13 +412,12 @@ where
                         continue;
                     }
 
-                    let go_index = T::try_from(node_index + input_len).unwrap();
                     top.way += 1;
                     let gi0 = self.gates[node_index].0.i0;
                     if gi0 >= self.input_len {
+                        let new_node_index = usize::try_from(gi0).unwrap() - input_len;
                         // println!("To next 0: {:?} {:?} {:?}", node_index + input_len, gi0,
                         //          self.gates[node_index].0);
-                        let new_node_index = usize::try_from(gi0).unwrap() - input_len;
                         // determine subtree_index
                         let subtree_index = if let Some(subtree_index) = top.subtree_index {
                             // propagate only to gate with usage<2
@@ -428,7 +428,7 @@ where
                             }
                         } else if usage[new_node_index] < 2 {
                             // if without subtree_index then its node index is subtree_index
-                            Some(go_index)
+                            Some(node_out_index)
                         } else {
                             None
                         };
@@ -440,7 +440,6 @@ where
                     }
                 } else if way == 1 {
                     top.way += 1;
-                    let go_index = T::try_from(node_index + input_len).unwrap();
                     let gi1 = self.gates[node_index].0.i1;
                     if gi1 >= self.input_len {
                         // println!("To next 1: {:?} {:?}: {:?}", node_index + input_len, gi1,
@@ -456,7 +455,7 @@ where
                             }
                         } else if usage[new_node_index] < 2 {
                             // if without subtree_index then its node index is subtree_index
-                            Some(go_index)
+                            Some(node_out_index)
                         } else {
                             None
                         };
@@ -467,7 +466,6 @@ where
                         });
                     }
                 } else {
-                    let node_out_index = T::try_from(node_index + input_len).unwrap();
                     // println!("Top node: {:?} {:?} {:?}", top.node + input_len,
                     //          top.way, top.subtree_index);
                     if let Some(subtree_index) = top.subtree_index {
