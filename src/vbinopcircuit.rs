@@ -1564,12 +1564,12 @@ mod tests {
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NoNegs),],
+                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NoNegs)],
                 outputs: vec![(4, false)]
             },
             vbinop_optimize_negs_in_subtree(VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NoNegs),],
+                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NoNegs)],
                 outputs: vec![(4, false)]
             })
         );
@@ -1577,24 +1577,61 @@ mod tests {
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NegInput1),],
+                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NegInput1)],
                 outputs: vec![(4, false)]
             },
             vbinop_optimize_negs_in_subtree(VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NegOutput), (vgate_and(2, 3), NoNegs),],
+                gates: vec![(vgate_and(0, 1), NegOutput), (vgate_and(2, 3), NoNegs)],
                 outputs: vec![(4, false)]
             })
         );
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NegInput1),],
+                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_and(2, 3), NegInput1)],
                 outputs: vec![(4, false)]
             },
             vbinop_optimize_negs_in_subtree(VBinOpCircuit {
                 input_len: 3,
-                gates: vec![(vgate_and(0, 1), NegOutput), (vgate_and(3, 2), NoNegs),],
+                gates: vec![(vgate_and(0, 1), NegOutput), (vgate_and(3, 2), NoNegs)],
+                outputs: vec![(4, false)]
+            })
+        );
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_and(0, 1), NoNegs), (vgate_or(3, 2), NegInput1),],
+                outputs: vec![(4, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_and(0, 1), NegOutput), (vgate_and(2, 3), NegOutput)],
+                outputs: vec![(4, false)]
+            })
+        );
+        // ignore this move
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_and(0, 1), NegInput1), (vgate_and(2, 3), NegOutput)],
+                outputs: vec![(4, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_and(0, 1), NegInput1), (vgate_and(2, 3), NegOutput)],
+                outputs: vec![(4, false)]
+            })
+        );
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_or(1, 0), NegInput1), (vgate_or(3, 2), NegOutput)],
+                outputs: vec![(4, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![(vgate_and(0, 1), NegInput1), (vgate_and(3, 2), NegInput1)],
                 outputs: vec![(4, false)]
             })
         );
