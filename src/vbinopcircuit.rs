@@ -90,6 +90,7 @@ where
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct SubTreeCopy<'a, T: Clone + Copy> {
+    input_len: T,
     subtree: &'a SubTree<T>,
     gates: Vec<(VGate<T>, VNegs)>,
 }
@@ -105,6 +106,7 @@ where
     fn new(circuit: &VBinOpCircuit<T>, subtree: &'a SubTree<T>) -> Self {
         let input_len = usize::try_from(circuit.input_len).unwrap();
         Self {
+            input_len: circuit.input_len,
             subtree,
             gates: subtree
                 .gates
@@ -119,6 +121,125 @@ where
     #[inline]
     fn gate_index(&self, t: T) -> Option<usize> {
         self.subtree.find_index(t)
+    }
+
+    fn optimize_negs(&mut self) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for (oi, (i, next_i)) in self.subtree.gates.iter().enumerate() {
+            let next_oi = self.gate_index(*next_i).unwrap();
+            let (g, neg) = self.gates[oi];
+            let (next_g, next_neg) = self.gates[next_oi];
+            if neg != NoNegs {
+                let (new_g, new_neg) = g.binop_neg(neg);
+                let (new_next_g, new_next_neg) = if next_g.i0 == *i {
+                    next_g.binop_neg_args(next_neg, true, false)
+                } else {
+                    next_g.binop_neg_args(next_neg, false, true)
+                };
+                let old_neg_count = usize::from(neg != NoNegs) + usize::from(next_neg != NoNegs);
+                let new_neg_count =
+                    usize::from(new_neg != NoNegs) + usize::from(new_next_neg != NoNegs);
+                if old_neg_count > new_neg_count
+                    || (old_neg_count == new_neg_count
+                        && (new_next_neg != NegInput1 || next_neg != NegOutput))
+                {
+                    // apply if negation reduction or negation move forward.
+                    self.gates[oi] = (new_g, new_neg);
+                    self.gates[next_oi] = (new_next_g, new_next_neg);
+                }
+            }
+            // check single reduction subtree.
+            let (g, neg) = self.gates[oi];
+            let (next_g, next_neg) = self.gates[next_oi];
+            let (roi, in_next) = if (next_neg == NegInput1) && *i == next_g.i1 {
+                // if this fork (from negated input)
+                (Some(oi), true)
+            } else if next_neg == NegOutput {
+                (Some(next_oi), false)
+            } else {
+                (None, false)
+            };
+
+            if let Some(roi) = roi {
+                let (rg, rneg) = self.gates[roi];
+                if rg.i0 < self.input_len || rg.i1 < self.input_len {
+                    continue;
+                }
+                let rg_oi0 = self.gate_index(rg.i0).unwrap();
+                let rg_oi1 = self.gate_index(rg.i1).unwrap();
+                let (rg0g, rg0neg) = self.gates[rg_oi0];
+                let (rg1g, rg1neg) = self.gates[rg_oi1];
+                if rg.func == VGateFunc::Xor
+                    || rg0g.func == VGateFunc::Xor
+                    || rg1g.func == VGateFunc::Xor
+                {
+                    continue;
+                }
+
+                if rg0neg == NegInput1 && rg1neg == NegInput1 {
+                    // found - just change subtree.
+                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
+                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
+                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
+                    if in_next {
+                        // propagate to next after ROI
+                        self.gates[roi].1 = NoNegs;
+                        self.gates[next_oi].1 = NoNegs;
+                    }
+                    continue;
+                }
+                if rg0g.i0 < self.input_len
+                    || rg0g.i1 < self.input_len
+                    || rg1g.i0 < self.input_len
+                    || rg1g.i1 < self.input_len
+                {
+                    continue;
+                }
+                let rg_oi00 = self.gate_index(rg0g.i0).unwrap();
+                let rg_oi01 = self.gate_index(rg0g.i1).unwrap();
+                let rg_oi10 = self.gate_index(rg1g.i0).unwrap();
+                let rg_oi11 = self.gate_index(rg1g.i1).unwrap();
+                let (rg00g, rg00neg) = self.gates[rg_oi00];
+                let (rg01g, rg01neg) = self.gates[rg_oi01];
+                let (rg10g, rg10neg) = self.gates[rg_oi10];
+                let (rg11g, rg11neg) = self.gates[rg_oi11];
+                if rg00g.func == VGateFunc::Xor
+                    || rg01g.func == VGateFunc::Xor
+                    || rg10g.func == VGateFunc::Xor
+                    || rg11g.func == VGateFunc::Xor
+                {
+                    continue;
+                }
+                if rg00neg == NegInput1
+                    && rg01neg == NegInput1
+                    && rg10neg == NegInput1
+                    && rg11neg == NegInput1
+                    && rg0neg == NoNegs
+                    && rg1neg == NoNegs
+                {
+                    // found - just change subtree.
+                    self.gates[rg_oi00] = rg00g.binop_neg(rg00neg);
+                    self.gates[rg_oi01] = rg01g.binop_neg(rg01neg);
+                    self.gates[rg_oi10] = rg10g.binop_neg(rg10neg);
+                    self.gates[rg_oi11] = rg11g.binop_neg(rg11neg);
+                    self.gates[rg_oi0] = rg0g.binop_neg_args(rg0neg, true, true);
+                    self.gates[rg_oi1] = rg1g.binop_neg_args(rg1neg, true, true);
+                    let (rg0g, rg0neg) = self.gates[rg_oi0];
+                    let (rg1g, rg1neg) = self.gates[rg_oi1];
+                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
+                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
+                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
+                    if in_next {
+                        // propagate to next after ROI
+                        self.gates[roi].1 = NoNegs;
+                        self.gates[next_oi].1 = NoNegs;
+                    }
+                    continue;
+                }
+            } else {
+                continue;
+            }
+        }
     }
 }
 
@@ -591,126 +712,6 @@ where
             };
             let oi = usize::try_from(oi).unwrap() - input_len;
             self.gates[oi] = subtree.gates[i];
-        }
-    }
-
-    fn optimize_negs_in_subtree(&mut self, subtree: &SubTree<T>) {
-        let input_len = usize::try_from(self.input_len).unwrap();
-        for (i, next_i) in &subtree.gates {
-            let oi = usize::try_from(*i).unwrap() - input_len;
-            let next_oi = usize::try_from(*next_i).unwrap() - input_len;
-            let (g, neg) = self.gates[oi];
-            let (next_g, next_neg) = self.gates[next_oi];
-            if neg != NoNegs {
-                let (new_g, new_neg) = g.binop_neg(neg);
-                let (new_next_g, new_next_neg) = if next_g.i0 == *i {
-                    next_g.binop_neg_args(next_neg, true, false)
-                } else {
-                    next_g.binop_neg_args(next_neg, false, true)
-                };
-                let old_neg_count = usize::from(neg != NoNegs) + usize::from(next_neg != NoNegs);
-                let new_neg_count =
-                    usize::from(new_neg != NoNegs) + usize::from(new_next_neg != NoNegs);
-                if old_neg_count > new_neg_count
-                    || (old_neg_count == new_neg_count
-                        && (new_next_neg != NegInput1 || next_neg != NegOutput))
-                {
-                    // apply if negation reduction or negation move forward.
-                    self.gates[oi] = (new_g, new_neg);
-                    self.gates[next_oi] = (new_next_g, new_next_neg);
-                }
-            }
-            // check single reduction subtree.
-            let (g, neg) = self.gates[oi];
-            let (next_g, next_neg) = self.gates[next_oi];
-            let (roi, in_next) = if (next_neg == NegInput1) && *i == next_g.i1 {
-                // if this fork (from negated input)
-                (Some(oi), true)
-            } else if next_neg == NegOutput {
-                (Some(next_oi), false)
-            } else {
-                (None, false)
-            };
-
-            if let Some(roi) = roi {
-                let (rg, rneg) = self.gates[roi];
-                if rg.i0 < self.input_len || rg.i1 < self.input_len {
-                    continue;
-                }
-                let rg_oi0 = usize::try_from(rg.i0).unwrap() - input_len;
-                let rg_oi1 = usize::try_from(rg.i1).unwrap() - input_len;
-                let (rg0g, rg0neg) = self.gates[rg_oi0];
-                let (rg1g, rg1neg) = self.gates[rg_oi1];
-                if rg.func == VGateFunc::Xor
-                    || rg0g.func == VGateFunc::Xor
-                    || rg1g.func == VGateFunc::Xor
-                {
-                    continue;
-                }
-
-                if rg0neg == NegInput1 && rg1neg == NegInput1 {
-                    // found - just change subtree.
-                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
-                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
-                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
-                    if in_next {
-                        // propagate to next after ROI
-                        self.gates[roi].1 = NoNegs;
-                        self.gates[next_oi].1 = NoNegs;
-                    }
-                    continue;
-                }
-                if rg0g.i0 < self.input_len
-                    || rg0g.i1 < self.input_len
-                    || rg1g.i0 < self.input_len
-                    || rg1g.i1 < self.input_len
-                {
-                    continue;
-                }
-                let rg_oi00 = usize::try_from(rg0g.i0).unwrap() - input_len;
-                let rg_oi01 = usize::try_from(rg0g.i1).unwrap() - input_len;
-                let rg_oi10 = usize::try_from(rg1g.i0).unwrap() - input_len;
-                let rg_oi11 = usize::try_from(rg1g.i1).unwrap() - input_len;
-                let (rg00g, rg00neg) = self.gates[rg_oi00];
-                let (rg01g, rg01neg) = self.gates[rg_oi01];
-                let (rg10g, rg10neg) = self.gates[rg_oi10];
-                let (rg11g, rg11neg) = self.gates[rg_oi11];
-                if rg00g.func == VGateFunc::Xor
-                    || rg01g.func == VGateFunc::Xor
-                    || rg10g.func == VGateFunc::Xor
-                    || rg11g.func == VGateFunc::Xor
-                {
-                    continue;
-                }
-                if rg00neg == NegInput1
-                    && rg01neg == NegInput1
-                    && rg10neg == NegInput1
-                    && rg11neg == NegInput1
-                    && rg0neg == NoNegs
-                    && rg1neg == NoNegs
-                {
-                    // found - just change subtree.
-                    self.gates[rg_oi00] = rg00g.binop_neg(rg00neg);
-                    self.gates[rg_oi01] = rg01g.binop_neg(rg01neg);
-                    self.gates[rg_oi10] = rg10g.binop_neg(rg10neg);
-                    self.gates[rg_oi11] = rg11g.binop_neg(rg11neg);
-                    self.gates[rg_oi0] = rg0g.binop_neg_args(rg0neg, true, true);
-                    self.gates[rg_oi1] = rg1g.binop_neg_args(rg1neg, true, true);
-                    let (rg0g, rg0neg) = self.gates[rg_oi0];
-                    let (rg1g, rg1neg) = self.gates[rg_oi1];
-                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
-                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
-                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
-                    if in_next {
-                        // propagate to next after ROI
-                        self.gates[roi].1 = NoNegs;
-                        self.gates[next_oi].1 = NoNegs;
-                    }
-                    continue;
-                }
-            } else {
-                continue;
-            }
         }
     }
 
@@ -1757,7 +1758,9 @@ mod tests {
     {
         let mut circuit = circuit.clone();
         let subtree = circuit.subtrees().1.pop().unwrap();
-        circuit.optimize_negs_in_subtree(&subtree);
+        let mut subtree_copy = SubTreeCopy::new(&circuit, &subtree);
+        subtree_copy.optimize_negs();
+        circuit.apply_subtree(subtree_copy);
         circuit
     }
 
