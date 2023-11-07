@@ -581,6 +581,19 @@ where
         )
     }
 
+    fn apply_subtree(&mut self, subtree: SubTreeCopy<T>) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for i in 0..subtree.gates.len() {
+            let oi = if i < subtree.gates.len() - 1 {
+                subtree.subtree.gates[i].0
+            } else {
+                subtree.subtree.root
+            };
+            let oi = usize::try_from(oi).unwrap() - input_len;
+            self.gates[oi] = subtree.gates[i];
+        }
+    }
+
     fn optimize_negs_in_subtree(&mut self, subtree: &SubTree<T>) {
         let input_len = usize::try_from(self.input_len).unwrap();
         for (i, next_i) in &subtree.gates {
