@@ -109,10 +109,9 @@ where
             gates: subtree
                 .gates
                 .iter()
-                .map(|(x, _)| circuit.gates[usize::try_from(*x).unwrap() - input_len])
-                .chain(std::iter::once(
-                    circuit.gates[usize::try_from(subtree.root).unwrap() - input_len],
-                ))
+                .copied()
+                .chain(std::iter::once((subtree.root, T::default())))
+                .map(|(x, _)| circuit.gates[usize::try_from(x).unwrap() - input_len])
                 .collect::<Vec<_>>(),
         }
     }
