@@ -593,7 +593,6 @@ where
                 }
 
                 if rg0neg == NegInput1 && rg1neg == NegInput1 {
-                    println!("Found single-reduction subtree level 1");
                     // found - just change subtree.
                     self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
                     self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
@@ -635,7 +634,6 @@ where
                     && rg1neg == NoNegs
                 {
                     // found - just change subtree.
-                    println!("Found single-reduction subtree level 2");
                     self.gates[rg_oi00] = rg00g.binop_neg(rg00neg);
                     self.gates[rg_oi01] = rg01g.binop_neg(rg01neg);
                     self.gates[rg_oi10] = rg10g.binop_neg(rg10neg);
