@@ -564,6 +564,96 @@ where
                     self.gates[next_oi] = (new_next_g, new_next_neg);
                 }
             }
+            // check single reduction subtree.
+            let (g, neg) = self.gates[oi];
+            let (next_g, next_neg) = self.gates[next_oi];
+            let (roi, in_next) = if (next_neg == NegInput1) && *i == next_g.i1 {
+                // if this fork (from negated input)
+                (Some(oi), true)
+            } else if next_neg == NegOutput {
+                (Some(next_oi), false)
+            } else {
+                (None, false)
+            };
+
+            if let Some(roi) = roi {
+                let (rg, rneg) = self.gates[roi];
+                if rg.i0 < self.input_len || rg.i1 < self.input_len {
+                    continue;
+                }
+                let rg_oi0 = usize::try_from(rg.i0).unwrap() - input_len;
+                let rg_oi1 = usize::try_from(rg.i1).unwrap() - input_len;
+                let (rg0g, rg0neg) = self.gates[rg_oi0];
+                let (rg1g, rg1neg) = self.gates[rg_oi1];
+                if rg.func == VGateFunc::Xor
+                    || rg0g.func == VGateFunc::Xor
+                    || rg1g.func == VGateFunc::Xor
+                {
+                    continue;
+                }
+
+                if rg0neg == NegInput1 && rg1neg == NegInput1 {
+                    println!("Found single-reduction subtree level 1");
+                    // found - just change subtree.
+                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
+                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
+                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
+                    if in_next {
+                        // propagate to next after ROI
+                        self.gates[roi].1 = NoNegs;
+                        self.gates[next_oi].1 = NoNegs;
+                    }
+                    continue;
+                }
+                if rg0g.i0 < self.input_len
+                    || rg0g.i1 < self.input_len
+                    || rg1g.i0 < self.input_len
+                    || rg1g.i1 < self.input_len
+                {
+                    continue;
+                }
+                let rg_oi00 = usize::try_from(rg0g.i0).unwrap() - input_len;
+                let rg_oi01 = usize::try_from(rg0g.i1).unwrap() - input_len;
+                let rg_oi10 = usize::try_from(rg1g.i0).unwrap() - input_len;
+                let rg_oi11 = usize::try_from(rg1g.i1).unwrap() - input_len;
+                let (rg00g, rg00neg) = self.gates[rg_oi00];
+                let (rg01g, rg01neg) = self.gates[rg_oi01];
+                let (rg10g, rg10neg) = self.gates[rg_oi10];
+                let (rg11g, rg11neg) = self.gates[rg_oi11];
+                if rg00g.func == VGateFunc::Xor
+                    || rg01g.func == VGateFunc::Xor
+                    || rg10g.func == VGateFunc::Xor
+                    || rg11g.func == VGateFunc::Xor
+                {
+                    continue;
+                }
+                if rg00neg == NegInput1
+                    && rg01neg == NegInput1
+                    && rg10neg == NegInput1
+                    && rg11neg == NegInput1
+                    && rg0neg == NoNegs
+                    && rg1neg == NoNegs
+                {
+                    // found - just change subtree.
+                    self.gates[rg_oi00] = rg00g.binop_neg(rg00neg);
+                    self.gates[rg_oi01] = rg01g.binop_neg(rg01neg);
+                    self.gates[rg_oi10] = rg10g.binop_neg(rg10neg);
+                    self.gates[rg_oi11] = rg11g.binop_neg(rg11neg);
+                    self.gates[rg_oi0] = rg0g.binop_neg_args(rg0neg, true, true);
+                    self.gates[rg_oi1] = rg1g.binop_neg_args(rg1neg, true, true);
+                    self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
+                    self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
+                    self.gates[roi] = rg.binop_neg_args(rneg, true, true);
+                    if in_next {
+                        // propagate to next after ROI
+                        self.gates[roi].1 = NoNegs;
+                        self.gates[next_oi].1 = NoNegs;
+                    }
+                    continue;
+                }
+            } else {
+                continue;
+            }
         }
     }
 
@@ -1800,6 +1890,73 @@ mod tests {
                     (vgate_xor(14, 15), NoNegs),
                 ],
                 outputs: vec![(16, false)]
+            })
+        );
+        // single reduce subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                ],
+                outputs: vec![(6, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                ],
+                outputs: vec![(6, false)]
+            })
+        );
+        // no single reduce subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_xor(0, 1), NoNegs),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                ],
+                outputs: vec![(6, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_xor(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                ],
+                outputs: vec![(6, false)]
+            })
+        );
+        // single reduce subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(7, 6), NoNegs),
+                ],
+                outputs: vec![(8, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(7, 6), NegInput1),
+                ],
+                outputs: vec![(8, false)]
             })
         );
     }
