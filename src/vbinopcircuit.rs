@@ -1935,6 +1935,27 @@ mod tests {
                 outputs: vec![(6, false)]
             })
         );
+        // no single reduce subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                ],
+                outputs: vec![(6, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                ],
+                outputs: vec![(6, false)]
+            })
+        );
         // single reduce subtree
         assert_eq!(
             VBinOpCircuit {
@@ -2006,6 +2027,35 @@ mod tests {
                     (vgate_and(0, 1), NegInput1),
                     (vgate_or(2, 3), NegInput1),
                     (vgate_and(0, 2), NegInput1),
+                    (vgate_or(1, 3), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(6, 7), NoNegs),
+                    (vgate_or(8, 9), NegOutput),
+                ],
+                outputs: vec![(10, false)]
+            })
+        );
+        // no single reduce subtree level 2
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(0, 2), NoNegs),
+                    (vgate_or(1, 3), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(6, 7), NoNegs),
+                    (vgate_or(8, 9), NegOutput),
+                ],
+                outputs: vec![(10, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(0, 2), NoNegs),
                     (vgate_or(1, 3), NegInput1),
                     (vgate_or(4, 5), NoNegs),
                     (vgate_or(6, 7), NoNegs),
