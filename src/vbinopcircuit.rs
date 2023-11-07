@@ -2,7 +2,7 @@ use gatesim::*;
 
 use crate::vcircuit::*;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -121,6 +121,15 @@ where
     #[inline]
     fn gate_index(&self, t: T) -> Option<usize> {
         self.subtree.find_index(t)
+    }
+
+    #[inline]
+    fn circuit_index(&self, index: usize) -> T {
+        if index < self.subtree.gates.len() {
+            self.subtree.gates[index].0
+        } else {
+            self.subtree.root
+        }
     }
 
     fn optimize_negs(&mut self) {
@@ -242,7 +251,20 @@ where
     // arguments: self - original (no changes), opt1 - if option1 changed to true.
     // opt2 - if option2 changed to true.
     fn is_independent_optimize_negs(&self, opt1: &Self, opt2: &Self) -> bool {
-        false
+        let mut diff1 = HashSet::new();
+        let mut diff2 = HashSet::new();
+        for i in 0..self.gates.len() {
+            if self.gates[i] != opt1.gates[i] {
+                diff1.insert(self.circuit_index(i));
+            }
+        }
+        for i in 0..self.gates.len() {
+            if self.gates[i] != opt2.gates[i] {
+                diff2.insert(self.circuit_index(i));
+            }
+        }
+        /// TODO: its requires other checking: single reduction subtree collisions and others
+        !diff1.is_disjoint(&diff2)
     }
 }
 
