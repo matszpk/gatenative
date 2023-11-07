@@ -234,12 +234,15 @@ where
                         self.gates[roi].1 = NoNegs;
                         self.gates[next_oi].1 = NoNegs;
                     }
-                    continue;
                 }
-            } else {
-                continue;
             }
         }
+    }
+
+    // arguments: self - original (no changes), opt1 - if option1 changed to true.
+    // opt2 - if option2 changed to true.
+    fn is_independent_optimize_negs(&self, opt1: &Self, opt2: &Self) -> bool {
+        false
     }
 }
 
@@ -713,12 +716,6 @@ where
             let oi = usize::try_from(oi).unwrap() - input_len;
             self.gates[oi] = subtree.gates[i];
         }
-    }
-
-    // arguments: self - original (no changes), opt1 - if option1 changed to true.
-    // opt2 - if option2 changed to true.
-    fn is_independent_optimize_neg(&self, opt1: &Self, opt2: &Self) -> bool {
-        false
     }
 
     fn optimize_negs(&mut self) {}
