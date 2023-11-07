@@ -1709,6 +1709,37 @@ mod tests {
             })
         );
 
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NoNegs),
+                    (vgate_or(10, 9), NegInput1),
+                    (vgate_or(4, 11), NoNegs),
+                    (vgate_and(12, 5), NegInput1),
+                    (vgate_or(6, 13), NoNegs),
+                    (vgate_and(14, 7), NegInput1),
+                    (vgate_or(8, 15), NoNegs),
+                ],
+                outputs: vec![(16, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 9,
+                gates: vec![
+                    (vgate_or(0, 1), NoNegs),
+                    (vgate_or(2, 3), NoNegs),
+                    (vgate_and(9, 10), NegInput1),
+                    (vgate_or(4, 11), NegInput1),
+                    (vgate_or(5, 12), NegInput1),
+                    (vgate_or(6, 13), NegInput1),
+                    (vgate_or(7, 14), NegInput1),
+                    (vgate_or(8, 15), NegInput1),
+                ],
+                outputs: vec![(16, false)]
+            })
+        );
+
         // move negation through XOR subtree
         assert_eq!(
             VBinOpCircuit {
