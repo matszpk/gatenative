@@ -1981,6 +1981,31 @@ mod tests {
                 outputs: vec![(8, false)]
             })
         );
+        // no single reduce subtree - neg input at bad root gate input
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(6, 7), NegInput1),
+                ],
+                outputs: vec![(8, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(6, 7), NegInput1),
+                ],
+                outputs: vec![(8, false)]
+            })
+        );
         // single reduce subtree
         assert_eq!(
             VBinOpCircuit {
