@@ -77,10 +77,14 @@ where
         }
         self.gates.pop();
     }
-    
+
     #[inline]
     fn find_index(&self, t: T) -> Option<usize> {
-        self.gates.binary_search_by_key(&t, |(x, _)| *x).ok()
+        if t == self.root {
+            Some(self.gates.len())
+        } else {
+            self.gates.binary_search_by_key(&t, |(x, _)| *x).ok()
+        }
     }
 }
 
@@ -109,7 +113,7 @@ where
                 .collect::<Vec<_>>(),
         }
     }
-    
+
     #[inline]
     fn gate_index(&self, t: T) -> Option<usize> {
         self.subtree.find_index(t)
