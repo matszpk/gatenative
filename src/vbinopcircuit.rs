@@ -635,12 +635,15 @@ where
                     && rg1neg == NoNegs
                 {
                     // found - just change subtree.
+                    println!("Found single-reduction subtree level 2");
                     self.gates[rg_oi00] = rg00g.binop_neg(rg00neg);
                     self.gates[rg_oi01] = rg01g.binop_neg(rg01neg);
                     self.gates[rg_oi10] = rg10g.binop_neg(rg10neg);
                     self.gates[rg_oi11] = rg11g.binop_neg(rg11neg);
                     self.gates[rg_oi0] = rg0g.binop_neg_args(rg0neg, true, true);
                     self.gates[rg_oi1] = rg1g.binop_neg_args(rg1neg, true, true);
+                    let (rg0g, rg0neg) = self.gates[rg_oi0];
+                    let (rg1g, rg1neg) = self.gates[rg_oi1];
                     self.gates[rg_oi0] = rg0g.binop_neg(rg0neg);
                     self.gates[rg_oi1] = rg1g.binop_neg(rg1neg);
                     self.gates[roi] = rg.binop_neg_args(rneg, true, true);
@@ -1957,6 +1960,60 @@ mod tests {
                     (vgate_and(7, 6), NegInput1),
                 ],
                 outputs: vec![(8, false)]
+            })
+        );
+        // single reduce subtree
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(7, 6), NoNegs),
+                ],
+                outputs: vec![(8, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(4, 5), NegOutput),
+                    (vgate_or(0, 2), NoNegs),
+                    (vgate_and(7, 6), NoNegs),
+                ],
+                outputs: vec![(8, false)]
+            })
+        );
+        // single reduce subtree level 2
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(2, 0), NegInput1),
+                    (vgate_and(3, 1), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_and(6, 7), NoNegs),
+                    (vgate_and(8, 9), NoNegs),
+                ],
+                outputs: vec![(10, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(0, 2), NegInput1),
+                    (vgate_or(1, 3), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(6, 7), NoNegs),
+                    (vgate_or(8, 9), NegOutput),
+                ],
+                outputs: vec![(10, false)]
             })
         );
     }
