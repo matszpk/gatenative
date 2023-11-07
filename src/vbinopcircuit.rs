@@ -1698,6 +1698,55 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_vbinopcircuit_apply_subtree() {
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                3,
+                [
+                    Gate::new_nimpl(0, 1),
+                    Gate::new_xor(3, 2),
+                    Gate::new_nimpl(4, 2),
+                    Gate::new_and(0, 1),
+                    Gate::new_nor(5, 6),
+                    Gate::new_nor(2, 7),
+                    Gate::new_xor(1, 7),
+                    Gate::new_and(8, 9),
+                ],
+                [(4, true), (10, false)],
+            )
+            .unwrap(),
+        );
+        let (subtree_map, subtrees) = circuit.subtrees();
+        let mut subtree_copies = subtrees
+            .iter()
+            .map(|st| SubTreeCopy::new(&circuit, st))
+            .collect::<Vec<_>>();
+        subtree_copies[0].gates[0] = (vgate_or(0, 1), NegInput1);
+        subtree_copies[1].gates[2] = (vgate_and(5, 6), NoNegs);
+        subtree_copies[2].gates[1] = (vgate_xor(1, 7), NegOutput);
+        for st in subtree_copies {
+            circuit.apply_subtree(st);
+        }
+        assert_eq!(
+            circuit,
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_or(0, 1), NegInput1),
+                    (vgate_xor(3, 2), NoNegs),
+                    (vgate_and(4, 2), NegInput1),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_and(5, 6), NoNegs),
+                    (vgate_or(2, 7), NegOutput),
+                    (vgate_xor(1, 7), NegOutput),
+                    (vgate_and(8, 9), NoNegs),
+                ],
+                outputs: vec![(4, true), (10, false)],
+            }
+        );
+    }
+
     fn vbinop_optimize_negs_in_subtree<T>(circuit: VBinOpCircuit<T>) -> VBinOpCircuit<T>
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
