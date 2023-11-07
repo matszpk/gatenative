@@ -79,6 +79,33 @@ where
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Debug)]
+struct SubTreeCopy<'a, T: Clone + Copy> {
+    subtree: &'a SubTree<T>,
+    gates: Vec<(VGate<T>, VNegs)>,
+}
+
+impl<'a, T> SubTreeCopy<'a, T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn new(circuit: &VBinOpCircuit<T>, subtree: &'a SubTree<T>) -> Self {
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        Self {
+            subtree,
+            gates: subtree
+                .gates
+                .iter()
+                .map(|(x, _)| circuit.gates[usize::try_from(*x).unwrap() - input_len])
+                .collect::<Vec<_>>(),
+        }
+    }
+}
+
 impl<T> VBinOpCircuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
@@ -656,6 +683,12 @@ where
                 continue;
             }
         }
+    }
+
+    // arguments: self - original (no changes), opt1 - if option1 changed to true.
+    // opt2 - if option2 changed to true.
+    fn is_independent_optimize_neg(&self, opt1: &Self, opt2: &Self) -> bool {
+        false
     }
 
     fn optimize_negs(&mut self) {}
