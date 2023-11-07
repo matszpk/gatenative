@@ -264,7 +264,7 @@ where
             }
         }
         /// TODO: its requires other checking: single reduction subtree collisions and others
-        !diff1.is_disjoint(&diff2)
+        diff1.is_disjoint(&diff2)
     }
 }
 
