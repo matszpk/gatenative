@@ -2016,5 +2016,38 @@ mod tests {
                 outputs: vec![(10, false)]
             })
         );
+        // single reduce subtree level 2 - in_next
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(2, 0), NegInput1),
+                    (vgate_and(3, 1), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_and(6, 7), NoNegs),
+                    (vgate_and(8, 9), NoNegs),
+                    (vgate_or(0, 3), NoNegs),
+                    (vgate_and(11, 10), NoNegs),
+                ],
+                outputs: vec![(12, false)]
+            },
+            vbinop_optimize_negs_in_subtree(VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_or(2, 3), NegInput1),
+                    (vgate_and(0, 2), NegInput1),
+                    (vgate_or(1, 3), NegInput1),
+                    (vgate_or(4, 5), NoNegs),
+                    (vgate_or(6, 7), NoNegs),
+                    (vgate_or(8, 9), NoNegs),
+                    (vgate_or(0, 3), NoNegs),
+                    (vgate_and(11, 10), NegInput1),
+                ],
+                outputs: vec![(12, false)]
+            })
+        );
     }
 }
