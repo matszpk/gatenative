@@ -473,8 +473,13 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut deps: Vec<Vec<T>> = vec![vec![]; subtrees.len()];
         for (i, st) in subtrees.iter().enumerate() {
-            for (gi, _) in &st.gates {
-                let (g, _) = self.gates[usize::try_from(*gi).unwrap() - input_len];
+            for (gi, _) in st
+                .gates
+                .iter()
+                .copied()
+                .chain(std::iter::once((st.root, T::default())))
+            {
+                let (g, _) = self.gates[usize::try_from(gi).unwrap() - input_len];
                 if g.i0 >= self.input_len {
                     if let Ok(p) = subtrees.binary_search_by_key(&g.i0, |st| st.root) {
                         deps[p].push(T::try_from(i).unwrap());
@@ -762,25 +767,25 @@ mod tests {
                 Circuit::new(
                     4,
                     [
-                        Gate::new_nimpl(0, 1), // 4
-                        Gate::new_and(0, 3),   // 5
-                        Gate::new_xor(1, 4),   // 6
-                        Gate::new_and(3, 5),   // 7
-                        Gate::new_xor(2, 6),   // 8
-                        Gate::new_xor(3, 7),   // 9
-                        Gate::new_nor(8, 9),   // 10
-                        Gate::new_and(8, 9),   // 11
-                        Gate::new_nimpl(8, 9), // 12
-                        Gate::new_nor(0, 10),  // 13
-                        Gate::new_nor(1, 11),  // 14
-                        Gate::new_xor(2, 12),  // 15
-                        Gate::new_xor(13, 14), // 16
-                        Gate::new_and(0, 10),  // 17 tree4
-                        Gate::new_nor(15, 16), // 18 tree3
-                        Gate::new_nimpl(1, 12), // 19 tree4
+                        Gate::new_nimpl(0, 1),   // 4
+                        Gate::new_and(0, 3),     // 5
+                        Gate::new_xor(1, 4),     // 6
+                        Gate::new_and(3, 5),     // 7
+                        Gate::new_xor(2, 6),     // 8
+                        Gate::new_xor(3, 7),     // 9
+                        Gate::new_nor(8, 9),     // 10
+                        Gate::new_and(8, 9),     // 11
+                        Gate::new_nimpl(8, 9),   // 12
+                        Gate::new_nor(0, 10),    // 13
+                        Gate::new_nor(1, 11),    // 14
+                        Gate::new_xor(2, 12),    // 15
+                        Gate::new_xor(13, 14),   // 16
+                        Gate::new_and(0, 10),    // 17 tree4
+                        Gate::new_nor(15, 16),   // 18 tree3
+                        Gate::new_nimpl(1, 12),  // 19 tree4
                         Gate::new_nimpl(11, 17), // 20
-                        Gate::new_nimpl(3, 19), // 21
-                        Gate::new_xor(20, 21), // 22
+                        Gate::new_nimpl(3, 19),  // 21
+                        Gate::new_xor(20, 21),   // 22
                     ],
                     [(18, true), (22, false)],
                 )
@@ -1351,6 +1356,48 @@ mod tests {
         let (_, subtrees) = circuit.subtrees();
         assert_eq!(
             vec![vec![1], vec![2], vec![]],
+            circuit.subtree_dependencies(subtrees),
+        );
+
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                4,
+                [
+                    Gate::new_nimpl(0, 1),   // 4
+                    Gate::new_and(0, 3),     // 5
+                    Gate::new_xor(1, 4),     // 6
+                    Gate::new_and(3, 5),     // 7
+                    Gate::new_xor(2, 6),     // 8
+                    Gate::new_xor(3, 7),     // 9
+                    Gate::new_nor(8, 9),     // 10
+                    Gate::new_and(8, 9),     // 11
+                    Gate::new_nimpl(8, 9),   // 12
+                    Gate::new_nor(0, 10),    // 13
+                    Gate::new_nor(1, 11),    // 14
+                    Gate::new_xor(2, 12),    // 15
+                    Gate::new_xor(13, 14),   // 16
+                    Gate::new_and(0, 10),    // 17 tree4
+                    Gate::new_nor(15, 16),   // 18 tree3
+                    Gate::new_nimpl(1, 12),  // 19 tree4
+                    Gate::new_nimpl(11, 17), // 20
+                    Gate::new_nimpl(3, 19),  // 21
+                    Gate::new_xor(20, 21),   // 22
+                ],
+                [(18, true), (22, false)],
+            )
+            .unwrap(),
+        );
+        let (_, subtrees) = circuit.subtrees();
+        assert_eq!(
+            vec![
+                vec![2, 3, 4],
+                vec![2, 3, 4],
+                vec![5, 6],
+                vec![5, 6],
+                vec![5, 6],
+                vec![],
+                vec![]
+            ],
             circuit.subtree_dependencies(subtrees),
         );
     }
