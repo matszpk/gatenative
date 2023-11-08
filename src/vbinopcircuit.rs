@@ -487,6 +487,10 @@ where
                 }
             }
         }
+        for d in &mut deps {
+            d.sort();
+            d.dedup();
+        }
         deps
     }
 
@@ -1237,6 +1241,32 @@ mod tests {
                 ],
                 outputs: vec![(12, false)]
             })
+        );
+    }
+
+    #[test]
+    fn test_vbinopcircuit_subtree_dependencies() {
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                3,
+                [
+                    Gate::new_nimpl(0, 1),
+                    Gate::new_xor(3, 2),
+                    Gate::new_nimpl(4, 2),
+                    Gate::new_and(0, 1),
+                    Gate::new_nor(5, 6),
+                    Gate::new_nor(2, 7),
+                    Gate::new_xor(1, 7),
+                    Gate::new_and(8, 9),
+                ],
+                [(4, true), (10, false)],
+            )
+            .unwrap(),
+        );
+        let (_, subtrees) = circuit.subtrees();
+        assert_eq!(
+            vec![vec![1], vec![2], vec![]],
+            circuit.subtree_dependencies(subtrees),
         );
     }
 }
