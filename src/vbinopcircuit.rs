@@ -703,6 +703,91 @@ mod tests {
             )
             .subtrees()
         );
+
+        assert_eq!(
+            (
+                BTreeMap::from_iter([
+                    (4, 8),
+                    (5, 9),
+                    (6, 8),
+                    (7, 9),
+                    (8, 8),
+                    (9, 9),
+                    (10, 10),
+                    (11, 11),
+                    (12, 12),
+                    (13, 18),
+                    (14, 18),
+                    (15, 18),
+                    (16, 18),
+                    (17, 22),
+                    (18, 18),
+                    (19, 22),
+                    (20, 22),
+                    (21, 22),
+                    (22, 22),
+                ]),
+                vec![
+                    SubTree {
+                        root: 8,
+                        gates: vec![(4, 6), (6, 8)]
+                    },
+                    SubTree {
+                        root: 9,
+                        gates: vec![(5, 7), (7, 9)]
+                    },
+                    SubTree {
+                        root: 10,
+                        gates: vec![]
+                    },
+                    SubTree {
+                        root: 11,
+                        gates: vec![]
+                    },
+                    SubTree {
+                        root: 12,
+                        gates: vec![]
+                    },
+                    SubTree {
+                        root: 18,
+                        gates: vec![(13, 16), (14, 16), (15, 18), (16, 18)]
+                    },
+                    SubTree {
+                        root: 22,
+                        gates: vec![(17, 20), (19, 21), (20, 22), (21, 22)]
+                    },
+                ]
+            ),
+            VBinOpCircuit::from(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1), // 4
+                        Gate::new_and(0, 3),   // 5
+                        Gate::new_xor(1, 4),   // 6
+                        Gate::new_and(3, 5),   // 7
+                        Gate::new_xor(2, 6),   // 8
+                        Gate::new_xor(3, 7),   // 9
+                        Gate::new_nor(8, 9),   // 10
+                        Gate::new_and(8, 9),   // 11
+                        Gate::new_nimpl(8, 9), // 12
+                        Gate::new_nor(0, 10),  // 13
+                        Gate::new_nor(1, 11),  // 14
+                        Gate::new_xor(2, 12),  // 15
+                        Gate::new_xor(13, 14), // 16
+                        Gate::new_and(0, 10),  // 17 tree4
+                        Gate::new_nor(15, 16), // 18 tree3
+                        Gate::new_nimpl(1, 12), // 19 tree4
+                        Gate::new_nimpl(11, 17), // 20
+                        Gate::new_nimpl(3, 19), // 21
+                        Gate::new_xor(20, 21), // 22
+                    ],
+                    [(18, true), (22, false)],
+                )
+                .unwrap()
+            )
+            .subtrees()
+        );
     }
 
     #[test]
