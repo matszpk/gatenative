@@ -174,8 +174,13 @@ where
                 if rg.i0 < self.input_len || rg.i1 < self.input_len {
                     continue;
                 }
-                let rg_oi0 = self.gate_index(rg.i0).unwrap();
-                let rg_oi1 = self.gate_index(rg.i1).unwrap();
+                let rg_oi0 = self.gate_index(rg.i0);
+                let rg_oi1 = self.gate_index(rg.i1);
+                if rg_oi0.is_none() || rg_oi1.is_none() {
+                    continue;
+                }
+                let rg_oi0 = rg_oi0.unwrap();
+                let rg_oi1 = rg_oi1.unwrap();
                 let (rg0g, rg0neg) = self.gates[rg_oi0];
                 let (rg1g, rg1neg) = self.gates[rg_oi1];
                 if rg.func == VGateFunc::Xor
@@ -204,10 +209,18 @@ where
                 {
                     continue;
                 }
-                let rg_oi00 = self.gate_index(rg0g.i0).unwrap();
-                let rg_oi01 = self.gate_index(rg0g.i1).unwrap();
-                let rg_oi10 = self.gate_index(rg1g.i0).unwrap();
-                let rg_oi11 = self.gate_index(rg1g.i1).unwrap();
+                let rg_oi00 = self.gate_index(rg0g.i0);
+                let rg_oi01 = self.gate_index(rg0g.i1);
+                let rg_oi10 = self.gate_index(rg1g.i0);
+                let rg_oi11 = self.gate_index(rg1g.i1);
+                if rg_oi00.is_none() || rg_oi01.is_none() || rg_oi10.is_none() || rg_oi11.is_none()
+                {
+                    continue;
+                }
+                let rg_oi00 = rg_oi00.unwrap();
+                let rg_oi01 = rg_oi01.unwrap();
+                let rg_oi10 = rg_oi10.unwrap();
+                let rg_oi11 = rg_oi11.unwrap();
                 let (rg00g, rg00neg) = self.gates[rg_oi00];
                 let (rg01g, rg01neg) = self.gates[rg_oi01];
                 let (rg10g, rg10neg) = self.gates[rg_oi10];
