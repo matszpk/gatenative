@@ -276,7 +276,8 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    // return map of Xor gates: key - XOR gate index, value - root XOR gate index.
+    // return map of gates: key - XOR gate index, value - root gate index.
+    // return subtrees.
     fn subtrees(&self) -> (BTreeMap<T, T>, Vec<SubTree<T>>) {
         // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
