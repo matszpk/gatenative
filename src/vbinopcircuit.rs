@@ -511,6 +511,10 @@ where
             st.optimize_negs();
         }
 
+        // find the best choice
+        for (i, st) in subtree_copies.iter_mut().enumerate() {
+            let deps = &subtree_deps[i];
+        }
         // apply
         for st in subtree_copies {
             self.apply_subtree(st);
