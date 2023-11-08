@@ -466,6 +466,30 @@ where
         }
     }
 
+    // get list of subtree dependencies:
+    // entry: entry for current subtree
+    //    - list of indices of next subtrees that have connection to current subtree.
+    fn subtree_dependencies(&self, subtrees: Vec<SubTree<T>>) -> Vec<Vec<T>> {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        let mut deps: Vec<Vec<T>> = vec![vec![]; subtrees.len()];
+        for (i, st) in subtrees.iter().enumerate() {
+            for (gi, _) in &st.gates {
+                let (g, _) = self.gates[usize::try_from(*gi).unwrap() - input_len];
+                if g.i0 >= self.input_len {
+                    if let Ok(p) = subtrees.binary_search_by_key(&g.i0, |st| st.root) {
+                        deps[p].push(T::try_from(i).unwrap());
+                    }
+                }
+                if g.i1 >= self.input_len {
+                    if let Ok(p) = subtrees.binary_search_by_key(&g.i1, |st| st.root) {
+                        deps[p].push(T::try_from(i).unwrap());
+                    }
+                }
+            }
+        }
+        deps
+    }
+
     fn optimize_negs(&mut self) {}
 }
 
