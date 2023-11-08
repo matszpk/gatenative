@@ -469,9 +469,9 @@ where
     // get list of subtree dependencies:
     // entry: entry for current subtree
     //    - list of indices of next subtrees that have connection to current subtree.
-    fn subtree_dependencies(&self, subtrees: &[SubTree<T>]) -> Vec<Vec<T>> {
+    fn subtree_dependencies(&self, subtrees: &[SubTree<T>]) -> Vec<Vec<(T, T, bool)>> {
         let input_len = usize::try_from(self.input_len).unwrap();
-        let mut deps: Vec<Vec<T>> = vec![vec![]; subtrees.len()];
+        let mut deps: Vec<Vec<(T, T, bool)>> = vec![vec![]; subtrees.len()];
         for (i, st) in subtrees.iter().enumerate() {
             for (gi, _) in st
                 .gates
@@ -482,19 +482,18 @@ where
                 let (g, _) = self.gates[usize::try_from(gi).unwrap() - input_len];
                 if g.i0 >= self.input_len {
                     if let Ok(p) = subtrees.binary_search_by_key(&g.i0, |st| st.root) {
-                        deps[p].push(T::try_from(i).unwrap());
+                        deps[p].push((T::try_from(i).unwrap(), gi, false));
                     }
                 }
                 if g.i1 >= self.input_len {
                     if let Ok(p) = subtrees.binary_search_by_key(&g.i1, |st| st.root) {
-                        deps[p].push(T::try_from(i).unwrap());
+                        deps[p].push((T::try_from(i).unwrap(), gi, true));
                     }
                 }
             }
         }
         for d in &mut deps {
             d.sort();
-            d.dedup();
         }
         deps
     }
@@ -1375,7 +1374,11 @@ mod tests {
         );
         let (_, subtrees) = circuit.subtrees();
         assert_eq!(
-            vec![vec![1], vec![2], vec![]],
+            vec![
+                vec![(1, 5, false)],
+                vec![(2, 8, true), (2, 9, true)],
+                vec![]
+            ],
             circuit.subtree_dependencies(&subtrees),
         );
 
@@ -1410,11 +1413,11 @@ mod tests {
         let (_, subtrees) = circuit.subtrees();
         assert_eq!(
             vec![
-                vec![2, 3, 4],
-                vec![2, 3, 4],
-                vec![5, 6],
-                vec![5, 6],
-                vec![5, 6],
+                vec![(2, 10, false), (3, 11, false), (4, 12, false)],
+                vec![(2, 10, true), (3, 11, true), (4, 12, true)],
+                vec![(5, 13, true), (6, 17, true)],
+                vec![(5, 14, true), (6, 20, false)],
+                vec![(5, 15, true), (6, 19, true)],
                 vec![],
                 vec![]
             ],
