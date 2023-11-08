@@ -469,7 +469,7 @@ where
     // get list of subtree dependencies:
     // entry: entry for current subtree
     //    - list of indices of next subtrees that have connection to current subtree.
-    fn subtree_dependencies(&self, subtrees: Vec<SubTree<T>>) -> Vec<Vec<T>> {
+    fn subtree_dependencies(&self, subtrees: &[SubTree<T>]) -> Vec<Vec<T>> {
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut deps: Vec<Vec<T>> = vec![vec![]; subtrees.len()];
         for (i, st) in subtrees.iter().enumerate() {
@@ -499,7 +499,23 @@ where
         deps
     }
 
-    fn optimize_negs(&mut self) {}
+    fn optimize_negs(&mut self) {
+        let (_, subtrees) = self.subtrees();
+        let subtree_deps = self.subtree_dependencies(&subtrees);
+        let mut subtree_copies = subtrees
+            .iter()
+            .map(|st| SubTreeCopy::new(self, &st))
+            .collect::<Vec<_>>();
+        // preliminary optimizations
+        for st in &mut subtree_copies {
+            st.optimize_negs();
+        }
+
+        // apply
+        for st in subtree_copies {
+            self.apply_subtree(st);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1356,7 +1372,7 @@ mod tests {
         let (_, subtrees) = circuit.subtrees();
         assert_eq!(
             vec![vec![1], vec![2], vec![]],
-            circuit.subtree_dependencies(subtrees),
+            circuit.subtree_dependencies(&subtrees),
         );
 
         let mut circuit = VBinOpCircuit::from(
@@ -1398,7 +1414,7 @@ mod tests {
                 vec![],
                 vec![]
             ],
-            circuit.subtree_dependencies(subtrees),
+            circuit.subtree_dependencies(&subtrees),
         );
     }
 }
