@@ -503,7 +503,7 @@ where
         for st in subtree_copies {
             self.apply_subtree(st);
         }
-        println!("Circuit after prelim: {:?}", self);
+        //println!("Circuit after prelim: {:?}", self);
         // after preliminary optimizations
         let (_, subtrees) = self.subtrees();
         let mut subtree_copies = subtrees
@@ -574,19 +574,21 @@ where
                         let (st, st_mod) = cur_subtrees.get_mut(&st_b).unwrap();
                         let (r, rneg) = st.gates.last().unwrap();
                         *st.gates.last_mut().unwrap() = r.binop_neg(*rneg);
-                        *st_mod = true;
-                        for (dep_st_i, p, garg) in &subtree_deps[st_b] {
-                            let dep_st_i = usize::try_from(*dep_st_i).unwrap();
-                            let (st, st_mod) = cur_subtrees.get_mut(&dep_st_i).unwrap();
-                            let st_gi = usize::try_from(*p).unwrap();
-                            let (arg, arg_neg) = st.gates[st_gi];
+                        let st_root = st.subtree.root;
+                        for (dep_dst_i, p, _) in &subtree_deps[st_b] {
+                            let dep_dst_i = usize::try_from(*dep_dst_i).unwrap();
+                            let (dst, dst_mod) = cur_subtrees.get_mut(&dep_dst_i).unwrap();
+                            let dst_gi = usize::try_from(*p).unwrap();
+                            let (arg, arg_neg) = dst.gates[dst_gi];
+                            let garg = st_root == arg.i1;
                             // println!(
-                            //     "  Ch dep: {:?} {:?}: {:?}: {:?} {}",
-                            //     st_b, dep_st_i, st.gates, p, *garg
+                            //     "  Ch dep: {:?} {:?}: {:?}: {:?} {} = {:?} {:?}",
+                            //     st_b, dep_dst_i, dst.gates, p, garg,
+                            //     arg, st_root
                             // );
-                            st.gates[st_gi] = arg.binop_neg_args(arg_neg, !*garg, *garg);
-                            // println!("  Ch dep after: {:?} {:?}: {:?}", st_b, dep_st_i, st.gates);
-                            *st_mod = true;
+                            dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, !garg, garg);
+                            // println!("  Ch dep after: {:?} {:?}: {:?}", dst_b, dep_dst_i, dst.gates);
+                            *dst_mod = true;
                         }
                     }
                 }
