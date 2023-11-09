@@ -581,7 +581,7 @@ where
                             let dst_gi = usize::try_from(*p).unwrap();
                             let (arg, arg_neg) = dst.gates[dst_gi];
                             let garg = if arg.i0 != arg.i1 {
-                                // determine from real gate: because it can changed earlier!
+                                // determine from real gate: because it can be changed earlier!
                                 st_root == arg.i1
                             } else {
                                 // if double occurrence then get from original deps
