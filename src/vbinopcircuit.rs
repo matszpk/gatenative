@@ -549,6 +549,16 @@ where
         }
         // TODO: find best combinations for circuit-output subtrees (last subtrees)
         // find combinations
+        let mut circ_output_negs = self.outputs.iter().map(|(_, n)| *n).collect::<Vec<_>>();
+        let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
+        for (i, (x, _)) in self.outputs.iter().enumerate() {
+            if let Some(list) = circ_out_map.get_mut(x) {
+                list.push(i);
+            } else {
+                circ_out_map.insert(*x, vec![i]);
+            }
+        }
+
         for mc in multi_choices {
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
@@ -614,6 +624,9 @@ where
         // apply
         for st in subtree_copies {
             self.apply_subtree(st);
+        }
+        for (i, n) in circ_output_negs.into_iter().enumerate() {
+            self.outputs[i].1 = n;
         }
     }
 }
