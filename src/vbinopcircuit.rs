@@ -568,6 +568,24 @@ where
             for c in 0..1 << mc.len() {
                 let mut cur_subtrees = orig_subtrees.clone();
                 // change subtrees
+                for (b, st_b) in mc.iter().enumerate() {
+                    if ((1 << b) & c) != 0 {
+                        let st_b = usize::try_from(*st_b).unwrap();
+                        let st = cur_subtrees.get_mut(&st_b).unwrap();
+                        let (r, rneg) = st.gates.last().unwrap();
+                        *st.gates.last_mut().unwrap() = r.binop_neg(*rneg);
+                        for (dep_st_i, p, garg) in &subtree_deps[st_b] {
+                            let dep_st_i = usize::try_from(*dep_st_i).unwrap();
+                            let st = cur_subtrees.get_mut(&dep_st_i).unwrap();
+                            let st_gi = usize::try_from(*p).unwrap();
+                            let (arg, arg_neg) = st.gates[st_gi];
+                            st.gates[st_gi] = arg.binop_neg_args(arg_neg, !*garg, *garg);
+                        }
+                    }
+                }
+                for st in cur_subtrees.values_mut() {
+                    st.optimize_negs();
+                }
 
                 let cur_neg_count = cur_subtrees
                     .values()
