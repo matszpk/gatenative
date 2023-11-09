@@ -597,7 +597,6 @@ where
             self.apply_subtree(st);
         }
 
-        // TODO: find best combinations for circuit-output subtrees (last subtrees)
         let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
         for (i, (x, _)) in self.outputs.iter().enumerate() {
             if let Some(list) = circ_out_map.get_mut(x) {
