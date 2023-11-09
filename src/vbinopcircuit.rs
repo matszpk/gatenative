@@ -279,6 +279,14 @@ where
         /// TODO: its requires other checking: single reduction subtree collisions and others
         diff1.is_disjoint(&diff2)
     }
+
+    #[inline]
+    fn count_negs(&self) -> usize {
+        self.gates
+            .iter()
+            .map(|(_, n)| usize::from(*n != NoNegs))
+            .sum::<usize>()
+    }
 }
 
 impl<T> VBinOpCircuit<T>
@@ -514,7 +522,7 @@ where
 
         // single choice: subtree root that can be negated or not.
         // multi choice: choice-bucket -list of single choices.
-        const MAX_MULTI_CHOICE: usize = 5;
+        const MAX_MULTI_CHOICE: usize = 4;
         let mut multi_choice_map = HashMap::<T, usize>::new();
         let mut multi_choices: Vec<Vec<T>> = vec![];
         for (i, st) in subtree_copies.iter_mut().enumerate() {
@@ -537,6 +545,42 @@ where
                     }
                 }
                 multi_choices.push(vec![T::try_from(i).unwrap()]);
+            }
+        }
+        // find combinations
+        for mc in multi_choices {
+            let mut orig_subtrees = HashMap::new();
+            for st_i in &mc {
+                let st_i = usize::try_from(*st_i).unwrap();
+                orig_subtrees.insert(st_i, subtree_copies[st_i].clone());
+                for (dep_st_i, _, _) in &subtree_deps[st_i] {
+                    let dep_st_i = usize::try_from(*dep_st_i).unwrap();
+                    orig_subtrees.insert(dep_st_i, subtree_copies[dep_st_i].clone());
+                }
+            }
+            let mut best_subtrees = orig_subtrees.clone();
+
+            let mut best_neg_count = best_subtrees
+                .values()
+                .map(|st| st.count_negs())
+                .sum::<usize>();
+
+            for c in 0..1 << mc.len() {
+                let mut cur_subtrees = orig_subtrees.clone();
+                // change subtrees
+
+                let cur_neg_count = cur_subtrees
+                    .values()
+                    .map(|st| st.count_negs())
+                    .sum::<usize>();
+                if cur_neg_count < best_neg_count {
+                    best_subtrees = cur_subtrees;
+                    best_neg_count = cur_neg_count;
+                }
+            }
+            // apply changes into subtrees
+            for (i, st) in best_subtrees {
+                subtree_copies[i] = st;
             }
         }
         // apply
