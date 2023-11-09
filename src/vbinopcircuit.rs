@@ -261,25 +261,6 @@ where
         }
     }
 
-    // arguments: self - original (no changes), opt1 - if option1 changed to true.
-    // opt2 - if option2 changed to true.
-    fn is_independent_optimize_negs(&self, opt1: &Self, opt2: &Self) -> bool {
-        let mut diff1 = HashSet::new();
-        let mut diff2 = HashSet::new();
-        for i in 0..self.gates.len() {
-            if self.gates[i] != opt1.gates[i] {
-                diff1.insert(self.circuit_index(i));
-            }
-        }
-        for i in 0..self.gates.len() {
-            if self.gates[i] != opt2.gates[i] {
-                diff2.insert(self.circuit_index(i));
-            }
-        }
-        /// TODO: its requires other checking: single reduction subtree collisions and others
-        diff1.is_disjoint(&diff2)
-    }
-
     #[inline]
     fn count_negs(&self) -> usize {
         self.gates
