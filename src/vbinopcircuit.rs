@@ -532,7 +532,9 @@ where
             if !found {
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
-                    multi_choice_map.insert(*dep, cur_choice);
+                    if !multi_choice_map.contains_key(dep) {
+                        multi_choice_map.insert(*dep, cur_choice);
+                    }
                 }
                 multi_choices.push(vec![T::try_from(i).unwrap()]);
             }
