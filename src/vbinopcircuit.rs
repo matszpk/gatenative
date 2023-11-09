@@ -553,10 +553,14 @@ where
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
                 let st_i = usize::try_from(*st_i).unwrap();
-                orig_subtrees.insert(st_i, subtree_copies[st_i].clone());
+                if !orig_subtrees.contains_key(&st_i) {
+                    orig_subtrees.insert(st_i, subtree_copies[st_i].clone());
+                }
                 for (dep_st_i, _, _) in &subtree_deps[st_i] {
                     let dep_st_i = usize::try_from(*dep_st_i).unwrap();
-                    orig_subtrees.insert(dep_st_i, subtree_copies[dep_st_i].clone());
+                    if !orig_subtrees.contains_key(&dep_st_i) {
+                        orig_subtrees.insert(dep_st_i, subtree_copies[dep_st_i].clone());
+                    }
                 }
             }
             let mut best_subtrees = orig_subtrees.clone();
