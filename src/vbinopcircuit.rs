@@ -637,6 +637,19 @@ where
             }
         }
     }
+
+    #[inline]
+    fn count_negs(&self) -> usize {
+        self.gates
+            .iter()
+            .map(|(_, n)| usize::from(*n != NoNegs))
+            .sum::<usize>()
+            + self
+                .outputs
+                .iter()
+                .map(|(_, n)| usize::from(*n))
+                .sum::<usize>()
+    }
 }
 
 #[cfg(test)]
@@ -1540,6 +1553,59 @@ mod tests {
                 vec![]
             ],
             circuit.subtree_dependencies(&subtrees),
+        );
+    }
+
+    #[test]
+    fn test_vbinopcircuit_optimize_negs() {
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                4,
+                [
+                    Gate::new_nimpl(0, 1),   // 4
+                    Gate::new_and(0, 3),     // 5
+                    Gate::new_xor(1, 4),     // 6
+                    Gate::new_and(3, 5),     // 7
+                    Gate::new_xor(2, 6),     // 8
+                    Gate::new_xor(3, 7),     // 9
+                    Gate::new_nor(8, 9),     // 10
+                    Gate::new_and(8, 9),     // 11
+                    Gate::new_nimpl(8, 9),   // 12
+                    Gate::new_nor(0, 10),    // 13
+                    Gate::new_nor(1, 11),    // 14
+                    Gate::new_xor(2, 12),    // 15
+                    Gate::new_xor(13, 14),   // 16
+                    Gate::new_and(0, 10),    // 17 tree4
+                    Gate::new_nor(15, 16),   // 18 tree3
+                    Gate::new_nimpl(1, 12),  // 19 tree4
+                    Gate::new_nimpl(11, 17), // 20
+                    Gate::new_nimpl(3, 19),  // 21
+                    Gate::new_xor(20, 21),   // 22
+                ],
+                [(18, true), (22, false)],
+            )
+            .unwrap(),
+        );
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_or(1, 0), NegInput1),
+                    (vgate_and(3, 2), NegInput1),
+                    (vgate_or(2, 0), NegInput1),
+                    (vgate_and(3, 1), NegInput1),
+                    (vgate_and(4, 5), NoNegs),
+                    (vgate_and(6, 7), NoNegs),
+                    (vgate_and(8, 9), NoNegs),
+                    (vgate_or(0, 3), NoNegs),
+                    (vgate_and(11, 10), NoNegs),
+                ],
+                outputs: vec![(12, false)]
+            },
+            circuit
         );
     }
 }
