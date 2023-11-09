@@ -537,7 +537,7 @@ where
                     break;
                 }
             }
-            if !found {
+            if !found && !deps.is_empty() {
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
                     if !multi_choice_map.contains_key(dep) {
