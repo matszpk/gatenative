@@ -491,7 +491,6 @@ where
 
     fn optimize_negs(&mut self) {
         let (_, subtrees) = self.subtrees();
-        let subtree_deps = self.subtree_dependencies(&subtrees);
         let mut subtree_copies = subtrees
             .iter()
             .map(|st| SubTreeCopy::new(self, &st))
@@ -500,6 +499,18 @@ where
         for st in &mut subtree_copies {
             st.optimize_negs();
         }
+        // apply
+        for st in subtree_copies {
+            self.apply_subtree(st);
+        }
+        println!("Circuit after prelim: {:?}", self);
+        // after preliminary optimizations
+        let (_, subtrees) = self.subtrees();
+        let mut subtree_copies = subtrees
+            .iter()
+            .map(|st| SubTreeCopy::new(self, &st))
+            .collect::<Vec<_>>();
+        let subtree_deps = self.subtree_dependencies(&subtrees);
 
         // single choice: subtree root that can be negated or not.
         // multi choice: choice-bucket -list of single choices.
@@ -531,6 +542,7 @@ where
 
         // find combinations
         for mc in multi_choices {
+            //println!("MC: {:?}", mc);
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
                 let st_i = usize::try_from(*st_i).unwrap();
@@ -568,13 +580,20 @@ where
                             let (st, st_mod) = cur_subtrees.get_mut(&dep_st_i).unwrap();
                             let st_gi = usize::try_from(*p).unwrap();
                             let (arg, arg_neg) = st.gates[st_gi];
+                            // println!(
+                            //     "  Ch dep: {:?} {:?}: {:?}: {:?} {}",
+                            //     st_b, dep_st_i, st.gates, p, *garg
+                            // );
                             st.gates[st_gi] = arg.binop_neg_args(arg_neg, !*garg, *garg);
+                            // println!("  Ch dep after: {:?} {:?}: {:?}", st_b, dep_st_i, st.gates);
                             *st_mod = true;
                         }
                     }
                 }
                 for (st, _) in cur_subtrees.values_mut().filter(|(st, m)| *m) {
+                    //println!("  cursubtree: {:?}", st.gates);
                     st.optimize_negs();
+                    //println!("  cursubtree 2: {:?}", st.gates);
                 }
 
                 let cur_neg_count = cur_subtrees
@@ -1586,24 +1605,35 @@ mod tests {
             )
             .unwrap(),
         );
-        println!("Count negs: {}", circuit.count_negs());
+        // println!("Count negs: {}", circuit.count_negs());
+        // println!("Circuit: {:?}", circuit);
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
+        //println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
                 gates: vec![
-                    (vgate_or(1, 0), NegInput1),
-                    (vgate_and(3, 2), NegInput1),
-                    (vgate_or(2, 0), NegInput1),
-                    (vgate_and(3, 1), NegInput1),
-                    (vgate_and(4, 5), NoNegs),
-                    (vgate_and(6, 7), NoNegs),
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_and(0, 3), NoNegs),
+                    (vgate_xor(1, 4), NoNegs),
+                    (vgate_and(3, 5), NoNegs),
+                    (vgate_xor(2, 6), NoNegs),
+                    (vgate_xor(3, 7), NoNegs),
+                    (vgate_or(8, 9), NegOutput),
                     (vgate_and(8, 9), NoNegs),
-                    (vgate_or(0, 3), NoNegs),
-                    (vgate_and(11, 10), NoNegs),
+                    (vgate_and(8, 9), NegInput1),
+                    (vgate_or(0, 10), NoNegs),
+                    (vgate_or(1, 11), NoNegs),
+                    (vgate_xor(2, 12), NoNegs),
+                    (vgate_xor(13, 14), NoNegs),
+                    (vgate_and(0, 10), NoNegs),
+                    (vgate_or(15, 16), NoNegs),
+                    (vgate_or(12, 1), NegInput1),
+                    (vgate_and(11, 17), NegInput1),
+                    (vgate_and(3, 19), NoNegs),
+                    (vgate_xor(20, 21), NoNegs),
                 ],
-                outputs: vec![(12, false)]
+                outputs: vec![(18, false), (22, false)]
             },
             circuit
         );
