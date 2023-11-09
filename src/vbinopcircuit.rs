@@ -575,12 +575,18 @@ where
                         let (r, rneg) = st.gates.last().unwrap();
                         *st.gates.last_mut().unwrap() = r.binop_neg(*rneg);
                         let st_root = st.subtree.root;
-                        for (dep_dst_i, p, _) in &subtree_deps[st_b] {
+                        for (dep_dst_i, p, in_garg) in &subtree_deps[st_b] {
                             let dep_dst_i = usize::try_from(*dep_dst_i).unwrap();
                             let (dst, dst_mod) = cur_subtrees.get_mut(&dep_dst_i).unwrap();
                             let dst_gi = usize::try_from(*p).unwrap();
                             let (arg, arg_neg) = dst.gates[dst_gi];
-                            let garg = st_root == arg.i1;
+                            let garg = if arg.i0 != arg.i1 {
+                                // determine from real gate: because it can changed earlier!
+                                st_root == arg.i1
+                            } else {
+                                // if double occurrence then get from original deps
+                                *in_garg
+                            };
                             // println!(
                             //     "  Ch dep: {:?} {:?}: {:?}: {:?} {} = {:?} {:?}",
                             //     st_b, dep_dst_i, dst.gates, p, garg,
