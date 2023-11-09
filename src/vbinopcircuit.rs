@@ -547,18 +547,8 @@ where
                 multi_choices.push(vec![T::try_from(i).unwrap()]);
             }
         }
-        // TODO: find best combinations for circuit-output subtrees (last subtrees)
-        // find combinations
-        let mut circ_output_negs = self.outputs.iter().map(|(_, n)| *n).collect::<Vec<_>>();
-        let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
-        for (i, (x, _)) in self.outputs.iter().enumerate() {
-            if let Some(list) = circ_out_map.get_mut(x) {
-                list.push(i);
-            } else {
-                circ_out_map.insert(*x, vec![i]);
-            }
-        }
 
+        // find combinations
         for mc in multi_choices {
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
@@ -625,8 +615,46 @@ where
         for st in subtree_copies {
             self.apply_subtree(st);
         }
-        for (i, n) in circ_output_negs.into_iter().enumerate() {
-            self.outputs[i].1 = n;
+
+        // TODO: find best combinations for circuit-output subtrees (last subtrees)
+        let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
+        for (i, (x, _)) in self.outputs.iter().enumerate() {
+            if let Some(list) = circ_out_map.get_mut(x) {
+                list.push(i);
+            } else {
+                circ_out_map.insert(*x, vec![i]);
+            }
+        }
+
+        // finally optimize negation at circuit outputs
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for (r, list) in circ_out_map {
+            if r < self.input_len {
+                continue;
+            }
+            let r = usize::try_from(r).unwrap() - input_len;
+            let mut pcount = 0;
+            let mut ncount = 0;
+
+            for x in list.iter() {
+                if self.outputs[*x].1 {
+                    ncount += 1;
+                } else {
+                    pcount += 1;
+                }
+            }
+            // check what is better
+            let (rg, rneg) = self.gates[r];
+            let (rg_new, rneg_new) = rg.binop_neg(rneg);
+            let nochange = usize::from(rneg != NoNegs) + ncount;
+            let neghchange = usize::from(rneg_new != NoNegs) + pcount;
+            if nochange > neghchange {
+                // if negation is better then apply negation
+                self.gates[r] = (rg_new, rneg_new);
+                for x in list.iter() {
+                    self.outputs[*x].1 = !self.outputs[*x].1;
+                }
+            }
         }
     }
 }
