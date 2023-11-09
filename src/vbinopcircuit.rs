@@ -512,9 +512,30 @@ where
             st.optimize_negs();
         }
 
-        // find the best choice
+        // single choice: subtree root that can be negated or not.
+        // multi choice: choice-bucket -list of single choices.
+        const MAX_MULTI_CHOICE: usize = 5;
+        let mut multi_choice_map = HashMap::<T, usize>::new();
+        let mut multi_choices: Vec<Vec<T>> = vec![];
         for (i, st) in subtree_copies.iter_mut().enumerate() {
             let deps = &subtree_deps[i];
+            let mut found = false;
+            for (dep, _, _) in deps {
+                if let Some(mc) = multi_choice_map.get(&dep) {
+                    if multi_choices[*mc].len() <= MAX_MULTI_CHOICE {
+                        multi_choices[*mc].push(T::try_from(i).unwrap());
+                        found = true;
+                    }
+                    break;
+                }
+            }
+            if !found {
+                let cur_choice = multi_choices.len();
+                for (dep, _, _) in deps {
+                    multi_choice_map.insert(*dep, cur_choice);
+                }
+                multi_choices.push(vec![T::try_from(i).unwrap()]);
+            }
         }
         // apply
         for st in subtree_copies {
