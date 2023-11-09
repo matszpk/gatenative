@@ -547,6 +547,7 @@ where
                 multi_choices.push(vec![T::try_from(i).unwrap()]);
             }
         }
+        // TODO: find best combinations for circuit-output subtrees (last subtrees)
         // find combinations
         for mc in multi_choices {
             let mut orig_subtrees = HashMap::new();
