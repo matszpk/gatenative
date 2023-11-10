@@ -29,13 +29,6 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum VOccur<T: Clone + Copy> {
-    Gate(T),
-    GateDouble(T),
-    Output(T), // circuit output index
-}
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 struct SubTree<T> {
     root: T,
