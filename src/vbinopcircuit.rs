@@ -537,7 +537,7 @@ where
             let mut found = false;
             for (dep, _, _) in deps {
                 if let Some(mc) = multi_choice_map.get(&dep) {
-                    if multi_choices[*mc].len() <= MAX_MULTI_CHOICE {
+                    if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
                         multi_choices[*mc].push(T::try_from(i).unwrap());
                         found = true;
                     }
