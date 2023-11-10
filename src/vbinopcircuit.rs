@@ -525,24 +525,44 @@ where
         for (i, st) in subtree_copies.iter_mut().enumerate() {
             let deps = &subtree_deps[i];
             let mut found = false;
+            let mut added = false;
             for (dep, _, _) in deps {
+                //println!("mccreate: {}: {:?}", i, dep);
                 if let Some(mcs) = multi_choice_map.get_mut(&dep) {
                     for mc in mcs.iter() {
                         if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
+                            //println!("mccreate: add {:?}: {:?} {:?}", mc, i, dep);
                             multi_choices[*mc].push(T::try_from(i).unwrap());
-                            found = true;
+                            added = true;
                             break;
                         }
                     }
-                    if !found {
-                        mcs.push(multi_choices.len());
-                        multi_choices.push(vec![T::try_from(i).unwrap()]);
-                        found = true;
+                    found = true;
+                    if added {
+                        break;
                     }
-                    break;
                 }
             }
-            if !found {
+            if found {
+                if !added {
+                    // if found but not added then find the best MCs where it can be added
+                    let mut best_dep = T::default();
+                    let mut best_mcs_len = usize::MAX;
+                    for (dep, _, _) in deps {
+                        if let Some(mcs) = multi_choice_map.get(&dep) {
+                            if best_mcs_len > mcs.len() {
+                                best_mcs_len = mcs.len();
+                                best_dep = *dep;
+                            }
+                        }
+                    }
+                    if let Some(mcs) = multi_choice_map.get_mut(&best_dep) {
+                        //println!("mccreate: found {:?}: {:?} {:?}", i, best_dep, mcs);
+                        mcs.push(multi_choices.len());
+                        multi_choices.push(vec![T::try_from(i).unwrap()]);
+                    }
+                }
+            } else {
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
                     if !multi_choice_map.contains_key(dep) {
