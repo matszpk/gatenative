@@ -543,29 +543,12 @@ where
                     }
                 }
             }
-            if found {
-                if !added {
-                    // if found but not added then find the best MCs where it can be added
-                    let mut best_dep = T::default();
-                    let mut best_mcs_len = usize::MAX;
-                    for (dep, _, _) in deps {
-                        if let Some(mcs) = multi_choice_map.get(&dep) {
-                            if best_mcs_len > mcs.len() {
-                                best_mcs_len = mcs.len();
-                                best_dep = *dep;
-                            }
-                        }
-                    }
-                    if let Some(mcs) = multi_choice_map.get_mut(&best_dep) {
-                        //println!("mccreate: found {:?}: {:?} {:?}", i, best_dep, mcs);
-                        mcs.push(multi_choices.len());
-                        multi_choices.push(vec![T::try_from(i).unwrap()]);
-                    }
-                }
-            } else {
+            if !found || !added {
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
-                    if !multi_choice_map.contains_key(dep) {
+                    if let Some(mcs) = multi_choice_map.get_mut(dep) {
+                        mcs.push(cur_choice);
+                    } else {
                         multi_choice_map.insert(*dep, vec![cur_choice]);
                     }
                 }
