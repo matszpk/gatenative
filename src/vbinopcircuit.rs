@@ -551,7 +551,7 @@ where
 
         // find combinations
         for mc in multi_choices {
-            println!("MC: {:?}", mc);
+            //println!("MC: {:?}", mc);
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
                 let st_i = usize::try_from(*st_i).unwrap();
