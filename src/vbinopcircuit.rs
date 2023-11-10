@@ -278,9 +278,8 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    // return map of gates: key - XOR gate index, value - root gate index.
     // return subtrees.
-    fn subtrees(&self) -> (BTreeMap<T, T>, Vec<SubTree<T>>) {
+    fn subtrees(&self) -> Vec<SubTree<T>> {
         // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut usage = vec![0u8; self.gates.len()];
@@ -415,7 +414,7 @@ where
         }
 
         let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
-        for (&x, &root) in &subtree_map {
+        for (x, root) in subtree_map {
             if let Some(st) = subtree_object_map.get_mut(&root) {
                 st.gates.push((x, T::default()));
             } else {
@@ -429,17 +428,14 @@ where
             }
         }
 
-        (
-            subtree_map,
-            subtree_object_map
-                .into_iter()
-                .map(|(_, mut v)| {
-                    v.sort_and_dedup();
-                    v.fill_successors(self);
-                    v
-                })
-                .collect::<Vec<_>>(),
-        )
+        subtree_object_map
+            .into_iter()
+            .map(|(_, mut v)| {
+                v.sort_and_dedup();
+                v.fill_successors(self);
+                v
+            })
+            .collect::<Vec<_>>()
     }
 
     fn apply_subtree(&mut self, subtree: SubTreeCopy<T>) {
@@ -496,7 +492,7 @@ where
     }
 
     fn optimize_negs(&mut self) {
-        let (_, subtrees) = self.subtrees();
+        let subtrees = self.subtrees();
         let mut subtree_copies = subtrees
             .iter()
             .map(|st| SubTreeCopy::new(self, &st))
@@ -511,7 +507,7 @@ where
         }
         println!("Circuit after prelim: {:?}", self);
         // after preliminary optimizations
-        let (_, subtrees) = self.subtrees();
+        let subtrees = self.subtrees();
         let mut subtree_copies = subtrees
             .iter()
             .map(|st| SubTreeCopy::new(self, &st))
@@ -755,13 +751,10 @@ mod tests {
     #[test]
     fn test_vbinopcircuit_subtrees() {
         assert_eq!(
-            (
-                BTreeMap::from_iter([(4, 4), (3, 4)]),
-                vec![SubTree {
-                    root: 4,
-                    gates: vec![(3, 4)]
-                }]
-            ),
+            vec![SubTree {
+                root: 4,
+                gates: vec![(3, 4)]
+            }],
             VBinOpCircuit::from(
                 Circuit::new(3, [Gate::new_xor(0, 1), Gate::new_xor(2, 3)], [(4, true)]).unwrap()
             )
@@ -769,23 +762,20 @@ mod tests {
         );
 
         assert_eq!(
-            (
-                BTreeMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
-                vec![
-                    SubTree {
-                        root: 3,
-                        gates: vec![],
-                    },
-                    SubTree {
-                        root: 4,
-                        gates: vec![],
-                    },
-                    SubTree {
-                        root: 7,
-                        gates: vec![(5, 7), (6, 7)],
-                    },
-                ]
-            ),
+            vec![
+                SubTree {
+                    root: 3,
+                    gates: vec![],
+                },
+                SubTree {
+                    root: 4,
+                    gates: vec![],
+                },
+                SubTree {
+                    root: 7,
+                    gates: vec![(5, 7), (6, 7)],
+                },
+            ],
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -804,23 +794,20 @@ mod tests {
         );
 
         assert_eq!(
-            (
-                BTreeMap::from_iter([(3, 3), (4, 4), (5, 7), (6, 7), (7, 7)]),
-                vec![
-                    SubTree {
-                        root: 3,
-                        gates: vec![],
-                    },
-                    SubTree {
-                        root: 4,
-                        gates: vec![],
-                    },
-                    SubTree {
-                        root: 7,
-                        gates: vec![(5, 7), (6, 7)],
-                    },
-                ]
-            ),
+            vec![
+                SubTree {
+                    root: 3,
+                    gates: vec![],
+                },
+                SubTree {
+                    root: 4,
+                    gates: vec![],
+                },
+                SubTree {
+                    root: 7,
+                    gates: vec![(5, 7), (6, 7)],
+                },
+            ],
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -839,13 +826,10 @@ mod tests {
         );
 
         assert_eq!(
-            (
-                BTreeMap::from_iter([(3, 7), (4, 7), (5, 7), (6, 7), (7, 7)]),
-                vec![SubTree {
-                    root: 7,
-                    gates: vec![(3, 4), (4, 5), (5, 7), (6, 7)]
-                }]
-            ),
+            vec![SubTree {
+                root: 7,
+                gates: vec![(3, 4), (4, 5), (5, 7), (6, 7)]
+            }],
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -864,32 +848,20 @@ mod tests {
         );
 
         assert_eq!(
-            (
-                BTreeMap::from_iter([
-                    (3, 4),
-                    (4, 4),
-                    (5, 7),
-                    (6, 7),
-                    (7, 7),
-                    (8, 10),
-                    (9, 10),
-                    (10, 10)
-                ]),
-                vec![
-                    SubTree {
-                        root: 4,
-                        gates: vec![(3, 4)]
-                    },
-                    SubTree {
-                        root: 7,
-                        gates: vec![(5, 7), (6, 7)]
-                    },
-                    SubTree {
-                        root: 10,
-                        gates: vec![(8, 10), (9, 10)]
-                    },
-                ]
-            ),
+            vec![
+                SubTree {
+                    root: 4,
+                    gates: vec![(3, 4)]
+                },
+                SubTree {
+                    root: 7,
+                    gates: vec![(5, 7), (6, 7)]
+                },
+                SubTree {
+                    root: 10,
+                    gates: vec![(8, 10), (9, 10)]
+                },
+            ],
             VBinOpCircuit::from(
                 Circuit::new(
                     3,
@@ -911,59 +883,36 @@ mod tests {
         );
 
         assert_eq!(
-            (
-                BTreeMap::from_iter([
-                    (4, 8),
-                    (5, 9),
-                    (6, 8),
-                    (7, 9),
-                    (8, 8),
-                    (9, 9),
-                    (10, 10),
-                    (11, 11),
-                    (12, 12),
-                    (13, 18),
-                    (14, 18),
-                    (15, 18),
-                    (16, 18),
-                    (17, 22),
-                    (18, 18),
-                    (19, 22),
-                    (20, 22),
-                    (21, 22),
-                    (22, 22),
-                ]),
-                vec![
-                    SubTree {
-                        root: 8,
-                        gates: vec![(4, 6), (6, 8)]
-                    },
-                    SubTree {
-                        root: 9,
-                        gates: vec![(5, 7), (7, 9)]
-                    },
-                    SubTree {
-                        root: 10,
-                        gates: vec![]
-                    },
-                    SubTree {
-                        root: 11,
-                        gates: vec![]
-                    },
-                    SubTree {
-                        root: 12,
-                        gates: vec![]
-                    },
-                    SubTree {
-                        root: 18,
-                        gates: vec![(13, 16), (14, 16), (15, 18), (16, 18)]
-                    },
-                    SubTree {
-                        root: 22,
-                        gates: vec![(17, 20), (19, 21), (20, 22), (21, 22)]
-                    },
-                ]
-            ),
+            vec![
+                SubTree {
+                    root: 8,
+                    gates: vec![(4, 6), (6, 8)]
+                },
+                SubTree {
+                    root: 9,
+                    gates: vec![(5, 7), (7, 9)]
+                },
+                SubTree {
+                    root: 10,
+                    gates: vec![]
+                },
+                SubTree {
+                    root: 11,
+                    gates: vec![]
+                },
+                SubTree {
+                    root: 12,
+                    gates: vec![]
+                },
+                SubTree {
+                    root: 18,
+                    gates: vec![(13, 16), (14, 16), (15, 18), (16, 18)]
+                },
+                SubTree {
+                    root: 22,
+                    gates: vec![(17, 20), (19, 21), (20, 22), (21, 22)]
+                },
+            ],
             VBinOpCircuit::from(
                 Circuit::new(
                     4,
@@ -1015,7 +964,7 @@ mod tests {
             )
             .unwrap(),
         );
-        let (subtree_map, subtrees) = circuit.subtrees();
+        let subtrees = circuit.subtrees();
         let mut subtree_copies = subtrees
             .iter()
             .map(|st| SubTreeCopy::new(&circuit, st))
@@ -1054,7 +1003,7 @@ mod tests {
         <usize as TryFrom<T>>::Error: Debug,
     {
         let mut circuit = circuit.clone();
-        let subtree = circuit.subtrees().1.pop().unwrap();
+        let subtree = circuit.subtrees().pop().unwrap();
         let mut subtree_copy = SubTreeCopy::new(&circuit, &subtree);
         subtree_copy.optimize_negs();
         circuit.apply_subtree(subtree_copy);
@@ -1554,7 +1503,7 @@ mod tests {
             )
             .unwrap(),
         );
-        let (_, subtrees) = circuit.subtrees();
+        let subtrees = circuit.subtrees();
         assert_eq!(
             vec![
                 vec![(1, 0, false)],
@@ -1592,7 +1541,7 @@ mod tests {
             )
             .unwrap(),
         );
-        let (_, subtrees) = circuit.subtrees();
+        let subtrees = circuit.subtrees();
         assert_eq!(
             vec![
                 vec![(2, 0, false), (3, 0, false), (4, 0, false)],
