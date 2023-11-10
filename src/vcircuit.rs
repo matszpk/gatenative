@@ -1,6 +1,5 @@
 use gatesim::*;
 
-use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
