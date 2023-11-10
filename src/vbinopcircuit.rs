@@ -1828,5 +1828,104 @@ mod tests {
             },
             circuit
         );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),     // 4
+                (vgate_and(0, 2), NoNegs),     // 5
+                (vgate_or(4, 5), NoNegs),      // 6
+                (vgate_and(0, 3), NoNegs),     // 7
+                (vgate_and(1, 2), NoNegs),     // 8
+                (vgate_or(7, 8), NoNegs),      // 9
+                (vgate_and(1, 3), NoNegs),     // 10
+                (vgate_and(2, 3), NoNegs),     // 11
+                (vgate_or(10, 11), NoNegs),    // 12
+                (vgate_xor(1, 3), NoNegs),     // 13
+                (vgate_xor(2, 3), NoNegs),     // 14
+                (vgate_or(13, 14), NoNegs),    // 15
+                (vgate_xor(0, 3), NoNegs),     // 16
+                (vgate_xor(1, 2), NoNegs),     // 17
+                (vgate_or(16, 17), NoNegs),    // 18
+                (vgate_or(0, 2), NoNegs),      // 19
+                (vgate_or(1, 3), NoNegs),      // 20
+                (vgate_and(19, 20), NoNegs),   // 21
+                (vgate_or(0, 6), NegInput1),   // 22
+                (vgate_or(0, 9), NegInput1),   // 23
+                (vgate_or(1, 12), NegInput1),  // 24
+                (vgate_or(2, 15), NegInput1),  // 25
+                (vgate_or(3, 18), NegInput1),  // 26
+                (vgate_or(3, 21), NegInput1),  // 27
+                (vgate_xor(22, 23), NoNegs),   // 28
+                (vgate_xor(24, 25), NoNegs),   // 29
+                (vgate_xor(26, 27), NoNegs),   // 30
+                (vgate_and(28, 29), NoNegs),   // 31
+                (vgate_and(30, 31), NoNegs),   // 32
+                (vgate_and(0, 6), NegInput1),  // 33
+                (vgate_and(0, 9), NegInput1),  // 34
+                (vgate_and(1, 12), NegInput1), // 35
+                (vgate_and(2, 15), NegInput1), // 36
+                (vgate_and(3, 18), NegInput1), // 37
+                (vgate_and(3, 21), NegInput1), // 38
+                (vgate_xor(33, 34), NoNegs),   // 39
+                (vgate_xor(35, 36), NoNegs),   // 40
+                (vgate_xor(37, 38), NoNegs),   // 41
+                (vgate_or(39, 40), NoNegs),    // 42
+                (vgate_or(41, 42), NoNegs),    // 43
+            ],
+            outputs: vec![(32, false), (43, false)],
+        };
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NoNegs),      // 4
+                    (vgate_and(0, 2), NoNegs),      // 5
+                    (vgate_or(4, 5), NegOutput),    // 6
+                    (vgate_and(0, 3), NoNegs),      // 7
+                    (vgate_and(1, 2), NoNegs),      // 8
+                    (vgate_or(7, 8), NegOutput),    // 9
+                    (vgate_and(1, 3), NoNegs),      // 10
+                    (vgate_and(2, 3), NoNegs),      // 11
+                    (vgate_or(10, 11), NegOutput),  // 12
+                    (vgate_xor(1, 3), NoNegs),      // 13
+                    (vgate_xor(2, 3), NoNegs),      // 14
+                    (vgate_or(13, 14), NegOutput),  // 15
+                    (vgate_xor(0, 3), NoNegs),      // 16
+                    (vgate_xor(1, 2), NoNegs),      // 17
+                    (vgate_or(16, 17), NegOutput),  // 18
+                    (vgate_or(0, 2), NoNegs),       // 19
+                    (vgate_or(1, 3), NoNegs),       // 20
+                    (vgate_and(19, 20), NegOutput), // 21
+                    (vgate_or(0, 6), NoNegs),       // 22
+                    (vgate_or(0, 9), NoNegs),       // 23
+                    (vgate_or(1, 12), NoNegs),      // 24
+                    (vgate_or(2, 15), NoNegs),      // 25
+                    (vgate_or(3, 18), NoNegs),      // 26
+                    (vgate_or(3, 21), NoNegs),      // 27
+                    (vgate_xor(22, 23), NoNegs),    // 28
+                    (vgate_xor(24, 25), NoNegs),    // 29
+                    (vgate_xor(26, 27), NoNegs),    // 30
+                    (vgate_and(28, 29), NoNegs),    // 31
+                    (vgate_and(30, 31), NoNegs),    // 32
+                    (vgate_and(0, 6), NoNegs),      // 33
+                    (vgate_and(0, 9), NoNegs),      // 34
+                    (vgate_and(1, 12), NoNegs),     // 35
+                    (vgate_and(2, 15), NoNegs),     // 36
+                    (vgate_and(3, 18), NoNegs),     // 37
+                    (vgate_and(3, 21), NoNegs),     // 38
+                    (vgate_xor(33, 34), NoNegs),    // 39
+                    (vgate_xor(35, 36), NoNegs),    // 40
+                    (vgate_xor(37, 38), NoNegs),    // 41
+                    (vgate_or(39, 40), NoNegs),     // 42
+                    (vgate_or(41, 42), NoNegs),     // 43
+                ],
+                outputs: vec![(32, false), (43, false)],
+            },
+            circuit
+        );
     }
 }
