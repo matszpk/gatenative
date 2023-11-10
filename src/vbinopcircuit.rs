@@ -512,6 +512,15 @@ where
             .collect::<Vec<_>>();
         let subtree_deps = self.subtree_dependencies(&subtrees);
 
+        let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
+        for (i, (x, _)) in self.outputs.iter().enumerate() {
+            if let Some(list) = circ_out_map.get_mut(x) {
+                list.push(i);
+            } else {
+                circ_out_map.insert(*x, vec![i]);
+            }
+        }
+
         // single choice: subtree root that can be negated or not.
         // multi choice: choice-bucket -list of single choices.
         const MAX_MULTI_CHOICE: usize = 4;
@@ -529,7 +538,7 @@ where
                     break;
                 }
             }
-            if !found && !deps.is_empty() {
+            if !found {
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
                     if !multi_choice_map.contains_key(dep) {
@@ -542,7 +551,7 @@ where
 
         // find combinations
         for mc in multi_choices {
-            //println!("MC: {:?}", mc);
+            println!("MC: {:?}", mc);
             let mut orig_subtrees = HashMap::new();
             for st_i in &mc {
                 let st_i = usize::try_from(*st_i).unwrap();
@@ -557,10 +566,18 @@ where
                 }
             }
             let mut best_subtrees = orig_subtrees.clone();
+            let mut best_comb = 0;
 
             let mut best_neg_count = best_subtrees
                 .values()
-                .map(|st| st.count_negs())
+                .map(|st| {
+                    let circ_output_negs = if let Some(list) = circ_out_map.get(&st.subtree.root) {
+                        list.iter().filter(|x| self.outputs[**x].1).count()
+                    } else {
+                        0
+                    };
+                    st.count_negs() + circ_output_negs
+                })
                 .sum::<usize>();
 
             for c in 0..1 << mc.len() {
@@ -568,13 +585,23 @@ where
                     orig_subtrees.iter().map(|(k, v)| (*k, (v.clone(), false))),
                 );
                 // change subtrees
+                let mut circ_output_neg_count = 0;
                 for (b, st_b) in mc.iter().enumerate() {
+                    let st_b = usize::try_from(*st_b).unwrap();
+                    let (st, st_mod) = cur_subtrees.get_mut(&st_b).unwrap();
                     if ((1 << b) & c) != 0 {
-                        let st_b = usize::try_from(*st_b).unwrap();
-                        let (st, st_mod) = cur_subtrees.get_mut(&st_b).unwrap();
+                        // if root of subtree will be negated then:
+                        // summarize circuit output negs
+                        if let Some(list) = circ_out_map.get(&st.subtree.root) {
+                            for x in list {
+                                circ_output_neg_count += usize::from(!self.outputs[*x].1);
+                            }
+                        }
+                        // change negation at root of subtree
                         let (r, rneg) = st.gates.last().unwrap();
                         *st.gates.last_mut().unwrap() = r.binop_neg(*rneg);
                         let st_root = st.subtree.root;
+                        // change negation at further dependencies
                         for (dep_dst_i, p, in_garg) in &subtree_deps[st_b] {
                             let dep_dst_i = usize::try_from(*dep_dst_i).unwrap();
                             let (dst, dst_mod) = cur_subtrees.get_mut(&dep_dst_i).unwrap();
@@ -593,8 +620,17 @@ where
                             //     arg, st_root
                             // );
                             dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, !garg, garg);
-                            // println!("  Ch dep after: {:?} {:?}: {:?}", dst_b, dep_dst_i, dst.gates);
+                            // println!("  Ch dep after: {:?} {:?}: {:?}", dst_b, dep_dst_i,
+                            // dst.gates);
                             *dst_mod = true;
+                        }
+                    } else {
+                        // if root of subtree will NOT be negated then:
+                        // summarize circuit output negs
+                        if let Some(list) = circ_out_map.get(&st.subtree.root) {
+                            for x in list {
+                                circ_output_neg_count += usize::from(self.outputs[*x].1);
+                            }
                         }
                     }
                 }
@@ -607,11 +643,25 @@ where
                 let cur_neg_count = cur_subtrees
                     .values()
                     .map(|(st, _)| st.count_negs())
-                    .sum::<usize>();
+                    .sum::<usize>()
+                    + circ_output_neg_count;
                 if cur_neg_count < best_neg_count {
                     best_subtrees =
                         HashMap::from_iter(cur_subtrees.into_iter().map(|(k, (st, _))| (k, st)));
                     best_neg_count = cur_neg_count;
+                    best_comb = c;
+                }
+            }
+            // apply to circuit outputs
+            for (b, st_b) in mc.iter().enumerate() {
+                let st_b = usize::try_from(*st_b).unwrap();
+                let st = best_subtrees.get(&st_b).unwrap();
+                if ((1 << b) & best_comb) != 0 {
+                    if let Some(list) = circ_out_map.get(&st.subtree.root) {
+                        for x in list {
+                            self.outputs[*x].1 = !self.outputs[*x].1;
+                        }
+                    }
                 }
             }
             // apply changes into subtrees
@@ -622,46 +672,6 @@ where
         // apply
         for st in subtree_copies {
             self.apply_subtree(st);
-        }
-
-        let mut circ_out_map = HashMap::<T, Vec<usize>>::new();
-        for (i, (x, _)) in self.outputs.iter().enumerate() {
-            if let Some(list) = circ_out_map.get_mut(x) {
-                list.push(i);
-            } else {
-                circ_out_map.insert(*x, vec![i]);
-            }
-        }
-
-        // finally optimize negation at circuit outputs
-        let input_len = usize::try_from(self.input_len).unwrap();
-        for (r, list) in circ_out_map {
-            if r < self.input_len {
-                continue;
-            }
-            let r = usize::try_from(r).unwrap() - input_len;
-            let mut pcount = 0;
-            let mut ncount = 0;
-
-            for x in list.iter() {
-                if self.outputs[*x].1 {
-                    ncount += 1;
-                } else {
-                    pcount += 1;
-                }
-            }
-            // check what is better
-            let (rg, rneg) = self.gates[r];
-            let (rg_new, rneg_new) = rg.binop_neg(rneg);
-            let nochange = usize::from(rneg != NoNegs) + ncount;
-            let neghchange = usize::from(rneg_new != NoNegs) + pcount;
-            if nochange > neghchange {
-                // if negation is better then apply negation
-                self.gates[r] = (rg_new, rneg_new);
-                for x in list.iter() {
-                    self.outputs[*x].1 = !self.outputs[*x].1;
-                }
-            }
         }
     }
 
