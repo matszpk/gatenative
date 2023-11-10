@@ -531,6 +531,7 @@ where
                         if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
                             multi_choices[*mc].push(T::try_from(i).unwrap());
                             found = true;
+                            break;
                         }
                     }
                     if !found {
