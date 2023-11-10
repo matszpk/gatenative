@@ -530,15 +530,23 @@ where
         // single choice: subtree root that can be negated or not.
         // multi choice: choice-bucket -list of single choices.
         const MAX_MULTI_CHOICE: usize = 4;
-        let mut multi_choice_map = HashMap::<T, usize>::new();
+        // multichoice map - dep to multichoice indexes
+        let mut multi_choice_map = HashMap::<T, Vec<usize>>::new();
         let mut multi_choices: Vec<Vec<T>> = vec![];
         for (i, st) in subtree_copies.iter_mut().enumerate() {
             let deps = &subtree_deps[i];
             let mut found = false;
             for (dep, _, _) in deps {
-                if let Some(mc) = multi_choice_map.get(&dep) {
-                    if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
-                        multi_choices[*mc].push(T::try_from(i).unwrap());
+                if let Some(mcs) = multi_choice_map.get_mut(&dep) {
+                    for mc in mcs.iter() {
+                        if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
+                            multi_choices[*mc].push(T::try_from(i).unwrap());
+                            found = true;
+                        }
+                    }
+                    if !found {
+                        mcs.push(multi_choices.len());
+                        multi_choices.push(vec![T::try_from(i).unwrap()]);
                         found = true;
                     }
                     break;
@@ -548,7 +556,7 @@ where
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
                     if !multi_choice_map.contains_key(dep) {
-                        multi_choice_map.insert(*dep, cur_choice);
+                        multi_choice_map.insert(*dep, vec![cur_choice]);
                     }
                 }
                 multi_choices.push(vec![T::try_from(i).unwrap()]);
