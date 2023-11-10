@@ -503,7 +503,7 @@ where
         for st in subtree_copies {
             self.apply_subtree(st);
         }
-        //println!("Circuit after prelim: {:?}", self);
+        println!("Circuit after prelim: {:?}", self);
         // after preliminary optimizations
         let (_, subtrees) = self.subtrees();
         let mut subtree_copies = subtrees
@@ -1652,6 +1652,59 @@ mod tests {
                     (vgate_xor(20, 21), NoNegs),
                 ],
                 outputs: vec![(18, false), (22, false)]
+            },
+            circuit
+        );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),      // 4
+                (vgate_and(0, 2), NoNegs),      // 5
+                (vgate_or(4, 5), NoNegs),       // 6
+                (vgate_and(0, 3), NoNegs),      // 7
+                (vgate_and(1, 2), NoNegs),      // 8
+                (vgate_or(7, 8), NoNegs),       // 9
+                (vgate_and(1, 3), NoNegs),      // 10
+                (vgate_and(2, 3), NoNegs),      // 11
+                (vgate_or(10, 11), NoNegs),     // 12
+                (vgate_or(0, 6), NegInput1),    // 13
+                (vgate_or(1, 9), NegInput1),    // 14
+                (vgate_or(13, 12), NegInput1),  // 15
+                (vgate_and(14, 15), NoNegs),    // 16
+                (vgate_and(0, 6), NegInput1),   // 17
+                (vgate_and(1, 9), NegInput1),   // 18
+                (vgate_and(17, 12), NegInput1), // 19
+                (vgate_or(18, 19), NoNegs),     // 20
+            ],
+            outputs: vec![(16, false), (20, false)],
+        };
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 4,
+                gates: vec![
+                    (vgate_and(0, 1), NoNegs),     // 4
+                    (vgate_and(0, 2), NoNegs),     // 5
+                    (vgate_or(4, 5), NegOutput),   // 6
+                    (vgate_and(0, 3), NoNegs),     // 7
+                    (vgate_and(1, 2), NoNegs),     // 8
+                    (vgate_or(7, 8), NegOutput),   // 9
+                    (vgate_and(1, 3), NoNegs),     // 10
+                    (vgate_and(2, 3), NoNegs),     // 11
+                    (vgate_or(10, 11), NegOutput), // 12
+                    (vgate_or(6, 0), NoNegs),      // 13
+                    (vgate_or(1, 9), NoNegs),      // 14
+                    (vgate_or(13, 12), NoNegs),    // 15
+                    (vgate_and(14, 15), NoNegs),   // 16
+                    (vgate_and(6, 0), NoNegs),     // 17
+                    (vgate_and(1, 9), NoNegs),     // 18
+                    (vgate_and(17, 12), NoNegs),   // 19
+                    (vgate_or(18, 19), NoNegs),    // 20
+                ],
+                outputs: vec![(16, false), (20, false)],
             },
             circuit
         );
