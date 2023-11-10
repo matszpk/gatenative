@@ -457,7 +457,13 @@ where
 
     // get list of subtree dependencies:
     // entry: entry for current subtree
-    //    - list of indices of next subtrees that have connection to current subtree.
+    //    list of entries
+    //    (n, g, a):
+    //      n - index of next subtree that connected to current subtree
+    //      g - index of gate in next subtree (from 0 (first gate in next subtree))
+    //          that have connection to current subtree (its root).
+    //      a - boolean. false if root of current subtree in first input of gate
+    //          where is connection to current subtree. true - if second input of gate.
     fn subtree_dependencies(&self, subtrees: &[SubTree<T>]) -> Vec<Vec<(T, T, bool)>> {
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut deps: Vec<Vec<(T, T, bool)>> = vec![vec![]; subtrees.len()];
