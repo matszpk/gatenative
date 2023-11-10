@@ -505,7 +505,7 @@ where
         for st in subtree_copies {
             self.apply_subtree(st);
         }
-        println!("Circuit after prelim: {:?}", self);
+        //println!("Circuit after prelim: {:?}", self);
         // after preliminary optimizations
         let subtrees = self.subtrees();
         let mut subtree_copies = subtrees
