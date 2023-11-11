@@ -579,7 +579,7 @@ where
                 .values()
                 .map(|st| {
                     // calculate circuit outputs negs - including combination value = 0
-                    // no negations
+                    // that is: no negations included into subtree roots.
                     let circ_output_negs = if let Some(list) = circ_out_map.get(&st.subtree.root) {
                         list.iter().filter(|x| self.outputs[**x].1).count()
                     } else {
