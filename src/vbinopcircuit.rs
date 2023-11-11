@@ -578,6 +578,8 @@ where
             let mut best_neg_count = best_subtrees
                 .values()
                 .map(|st| {
+                    // calculate circuit outputs negs - including combination value = 0
+                    // no negations
                     let circ_output_negs = if let Some(list) = circ_out_map.get(&st.subtree.root) {
                         list.iter().filter(|x| self.outputs[**x].1).count()
                     } else {
