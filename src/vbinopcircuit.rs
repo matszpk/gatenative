@@ -531,6 +531,7 @@ where
                 if let Some(mcs) = multi_choice_map.get_mut(&dep) {
                     for mc in mcs.iter() {
                         if multi_choices[*mc].len() < MAX_MULTI_CHOICE {
+                            // add subtree to multichoice
                             //println!("mccreate: add {:?}: {:?} {:?}", mc, i, dep);
                             multi_choices[*mc].push(T::try_from(i).unwrap());
                             added = true;
@@ -544,6 +545,8 @@ where
                 }
             }
             if !found || !added {
+                // if not found or not added then create new multichoice and register in
+                // multi_choice_map
                 let cur_choice = multi_choices.len();
                 for (dep, _, _) in deps {
                     if let Some(mcs) = multi_choice_map.get_mut(dep) {
