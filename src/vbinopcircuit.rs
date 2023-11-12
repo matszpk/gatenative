@@ -1793,15 +1793,15 @@ mod tests {
                 (vgate_or(6, 7), NegOutput),    // 11
                 (vgate_or(8, 9), NegOutput),    // 12
                 (vgate_or(0, 10), NegInput1),   // 13
-                (vgate_or(1, 11), NegInput1),   // 14
-                (vgate_or(13, 12), NegInput1),  // 15
-                (vgate_and(14, 15), NoNegs),    // 16
-                (vgate_and(0, 10), NegInput1),  // 17
-                (vgate_and(1, 11), NegInput1),  // 18
-                (vgate_and(17, 12), NegInput1), // 19
-                (vgate_or(18, 19), NoNegs),     // 20
+                (vgate_and(0, 10), NegInput1),  // 14
+                (vgate_or(1, 11), NegInput1),   // 15
+                (vgate_and(1, 11), NegInput1),  // 16
+                (vgate_or(13, 12), NegInput1),  // 17
+                (vgate_and(14, 12), NegInput1), // 18
+                (vgate_and(15, 17), NoNegs),    // 19
+                (vgate_or(16, 18), NoNegs),     // 20
             ],
-            outputs: vec![(16, false), (20, false)],
+            outputs: vec![(19, false), (20, false)],
         };
         println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
@@ -1820,15 +1820,15 @@ mod tests {
                     (vgate_or(6, 7), NoNegs),    // 11
                     (vgate_or(8, 9), NoNegs),    // 12
                     (vgate_or(10, 0), NoNegs),   // 13
-                    (vgate_or(1, 11), NoNegs),   // 14
-                    (vgate_or(13, 12), NoNegs),  // 15
-                    (vgate_and(14, 15), NoNegs), // 16
-                    (vgate_and(10, 0), NoNegs),  // 17
-                    (vgate_and(1, 11), NoNegs),  // 18
-                    (vgate_and(17, 12), NoNegs), // 19
-                    (vgate_or(18, 19), NoNegs),  // 20
+                    (vgate_and(10, 0), NoNegs),  // 14
+                    (vgate_or(1, 11), NoNegs),   // 15
+                    (vgate_and(1, 11), NoNegs),  // 16
+                    (vgate_or(13, 12), NoNegs),  // 17
+                    (vgate_and(14, 12), NoNegs), // 18
+                    (vgate_and(15, 17), NoNegs), // 19
+                    (vgate_or(16, 18), NoNegs),  // 20
                 ],
-                outputs: vec![(16, false), (20, false)],
+                outputs: vec![(19, false), (20, false)],
             },
             circuit
         );
