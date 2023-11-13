@@ -624,6 +624,7 @@ where
                                 st_root == arg.i1
                             } else {
                                 // if double occurrence then get from original deps
+                                // BUG: and(i0,not(i0)) -> and(not(i0),not(i0)) != and(i0,i0)
                                 *in_garg
                             };
                             // println!(
