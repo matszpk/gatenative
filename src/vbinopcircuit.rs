@@ -629,13 +629,6 @@ where
                                 // for first argument occurrence in gate.
                                 dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, true, true);
                             }
-                            // println!(
-                            //     "  Ch dep: {:?} {:?}: {:?}: {:?} {} = {:?} {:?}",
-                            //     st_b, dep_dst_i, dst.gates, p, garg,
-                            //     arg, st_root
-                            // );
-                            // println!("  Ch dep after: {:?} {:?}: {:?}", dst_b, dep_dst_i,
-                            // dst.gates);
                             *dst_mod = true;
                         }
                     } else {
