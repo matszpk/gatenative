@@ -1931,5 +1931,103 @@ mod tests {
             },
             circuit
         );
+
+        let mut circuit = VBinOpCircuit::from(
+            Circuit::new(
+                3,
+                [
+                    Gate::new_nimpl(0, 1),
+                    Gate::new_xor(2, 3),
+                    Gate::new_nimpl(2, 3),
+                    Gate::new_and(0, 1),
+                    Gate::new_nor(5, 6),
+                ],
+                [(4, true), (7, false)],
+            )
+            .unwrap(),
+        );
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegInput1),
+                    (vgate_xor(2, 3), NoNegs),
+                    (vgate_and(2, 3), NegInput1),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(5, 6), NegOutput),
+                ],
+                outputs: vec![(4, true), (7, false)],
+            },
+            circuit
+        );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NegInput1),
+                (vgate_xor(2, 3), NegOutput),
+                (vgate_and(2, 3), NegInput1),
+                (vgate_and(0, 1), NoNegs),
+                (vgate_or(5, 6), NegOutput),
+            ],
+            outputs: vec![(4, true), (7, true)],
+        };
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_or(1, 0), NegInput1),
+                    (vgate_xor(2, 3), NoNegs),
+                    (vgate_and(2, 3), NoNegs),
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(5, 6), NoNegs),
+                ],
+                outputs: vec![(4, true), (7, false)],
+            },
+            circuit
+        );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),
+                (vgate_or(1, 2), NoNegs),
+                (vgate_and(3, 4), NegOutput),
+                (vgate_or(3, 4), NegOutput),
+                (vgate_xor(0, 3), NegOutput),
+                (vgate_xor(1, 3), NegOutput),
+                (vgate_or(5, 6), NoNegs),
+                (vgate_or(7, 9), NoNegs),
+                (vgate_or(8, 10), NoNegs),
+            ],
+            outputs: vec![(11, false)],
+        };
+        println!("Count negs: {}", circuit.count_negs());
+        circuit.optimize_negs();
+        println!("Count negs 2: {}", circuit.count_negs());
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NoNegs),
+                    (vgate_or(1, 2), NoNegs),
+                    (vgate_and(3, 4), NoNegs),
+                    (vgate_or(3, 4), NoNegs),
+                    (vgate_xor(0, 3), NoNegs),
+                    (vgate_xor(1, 3), NoNegs),
+                    (vgate_and(6, 5), NoNegs),
+                    (vgate_and(9, 7), NoNegs),
+                    (vgate_and(10, 8), NegOutput),
+                ],
+                outputs: vec![(11, false)],
+            },
+            circuit
+        );
     }
 }
