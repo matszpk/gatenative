@@ -1588,10 +1588,7 @@ mod tests {
             )
             .unwrap(),
         );
-        // println!("Count negs: {}", circuit.count_negs());
-        // println!("Circuit: {:?}", circuit);
         circuit.optimize_negs();
-        //println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1644,9 +1641,7 @@ mod tests {
             ],
             outputs: vec![(16, false), (20, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1697,9 +1692,7 @@ mod tests {
             ],
             outputs: vec![(16, false), (20, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1750,9 +1743,7 @@ mod tests {
             ],
             outputs: vec![(16, false), (20, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1803,9 +1794,7 @@ mod tests {
             ],
             outputs: vec![(19, false), (20, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1879,9 +1868,7 @@ mod tests {
             ],
             outputs: vec![(32, false), (43, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 4,
@@ -1946,9 +1933,7 @@ mod tests {
             )
             .unwrap(),
         );
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
@@ -1975,9 +1960,7 @@ mod tests {
             ],
             outputs: vec![(4, true), (7, true)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
@@ -2008,9 +1991,7 @@ mod tests {
             ],
             outputs: vec![(11, false)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
@@ -2042,9 +2023,7 @@ mod tests {
             ],
             outputs: vec![(8, true)],
         };
-        println!("Count negs: {}", circuit.count_negs());
         circuit.optimize_negs();
-        println!("Count negs 2: {}", circuit.count_negs());
         assert_eq!(
             VBinOpCircuit {
                 input_len: 3,
