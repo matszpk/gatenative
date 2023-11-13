@@ -625,8 +625,8 @@ where
                                 dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, !garg, garg);
                             } else if !*in_garg {
                                 // if double occurrence then get from original deps.
-                                // apply change only for second entry in subtree_deps
-                                // entry (with true in second arg).
+                                // apply change only for first entry in subtree_deps list.
+                                // for first argument occurrence in gate.
                                 dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, true, true);
                             }
                             // println!(
