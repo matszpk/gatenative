@@ -619,20 +619,21 @@ where
                             let (dst, dst_mod) = cur_subtrees.get_mut(&dep_dst_i).unwrap();
                             let dst_gi = usize::try_from(*p).unwrap();
                             let (arg, arg_neg) = dst.gates[dst_gi];
-                            let garg = if arg.i0 != arg.i1 {
+                            if arg.i0 != arg.i1 {
                                 // determine from real gate: because it can be changed earlier!
-                                st_root == arg.i1
-                            } else {
-                                // if double occurrence then get from original deps
-                                // BUG: and(i0,not(i0)) -> and(not(i0),not(i0)) != and(i0,i0)
-                                *in_garg
-                            };
+                                let garg = st_root == arg.i1;
+                                dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, !garg, garg);
+                            } else if !*in_garg {
+                                // if double occurrence then get from original deps.
+                                // apply change only for second entry in subtree_deps
+                                // entry (with true in second arg).
+                                dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, true, true);
+                            }
                             // println!(
                             //     "  Ch dep: {:?} {:?}: {:?}: {:?} {} = {:?} {:?}",
                             //     st_b, dep_dst_i, dst.gates, p, garg,
                             //     arg, st_root
                             // );
-                            dst.gates[dst_gi] = arg.binop_neg_args(arg_neg, !garg, garg);
                             // println!("  Ch dep after: {:?} {:?}: {:?}", dst_b, dep_dst_i,
                             // dst.gates);
                             *dst_mod = true;
