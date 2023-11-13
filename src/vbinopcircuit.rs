@@ -2034,5 +2034,67 @@ mod tests {
             },
             circuit
         );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),    // 3
+                (vgate_or(3, 3), NegInput1),  // 4
+                (vgate_or(2, 4), NoNegs),     // 5
+                (vgate_and(0, 3), NegInput1), // 6
+                (vgate_and(1, 3), NegInput1), // 7
+                (vgate_and(2, 3), NegInput1), // 8
+                (vgate_or(0, 3), NegInput1),  // 9
+            ],
+            outputs: vec![(5, false), (6, false), (7, false), (8, false), (9, false)],
+        };
+        circuit.optimize_negs();
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegOutput), // 3
+                    (vgate_or(3, 3), NegInput1),  // 4
+                    (vgate_or(2, 4), NoNegs),     // 5
+                    (vgate_and(0, 3), NoNegs),    // 6
+                    (vgate_and(1, 3), NoNegs),    // 7
+                    (vgate_and(2, 3), NoNegs),    // 8
+                    (vgate_or(0, 3), NoNegs),     // 9
+                ],
+                outputs: vec![(5, false), (6, false), (7, false), (8, false), (9, false)],
+            },
+            circuit
+        );
+
+        let mut circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                (vgate_and(0, 1), NoNegs),    // 3
+                (vgate_or(3, 3), NoNegs),     // 4
+                (vgate_or(2, 4), NoNegs),     // 5
+                (vgate_and(0, 3), NegInput1), // 6
+                (vgate_and(1, 3), NegInput1), // 7
+                (vgate_and(2, 3), NegInput1), // 8
+                (vgate_or(0, 3), NegInput1),  // 9
+            ],
+            outputs: vec![(5, false), (6, false), (7, false), (8, false), (9, false)],
+        };
+        circuit.optimize_negs();
+        assert_eq!(
+            VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    (vgate_and(0, 1), NegOutput), // 3
+                    (vgate_and(3, 3), NoNegs),    // 4
+                    (vgate_or(2, 4), NegInput1),  // 5
+                    (vgate_and(0, 3), NoNegs),    // 6
+                    (vgate_and(1, 3), NoNegs),    // 7
+                    (vgate_and(2, 3), NoNegs),    // 8
+                    (vgate_or(0, 3), NoNegs),     // 9
+                ],
+                outputs: vec![(5, false), (6, false), (7, false), (8, false), (9, false)],
+            },
+            circuit
+        );
     }
 }
