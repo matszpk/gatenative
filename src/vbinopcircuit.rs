@@ -271,7 +271,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    // return subtrees.
+    // return subtrees
     fn subtrees(&self) -> Vec<SubTree<T>> {
         // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
