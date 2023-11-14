@@ -140,6 +140,11 @@ where
         let var_usage_1 = usize::try_from(var_usage[gi1]).unwrap() + 1;
         var_usage[gi1] = T::try_from(var_usage_1).unwrap();
     }
+    for (o, _) in circuit.outputs() {
+        let o = usize::try_from(*o).unwrap();
+        let var_usage_0 = usize::try_from(var_usage[o]).unwrap() + 1;
+        var_usage[o] = T::try_from(var_usage_0).unwrap();
+    }
     var_usage
 }
 
@@ -275,5 +280,26 @@ mod tests {
         assert_eq!(2, vacc.alloc());
         assert_eq!(4, vacc.alloc());
         assert_eq!(6, vacc.alloc());
+    }
+
+    #[test]
+    fn test_gen_var_usage() {
+        assert_eq!(
+            vec![2, 2, 2, 2, 1, 1, 1, 1],
+            gen_var_usage(
+                &Circuit::new(
+                    3,
+                    [
+                        Gate::new_xor(0, 1),
+                        Gate::new_xor(2, 3),
+                        Gate::new_and(2, 3),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                    ],
+                    [(4, false), (7, true)],
+                )
+                .unwrap()
+            )
+        );
     }
 }
