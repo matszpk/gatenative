@@ -678,19 +678,6 @@ where
             self.apply_subtree(st);
         }
     }
-
-    #[inline]
-    fn count_negs(&self) -> usize {
-        self.gates
-            .iter()
-            .map(|(_, n)| usize::from(*n != NoNegs))
-            .sum::<usize>()
-            + self
-                .outputs
-                .iter()
-                .map(|(_, n)| usize::from(*n))
-                .sum::<usize>()
-    }
 }
 
 #[cfg(test)]
@@ -1549,6 +1536,19 @@ mod tests {
             circuit.subtree_dependencies(&subtrees),
         );
     }
+
+    // #[inline]
+    // fn vbinopcircuit_count_negs<T>(circuit: &VBinOpCircuit<T>) -> usize {
+    //     circuit.gates
+    //         .iter()
+    //         .map(|(_, n)| usize::from(*n != NoNegs))
+    //         .sum::<usize>()
+    //         + circuit
+    //             .outputs
+    //             .iter()
+    //             .map(|(_, n)| usize::from(*n))
+    //             .sum::<usize>()
+    // }
 
     #[test]
     fn test_vbinopcircuit_optimize_negs() {
