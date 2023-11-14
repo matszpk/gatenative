@@ -2,17 +2,17 @@ use gatesim::*;
 
 use crate::vcircuit::*;
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::VNegs::{self, *};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-struct VBinOpCircuit<T: Clone + Copy> {
-    input_len: T,
-    gates: Vec<(VGate<T>, VNegs)>,
-    outputs: Vec<(T, bool)>,
+pub(crate) struct VBinOpCircuit<T: Clone + Copy> {
+    pub(crate) input_len: T,
+    pub(crate) gates: Vec<(VGate<T>, VNegs)>,
+    pub(crate) outputs: Vec<(T, bool)>,
 }
 
 impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
@@ -126,7 +126,6 @@ where
     }
 
     fn optimize_negs(&mut self) {
-        let input_len = usize::try_from(self.input_len).unwrap();
         for (oi, (i, next_i)) in self.subtree.gates.iter().enumerate() {
             let next_oi = self.gate_index(*next_i).unwrap();
             let (g, neg) = self.gates[oi];
@@ -151,7 +150,6 @@ where
                 }
             }
             // check single reduction subtree.
-            let (g, neg) = self.gates[oi];
             let (next_g, next_neg) = self.gates[next_oi];
             let (roi, in_next) = if (next_neg == NegInput1) && *i == next_g.i1 {
                 // if this fork (from negated input)
@@ -309,7 +307,6 @@ where
         let gate_num = self.gates.len();
         let mut visited = vec![false; gate_num];
         let mut subtree_map = BTreeMap::new();
-        let mut subtree_object_map = BTreeMap::<T, SubTree<T>>::new();
 
         // traverse through circuit
         for (o, _) in self.outputs.iter() {
@@ -484,7 +481,7 @@ where
         deps
     }
 
-    fn optimize_negs(&mut self) {
+    pub(crate) fn optimize_negs(&mut self) {
         let subtrees = self.subtrees();
         let mut subtree_copies = subtrees
             .iter()
@@ -522,7 +519,7 @@ where
         // multichoice map - dep to multichoice indexes
         let mut multi_choice_map = HashMap::<T, Vec<usize>>::new();
         let mut multi_choices: Vec<Vec<T>> = vec![];
-        for (i, st) in subtree_copies.iter_mut().enumerate() {
+        for (i, _) in subtree_copies.iter_mut().enumerate() {
             let deps = &subtree_deps[i];
             let mut found = false;
             let mut added = false;
@@ -600,7 +597,7 @@ where
                 let mut circ_output_neg_count = 0;
                 for (b, st_b) in mc.iter().enumerate() {
                     let st_b = usize::try_from(*st_b).unwrap();
-                    let (st, st_mod) = cur_subtrees.get_mut(&st_b).unwrap();
+                    let (st, _) = cur_subtrees.get_mut(&st_b).unwrap();
                     if ((1 << b) & c) != 0 {
                         // if root of subtree will be negated then:
                         // summarize circuit output negs
@@ -641,7 +638,7 @@ where
                         }
                     }
                 }
-                for (st, _) in cur_subtrees.values_mut().filter(|(st, m)| *m) {
+                for (st, _) in cur_subtrees.values_mut().filter(|(_, m)| *m) {
                     //println!("  cursubtree: {:?}", st.gates);
                     st.optimize_negs();
                     //println!("  cursubtree 2: {:?}", st.gates);

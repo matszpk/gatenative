@@ -122,8 +122,6 @@ struct VarUsage {
     bnot: bool, // if single operation is boolean negation of original gate output.
 }
 
-use VNegs::*;
-
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,

@@ -1,12 +1,11 @@
 use gatesim::*;
 
 use std::fmt::Debug;
-use std::hash::Hash;
 
 use crate::VNegs::{self, *};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum VGateFunc {
+pub(crate) enum VGateFunc {
     And,
     Nand,
     Or,
@@ -480,10 +479,10 @@ impl<T: Clone + Copy> VGate<T> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-struct VCircuit<T: Clone + Copy> {
-    input_len: T,
-    gates: Vec<VGate<T>>,
-    outputs: Vec<(T, bool)>,
+pub(crate) struct VCircuit<T: Clone + Copy> {
+    pub(crate) input_len: T,
+    pub(crate) gates: Vec<VGate<T>>,
+    pub(crate) outputs: Vec<(T, bool)>,
 }
 
 impl<T> VCircuit<T>
@@ -494,7 +493,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    fn to_op_and_ximpl_circuit(circuit: Circuit<T>, nimpl: bool) -> VCircuit<T> {
+    pub(crate) fn to_op_and_ximpl_circuit(circuit: Circuit<T>, nimpl: bool) -> VCircuit<T> {
         #[derive(Clone, Copy)]
         struct StackEntry {
             node: usize,
