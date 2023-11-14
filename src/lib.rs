@@ -152,7 +152,7 @@ where
     var_usage
 }
 
-fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [T]) -> Vec<T>
+fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [T]) -> (Vec<T>, usize)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -234,10 +234,13 @@ where
         }
         alloc_and_use(*o);
     }
-    alloc_vars
-        .into_iter()
-        .map(|x| x.unwrap())
-        .collect::<Vec<_>>()
+    (
+        alloc_vars
+            .into_iter()
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>(),
+        var_alloc.len(),
+    )
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
