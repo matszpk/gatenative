@@ -251,7 +251,7 @@ where
                 }
             } else {
                 // allocate and use
-                //println!("Stack: {:?} {:?}", node_index, gates[node_index]);
+                //println!("Stack: {:?} {:?}", input_len + node_index, gates[node_index]);
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i0);
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i1);
                 single_var_alloc(
@@ -318,28 +318,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gen_var_usage() {
-        assert_eq!(
-            vec![2, 2, 2, 2, 1, 1, 1, 1],
-            gen_var_usage(
-                &Circuit::new(
-                    3,
-                    [
-                        Gate::new_xor(0, 1),
-                        Gate::new_xor(2, 3),
-                        Gate::new_and(2, 3),
-                        Gate::new_and(0, 1),
-                        Gate::new_nor(5, 6),
-                    ],
-                    [(4, false), (7, true)],
-                )
-                .unwrap()
-            )
-        );
-    }
-
-    #[test]
-    fn test_gen_var_allocs() {
+    fn test_gen_var_usage_and_var_allocs() {
         let circuit = Circuit::new(
             3,
             [
@@ -353,8 +332,33 @@ mod tests {
         )
         .unwrap();
         let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 2, 3, 4, 2, 0, 0], 5),
+            gen_var_allocs(&circuit, &mut var_usage)
+        );
+
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(0, 2),
+                Gate::new_and(1, 2),
+                Gate::new_and(0, 3),
+                Gate::new_and(1, 3),
+                // add a1*b0 + a0*b1
+                Gate::new_xor(5, 6),
+                Gate::new_and(5, 6),
+                // add c(a1*b0 + a0*b1) + a1*b1
+                Gate::new_xor(7, 9),
+                Gate::new_and(7, 9),
+            ],
+            [(4, false), (8, true), (10, false), (11, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 1, 4, 0, 2, 0], 5),
             gen_var_allocs(&circuit, &mut var_usage)
         );
     }
