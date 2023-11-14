@@ -122,7 +122,28 @@ struct VarUsage {
     bnot: bool, // if single operation is boolean negation of original gate output.
 }
 
-fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<usize>
+fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len = usize::try_from(circuit.input_len()).unwrap();
+    let mut var_usage = vec![T::default(); input_len + circuit.len()];
+    for (i, g) in circuit.gates().iter().enumerate() {
+        let gi0 = usize::try_from(g.i0).unwrap();
+        let gi1 = usize::try_from(g.i1).unwrap();
+        let var_usage_0 = usize::try_from(var_usage[gi0]).unwrap() + 1;
+        var_usage[gi0] = T::try_from(var_usage_0).unwrap();
+        let var_usage_1 = usize::try_from(var_usage[gi1]).unwrap() + 1;
+        var_usage[gi1] = T::try_from(var_usage_1).unwrap();
+    }
+    var_usage
+}
+
+fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [usize]) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -130,13 +151,62 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut var_usage = vec![0usize; input_len + circuit.len()];
-    for (i, g) in circuit.gates().iter().enumerate() {
-        var_usage[usize::try_from(g.i0).unwrap()] += 1;
-        var_usage[usize::try_from(g.i1).unwrap()] += 1;
+    #[derive(Clone, Copy)]
+    struct StackEntry {
+        node: usize,
+        way: usize,
     }
-    var_usage
+    let input_len_t = circuit.input_len();
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.len();
+    let gates = circuit.gates();
+    let mut var_allocs: Vec<Option<T>> = vec![None; input_len + gate_num];
+    
+    let mut visited = vec![false; gate_num];
+    for (o, _) in circuit.outputs().iter() {
+        if *o < input_len_t {
+            continue;
+        }
+        let oidx = usize::try_from(*o).unwrap() - input_len;
+        let mut stack = Vec::new();
+        stack.push(StackEntry { node: oidx, way: 0 });
+        
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let node_index = top.node;
+            let way = top.way;
+
+            if way == 0 {
+                if !visited[node_index] {
+                    visited[node_index] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+
+                top.way += 1;
+                let gi0 = gates[node_index].i0;
+                if gi0 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi0).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else if way == 1 {
+                top.way += 1;
+                let gi1 = gates[node_index].i1;
+                if gi1 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi1).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else {
+                // resolve
+            }
+        }
+    }
+    var_allocs.into_iter().map(|x| x.unwrap()).collect::<Vec<_>>()
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
