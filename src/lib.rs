@@ -122,15 +122,6 @@ where
 
 // var usage - just counter of var usage.
 
-// TODO: binary double-not optimization.
-// if only one type of occurrence of variable: reduce in both sides.
-// if either two type of occurrence of variable:
-
-struct VarUsage {
-    index: usize,
-    bnot: bool, // if single operation is boolean negation of original gate output.
-}
-
 fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
