@@ -122,6 +122,23 @@ struct VarUsage {
     bnot: bool, // if single operation is boolean negation of original gate output.
 }
 
+fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<usize>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len = usize::try_from(circuit.input_len()).unwrap();
+    let mut var_usage = vec![0usize; input_len + circuit.len()];
+    for (i, g) in circuit.gates().iter().enumerate() {
+        var_usage[usize::try_from(g.i0).unwrap()] += 1;
+        var_usage[usize::try_from(g.i1).unwrap()] += 1;
+    }
+    var_usage
+}
+
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
