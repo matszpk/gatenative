@@ -1463,7 +1463,7 @@ mod tests {
 
     #[test]
     fn test_vbinopcircuit_subtree_dependencies() {
-        let mut circuit = VBinOpCircuit::from(
+        let circuit = VBinOpCircuit::from(
             Circuit::new(
                 3,
                 [
@@ -1490,7 +1490,7 @@ mod tests {
             circuit.subtree_dependencies(&subtrees),
         );
 
-        let mut circuit = VBinOpCircuit::from(
+        let circuit = VBinOpCircuit::from(
             Circuit::new(
                 4,
                 [
