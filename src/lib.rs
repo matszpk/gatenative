@@ -113,7 +113,6 @@ impl VarAllocator {
 
 // var usage - just counter of var usage.
 
-// TODO: binary double-not optimization.
 // if only one type of occurrence of variable: reduce in both sides.
 // if either two type of occurrence of variable:
 
