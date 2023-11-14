@@ -65,12 +65,19 @@ pub trait CodeWriter {
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize);
 }
 
-pub struct VarAllocator {
-    free_list: BinaryHeap<std::cmp::Reverse<usize>>,
+pub struct VarAllocator<T> {
+    free_list: BinaryHeap<std::cmp::Reverse<T>>,
     alloc_map: Vec<bool>,
 }
 
-impl VarAllocator {
+impl<T> VarAllocator<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
     fn new() -> Self {
         Self {
             free_list: BinaryHeap::new(),
@@ -83,22 +90,24 @@ impl VarAllocator {
         self.alloc_map.len()
     }
 
-    fn alloc(&mut self) -> usize {
+    fn alloc(&mut self) -> T {
         if let Some(std::cmp::Reverse(index)) = self.free_list.pop() {
-            self.alloc_map[index] = true;
+            let index_u = usize::try_from(index).unwrap();
+            self.alloc_map[index_u] = true;
             index
         } else {
             let index = self.alloc_map.len();
             self.alloc_map.push(true);
-            index
+            T::try_from(index).unwrap()
         }
     }
 
-    fn free(&mut self, index: usize) -> bool {
-        assert!(index < self.len());
-        if self.alloc_map[index] {
+    fn free(&mut self, index: T) -> bool {
+        let index_u = usize::try_from(index).unwrap();
+        assert!(index_u < self.len());
+        if self.alloc_map[index_u] {
             self.free_list.push(std::cmp::Reverse(index));
-            self.alloc_map[index] = false;
+            self.alloc_map[index_u] = false;
             true
         } else {
             false
@@ -143,7 +152,7 @@ where
     var_usage
 }
 
-fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [usize]) -> Vec<T>
+fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [T]) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -160,8 +169,23 @@ where
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
     let gates = circuit.gates();
-    let mut var_allocs: Vec<Option<T>> = vec![None; input_len + gate_num];
-    
+    let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
+    let mut var_alloc = VarAllocator::<T>::new();
+
+    let mut alloc_and_use = |var| {
+        let var_u = usize::try_from(var).unwrap();
+        if alloc_vars[var_u].is_none() {
+            alloc_vars[var_u] = Some(var_alloc.alloc());
+        }
+        let mut vu = usize::try_from(var_usage[var_u]).unwrap();
+        vu -= 1;
+        var_usage[var_u] = T::try_from(vu).unwrap();
+        if vu == 0 {
+            // if no further usage
+            var_alloc.free(alloc_vars[var_u].unwrap());
+        }
+    };
+
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -170,7 +194,7 @@ where
         let oidx = usize::try_from(*o).unwrap() - input_len;
         let mut stack = Vec::new();
         stack.push(StackEntry { node: oidx, way: 0 });
-        
+
         while !stack.is_empty() {
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
@@ -202,11 +226,18 @@ where
                     });
                 }
             } else {
-                // resolve
+                // allocate and use
+                alloc_and_use(gates[node_index].i0);
+                alloc_and_use(gates[node_index].i1);
+                stack.pop();
             }
         }
+        alloc_and_use(*o);
     }
-    var_allocs.into_iter().map(|x| x.unwrap()).collect::<Vec<_>>()
+    alloc_vars
+        .into_iter()
+        .map(|x| x.unwrap())
+        .collect::<Vec<_>>()
 }
 
 pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
