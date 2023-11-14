@@ -148,9 +148,47 @@ where
     var_usage
 }
 
+fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let var_u = usize::try_from(var).unwrap();
+    if alloc_vars[var_u].is_none() {
+        alloc_vars[var_u] = Some(var_alloc.alloc());
+    }
+    //println!("  Alloc: {:?} {:?}", var, alloc_vars[var_u]);
+}
+
+fn single_var_use<T>(
+    var_alloc: &mut VarAllocator<T>,
+    alloc_vars: &[Option<T>],
+    var_usage: &mut [T],
+    var: T,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let var_u = usize::try_from(var).unwrap();
+    let mut vu = usize::try_from(var_usage[var_u]).unwrap();
+    vu -= 1;
+    //println!("  VarUsage: {:?} {:?}", var, vu);
+    var_usage[var_u] = T::try_from(vu).unwrap();
+    if vu == 0 {
+        // if no further usage
+        var_alloc.free(alloc_vars[var_u].unwrap());
+    }
+}
+
 fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [T]) -> (Vec<T>, usize)
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -168,21 +206,11 @@ where
     let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
     let mut var_alloc = VarAllocator::<T>::new();
 
-    let mut alloc_and_use = |var| {
-        let var_u = usize::try_from(var).unwrap();
-        if alloc_vars[var_u].is_none() {
-            alloc_vars[var_u] = Some(var_alloc.alloc());
-        }
-        let mut vu = usize::try_from(var_usage[var_u]).unwrap();
-        vu -= 1;
-        var_usage[var_u] = T::try_from(vu).unwrap();
-        if vu == 0 {
-            // if no further usage
-            var_alloc.free(alloc_vars[var_u].unwrap());
-        }
-    };
-
     let mut visited = vec![false; gate_num];
+    for i in 0..input_len {
+        single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+    }
+
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             continue;
@@ -223,12 +251,19 @@ where
                 }
             } else {
                 // allocate and use
-                alloc_and_use(gates[node_index].i0);
-                alloc_and_use(gates[node_index].i1);
+                //println!("Stack: {:?} {:?}", node_index, gates[node_index]);
+                single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i0);
+                single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i1);
+                single_var_alloc(
+                    &mut var_alloc,
+                    &mut alloc_vars,
+                    T::try_from(node_index + input_len).unwrap(),
+                );
                 stack.pop();
             }
         }
-        alloc_and_use(*o);
+
+        single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
     }
     (
         alloc_vars
@@ -300,6 +335,27 @@ mod tests {
                 )
                 .unwrap()
             )
+        );
+    }
+
+    #[test]
+    fn test_gen_var_allocs() {
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 0], 5),
+            gen_var_allocs(&circuit, &mut var_usage)
         );
     }
 }
