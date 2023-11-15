@@ -273,6 +273,7 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
     writer: &CW,
     out: &mut Vec<u8>,
     circuit: &VCircuit<T>,
+    swap_args: &[bool],
     var_allocs: &[T],
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -292,7 +293,7 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
     let gates = &circuit.gates;
 
     let mut visited = vec![false; gate_num];
-    for (o, _) in circuit.outputs.iter() {
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
             continue;
         }
@@ -314,7 +315,11 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
                 }
 
                 top.way += 1;
-                let gi0 = gates[node_index].i0;
+                let gi0 = if swap_args[node_index] {
+                    gates[node_index].i1
+                } else {
+                    gates[node_index].i0
+                };
                 if gi0 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi0).unwrap() - input_len,
@@ -323,7 +328,11 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
                 }
             } else if way == 1 {
                 top.way += 1;
-                let gi1 = gates[node_index].i1;
+                let gi1 = if swap_args[node_index] {
+                    gates[node_index].i0
+                } else {
+                    gates[node_index].i1
+                };
                 if gi1 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi1).unwrap() - input_len,
@@ -353,6 +362,12 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
                 stack.pop();
             }
         }
+        writer.gen_store(
+            out,
+            *on,
+            oi,
+            usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
+        );
     }
 }
 
@@ -360,6 +375,7 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
     writer: &CW,
     out: &mut Vec<u8>,
     circuit: &VBinOpCircuit<T>,
+    swap_args: &[bool],
     var_allocs: &[T],
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -379,7 +395,7 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
     let gates = &circuit.gates;
 
     let mut visited = vec![false; gate_num];
-    for (o, _) in circuit.outputs.iter() {
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
             continue;
         }
@@ -401,7 +417,11 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
                 }
 
                 top.way += 1;
-                let gi0 = gates[node_index].0.i0;
+                let gi0 = if swap_args[node_index] {
+                    gates[node_index].0.i1
+                } else {
+                    gates[node_index].0.i0
+                };
                 if gi0 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi0).unwrap() - input_len,
@@ -410,7 +430,11 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
                 }
             } else if way == 1 {
                 top.way += 1;
-                let gi1 = gates[node_index].0.i1;
+                let gi1 = if swap_args[node_index] {
+                    gates[node_index].0.i0
+                } else {
+                    gates[node_index].0.i1
+                };
                 if gi1 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi1).unwrap() - input_len,
@@ -438,6 +462,12 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
                 stack.pop();
             }
         }
+        writer.gen_store(
+            out,
+            *on,
+            oi,
+            usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
+        );
     }
 }
 
@@ -471,25 +501,27 @@ pub fn generate_code<CW: CodeWriter, T>(
         writer.gen_load(out, usize::try_from(var_allocs[i]).unwrap(), i);
     }
 
-    let outputs = if impl_op || nimpl_op {
-        let circuit = VCircuit::to_op_and_ximpl_circuit(circuit, nimpl_op);
-        gen_func_code_for_ximpl(writer, out, &circuit, &var_allocs);
-        circuit.outputs
+    if impl_op || nimpl_op {
+        let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);
+        let swap_args = circuit
+            .gates()
+            .iter()
+            .enumerate()
+            .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
+            .collect::<Vec<_>>();
+        gen_func_code_for_ximpl(writer, out, &vcircuit, &swap_args, &var_allocs);
     } else {
-        let mut circuit = VBinOpCircuit::from(circuit);
+        let mut vcircuit = VBinOpCircuit::from(circuit.clone());
         if optimize_negs {
-            circuit.optimize_negs();
+            vcircuit.optimize_negs();
         }
-        gen_func_code_for_binop(writer, out, &circuit, &var_allocs);
-        circuit.outputs
-    };
-    for (i, (o, n)) in outputs.into_iter().enumerate() {
-        writer.gen_store(
-            out,
-            n,
-            i,
-            usize::try_from(var_allocs[usize::try_from(o).unwrap()]).unwrap(),
-        );
+        let swap_args = circuit
+            .gates()
+            .iter()
+            .enumerate()
+            .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
+            .collect::<Vec<_>>();
+        gen_func_code_for_binop(writer, out, &vcircuit, &swap_args, &var_allocs);
     }
 
     writer.func_end(out, name);
@@ -650,5 +682,48 @@ mod tests {
             )
             .unwrap();
         }
+    }
+
+    #[test]
+    fn test_generate_code() {
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_nimpl(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, false)],
+        )
+        .unwrap();
+
+        let basic_ops = (1u64 << InstrOp::And.int_value())
+            | (1u64 << InstrOp::Or.int_value())
+            | (1u64 << InstrOp::Xor.int_value());
+        let basic_impl_ops = basic_ops | (1u64 << InstrOp::Impl.int_value());
+        let cw = TestCodeWriter {
+            supp_ops: basic_impl_ops,
+        };
+        let mut out = vec![];
+        generate_code(&cw, &mut out, "test1", circuit.clone(), false);
+        assert_eq!(
+            String::from_utf8(out).unwrap(),
+            r##"Func test1(3 2)
+  vars v0..5
+  v0 = I0
+  v1 = I1
+  v2 = I2
+  v3 = (v0 xor v1)
+  v4 = (v2 xor v3)
+  O0 = v4
+  v2 = (v2 and v3)
+  v0 = (v0 impl v1)
+  v0 = (v0 impl v2)
+  O1 = ~v0
+EndFunc
+"##
+        );
     }
 }
