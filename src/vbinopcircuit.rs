@@ -45,7 +45,7 @@ impl<T: Clone + Copy + Ord> SubTree<T> {
 }
 impl<T> SubTree<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -90,7 +90,7 @@ struct SubTreeCopy<'a, T: Clone + Copy> {
 
 impl<'a, T> SubTreeCopy<'a, T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -263,7 +263,7 @@ where
 
 impl<T> VBinOpCircuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,

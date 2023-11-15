@@ -274,7 +274,7 @@ where
     )
 }
 
-pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>)
+pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>, optimize_negs: bool)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -282,6 +282,23 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    let supported_ops = writer.supported_ops();
+    let basic_ops: u64 = (1u64 << InstrOp::And.int_value())
+        | (1u64 << InstrOp::Or.int_value())
+        | (1u64 << InstrOp::Xor.int_value());
+    assert_eq!(basic_ops, (supported_ops & basic_ops));
+    let impl_op = (supported_ops & (1u64 << InstrOp::Impl.int_value())) != 0;
+    let nimpl_op = (supported_ops & (1u64 << InstrOp::Nimpl.int_value())) != 0;
+    let var_allocs = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
+
+    if impl_op || nimpl_op {
+        let circuit = VCircuit::to_op_and_ximpl_circuit(circuit, nimpl_op);
+    } else {
+        let mut circuit = VBinOpCircuit::from(circuit);
+        if optimize_negs {
+            circuit.optimize_negs();
+        }
+    }
 }
 
 #[cfg(test)]
