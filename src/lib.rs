@@ -40,7 +40,7 @@ pub trait CodeWriter {
     fn preferred_var_num(&self) -> usize;
     /// Generates prolog.
     fn prolog(&self, out: &mut Vec<u8>);
-    /// Generates epilog;
+    /// Generates epilog.
     fn epilog(&self, out: &mut Vec<u8>);
     /// Generates function start with definition.
     fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize);

@@ -24,7 +24,6 @@ impl CodeWriter for TestCodeWriter {
     fn prolog(&self, out: &mut Vec<u8>) {
         writeln!(out, "Start").unwrap();
     }
-    /// Generates epilog;
     fn epilog(&self, out: &mut Vec<u8>) {
         writeln!(out, "End").unwrap();
     }
