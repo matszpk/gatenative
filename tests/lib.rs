@@ -100,11 +100,17 @@ fn test_generate_code() {
         | (1u64 << InstrOp::Xor.int_value());
     let basic_impl_ops = basic_ops | (1u64 << InstrOp::Impl.int_value());
     let basic_nimpl_ops = basic_ops | (1u64 << InstrOp::Nimpl.int_value());
-    let cw = TestCodeWriter {
+    let cw_impl = TestCodeWriter {
         supp_ops: basic_impl_ops,
     };
+    let cw_nimpl = TestCodeWriter {
+        supp_ops: basic_nimpl_ops,
+    };
+    let cw_basic = TestCodeWriter {
+        supp_ops: basic_ops,
+    };
     let mut out = vec![];
-    generate_code(&cw, &mut out, "test1", circuit.clone(), false);
+    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
@@ -123,11 +129,8 @@ EndFunc
 "##
     );
 
-    let cw = TestCodeWriter {
-        supp_ops: basic_nimpl_ops,
-    };
     let mut out = vec![];
-    generate_code(&cw, &mut out, "test1", circuit.clone(), false);
+    generate_code(&cw_nimpl, &mut out, "test1", circuit.clone(), false);
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
@@ -146,11 +149,8 @@ EndFunc
 "##
     );
 
-    let cw = TestCodeWriter {
-        supp_ops: basic_ops,
-    };
     let mut out = vec![];
-    generate_code(&cw, &mut out, "test1", circuit.clone(), false);
+    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
