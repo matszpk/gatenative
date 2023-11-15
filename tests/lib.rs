@@ -35,10 +35,10 @@ impl CodeWriter for TestCodeWriter {
         writeln!(out, "EndFunc").unwrap();
     }
     fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
-        writeln!(out, "  vars v0..{}", var_num).unwrap();
+        writeln!(out, "    vars v0..{}", var_num).unwrap();
     }
     fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize) {
-        writeln!(out, "  v{} = I{}", reg, input).unwrap();
+        writeln!(out, "    v{} = I{}", reg, input).unwrap();
     }
     fn gen_op(
         &self,
@@ -51,7 +51,7 @@ impl CodeWriter for TestCodeWriter {
     ) {
         writeln!(
             out,
-            "  v{} = {}(v{} {} {}v{})",
+            "    v{} = {}(v{} {} {}v{})",
             dst_arg,
             if negs == VNegs::NegOutput { "~" } else { "" },
             arg0,
@@ -70,7 +70,7 @@ impl CodeWriter for TestCodeWriter {
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
         writeln!(
             out,
-            "  O{} = {}v{}",
+            "    O{} = {}v{}",
             output,
             if neg { "~" } else { "" },
             reg
@@ -113,17 +113,17 @@ fn test_generate_code() {
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
-  vars v0..5
-  v0 = I0
-  v1 = I1
-  v2 = I2
-  v3 = (v0 xor v1)
-  v4 = (v2 xor v3)
-  O0 = v4
-  v2 = (v2 and v3)
-  v0 = (v0 impl v1)
-  v0 = (v0 impl v2)
-  O1 = ~v0
+    vars v0..5
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    O0 = v4
+    v2 = (v2 and v3)
+    v0 = (v0 impl v1)
+    v0 = (v0 impl v2)
+    O1 = ~v0
 EndFunc
 "##
     );
@@ -133,17 +133,17 @@ EndFunc
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
-  vars v0..5
-  v0 = I0
-  v1 = I1
-  v2 = I2
-  v3 = (v0 xor v1)
-  v4 = (v2 xor v3)
-  O0 = v4
-  v2 = (v2 and v3)
-  v0 = (v0 nimpl v1)
-  v0 = (v2 or v0)
-  O1 = ~v0
+    vars v0..5
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    O0 = v4
+    v2 = (v2 and v3)
+    v0 = (v0 nimpl v1)
+    v0 = (v2 or v0)
+    O1 = ~v0
 EndFunc
 "##
     );
@@ -153,18 +153,68 @@ EndFunc
     assert_eq!(
         String::from_utf8(out).unwrap(),
         r##"Func test1(3 2)
-  vars v0..5
-  v0 = I0
-  v1 = I1
-  v2 = I2
-  v3 = (v0 xor v1)
-  v4 = (v2 xor v3)
-  O0 = v4
-  v2 = (v2 and v3)
-  v0 = (v0 and ~v1)
-  v0 = ~(v2 or v0)
-  O1 = v0
+    vars v0..5
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    O0 = v4
+    v2 = (v2 and v3)
+    v0 = (v0 and ~v1)
+    v0 = ~(v2 or v0)
+    O1 = v0
 EndFunc
 "##
     );
+
+    //     let circuit = Circuit::new(
+    //         4,
+    //         [
+    //             Gate::new_nimpl(0, 1),   // 4
+    //             Gate::new_and(0, 3),     // 5
+    //             Gate::new_xor(1, 4),     // 6
+    //             Gate::new_and(3, 5),     // 7
+    //             Gate::new_xor(2, 6),     // 8
+    //             Gate::new_xor(3, 7),     // 9
+    //             Gate::new_nor(8, 9),     // 10
+    //             Gate::new_and(8, 9),     // 11
+    //             Gate::new_nimpl(8, 9),   // 12
+    //             Gate::new_nor(0, 10),    // 13
+    //             Gate::new_nor(1, 11),    // 14
+    //             Gate::new_xor(2, 12),    // 15
+    //             Gate::new_xor(13, 14),   // 16
+    //             Gate::new_and(0, 10),    // 17 tree4
+    //             Gate::new_nor(15, 16),   // 18 tree3
+    //             Gate::new_nimpl(1, 12),  // 19 tree4
+    //             Gate::new_nimpl(11, 17), // 20
+    //             Gate::new_nimpl(3, 19),  // 21
+    //             Gate::new_xor(20, 21),   // 22
+    //         ],
+    //         [(18, true), (22, false)],
+    //     )
+    //     .unwrap();
+    //
+    //     let mut out = vec![];
+    //     generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    //     assert_eq!(
+    //         String::from_utf8(out).unwrap(),
+    //         r##"Func test1(4 2)
+    //   vars v0..9
+    //   v0 = I0
+    //   v1 = I1
+    //   v2 = I2
+    //   v3 = I3
+    //   v4 = (v0 impl v1)
+    //
+    //   v3 = (v0 xor v1)
+    //   v4 = (v2 xor v3)
+    //   O0 = v4
+    //   v2 = (v2 and v3)
+    //   v0 = (v0 impl v1)
+    //   v0 = (v0 impl v2)
+    //   O1 = ~v0
+    // EndFunc
+    // "##
+    //     );
 }
