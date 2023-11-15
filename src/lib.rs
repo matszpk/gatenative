@@ -58,8 +58,8 @@ pub trait CodeWriter {
         op: InstrOp,
         negs: VNegs,
         dst_arg: usize,
+        arg0: usize,
         arg1: usize,
-        arg2: usize,
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize);
@@ -619,15 +619,15 @@ mod tests {
             op: InstrOp,
             negs: VNegs,
             dst_arg: usize,
+            arg0: usize,
             arg1: usize,
-            arg2: usize,
         ) {
             writeln!(
                 out,
                 "  v{} = {}(v{} {} {}v{})",
                 dst_arg,
                 if negs == VNegs::NegOutput { "~" } else { "" },
-                arg1,
+                arg0,
                 match op {
                     InstrOp::And => "and",
                     InstrOp::Or => "or",
@@ -636,7 +636,7 @@ mod tests {
                     InstrOp::Nimpl => "nimpl",
                 },
                 if negs == VNegs::NegInput1 { "~" } else { "" },
-                arg2
+                arg1
             )
             .unwrap();
         }
