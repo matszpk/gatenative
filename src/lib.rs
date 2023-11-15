@@ -269,6 +269,178 @@ where
     )
 }
 
+fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
+    writer: &CW,
+    out: &mut Vec<u8>,
+    circuit: &VCircuit<T>,
+    var_allocs: &[T],
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    #[derive(Clone, Copy)]
+    struct StackEntry {
+        node: usize,
+        way: usize,
+    }
+    let input_len_t = circuit.input_len;
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.gates.len();
+    let gates = &circuit.gates;
+
+    let mut visited = vec![false; gate_num];
+    for (o, _) in circuit.outputs.iter() {
+        if *o < input_len_t {
+            continue;
+        }
+        let oidx = usize::try_from(*o).unwrap() - input_len;
+        let mut stack = Vec::new();
+        stack.push(StackEntry { node: oidx, way: 0 });
+
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let node_index = top.node;
+            let way = top.way;
+
+            if way == 0 {
+                if !visited[node_index] {
+                    visited[node_index] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+
+                top.way += 1;
+                let gi0 = gates[node_index].i0;
+                if gi0 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi0).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else if way == 1 {
+                top.way += 1;
+                let gi1 = gates[node_index].i1;
+                if gi1 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi1).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else {
+                writer.gen_op(
+                    out,
+                    match gates[node_index].func {
+                        VGateFunc::And => InstrOp::And,
+                        VGateFunc::Or => InstrOp::Or,
+                        VGateFunc::Impl => InstrOp::Impl,
+                        VGateFunc::Nimpl => InstrOp::Nimpl,
+                        VGateFunc::Xor => InstrOp::Xor,
+                        _ => {
+                            panic!("Unsupported InstrOp")
+                        }
+                    },
+                    VNegs::NoNegs,
+                    usize::try_from(var_allocs[input_len + node_index]).unwrap(),
+                    usize::try_from(var_allocs[usize::try_from(gates[node_index].i0).unwrap()])
+                        .unwrap(),
+                    usize::try_from(var_allocs[usize::try_from(gates[node_index].i1).unwrap()])
+                        .unwrap(),
+                );
+                stack.pop();
+            }
+        }
+    }
+}
+
+fn gen_func_code_for_binop<CW: CodeWriter, T>(
+    writer: &CW,
+    out: &mut Vec<u8>,
+    circuit: &VBinOpCircuit<T>,
+    var_allocs: &[T],
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    #[derive(Clone, Copy)]
+    struct StackEntry {
+        node: usize,
+        way: usize,
+    }
+    let input_len_t = circuit.input_len;
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.gates.len();
+    let gates = &circuit.gates;
+
+    let mut visited = vec![false; gate_num];
+    for (o, _) in circuit.outputs.iter() {
+        if *o < input_len_t {
+            continue;
+        }
+        let oidx = usize::try_from(*o).unwrap() - input_len;
+        let mut stack = Vec::new();
+        stack.push(StackEntry { node: oidx, way: 0 });
+
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let node_index = top.node;
+            let way = top.way;
+
+            if way == 0 {
+                if !visited[node_index] {
+                    visited[node_index] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+
+                top.way += 1;
+                let gi0 = gates[node_index].0.i0;
+                if gi0 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi0).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else if way == 1 {
+                top.way += 1;
+                let gi1 = gates[node_index].0.i1;
+                if gi1 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi1).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else {
+                writer.gen_op(
+                    out,
+                    match gates[node_index].0.func {
+                        VGateFunc::And => InstrOp::And,
+                        VGateFunc::Or => InstrOp::Or,
+                        VGateFunc::Xor => InstrOp::Xor,
+                        _ => {
+                            panic!("Unsupported InstrOp")
+                        }
+                    },
+                    gates[node_index].1,
+                    usize::try_from(var_allocs[input_len + node_index]).unwrap(),
+                    usize::try_from(var_allocs[usize::try_from(gates[node_index].0.i0).unwrap()])
+                        .unwrap(),
+                    usize::try_from(var_allocs[usize::try_from(gates[node_index].0.i1).unwrap()])
+                        .unwrap(),
+                );
+                stack.pop();
+            }
+        }
+    }
+}
+
 pub fn generate_code<CW: CodeWriter, T>(
     writer: &CW,
     out: &mut Vec<u8>,
@@ -301,12 +473,14 @@ pub fn generate_code<CW: CodeWriter, T>(
 
     let outputs = if impl_op || nimpl_op {
         let circuit = VCircuit::to_op_and_ximpl_circuit(circuit, nimpl_op);
+        gen_func_code_for_ximpl(writer, out, &circuit, &var_allocs);
         circuit.outputs
     } else {
         let mut circuit = VBinOpCircuit::from(circuit);
         if optimize_negs {
             circuit.optimize_negs();
         }
+        gen_func_code_for_binop(writer, out, &circuit, &var_allocs);
         circuit.outputs
     };
     for (i, (o, n)) in outputs.into_iter().enumerate() {
