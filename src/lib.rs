@@ -605,10 +605,10 @@ mod tests {
             writeln!(out, "End").unwrap();
         }
         fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize) {
-            writeln!(out, "Func {}({} {}) {{", name, input_len, output_len).unwrap();
+            writeln!(out, "Func {}({} {})", name, input_len, output_len).unwrap();
         }
         fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
-            writeln!(out, "}}").unwrap();
+            writeln!(out, "EndFunc").unwrap();
         }
         fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
             writeln!(out, "  vars v0..{}", var_num).unwrap();
