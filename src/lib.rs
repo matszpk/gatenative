@@ -703,6 +703,7 @@ mod tests {
             | (1u64 << InstrOp::Or.int_value())
             | (1u64 << InstrOp::Xor.int_value());
         let basic_impl_ops = basic_ops | (1u64 << InstrOp::Impl.int_value());
+        let basic_nimpl_ops = basic_ops | (1u64 << InstrOp::Nimpl.int_value());
         let cw = TestCodeWriter {
             supp_ops: basic_impl_ops,
         };
@@ -721,6 +722,29 @@ mod tests {
   v2 = (v2 and v3)
   v0 = (v0 impl v1)
   v0 = (v0 impl v2)
+  O1 = ~v0
+EndFunc
+"##
+        );
+
+        let cw = TestCodeWriter {
+            supp_ops: basic_nimpl_ops,
+        };
+        let mut out = vec![];
+        generate_code(&cw, &mut out, "test1", circuit.clone(), false);
+        assert_eq!(
+            String::from_utf8(out).unwrap(),
+            r##"Func test1(3 2)
+  vars v0..5
+  v0 = I0
+  v1 = I1
+  v2 = I2
+  v3 = (v0 xor v1)
+  v4 = (v2 xor v3)
+  O0 = v4
+  v2 = (v2 and v3)
+  v0 = (v0 nimpl v1)
+  v0 = (v2 or v0)
   O1 = ~v0
 EndFunc
 "##
