@@ -749,7 +749,7 @@ EndFunc
 EndFunc
 "##
         );
-        
+
         let cw = TestCodeWriter {
             supp_ops: basic_ops,
         };
