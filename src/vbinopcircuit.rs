@@ -1533,19 +1533,6 @@ mod tests {
         );
     }
 
-    // #[inline]
-    // fn vbinopcircuit_count_negs<T>(circuit: &VBinOpCircuit<T>) -> usize {
-    //     circuit.gates
-    //         .iter()
-    //         .map(|(_, n)| usize::from(*n != NoNegs))
-    //         .sum::<usize>()
-    //         + circuit
-    //             .outputs
-    //             .iter()
-    //             .map(|(_, n)| usize::from(*n))
-    //             .sum::<usize>()
-    // }
-
     #[test]
     fn test_vbinopcircuit_optimize_negs() {
         let mut circuit = VBinOpCircuit::from(
