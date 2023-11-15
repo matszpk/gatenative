@@ -330,4 +330,50 @@ EndFunc
 EndFunc
 "##
     );
+
+    let circuit = Circuit::new(
+        3,
+        [
+            Gate::new_and(0, 1),
+            Gate::new_and(1, 2),
+            Gate::new_nimpl(3, 4),
+            Gate::new_nimpl(5, 1),
+        ],
+        [(6, true)],
+    )
+    .unwrap();
+    let mut out = vec![];
+    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        r##"Func test1(3 1)
+    vars v0..3
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v0 = (v0 and v1)
+    v2 = (v1 and v2)
+    v0 = (v0 and ~v2)
+    v0 = (v0 and ~v1)
+    O0 = ~v0
+EndFunc
+"##
+    );
+    let mut out = vec![];
+    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), true);
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        r##"Func test1(3 1)
+    vars v0..3
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v0 = (v0 and v1)
+    v2 = (v1 and v2)
+    v0 = (v2 or ~v0)
+    v0 = (v0 or v1)
+    O0 = v0
+EndFunc
+"##
+    );
 }
