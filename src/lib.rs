@@ -150,7 +150,7 @@ where
 
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -169,7 +169,7 @@ fn single_var_use<T>(
     var_usage: &mut [T],
     var: T,
 ) where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -188,7 +188,7 @@ fn single_var_use<T>(
 
 fn gen_var_allocs<T>(circuit: &Circuit<T>, var_usage: &mut [T]) -> (Vec<T>, usize)
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
