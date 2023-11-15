@@ -584,15 +584,12 @@ mod tests {
         fn supported_ops(&self) -> u64 {
             self.supp_ops
         }
-
         fn word_len(&self) -> u32 {
             32
         }
-
         fn max_var_num(&self) -> usize {
             usize::MAX
         }
-
         fn preferred_var_num(&self) -> usize {
             1000000
         }
