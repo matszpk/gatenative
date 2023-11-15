@@ -21,7 +21,6 @@ impl CodeWriter for TestCodeWriter {
     fn preferred_var_num(&self) -> usize {
         1000000
     }
-    /// Generates prolog.
     fn prolog(&self, out: &mut Vec<u8>) {
         writeln!(out, "Start").unwrap();
     }
