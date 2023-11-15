@@ -113,11 +113,6 @@ where
             false
         }
     }
-
-    #[inline]
-    fn is_alloc(&self, index: usize) -> bool {
-        self.alloc_map[index]
-    }
 }
 
 // var usage - just counter of var usage.
@@ -132,7 +127,7 @@ where
 {
     let input_len = usize::try_from(circuit.input_len()).unwrap();
     let mut var_usage = vec![T::default(); input_len + circuit.len()];
-    for (i, g) in circuit.gates().iter().enumerate() {
+    for g in circuit.gates() {
         let gi0 = usize::try_from(g.i0).unwrap();
         let gi1 = usize::try_from(g.i1).unwrap();
         let var_usage_0 = usize::try_from(var_usage[gi0]).unwrap() + 1;
@@ -274,8 +269,13 @@ where
     )
 }
 
-pub fn generate_code<CW: CodeWriter, T>(writer: &CW, circuit: Circuit<T>, optimize_negs: bool)
-where
+pub fn generate_code<CW: CodeWriter, T>(
+    writer: &CW,
+    out: &mut Vec<u8>,
+    name: &str,
+    circuit: Circuit<T>,
+    optimize_negs: bool,
+) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
@@ -289,16 +289,36 @@ where
     assert_eq!(basic_ops, (supported_ops & basic_ops));
     let impl_op = (supported_ops & (1u64 << InstrOp::Impl.int_value())) != 0;
     let nimpl_op = (supported_ops & (1u64 << InstrOp::Nimpl.int_value())) != 0;
-    let var_allocs = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
+    let (var_allocs, var_num) = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
 
-    if impl_op || nimpl_op {
+    let input_len = usize::try_from(circuit.input_len()).unwrap();
+    writer.func_start(out, name, input_len, circuit.outputs().len());
+    writer.alloc_vars(out, var_num);
+
+    for i in 0..input_len {
+        writer.gen_load(out, usize::try_from(var_allocs[i]).unwrap(), i);
+    }
+
+    let outputs = if impl_op || nimpl_op {
         let circuit = VCircuit::to_op_and_ximpl_circuit(circuit, nimpl_op);
+        circuit.outputs
     } else {
         let mut circuit = VBinOpCircuit::from(circuit);
         if optimize_negs {
             circuit.optimize_negs();
         }
+        circuit.outputs
+    };
+    for (i, (o, n)) in outputs.into_iter().enumerate() {
+        writer.gen_store(
+            out,
+            n,
+            i,
+            usize::try_from(var_allocs[usize::try_from(o).unwrap()]).unwrap(),
+        );
     }
+
+    writer.func_end(out, name);
 }
 
 #[cfg(test)]
