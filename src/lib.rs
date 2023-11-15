@@ -573,4 +573,85 @@ mod tests {
             gen_var_allocs(&circuit, &mut var_usage)
         );
     }
+
+    struct TestCodeWriter {
+        supp_ops: u64,
+    }
+
+    use std::io::Write;
+
+    impl CodeWriter for TestCodeWriter {
+        fn supported_ops(&self) -> u64 {
+            self.supp_ops
+        }
+
+        fn word_len(&self) -> u32 {
+            32
+        }
+
+        fn max_var_num(&self) -> usize {
+            usize::MAX
+        }
+
+        fn preferred_var_num(&self) -> usize {
+            1000000
+        }
+        /// Generates prolog.
+        fn prolog(&self, out: &mut Vec<u8>) {
+            writeln!(out, "Start").unwrap();
+        }
+        /// Generates epilog;
+        fn epilog(&self, out: &mut Vec<u8>) {
+            writeln!(out, "End").unwrap();
+        }
+        fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize) {
+            writeln!(out, "Func {}({} {}) {{", name, input_len, output_len).unwrap();
+        }
+        fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
+            writeln!(out, "}}").unwrap();
+        }
+        fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
+            writeln!(out, "  vars v0..{}", var_num).unwrap();
+        }
+        fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize) {
+            writeln!(out, "  v{} = I{}", reg, input).unwrap();
+        }
+        fn gen_op(
+            &self,
+            out: &mut Vec<u8>,
+            op: InstrOp,
+            negs: VNegs,
+            dst_arg: usize,
+            arg1: usize,
+            arg2: usize,
+        ) {
+            writeln!(
+                out,
+                "  v{} = {}(v{} {} {}v{})",
+                dst_arg,
+                if negs == VNegs::NegOutput { "~" } else { "" },
+                arg1,
+                match op {
+                    InstrOp::And => "and",
+                    InstrOp::Or => "or",
+                    InstrOp::Xor => "xor",
+                    InstrOp::Impl => "impl",
+                    InstrOp::Nimpl => "nimpl",
+                },
+                if negs == VNegs::NegInput1 { "~" } else { "" },
+                arg2
+            )
+            .unwrap();
+        }
+        fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
+            writeln!(
+                out,
+                "  O{} = {}v{}",
+                output,
+                if neg { "~" } else { "" },
+                reg
+            )
+            .unwrap();
+        }
+    }
 }
