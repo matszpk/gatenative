@@ -8,8 +8,8 @@ use std::hash::Hash;
 
 use crate::*;
 
-use crate::vcircuit::*;
 use crate::vbinopcircuit::*;
+use crate::vcircuit::*;
 
 pub struct VarAllocator<T> {
     free_list: BinaryHeap<std::cmp::Reverse<T>>,
@@ -104,6 +104,7 @@ where
     //println!("  Alloc: {:?} {:?}", var, alloc_vars[var_u]);
 }
 
+// single variable use - just mark that variable has been used by decreasing its usage.
 fn single_var_use<T>(
     var_alloc: &mut VarAllocator<T>,
     alloc_vars: &[Option<T>],

@@ -7,9 +7,9 @@ pub enum VNegs {
     NegOutput,
 }
 
-mod vcircuit;
-mod vbinopcircuit;
 pub mod gencode;
+mod vbinopcircuit;
+mod vcircuit;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]

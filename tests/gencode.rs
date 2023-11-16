@@ -1,5 +1,5 @@
-use gatenative::*;
 use gatenative::gencode::*;
+use gatenative::*;
 use gatesim::*;
 use int_enum::IntEnum;
 
