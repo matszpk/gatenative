@@ -266,7 +266,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             .unwrap();
         }
         if let Some((_, one_value)) = self.one_value {
-            writeln!(out, "    {} one = {}", self.type_name, one_value).unwrap();
+            writeln!(out, "    {} one = {};", self.type_name, one_value).unwrap();
         }
     }
     fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
