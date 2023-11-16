@@ -6,7 +6,6 @@ struct CLangWriter<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>, // to initialize index in OpenCL kernel
     include_name: Option<&'a str>,
-    type_modifier: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
     and_op: &'a str,
@@ -22,7 +21,6 @@ const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("stdint.h"),
-    type_modifier: None,
     type_name: "uint32_t",
     type_bit_len: 32,
     and_op: "{} & {}",
@@ -38,7 +36,6 @@ const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("stdint.h"),
-    type_modifier: None,
     type_name: "uint64_t",
     type_bit_len: 64,
     and_op: "{} & {}",
@@ -54,7 +51,6 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("mmintrin.h"),
-    type_modifier: None,
     type_name: "__m64",
     type_bit_len: 64,
     and_op: "_m_pand({}, {})",
@@ -73,7 +69,6 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("xmmintrin.h"),
-    type_modifier: None,
     type_name: "__m128",
     type_bit_len: 128,
     and_op: "_mm_and_ps({}, {})",
@@ -93,7 +88,6 @@ const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("immintrin.h"),
-    type_modifier: None,
     type_name: "__m256",
     type_bit_len: 256,
     and_op: "_mm256_and_ps({}, {})",
@@ -115,7 +109,6 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("immintrin.h"),
-    type_modifier: None,
     type_name: "__m512i",
     type_bit_len: 512,
     and_op: "_mm512_and_epi64({}, {})",
@@ -139,7 +132,6 @@ const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("arm_neon.h"),
-    type_modifier: None,
     type_name: "uint32x4_t",
     type_bit_len: 128,
     and_op: "vandq_u32({}, {})",
@@ -155,7 +147,6 @@ const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: Some("kernel"),
     init_index: Some("uint idx = get_global_id(0);"),
     include_name: None,
-    type_modifier: None,
     type_name: "uint",
     type_bit_len: 32,
     and_op: "{} & {}",
@@ -248,8 +239,10 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             out.push(b'\n');
         }
     }
-    fn epilog(&self, out: &mut Vec<u8>) {}
-    fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize) {
+
+    fn epilog(&self, _out: &mut Vec<u8>) {}
+
+    fn func_start(&self, out: &mut Vec<u8>, name: &str, _input_len: usize, _output_len: usize) {
         if let Some(init_index) = self.init_index {
             writeln!(
                 out,
@@ -276,7 +269,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             writeln!(out, "    {} one = {}", self.type_name, one_value).unwrap();
         }
     }
-    fn func_end(&self, out: &mut Vec<u8>, name: &str) {
+    fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
         out.extend(b"}\n");
     }
     fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
@@ -304,7 +297,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         let arg0 = format!("v{}", arg0);
         let arg1 = self.format_neg_arg(negs == VNegs::NegInput1, arg1);
         let mut op_vec = vec![];
-        let mut args = [arg0.as_bytes(), arg1.as_bytes()];
+        let args = [arg0.as_bytes(), arg1.as_bytes()];
         match op {
             InstrOp::And => self.write_op(&mut op_vec, self.and_op, &args),
             InstrOp::Or => self.write_op(&mut op_vec, self.or_op, &args),
@@ -312,6 +305,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             InstrOp::Impl => self.write_op(&mut op_vec, self.impl_op.unwrap(), &args),
             InstrOp::Nimpl => self.write_op(&mut op_vec, self.nimpl_op.unwrap(), &args),
         };
+        write!(out, "    v{} =", dst_arg).unwrap();
         if negs == VNegs::NegOutput {
             self.write_neg(out, &op_vec);
         } else {
