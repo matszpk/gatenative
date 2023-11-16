@@ -145,7 +145,7 @@ const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
 
 const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: Some("kernel"),
-    init_index: Some("uint idx = get_global_id(0);"),
+    init_index: Some("const uint idx = get_global_id(0);"),
     include_name: None,
     type_name: "uint",
     type_bit_len: 32,
@@ -246,8 +246,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             writeln!(
                 out,
                 r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}* input, {3}* output) {{
-    {4}
-    if (idx >= n) return;"##,
+    {4}"##,
                 self.func_modifier.unwrap_or(""),
                 if self.func_modifier.is_some() {
                     " "
@@ -275,7 +274,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             .unwrap();
         }
         if let Some((_, one_value)) = self.one_value {
-            writeln!(out, "    {} one = {};", self.type_name, one_value).unwrap();
+            writeln!(out, "    const {} one = {};", self.type_name, one_value).unwrap();
         }
     }
     fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
@@ -284,6 +283,9 @@ impl<'a> CodeWriter for CLangWriter<'a> {
     fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
         for i in 0..var_num {
             writeln!(out, "    {} v{};", self.type_name, i).unwrap();
+        }
+        if self.init_index.is_some() {
+            out.extend(b"    if (idx >= n) return;\n");
         }
     }
 
@@ -422,7 +424,7 @@ void gate_sys_func1(const uint64_t* input, uint64_t* output) {
             r##"#include <mmintrin.h>
 static const unsinged int one_value[2] = { 0xffffffff, 0xffffffff };
 void gate_sys_func1(const __m64* input, __m64* output) {
-    __m64 one = *((const __m64*)one_value);
+    const __m64 one = *((const __m64*)one_value);
     __m64 v0;
     __m64 v1;
     __m64 v2;
@@ -451,7 +453,7 @@ void gate_sys_func1(const __m64* input, __m64* output) {
 static const unsinged int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
 void gate_sys_func1(const __m128* input, __m128* output) {
-    __m128 one = *((const __m128*)one_value);
+    const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
     __m128 v2;
@@ -482,7 +484,7 @@ static const unsigned int one_value[8] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
 void gate_sys_func1(const __m256* input, __m256* output) {
-    __m256 one = *((const __m256*)one_value);
+    const __m256 one = *((const __m256*)one_value);
     __m256 v0;
     __m256 v1;
     __m256 v2;
@@ -515,7 +517,7 @@ static const unsigned int one_value[16] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
 void gate_sys_func1(const __m512i* input, __m512i* output) {
-    __m512i one = *((const __m512i*)one_value);
+    const __m512i one = *((const __m512i*)one_value);
     __m512i v0;
     __m512i v1;
     __m512i v2;
@@ -567,13 +569,13 @@ void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
         );
         assert_eq!(
             r##"kernel void gate_sys_func1(unsigned int n, const uint* input, uint* output) {
-    uint idx = get_global_id(0);
-    if (idx >= n) return;
+    const uint idx = get_global_id(0);
     uint v0;
     uint v1;
     uint v2;
     uint v3;
     uint v4;
+    if (idx >= n) return;
     v2 = input[0*n + idx];
     v1 = input[1*n + idx];
     v0 = input[2*n + idx];
