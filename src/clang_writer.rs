@@ -5,7 +5,7 @@ use crate::*;
 struct CLangWriter<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>,
-    include_name: &'a str,
+    include_name: Option<&'a str>,
     type_modifier: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
@@ -21,7 +21,7 @@ struct CLangWriter<'a> {
 const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "stdint.h",
+    include_name: Some("stdint.h"),
     type_modifier: None,
     type_name: "uint32_t",
     type_bit_len: 32,
@@ -37,7 +37,7 @@ const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
 const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "stdint.h",
+    include_name: Some("stdint.h"),
     type_modifier: None,
     type_name: "uint64_t",
     type_bit_len: 64,
@@ -53,7 +53,7 @@ const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
 const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "mmintrin.h",
+    include_name: Some("mmintrin.h"),
     type_modifier: None,
     type_name: "__m64",
     type_bit_len: 64,
@@ -74,7 +74,7 @@ static const uint32_t one_value[2] = { 0xffffffff, 0xffffffff };
 const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "xmmintrin.h",
+    include_name: Some("xmmintrin.h"),
     type_modifier: None,
     type_name: "__m128",
     type_bit_len: 128,
@@ -95,7 +95,7 @@ static const uint32_t one_value[4] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xfff
 const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "immintrin.h",
+    include_name: Some("immintrin.h"),
     type_modifier: None,
     type_name: "__m256",
     type_bit_len: 256,
@@ -118,7 +118,7 @@ static const uint32_t one_value[8] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xfff
 const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
-    include_name: "immintrin.h",
+    include_name: Some("immintrin.h"),
     type_modifier: None,
     type_name: "__m512i",
     type_bit_len: 512,
@@ -139,4 +139,36 @@ static const uint32_t one_value[16] = {
 "##,
         "*((__m512i)one_value)",
     )),
+};
+
+const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
+    func_modifier: None,
+    init_index: None,
+    include_name: Some("arm_neon.h"),
+    type_modifier: None,
+    type_name: "uint32x4_t",
+    type_bit_len: 128,
+    and_op: "vandq_u32({}, {})",
+    or_op: "vorq_u32({}, {})",
+    xor_op: "veorq_u32({}, {})",
+    impl_op: Some("vornq_u32({1}, {0})"),
+    nimpl_op: None,
+    not_op: Some("vmvnq_u32({})"),
+    one_value: None,
+};
+
+const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
+    func_modifier: Some("kernel"),
+    init_index: Some("uint idx = get_global_id(0);"),
+    include_name: None,
+    type_modifier: None,
+    type_name: "uint",
+    type_bit_len: 32,
+    and_op: "{} & {}",
+    or_op: "{} | {}",
+    xor_op: "{} ^ {}",
+    impl_op: None,
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    one_value: None,
 };
