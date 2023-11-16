@@ -64,9 +64,7 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_m_pandn({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"#include <stdint.h>
-static const uint32_t one_value[2] = { 0xffffffff, 0xffffffff };
-"##,
+        r##"static const unsinged int one_value[2] = { 0xffffffff, 0xffffffff };"##,
         "*((__m64*)one_value)",
     )),
 };
@@ -85,9 +83,8 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"#include <stdint.h>
-static const uint32_t one_value[4] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
-"##,
+        r##"static const unsinged int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((__m128*)one_value)",
     )),
 };
@@ -106,11 +103,10 @@ const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_mm256_andnot_ps({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"#include <stdint.h>
-static const uint32_t one_value[8] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+        r##"static const unsigned int one_value[8] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
-};
-"##,
+};"##,
         "*((__m256*)one_value)",
     )),
 };
@@ -129,14 +125,12 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"#include <stdint.h>
-static const uint32_t one_value[16] = {
+        r##"static const unsigned int one_value[16] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
-};
-"##,
+};"##,
         "*((__m512i)one_value)",
     )),
 };
