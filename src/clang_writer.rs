@@ -241,7 +241,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
 
     fn epilog(&self, _out: &mut Vec<u8>) {}
 
-    fn func_start(&self, out: &mut Vec<u8>, name: &str, _input_len: usize, _output_len: usize) {
+    fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize) {
         if let Some(init_index) = self.init_index {
             writeln!(
                 out,
@@ -256,6 +256,15 @@ impl<'a> CodeWriter for CLangWriter<'a> {
                 name,
                 self.type_name,
                 init_index
+            )
+            .unwrap();
+            write!(
+                out,
+                concat!(
+                    "    const unsigned int ivn = {} * idx;\n",
+                    "    const unsigned int ovn = {} * idx;\n"
+                ),
+                input_len, output_len
             )
             .unwrap();
         } else {
@@ -291,7 +300,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
 
     fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize) {
         if self.init_index.is_some() {
-            writeln!(out, "    v{} = input[{}*n + idx];", reg, input).unwrap();
+            writeln!(out, "    v{} = input[ivn + {}];", reg, input).unwrap();
         } else {
             writeln!(out, "    v{} = input[{}];", reg, input).unwrap();
         }
@@ -328,7 +337,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
         let arg = self.format_neg_arg(neg, reg);
         if self.init_index.is_some() {
-            writeln!(out, "    output[{}*n + idx] = {};", output, arg).unwrap();
+            writeln!(out, "    output[ovn + {}] = {};", output, arg).unwrap();
         } else {
             writeln!(out, "    output[{}] = {};", output, arg).unwrap();
         }
@@ -570,25 +579,27 @@ void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
         assert_eq!(
             r##"kernel void gate_sys_func1(unsigned int n, const uint* input, uint* output) {
     const uint idx = get_global_id(0);
+    const unsigned int ivn = 3 * idx;
+    const unsigned int ovn = 2 * idx;
     uint v0;
     uint v1;
     uint v2;
     uint v3;
     uint v4;
     if (idx >= n) return;
-    v2 = input[0*n + idx];
-    v1 = input[1*n + idx];
-    v0 = input[2*n + idx];
+    v2 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v0 = input[ivn + 2];
     v2 = (v0 & v1);
     v1 = (v2 | v1);
     v3 = (v0 ^ v1);
     v3 = ~(v0 & v1);
-    output[1*n + idx] = ~v3;
+    output[ovn + 1] = ~v3;
     v2 = ~(v2 | v3);
     v4 = ~(v1 ^ v3);
     v4 = (v4 & ~v1);
     v4 = (v4 ^ ~v1);
-    output[0*n + idx] = v4;
+    output[ovn + 0] = v4;
 }
 "##,
             write_test_code(&CLANG_WRITER_OPENCL_U32)
