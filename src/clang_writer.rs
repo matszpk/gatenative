@@ -248,7 +248,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
                 out,
                 r##"{0} void gate_sys_{1}(unsigned int n, const {2}* input, {2}* output) {{
     {3}
-    if idx < n {{ return; }}"##,
+    if idx >= n {{ return; }}"##,
                 self.func_modifier.unwrap_or(""),
                 name,
                 self.type_name,
