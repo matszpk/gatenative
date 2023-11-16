@@ -7,10 +7,10 @@ pub enum VNegs {
     NegOutput,
 }
 
+pub mod clang_writer;
 pub mod gencode;
 mod vbinopcircuit;
 mod vcircuit;
-pub mod clang_writer;
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
@@ -23,7 +23,7 @@ pub enum InstrOp {
 }
 
 pub const INSTR_OP_VALUE_AND: u64 = 0;
-pub const INSTR_OP_VALUE_OR: u64  = 1;
+pub const INSTR_OP_VALUE_OR: u64 = 1;
 pub const INSTR_OP_VALUE_IMPL: u64 = 2;
 pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
 pub const INSTR_OP_VALUE_XOR: u64 = 4;

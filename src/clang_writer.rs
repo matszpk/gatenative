@@ -14,6 +14,8 @@ struct CLangWriter<'a> {
     xor_op: &'a str,
     impl_op: Option<&'a str>,
     nimpl_op: Option<&'a str>,
+    not_op: Option<&'a str>,
+    one_value: Option<(&'a str, &'a str)>, // for emulate NOT
 }
 
 const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
@@ -28,6 +30,8 @@ const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     xor_op: "{} ^ {}",
     impl_op: None,
     nimpl_op: None,
+    not_op: Some("~{}"),
+    one_value: None,
 };
 
 const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
@@ -42,6 +46,8 @@ const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     xor_op: "{} ^ {}",
     impl_op: None,
     nimpl_op: None,
+    not_op: Some("~{}"),
+    one_value: None,
 };
 
 const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
@@ -56,6 +62,13 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     xor_op: "_m_pxor({}, {})",
     impl_op: None,
     nimpl_op: Some("_m_pandn({1}, {0})"),
+    not_op: None,
+    one_value: Some((
+        r##"#include <stdint.h>
+static const uint32_t one_value[2] = { 0xffffffff, 0xffffffff };
+"##,
+        "*((__m64*)one_value)",
+    )),
 };
 
 const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
@@ -70,6 +83,13 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     xor_op: "_mm_xor_ps({}, {})",
     impl_op: None,
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
+    not_op: None,
+    one_value: Some((
+        r##"#include <stdint.h>
+static const uint32_t one_value[4] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
+"##,
+        "*((__m128*)one_value)",
+    )),
 };
 
 const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
@@ -84,6 +104,15 @@ const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     xor_op: "_mm256_xor_ps({}, {})",
     impl_op: None,
     nimpl_op: Some("_mm256_andnot_ps({1}, {0})"),
+    not_op: None,
+    one_value: Some((
+        r##"#include <stdint.h>
+static const uint32_t one_value[8] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};
+"##,
+        "*((__m256*)one_value)",
+    )),
 };
 
 const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
@@ -98,4 +127,16 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     xor_op: "_mm512_xor_epi64({}, {})",
     impl_op: None,
     nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
+    not_op: None,
+    one_value: Some((
+        r##"#include <stdint.h>
+static const uint32_t one_value[16] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+};
+"##,
+        "*((__m512i)one_value)",
+    )),
 };
