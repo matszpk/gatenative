@@ -29,14 +29,13 @@ pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
 pub const INSTR_OP_VALUE_XOR: u64 = 4;
 
 pub trait CodeWriter {
-    /// It returns bit mask of where bit position is InstrOp integer value - support
-    // Instr Ops.
+    /// It returns bit mask of where bit position is InstrOp integer value - support Instr Ops.
     fn supported_ops(&self) -> u64;
-    // Returns Word length in bits. Single variable have word length.
+    /// Returns Word length in bits. Single variable have word length.
     fn word_len(&self) -> u32;
-    // Returns maximal possible variable number in words.
+    /// Returns maximal possible variable number in words.
     fn max_var_num(&self) -> usize;
-    // Returns preferred variable number in words.
+    /// Returns preferred variable number in words.
     fn preferred_var_num(&self) -> usize;
     /// Generates prolog.
     fn prolog(&self, out: &mut Vec<u8>);
