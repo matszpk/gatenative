@@ -74,10 +74,9 @@ pub trait Executor {
     fn execute(input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
 }
 
-pub trait Builder {
+pub trait Builder<E: Executor> {
     type ErrorType;
-    type Executor;
-    fn build<T: Clone + Copy>(circuit: Circuit<T>) -> Result<Self::Executor, Self::ErrorType>;
+    fn build<T: Clone + Copy>(circuit: Circuit<T>) -> Result<E, Self::ErrorType>;
     fn word_len() -> u32;
 }
 
