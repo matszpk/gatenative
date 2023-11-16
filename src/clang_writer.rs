@@ -60,7 +60,7 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_m_pandn({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"static const unsinged int one_value[2] = { 0xffffffff, 0xffffffff };"##,
+        r##"static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };"##,
         "*((const __m64*)one_value)",
     )),
 };
@@ -78,7 +78,7 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"static const unsinged int one_value[4] = {
+        r##"static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((const __m128*)one_value)",
     )),
@@ -431,7 +431,7 @@ void gate_sys_func1(const uint64_t* input, uint64_t* output) {
         );
         assert_eq!(
             r##"#include <mmintrin.h>
-static const unsinged int one_value[2] = { 0xffffffff, 0xffffffff };
+static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
 void gate_sys_func1(const __m64* input, __m64* output) {
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;
@@ -459,7 +459,7 @@ void gate_sys_func1(const __m64* input, __m64* output) {
         );
         assert_eq!(
             r##"#include <xmmintrin.h>
-static const unsinged int one_value[4] = {
+static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
 void gate_sys_func1(const __m128* input, __m128* output) {
     const __m128 one = *((const __m128*)one_value);
