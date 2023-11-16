@@ -97,5 +97,5 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     or_op: "_mm512_or_epi64({}, {})",
     xor_op: "_mm512_xor_epi64({}, {})",
     impl_op: None,
-    nimpl_op: Some("_mm512_andnot_epi64({}, {})"),
+    nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
 };
