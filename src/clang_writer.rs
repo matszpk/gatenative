@@ -135,7 +135,7 @@ const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
     type_name: "uint32x4_t",
     type_bit_len: 128,
     and_op: "vandq_u32({}, {})",
-    or_op: "vorq_u32({}, {})",
+    or_op: "vorrq_u32({}, {})",
     xor_op: "veorq_u32({}, {})",
     impl_op: Some("vornq_u32({1}, {0})"),
     nimpl_op: None,
@@ -562,12 +562,12 @@ void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
     v1 = input[1];
     v0 = input[2];
     v2 = vandq_u32(v0, v1);
-    v1 = vorq_u32(v2, v1);
+    v1 = vorrq_u32(v2, v1);
     v3 = veorq_u32(v0, v1);
     v3 = vmvnq_u32(vandq_u32(v0, v1));
     v3 = vornq_u32(v1, v2);
     output[1] = vmvnq_u32(v3);
-    v2 = vmvnq_u32(vorq_u32(v2, v3));
+    v2 = vmvnq_u32(vorrq_u32(v2, v3));
     v4 = vmvnq_u32(veorq_u32(v1, v3));
     v4 = vandq_u32(v4, vmvnq_u32(v1));
     v4 = veorq_u32(v4, vmvnq_u32(v1));
