@@ -18,7 +18,7 @@ pub struct CLangWriter<'a> {
     one_value: Option<(&'a str, &'a str)>, // for emulate NOT
 }
 
-const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("stdint.h"),
@@ -34,7 +34,7 @@ const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     one_value: None,
 };
 
-const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("stdint.h"),
@@ -50,7 +50,7 @@ const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     one_value: None,
 };
 
-const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("mmintrin.h"),
@@ -69,7 +69,7 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     )),
 };
 
-const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("xmmintrin.h"),
@@ -89,7 +89,7 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     )),
 };
 
-const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("immintrin.h"),
@@ -111,7 +111,7 @@ const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     )),
 };
 
-const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("immintrin.h"),
@@ -135,7 +135,7 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     )),
 };
 
-const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
     func_modifier: None,
     init_index: None,
     include_name: Some("arm_neon.h"),
@@ -151,7 +151,7 @@ const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
     one_value: None,
 };
 
-const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
+pub const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
     func_modifier: Some("kernel"),
     init_index: Some("const uint idx = get_global_id(0);"),
     include_name: None,
