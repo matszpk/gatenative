@@ -419,6 +419,34 @@ void gate_sys_func1(const uint64_t* input, uint64_t* output) {
             write_test_code(&CLANG_WRITER_U64)
         );
         assert_eq!(
+            r##"#include <mmintrin.h>
+static const unsinged int one_value[2] = { 0xffffffff, 0xffffffff };
+void gate_sys_func1(const __m64* input, __m64* output) {
+    __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _m_pand(v0, v1);
+    v1 = _m_por(v2, v1);
+    v3 = _m_pxor(v0, v1);
+    v3 = _m_pxor(_m_pand(v0, v1), one);
+    output[1] = _m_pxor(v3, one);
+    v2 = _m_pxor(_m_por(v2, v3), one);
+    v4 = _m_pxor(_m_pxor(v1, v3), one);
+    v4 = _m_pand(v4, _m_pxor(v1, one));
+    v4 = _m_pxor(v4, _m_pxor(v1, one));
+    v4 = _m_pandn(v4, v2);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_INTEL_MMX)
+        );
+        assert_eq!(
             r##"#include <xmmintrin.h>
 static const unsinged int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
@@ -446,6 +474,70 @@ void gate_sys_func1(const __m128* input, __m128* output) {
 }
 "##,
             write_test_code(&CLANG_WRITER_INTEL_SSE)
+        );
+        assert_eq!(
+            r##"#include <immintrin.h>
+static const unsigned int one_value[8] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};
+void gate_sys_func1(const __m256* input, __m256* output) {
+    __m256 one = *((const __m256*)one_value);
+    __m256 v0;
+    __m256 v1;
+    __m256 v2;
+    __m256 v3;
+    __m256 v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _mm256_and_ps(v0, v1);
+    v1 = _mm256_or_ps(v2, v1);
+    v3 = _mm256_xor_ps(v0, v1);
+    v3 = _mm256_xor_ps(_mm256_and_ps(v0, v1), one);
+    output[1] = _mm256_xor_ps(v3, one);
+    v2 = _mm256_xor_ps(_mm256_or_ps(v2, v3), one);
+    v4 = _mm256_xor_ps(_mm256_xor_ps(v1, v3), one);
+    v4 = _mm256_and_ps(v4, _mm256_xor_ps(v1, one));
+    v4 = _mm256_xor_ps(v4, _mm256_xor_ps(v1, one));
+    v4 = _mm256_andnot_ps(v4, v2);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_INTEL_AVX)
+        );
+        assert_eq!(
+            r##"#include <immintrin.h>
+static const unsigned int one_value[16] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};
+void gate_sys_func1(const __m512i* input, __m512i* output) {
+    __m512i one = *((const __m512i*)one_value);
+    __m512i v0;
+    __m512i v1;
+    __m512i v2;
+    __m512i v3;
+    __m512i v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _mm512_and_epi64(v0, v1);
+    v1 = _mm512_or_epi64(v2, v1);
+    v3 = _mm512_xor_epi64(v0, v1);
+    v3 = _mm512_xor_epi64(_mm512_and_epi64(v0, v1), one);
+    output[1] = _mm512_xor_epi64(v3, one);
+    v2 = _mm512_xor_epi64(_mm512_or_epi64(v2, v3), one);
+    v4 = _mm512_xor_epi64(_mm512_xor_epi64(v1, v3), one);
+    v4 = _mm512_and_epi64(v4, _mm512_xor_epi64(v1, one));
+    v4 = _mm512_xor_epi64(v4, _mm512_xor_epi64(v1, one));
+    v4 = _mm512_andnot_epi64(v4, v2);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_INTEL_AVX512)
         );
         assert_eq!(
             r##"#include <arm_neon.h>
