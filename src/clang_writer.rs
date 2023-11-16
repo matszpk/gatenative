@@ -305,12 +305,13 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             InstrOp::Impl => self.write_op(&mut op_vec, self.impl_op.unwrap(), &args),
             InstrOp::Nimpl => self.write_op(&mut op_vec, self.nimpl_op.unwrap(), &args),
         };
-        write!(out, "    v{} =", dst_arg).unwrap();
+        write!(out, "    v{} = ", dst_arg).unwrap();
         if negs == VNegs::NegOutput {
             self.write_neg(out, &op_vec);
         } else {
             out.extend(op_vec);
         }
+        out.extend(b";\n");
     }
 
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
