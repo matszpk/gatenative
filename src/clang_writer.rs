@@ -168,21 +168,21 @@ const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
 };
 
 impl<'a> CLangWriter<'a> {
-    fn write_op(&self, out: &mut Vec<u8>, op: &str, args: &[&str]) {
+    fn write_op(&self, out: &mut Vec<u8>, op: &str, args: &[&[u8]]) {
         let mut rest = op;
         let mut arg_index = 0;
         while let Some(p) = rest.find('{') {
-            out.extend(rest[..p].bytes());
+            out.extend(rest[..p].as_bytes());
             rest = &rest[p + 1..];
             if let Some(endr) = rest.find('}') {
                 if rest[..endr].is_empty() {
                     // fetch next argument
-                    out.extend(args[arg_index].bytes());
+                    out.extend(args[arg_index]);
                     arg_index += 1;
                 } else {
                     // fetch argument with index given between {}
                     let index = usize::from_str_radix(&rest[..endr], 10).unwrap();
-                    out.extend(args[index].bytes());
+                    out.extend(args[index]);
                 }
                 rest = &rest[endr + 1..];
             } else {
@@ -191,15 +191,15 @@ impl<'a> CLangWriter<'a> {
             rest = &rest[p..];
         }
         if !rest.is_empty() {
-            out.extend(rest.bytes());
+            out.extend(rest.as_bytes());
         }
     }
 
-    fn write_neg(&self, out: &mut Vec<u8>, arg: &str) {
+    fn write_neg(&self, out: &mut Vec<u8>, arg: &[u8]) {
         if let Some(op) = self.not_op {
             self.write_op(out, op, &[arg]);
         } else {
-            self.write_op(out, self.xor_op, &[arg, "one"]);
+            self.write_op(out, self.xor_op, &[arg, b"one"]);
         }
     }
 
@@ -207,8 +207,8 @@ impl<'a> CLangWriter<'a> {
         if neg {
             let arg = format!("v{}", reg);
             let mut out_str = vec![];
-            self.write_neg(&mut out_str, &arg);
-            String::from_utf8(out_str).unwrap()
+            self.write_neg(&mut out_str, arg.as_bytes());
+            String::from_utf8_lossy(&out_str).to_string()
         } else {
             format!("v{}", reg)
         }
@@ -244,7 +244,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
             writeln!(out, "#include \"{}\"", include_name).unwrap();
         }
         if let Some((init_one, _)) = self.one_value {
-            out.extend(init_one.bytes());
+            out.extend(init_one.as_bytes());
             out.push(b'\n');
         }
     }
@@ -304,16 +304,16 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         let arg0 = format!("v{}", arg0);
         let arg1 = self.format_neg_arg(negs == VNegs::NegInput1, arg1);
         let mut op_vec = vec![];
+        let mut args = [arg0.as_bytes(), arg1.as_bytes()];
         match op {
-            InstrOp::And => self.write_op(&mut op_vec, self.and_op, &[&arg0, &arg1]),
-            InstrOp::Or => self.write_op(&mut op_vec, self.or_op, &[&arg0, &arg1]),
-            InstrOp::Xor => self.write_op(&mut op_vec, self.or_op, &[&arg0, &arg1]),
-            InstrOp::Impl => self.write_op(&mut op_vec, self.impl_op.unwrap(), &[&arg0, &arg1]),
-            InstrOp::Nimpl => self.write_op(&mut op_vec, self.nimpl_op.unwrap(), &[&arg0, &arg1]),
+            InstrOp::And => self.write_op(&mut op_vec, self.and_op, &args),
+            InstrOp::Or => self.write_op(&mut op_vec, self.or_op, &args),
+            InstrOp::Xor => self.write_op(&mut op_vec, self.or_op, &args),
+            InstrOp::Impl => self.write_op(&mut op_vec, self.impl_op.unwrap(), &args),
+            InstrOp::Nimpl => self.write_op(&mut op_vec, self.nimpl_op.unwrap(), &args),
         };
         if negs == VNegs::NegOutput {
-            let s = String::from_utf8(op_vec).unwrap();
-            self.write_neg(out, &s);
+            self.write_neg(out, &op_vec);
         } else {
             out.extend(op_vec);
         }
