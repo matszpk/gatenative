@@ -287,7 +287,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
 
     fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize) {
         if self.init_index.is_some() {
-            writeln!(out, "    v{} = input[{} * n + idx];", reg, input).unwrap();
+            writeln!(out, "    v{} = input[{}*n + idx];", reg, input).unwrap();
         } else {
             writeln!(out, "    v{} = input[{}];", reg, input).unwrap();
         }
@@ -322,7 +322,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
         let arg = self.format_neg_arg(neg, reg);
         if self.init_index.is_some() {
-            writeln!(out, "    output[{} * n + idx] = {};", output, arg).unwrap();
+            writeln!(out, "    output[{}*n + idx] = {};", output, arg).unwrap();
         } else {
             writeln!(out, "    output[{}] = {};", output, arg).unwrap();
         }
