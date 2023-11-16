@@ -1,3 +1,5 @@
+use gatesim::Circuit;
+
 use int_enum::IntEnum;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -63,6 +65,20 @@ pub trait CodeWriter {
     );
     /// Generates Store instruction into output.
     fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize);
+}
+
+pub trait Executor {
+    type ErrorType;
+    fn input_len() -> usize;
+    fn output_len() -> usize;
+    fn execute(input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
+}
+
+pub trait Builder {
+    type ErrorType;
+    type Executor;
+    fn build<T: Clone + Copy>(circuit: Circuit<T>) -> Result<Self::Executor, Self::ErrorType>;
+    fn word_len() -> u32;
 }
 
 // #[cfg(test)]
