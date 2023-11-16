@@ -4,7 +4,7 @@ use crate::*;
 
 struct CLangWriter<'a> {
     func_modifier: Option<&'a str>,
-    init_index: Option<&'a str>,
+    init_index: Option<&'a str>, // to initialize index in OpenCL kernel
     include_name: Option<&'a str>,
     type_modifier: Option<&'a str>,
     type_name: &'a str,
