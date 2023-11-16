@@ -2,7 +2,7 @@ use crate::*;
 
 use std::io::Write;
 
-struct CLangWriter<'a> {
+pub struct CLangWriter<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>, // to initialize index in OpenCL kernel
     include_name: Option<&'a str>,
@@ -179,7 +179,6 @@ impl<'a> CLangWriter<'a> {
             } else {
                 panic!("Unexpected");
             }
-            rest = &rest[p..];
         }
         if !rest.is_empty() {
             out.extend(rest.as_bytes());
@@ -232,7 +231,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
     }
     fn prolog(&self, out: &mut Vec<u8>) {
         if let Some(include_name) = self.include_name {
-            writeln!(out, "#include \"{}\"", include_name).unwrap();
+            writeln!(out, "#include <{}>", include_name).unwrap();
         }
         if let Some((init_one, _)) = self.one_value {
             out.extend(init_one.as_bytes());
@@ -246,10 +245,15 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         if let Some(init_index) = self.init_index {
             writeln!(
                 out,
-                r##"{0} void gate_sys_{1}(unsigned int n, const {2}* input, {2}* output) {{
-    {3}
+                r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}* input, {3}* output) {{
+    {4}
     if (idx >= n) return;"##,
                 self.func_modifier.unwrap_or(""),
+                if self.func_modifier.is_some() {
+                    " "
+                } else {
+                    ""
+                },
                 name,
                 self.type_name,
                 init_index
@@ -258,8 +262,13 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         } else {
             writeln!(
                 out,
-                "{0} void gate_sys_{1}(const {2}* input, {2}* output) {{",
+                "{0}{1}void gate_sys_{2}(const {3}* input, {3}* output) {{",
                 self.func_modifier.unwrap_or(""),
+                if self.func_modifier.is_some() {
+                    " "
+                } else {
+                    ""
+                },
                 name,
                 self.type_name
             )
@@ -301,7 +310,7 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         match op {
             InstrOp::And => self.write_op(&mut op_vec, self.and_op, &args),
             InstrOp::Or => self.write_op(&mut op_vec, self.or_op, &args),
-            InstrOp::Xor => self.write_op(&mut op_vec, self.or_op, &args),
+            InstrOp::Xor => self.write_op(&mut op_vec, self.xor_op, &args),
             InstrOp::Impl => self.write_op(&mut op_vec, self.impl_op.unwrap(), &args),
             InstrOp::Nimpl => self.write_op(&mut op_vec, self.nimpl_op.unwrap(), &args),
         };
@@ -321,5 +330,174 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         } else {
             writeln!(out, "    output[{}] = {};", output, arg).unwrap();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn write_test_code<CW: CodeWriter>(cw: &CW) -> String {
+        let mut out = vec![];
+        cw.prolog(&mut out);
+        cw.func_start(&mut out, "func1", 3, 2);
+        cw.alloc_vars(&mut out, 5);
+        cw.gen_load(&mut out, 2, 0);
+        cw.gen_load(&mut out, 1, 1);
+        cw.gen_load(&mut out, 0, 2);
+        cw.gen_op(&mut out, InstrOp::And, VNegs::NoNegs, 2, 0, 1);
+        cw.gen_op(&mut out, InstrOp::Or, VNegs::NoNegs, 1, 2, 1);
+        cw.gen_op(&mut out, InstrOp::Xor, VNegs::NoNegs, 3, 0, 1);
+        cw.gen_op(&mut out, InstrOp::And, VNegs::NegOutput, 3, 0, 1);
+        if (cw.supported_ops() & (1u64 << INSTR_OP_VALUE_IMPL)) != 0 {
+            cw.gen_op(&mut out, InstrOp::Impl, VNegs::NoNegs, 3, 2, 1);
+        }
+        cw.gen_store(&mut out, true, 1, 3);
+        cw.gen_op(&mut out, InstrOp::Or, VNegs::NegOutput, 2, 2, 3);
+        cw.gen_op(&mut out, InstrOp::Xor, VNegs::NegOutput, 4, 1, 3);
+        cw.gen_op(&mut out, InstrOp::And, VNegs::NegInput1, 4, 4, 1);
+        cw.gen_op(&mut out, InstrOp::Xor, VNegs::NegInput1, 4, 4, 1);
+        if (cw.supported_ops() & (1u64 << INSTR_OP_VALUE_NIMPL)) != 0 {
+            cw.gen_op(&mut out, InstrOp::Nimpl, VNegs::NoNegs, 4, 2, 4);
+        }
+        cw.gen_store(&mut out, false, 0, 4);
+        cw.func_end(&mut out, "func1");
+        cw.epilog(&mut out);
+        String::from_utf8(out).unwrap()
+    }
+
+    #[test]
+    fn test_clang_writer() {
+        assert_eq!(
+            r##"#include <stdint.h>
+void gate_sys_func1(const uint32_t* input, uint32_t* output) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_U32)
+        );
+        assert_eq!(
+            r##"#include <stdint.h>
+void gate_sys_func1(const uint64_t* input, uint64_t* output) {
+    uint64_t v0;
+    uint64_t v1;
+    uint64_t v2;
+    uint64_t v3;
+    uint64_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_U64)
+        );
+        assert_eq!(
+            r##"#include <xmmintrin.h>
+static const unsinged int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
+void gate_sys_func1(const __m128* input, __m128* output) {
+    __m128 one = *((const __m128*)one_value);
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _mm_and_ps(v0, v1);
+    v1 = _mm_or_ps(v2, v1);
+    v3 = _mm_xor_ps(v0, v1);
+    v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
+    output[1] = _mm_xor_ps(v3, one);
+    v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
+    v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
+    v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
+    v4 = _mm_xor_ps(v4, _mm_xor_ps(v1, one));
+    v4 = _mm_andnot_ps(v4, v2);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_INTEL_SSE)
+        );
+        assert_eq!(
+            r##"#include <arm_neon.h>
+void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
+    uint32x4_t v0;
+    uint32x4_t v1;
+    uint32x4_t v2;
+    uint32x4_t v3;
+    uint32x4_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = vandq_u32(v0, v1);
+    v1 = vorq_u32(v2, v1);
+    v3 = veorq_u32(v0, v1);
+    v3 = vmvnq_u32(vandq_u32(v0, v1));
+    v3 = vornq_u32(v1, v2);
+    output[1] = vmvnq_u32(v3);
+    v2 = vmvnq_u32(vorq_u32(v2, v3));
+    v4 = vmvnq_u32(veorq_u32(v1, v3));
+    v4 = vandq_u32(v4, vmvnq_u32(v1));
+    v4 = veorq_u32(v4, vmvnq_u32(v1));
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_ARM_NEON)
+        );
+        assert_eq!(
+            r##"kernel void gate_sys_func1(unsigned int n, const uint* input, uint* output) {
+    uint idx = get_global_id(0);
+    if (idx >= n) return;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    v2 = input[0*n + idx];
+    v1 = input[1*n + idx];
+    v0 = input[2*n + idx];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[1*n + idx] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[0*n + idx] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_OPENCL_U32)
+        );
     }
 }
