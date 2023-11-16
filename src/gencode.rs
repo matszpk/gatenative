@@ -449,6 +449,8 @@ pub fn generate_code<CW: CodeWriter, T>(
 
     if impl_op || nimpl_op {
         let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);
+        // generate swap_args - it used to preserve order original traverse from original circuit.
+        // if true then argument should be swapped while choosen way.
         let swap_args = circuit
             .gates()
             .iter()
@@ -461,6 +463,8 @@ pub fn generate_code<CW: CodeWriter, T>(
         if optimize_negs {
             vcircuit.optimize_negs();
         }
+        // generate swap_args - it used to preserve order original traverse from original circuit.
+        // if true then argument should be swapped while choosen way.
         let swap_args = circuit
             .gates()
             .iter()
