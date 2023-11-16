@@ -69,15 +69,15 @@ pub trait CodeWriter {
 
 pub trait Executor {
     type ErrorType;
-    fn input_len() -> usize;
-    fn output_len() -> usize;
-    fn execute(input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
+    fn input_len(&self) -> usize;
+    fn output_len(&self) -> usize;
+    fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
 }
 
 pub trait Builder<E: Executor> {
     type ErrorType;
-    fn build<T: Clone + Copy>(circuit: Circuit<T>) -> Result<E, Self::ErrorType>;
-    fn word_len() -> u32;
+    fn build<T: Clone + Copy>(&mut self, circuit: Circuit<T>) -> Result<E, Self::ErrorType>;
+    fn word_len(&self) -> u32;
 }
 
 // #[cfg(test)]
