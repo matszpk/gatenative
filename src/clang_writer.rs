@@ -8,6 +8,7 @@ pub struct CLangWriter<'a> {
     include_name: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
+    arg_modifier: Option<&'a str>,
     and_op: &'a str,
     or_op: &'a str,
     xor_op: &'a str,
@@ -23,6 +24,7 @@ const CLANG_WRITER_U32: CLangWriter<'_> = CLangWriter {
     include_name: Some("stdint.h"),
     type_name: "uint32_t",
     type_bit_len: 32,
+    arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
@@ -38,6 +40,7 @@ const CLANG_WRITER_U64: CLangWriter<'_> = CLangWriter {
     include_name: Some("stdint.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
+    arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
@@ -53,6 +56,7 @@ const CLANG_WRITER_INTEL_MMX: CLangWriter<'_> = CLangWriter {
     include_name: Some("mmintrin.h"),
     type_name: "__m64",
     type_bit_len: 64,
+    arg_modifier: None,
     and_op: "_m_pand({}, {})",
     or_op: "_m_por({}, {})",
     xor_op: "_m_pxor({}, {})",
@@ -71,6 +75,7 @@ const CLANG_WRITER_INTEL_SSE: CLangWriter<'_> = CLangWriter {
     include_name: Some("xmmintrin.h"),
     type_name: "__m128",
     type_bit_len: 128,
+    arg_modifier: None,
     and_op: "_mm_and_ps({}, {})",
     or_op: "_mm_or_ps({}, {})",
     xor_op: "_mm_xor_ps({}, {})",
@@ -90,6 +95,7 @@ const CLANG_WRITER_INTEL_AVX: CLangWriter<'_> = CLangWriter {
     include_name: Some("immintrin.h"),
     type_name: "__m256",
     type_bit_len: 256,
+    arg_modifier: None,
     and_op: "_mm256_and_ps({}, {})",
     or_op: "_mm256_or_ps({}, {})",
     xor_op: "_mm256_xor_ps({}, {})",
@@ -111,6 +117,7 @@ const CLANG_WRITER_INTEL_AVX512: CLangWriter<'_> = CLangWriter {
     include_name: Some("immintrin.h"),
     type_name: "__m512i",
     type_bit_len: 512,
+    arg_modifier: None,
     and_op: "_mm512_and_epi64({}, {})",
     or_op: "_mm512_or_epi64({}, {})",
     xor_op: "_mm512_xor_epi64({}, {})",
@@ -134,6 +141,7 @@ const CLANG_WRITER_ARM_NEON: CLangWriter<'_> = CLangWriter {
     include_name: Some("arm_neon.h"),
     type_name: "uint32x4_t",
     type_bit_len: 128,
+    arg_modifier: None,
     and_op: "vandq_u32({}, {})",
     or_op: "vorrq_u32({}, {})",
     xor_op: "veorq_u32({}, {})",
@@ -149,6 +157,7 @@ const CLANG_WRITER_OPENCL_U32: CLangWriter<'_> = CLangWriter {
     include_name: None,
     type_name: "uint",
     type_bit_len: 32,
+    arg_modifier: Some("global"),
     and_op: "({} & {})",
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
@@ -245,8 +254,9 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         if let Some(init_index) = self.init_index {
             writeln!(
                 out,
-                r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}* input, {3}* output) {{
-    {4}"##,
+                r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}{4}{5}* input,
+    {3}{4}{5}* output) {{
+    {6}"##,
                 self.func_modifier.unwrap_or(""),
                 if self.func_modifier.is_some() {
                     " "
@@ -254,6 +264,8 @@ impl<'a> CodeWriter for CLangWriter<'a> {
                     ""
                 },
                 name,
+                self.arg_modifier.unwrap_or(""),
+                if self.arg_modifier.is_some() { " " } else { "" },
                 self.type_name,
                 init_index
             )
@@ -270,7 +282,8 @@ impl<'a> CodeWriter for CLangWriter<'a> {
         } else {
             writeln!(
                 out,
-                "{0}{1}void gate_sys_{2}(const {3}* input, {3}* output) {{",
+                r##"{0}{1}void gate_sys_{2}(const {3}{4}{5}* input,
+    {3}{4}{5}* output) {{"##,
                 self.func_modifier.unwrap_or(""),
                 if self.func_modifier.is_some() {
                     " "
@@ -278,6 +291,8 @@ impl<'a> CodeWriter for CLangWriter<'a> {
                     ""
                 },
                 name,
+                self.arg_modifier.unwrap_or(""),
+                if self.arg_modifier.is_some() { " " } else { "" },
                 self.type_name
             )
             .unwrap();
@@ -381,7 +396,8 @@ mod tests {
     fn test_clang_writer() {
         assert_eq!(
             r##"#include <stdint.h>
-void gate_sys_func1(const uint32_t* input, uint32_t* output) {
+void gate_sys_func1(const uint32_t* input,
+    uint32_t* output) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -406,7 +422,8 @@ void gate_sys_func1(const uint32_t* input, uint32_t* output) {
         );
         assert_eq!(
             r##"#include <stdint.h>
-void gate_sys_func1(const uint64_t* input, uint64_t* output) {
+void gate_sys_func1(const uint64_t* input,
+    uint64_t* output) {
     uint64_t v0;
     uint64_t v1;
     uint64_t v2;
@@ -432,7 +449,8 @@ void gate_sys_func1(const uint64_t* input, uint64_t* output) {
         assert_eq!(
             r##"#include <mmintrin.h>
 static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
-void gate_sys_func1(const __m64* input, __m64* output) {
+void gate_sys_func1(const __m64* input,
+    __m64* output) {
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;
     __m64 v1;
@@ -461,7 +479,8 @@ void gate_sys_func1(const __m64* input, __m64* output) {
             r##"#include <xmmintrin.h>
 static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
-void gate_sys_func1(const __m128* input, __m128* output) {
+void gate_sys_func1(const __m128* input,
+    __m128* output) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -492,7 +511,8 @@ static const unsigned int one_value[8] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
-void gate_sys_func1(const __m256* input, __m256* output) {
+void gate_sys_func1(const __m256* input,
+    __m256* output) {
     const __m256 one = *((const __m256*)one_value);
     __m256 v0;
     __m256 v1;
@@ -525,7 +545,8 @@ static const unsigned int one_value[16] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
-void gate_sys_func1(const __m512i* input, __m512i* output) {
+void gate_sys_func1(const __m512i* input,
+    __m512i* output) {
     const __m512i one = *((const __m512i*)one_value);
     __m512i v0;
     __m512i v1;
@@ -552,7 +573,8 @@ void gate_sys_func1(const __m512i* input, __m512i* output) {
         );
         assert_eq!(
             r##"#include <arm_neon.h>
-void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
+void gate_sys_func1(const uint32x4_t* input,
+    uint32x4_t* output) {
     uint32x4_t v0;
     uint32x4_t v1;
     uint32x4_t v2;
@@ -577,7 +599,8 @@ void gate_sys_func1(const uint32x4_t* input, uint32x4_t* output) {
             write_test_code(&CLANG_WRITER_ARM_NEON)
         );
         assert_eq!(
-            r##"kernel void gate_sys_func1(unsigned int n, const uint* input, uint* output) {
+            r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
+    global uint* output) {
     const uint idx = get_global_id(0);
     const unsigned int ivn = 3 * idx;
     const unsigned int ovn = 2 * idx;
