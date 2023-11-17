@@ -204,9 +204,12 @@ where
                 stack.pop();
             }
         }
+    }
 
+    for (o, _) in circuit.outputs().iter() {
         single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
     }
+
     (
         alloc_vars
             .into_iter()
@@ -240,7 +243,7 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
     let gates = &circuit.gates;
 
     let mut visited = vec![false; gate_num];
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+    for (o, _) in circuit.outputs.iter() {
         if *o < input_len_t {
             continue;
         }
@@ -309,6 +312,9 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
                 stack.pop();
             }
         }
+    }
+
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         writer.gen_store(
             out,
             *on,
@@ -342,7 +348,7 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
     let gates = &circuit.gates;
 
     let mut visited = vec![false; gate_num];
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+    for (o, _) in circuit.outputs.iter() {
         if *o < input_len_t {
             continue;
         }
@@ -409,6 +415,9 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
                 stack.pop();
             }
         }
+    }
+
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         writer.gen_store(
             out,
             *on,
@@ -552,7 +561,7 @@ mod tests {
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
-            (vec![0, 1, 2, 3, 4, 2, 0, 1, 4, 0, 2, 0], 5),
+            (vec![0, 1, 2, 3, 4, 2, 0, 1, 5, 0, 2, 0], 6),
             gen_var_allocs(&circuit, &mut var_usage)
         );
     }

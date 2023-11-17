@@ -119,10 +119,10 @@ fn test_generate_code() {
     v2 = I2
     v3 = (v0 xor v1)
     v4 = (v2 xor v3)
-    O0 = v4
     v2 = (v2 and v3)
     v0 = (v0 impl v1)
     v0 = (v0 impl v2)
+    O0 = v4
     O1 = ~v0
 EndFunc
 "##
@@ -139,10 +139,10 @@ EndFunc
     v2 = I2
     v3 = (v0 xor v1)
     v4 = (v2 xor v3)
-    O0 = v4
     v2 = (v2 and v3)
     v0 = (v0 nimpl v1)
     v0 = (v2 or v0)
+    O0 = v4
     O1 = ~v0
 EndFunc
 "##
@@ -159,10 +159,10 @@ EndFunc
     v2 = I2
     v3 = (v0 xor v1)
     v4 = (v2 xor v3)
-    O0 = v4
     v2 = (v2 and v3)
     v0 = (v0 and ~v1)
     v0 = ~(v2 or v0)
+    O0 = v4
     O1 = v0
 EndFunc
 "##
@@ -219,12 +219,12 @@ EndFunc
     v5 = (v4 impl v1)
     v5 = (v8 xor v5)
     v2 = (v2 impl v5)
-    O0 = v2
     v0 = (v0 impl v7)
     v0 = (v0 impl v4)
     v1 = (v1 and v6)
     v1 = (v3 impl v1)
     v0 = (v0 xor v1)
+    O0 = v2
     O1 = v0
 EndFunc
 "##
@@ -253,12 +253,12 @@ EndFunc
     v5 = (v1 or v4)
     v5 = (v8 xor v5)
     v2 = (v5 nimpl v2)
-    O0 = ~v2
     v0 = (v0 nimpl v7)
     v0 = (v4 nimpl v0)
     v1 = (v1 nimpl v6)
     v1 = (v3 nimpl v1)
     v0 = (v0 xor v1)
+    O0 = ~v2
     O1 = v0
 EndFunc
 "##
@@ -287,12 +287,12 @@ EndFunc
     v5 = ~(v1 or v4)
     v5 = (v8 xor v5)
     v2 = ~(v2 or v5)
-    O0 = ~v2
     v0 = (v0 and v7)
     v0 = (v4 and ~v0)
     v1 = (v1 and ~v6)
     v1 = (v3 and ~v1)
     v0 = (v0 xor v1)
+    O0 = ~v2
     O1 = v0
 EndFunc
 "##
@@ -321,12 +321,12 @@ EndFunc
     v5 = (v1 or v4)
     v5 = (v8 xor v5)
     v2 = (v2 or v5)
-    O0 = v2
     v0 = (v0 and v7)
     v0 = (v4 and ~v0)
     v1 = (v6 or ~v1)
     v1 = (v3 and v1)
     v0 = (v0 xor v1)
+    O0 = v2
     O1 = v0
 EndFunc
 "##
