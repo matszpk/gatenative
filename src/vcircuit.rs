@@ -485,6 +485,9 @@ pub(crate) struct VCircuit<T: Clone + Copy> {
     pub(crate) outputs: Vec<(T, bool)>,
 }
 
+/// VCircuit - circuit that have basic logic operations (AND, OR, XOR) and implication
+/// or negated implication. It can be used if that set of operations is available
+/// while generating code.
 impl<T> VCircuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,

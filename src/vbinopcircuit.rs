@@ -8,6 +8,8 @@ use std::hash::Hash;
 
 use crate::VNegs::{self, *};
 
+/// VBinOpCircuit - circuit that have only basic logic operations (AND, OR, XOR)
+/// with boolean negations. It can be used if generator can use only basic logical operations.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct VBinOpCircuit<T: Clone + Copy> {
     pub(crate) input_len: T,
