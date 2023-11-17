@@ -5,7 +5,7 @@ use static_init::dynamic;
 use std::process::Command;
 use thiserror::Error;
 
-use std::env::temp_dir;
+use std::env::{self, temp_dir};
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
@@ -144,6 +144,9 @@ static mut TIMESTAMP: u128 = {
         .as_nanos()
 };
 
+#[dynamic]
+static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
+
 fn get_timestamp() -> u128 {
     let mut lock = TIMESTAMP.write();
     let old = *lock;
@@ -190,7 +193,7 @@ impl SharedLib {
             args
         };
 
-        let output = Command::new("clang").args(args).output()?;
+        let output = Command::new(&*GATE_SYS_CC).args(args).output()?;
         if !output.status.success() {
             return Err(String::from_utf8(output.stderr)?.into());
         }
