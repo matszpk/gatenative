@@ -31,7 +31,22 @@ pub const INSTR_OP_VALUE_IMPL: u64 = 2;
 pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
 pub const INSTR_OP_VALUE_XOR: u64 = 4;
 
-pub trait CodeWriter {
+pub trait FuncWriter {
+    fn func_start(&mut self);
+    /// Generates function end.
+    fn func_end(&mut self);
+    /// Generates allocation of local variables to make operations.
+    fn alloc_vars(&mut self, var_num: usize);
+
+    /// Generates Load instruction from input.
+    fn gen_load(&mut self, reg: usize, input: usize);
+    /// Generates operation.
+    fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
+    /// Generates Store instruction into output.
+    fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
+}
+
+pub trait CodeWriter<'a, FW: FuncWriter> {
     /// It returns bit mask of where bit position is InstrOp integer value - support Instr Ops.
     fn supported_ops(&self) -> u64;
     /// Returns Word length in bits. Single variable have word length.
@@ -44,19 +59,15 @@ pub trait CodeWriter {
     fn prolog(&mut self);
     /// Generates epilog.
     fn epilog(&mut self);
-    /// Generates function start with definition.
-    fn func_start(&mut self, name: &str, input_len: usize, output_len: usize);
-    /// Generates function end.
-    fn func_end(&mut self, name: &str);
-    /// Generates allocation of local variables to make operations.
-    fn alloc_vars(&mut self, var_num: usize);
-
-    /// Generates Load instruction from input.
-    fn gen_load(&mut self, reg: usize, input: usize);
-    /// Generates operation.
-    fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
-    /// Generates Store instruction into output.
-    fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
+    // get function writer
+    fn func_writer(
+        &'a mut self,
+        name: &'a str,
+        input_len: usize,
+        output_len: usize,
+        input_placement: Option<(&'a [usize], usize)>,
+        output_placement: Option<(&'a [usize], usize)>,
+    ) -> FW;
 }
 
 pub trait Executor {

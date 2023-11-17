@@ -3,47 +3,36 @@ use gatenative::*;
 use gatesim::*;
 use int_enum::IntEnum;
 
-struct TestCodeWriter {
-    supp_ops: u64,
-    out: Vec<u8>,
+struct TestFuncWriter<'c> {
+    writer: &'c mut TestCodeWriter,
+    name: &'c str,
+    input_len: usize,
+    output_len: usize,
+    input_placement: Option<(&'c [usize], usize)>,
+    output_placement: Option<(&'c [usize], usize)>,
 }
 
-use std::io::Write;
-
-impl CodeWriter for TestCodeWriter {
-    fn supported_ops(&self) -> u64 {
-        self.supp_ops
+impl<'c> FuncWriter for TestFuncWriter<'c> {
+    fn func_start(&mut self) {
+        writeln!(
+            self.writer.out,
+            "Func {}({} {})",
+            self.name, self.input_len, self.output_len
+        )
+        .unwrap();
     }
-    fn word_len(&self) -> u32 {
-        32
-    }
-    fn max_var_num(&self) -> usize {
-        usize::MAX
-    }
-    fn preferred_var_num(&self) -> usize {
-        1000000
-    }
-    fn prolog(&mut self) {
-        writeln!(self.out, "Start").unwrap();
-    }
-    fn epilog(&mut self) {
-        writeln!(self.out, "End").unwrap();
-    }
-    fn func_start(&mut self, name: &str, input_len: usize, output_len: usize) {
-        writeln!(self.out, "Func {}({} {})", name, input_len, output_len).unwrap();
-    }
-    fn func_end(&mut self, _name: &str) {
-        writeln!(self.out, "EndFunc").unwrap();
+    fn func_end(&mut self) {
+        writeln!(self.writer.out, "EndFunc").unwrap();
     }
     fn alloc_vars(&mut self, var_num: usize) {
-        writeln!(self.out, "    vars v0..{}", var_num).unwrap();
+        writeln!(self.writer.out, "    vars v0..{}", var_num).unwrap();
     }
     fn gen_load(&mut self, reg: usize, input: usize) {
-        writeln!(self.out, "    v{} = I{}", reg, input).unwrap();
+        writeln!(self.writer.out, "    v{} = I{}", reg, input).unwrap();
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
         writeln!(
-            self.out,
+            self.writer.out,
             "    v{} = {}(v{} {} {}v{})",
             dst_arg,
             if negs == VNegs::NegOutput { "~" } else { "" },
@@ -62,13 +51,58 @@ impl CodeWriter for TestCodeWriter {
     }
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
         writeln!(
-            self.out,
+            self.writer.out,
             "    O{} = {}v{}",
             output,
             if neg { "~" } else { "" },
             reg
         )
         .unwrap();
+    }
+}
+
+struct TestCodeWriter {
+    supp_ops: u64,
+    out: Vec<u8>,
+}
+
+use std::io::Write;
+
+impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
+    fn supported_ops(&self) -> u64 {
+        self.supp_ops
+    }
+    fn word_len(&self) -> u32 {
+        32
+    }
+    fn max_var_num(&self) -> usize {
+        usize::MAX
+    }
+    fn preferred_var_num(&self) -> usize {
+        1000000
+    }
+    fn prolog(&mut self) {
+        writeln!(self.out, "Start").unwrap();
+    }
+    fn epilog(&mut self) {
+        writeln!(self.out, "End").unwrap();
+    }
+    fn func_writer(
+        &'c mut self,
+        name: &'c str,
+        input_len: usize,
+        output_len: usize,
+        input_placement: Option<(&'c [usize], usize)>,
+        output_placement: Option<(&'c [usize], usize)>,
+    ) -> TestFuncWriter<'c> {
+        TestFuncWriter::<'c> {
+            writer: self,
+            name,
+            input_len,
+            output_len,
+            input_placement,
+            output_placement,
+        }
     }
 }
 

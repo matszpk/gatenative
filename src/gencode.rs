@@ -219,8 +219,8 @@ where
     )
 }
 
-fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
-    writer: &mut CW,
+fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
+    writer: &mut FW,
     circuit: &VCircuit<T>,
     swap_args: &[bool],
     var_allocs: &[T],
@@ -321,8 +321,8 @@ fn gen_func_code_for_ximpl<CW: CodeWriter, T>(
     }
 }
 
-fn gen_func_code_for_binop<CW: CodeWriter, T>(
-    writer: &mut CW,
+fn gen_func_code_for_binop<FW: FuncWriter, T>(
+    writer: &mut FW,
     circuit: &VBinOpCircuit<T>,
     swap_args: &[bool],
     var_allocs: &[T],
@@ -421,9 +421,9 @@ fn gen_func_code_for_binop<CW: CodeWriter, T>(
     }
 }
 
-pub fn generate_code<CW: CodeWriter, T>(
-    writer: &mut CW,
-    name: &str,
+pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+    writer: &'a mut CW,
+    name: &'a str,
     circuit: Circuit<T>,
     optimize_negs: bool,
 ) where
@@ -443,11 +443,12 @@ pub fn generate_code<CW: CodeWriter, T>(
     let (var_allocs, var_num) = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
-    writer.func_start(name, input_len, circuit.outputs().len());
-    writer.alloc_vars(var_num);
+    let mut func_writer = writer.func_writer(name, input_len, circuit.outputs().len(), None, None);
+    func_writer.func_start();
+    func_writer.alloc_vars(var_num);
 
     for i in 0..input_len {
-        writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+        func_writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
     }
 
     if impl_op || nimpl_op {
@@ -460,7 +461,7 @@ pub fn generate_code<CW: CodeWriter, T>(
             .enumerate()
             .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
             .collect::<Vec<_>>();
-        gen_func_code_for_ximpl(writer, &vcircuit, &swap_args, &var_allocs);
+        gen_func_code_for_ximpl(&mut func_writer, &vcircuit, &swap_args, &var_allocs);
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
         if optimize_negs {
@@ -474,10 +475,10 @@ pub fn generate_code<CW: CodeWriter, T>(
             .enumerate()
             .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
             .collect::<Vec<_>>();
-        gen_func_code_for_binop(writer, &vcircuit, &swap_args, &var_allocs);
+        gen_func_code_for_binop(&mut func_writer, &vcircuit, &swap_args, &var_allocs);
     }
 
-    writer.func_end(name);
+    func_writer.func_end();
 }
 
 #[cfg(test)]
