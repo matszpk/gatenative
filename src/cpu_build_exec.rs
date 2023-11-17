@@ -109,7 +109,7 @@ const BUILD_CONFIG_INTEL_AVX512: BuildConfig = BuildConfig {
 
 const BUILD_CONFIG_ARM_NEON: BuildConfig = BuildConfig {
     writer_config: &CLANG_WRITER_ARM_NEON,
-    extra_flags: &["-fp=neon"],
+    extra_flags: &["-mfpu=neon"],
 };
 
 // shared library object
