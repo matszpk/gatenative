@@ -17,6 +17,16 @@ enum DetectCPUError {
     IOError(#[from] io::Error),
 }
 
+#[derive(Error, Debug)]
+enum BuildError {
+    #[error("IO error {0}")]
+    IOError(#[from] io::Error),
+    #[error("Compile error {0}")]
+    CompileError(String),
+    #[error("LibLoading error {0}")]
+    LibLoadingError(#[from] libloading::Error),
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum CPUExtension {
     NoExtension,
@@ -175,7 +185,7 @@ impl SharedLib {
         }
     }
 
-    fn build(&mut self, source: &[u8]) -> Result<Library, Box<dyn std::error::Error>> {
+    fn build(&mut self, source: &[u8]) -> Result<Library, BuildError> {
         fs::write(&self.source_path, source)?;
         let extra_flags = get_build_config(self.cpu_ext).extra_flags;
         let args = {
@@ -195,7 +205,9 @@ impl SharedLib {
 
         let output = Command::new(&*GATE_SYS_CC).args(args).output()?;
         if !output.status.success() {
-            return Err(String::from_utf8(output.stderr)?.into());
+            return Err(BuildError::CompileError(
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            ));
         }
         let lib = unsafe { Library::new(&self.shared_library_path)? };
         if fs::remove_file(&self.source_path).is_err() {
