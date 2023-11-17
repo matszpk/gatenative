@@ -1,9 +1,13 @@
+use crate::clang_writer::*;
 use gatesim::*;
 use static_init::dynamic;
 use thiserror::Error;
 
+use std::env::temp_dir;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
+use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Error, Debug)]
 enum DetectCPUError {
@@ -63,6 +67,87 @@ fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
 
 #[dynamic]
 static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
+
+// configurations
+
+struct BuildConfig<'a> {
+    writer_config: &'a CLangWriterConfig<'a>,
+    extra_flags: &'a [&'a str],
+}
+
+const BUILD_CONFIG_U32: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_U32,
+    extra_flags: &[],
+};
+
+const BUILD_CONFIG_U64: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_U64,
+    extra_flags: &[],
+};
+
+const BUILD_CONFIG_INTEL_MMX: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_MMX,
+    extra_flags: &["-mmmx"],
+};
+
+const BUILD_CONFIG_INTEL_SSE: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_SSE,
+    extra_flags: &["-msse"],
+};
+
+const BUILD_CONFIG_INTEL_AVX: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_AVX,
+    extra_flags: &["-mavx"],
+};
+
+const BUILD_CONFIG_INTEL_AVX512: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_AVX512,
+    extra_flags: &["-mavx512f"],
+};
+
+const BUILD_CONFIG_ARM_NEON: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_ARM_NEON,
+    extra_flags: &["-fp=neon"],
+};
+
+// shared library object
+
+#[dynamic]
+static mut TIMESTAMP: u128 = {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
+};
+
+fn get_timestamp() -> u128 {
+    let mut lock = TIMESTAMP.write();
+    let old = *lock;
+    *lock += 1;
+    old
+}
+
+struct SharedLib {
+    cpu_ext: CPUExtension,
+    source_path: PathBuf,
+    shared_library_path: PathBuf,
+}
+
+impl SharedLib {
+    fn new() -> Self {
+        Self::new_with_cpu_ext(*CPU_EXTENSION)
+    }
+
+    fn new_with_cpu_ext(cpu_ext: CPUExtension) -> Self {
+        let temp_dir_path = temp_dir();
+        let unix_time = get_timestamp();
+        Self {
+            cpu_ext,
+            source_path: temp_dir_path.join(format!("gate_x4x_source_{}.c", unix_time)),
+            shared_library_path: temp_dir_path.join(format!("gate_x4x_lib_{}.so", unix_time)),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
