@@ -377,4 +377,72 @@ EndFunc
 EndFunc
 "##
     );
+
+    let circuit = Circuit::new(
+        4,
+        [
+            Gate::new_and(0, 2),
+            Gate::new_and(1, 2),
+            Gate::new_and(0, 3),
+            Gate::new_and(1, 3),
+            // add a1*b0 + a0*b1
+            Gate::new_xor(5, 6),
+            Gate::new_and(5, 6),
+            // add c(a1*b0 + a0*b1) + a1*b1
+            Gate::new_xor(7, 9),
+            Gate::new_and(7, 9),
+        ],
+        [(4, false), (8, true), (10, false), (11, true)],
+    )
+    .unwrap();
+    let mut out = vec![];
+    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        r##"Func test1(4 4)
+    vars v0..6
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = I3
+    v4 = (v0 and v2)
+    v2 = (v1 and v2)
+    v0 = (v0 and v3)
+    v5 = (v2 xor v0)
+    v1 = (v1 and v3)
+    v0 = (v2 and v0)
+    v2 = (v1 xor v0)
+    v0 = (v1 and v0)
+    O0 = v4
+    O1 = ~v5
+    O2 = v2
+    O3 = ~v0
+EndFunc
+"##
+    );
+    let mut out = vec![];
+    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        r##"Func test1(4 4)
+    vars v0..6
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = I3
+    v4 = (v0 and v2)
+    v2 = (v1 and v2)
+    v0 = (v0 and v3)
+    v5 = (v2 xor v0)
+    v1 = (v1 and v3)
+    v0 = (v2 and v0)
+    v2 = (v1 xor v0)
+    v0 = (v1 and v0)
+    O0 = v4
+    O1 = ~v5
+    O2 = v2
+    O3 = ~v0
+EndFunc
+"##
+    );
 }
