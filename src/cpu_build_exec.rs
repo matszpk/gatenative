@@ -185,7 +185,7 @@ impl SharedLib {
         }
     }
 
-    fn build(&mut self, source: &[u8]) -> Result<Library, BuildError> {
+    fn build(&self, source: &[u8]) -> Result<Library, BuildError> {
         fs::write(&self.source_path, source)?;
         let extra_flags = get_build_config(self.cpu_ext).extra_flags;
         let args = {
@@ -286,5 +286,27 @@ mod tests {
             ))
             .unwrap()
         );
+    }
+
+    #[test]
+    fn test_shared_lib() {
+        let shlib = SharedLib::new_with_cpu_ext(CPUExtension::NoExtension);
+        let lib = shlib
+            .build(
+                r##"
+#include <stdint.h>
+uint32_t myvalue(uint32_t a, uint32_t b, uint32_t c) {
+    return a * b + c;
+}
+        "##
+                .as_bytes(),
+            )
+            .unwrap();
+        let value = unsafe {
+            let func: Symbol<unsafe extern "C" fn(u32, u32, u32) -> u32> =
+                lib.get(b"myvalue").unwrap();
+            func(12, 16, 5)
+        };
+        assert_eq!(12 * 16 + 5, value);
     }
 }
