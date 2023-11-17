@@ -1,9 +1,9 @@
 use gatesim::*;
+use static_init::dynamic;
+use thiserror::Error;
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-use thiserror::Error;
 
 #[derive(Error, Debug)]
 enum DetectCPUError {
@@ -60,6 +60,9 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
 fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
     detect_cpu_from_file(BufReader::new(File::open("/proc/cpuinfo")?))
 }
+
+#[dynamic]
+static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
 
 #[cfg(test)]
 mod tests {
