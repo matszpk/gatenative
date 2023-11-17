@@ -59,7 +59,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn prolog(&mut self);
     /// Generates epilog.
     fn epilog(&mut self);
-    // get function writer
+    /// Get function writer.
+    /// The input_placement and output_placement - real input and output area defintion:
+    /// first field - list of real indices. second field - real length.
     fn func_writer(
         &'a mut self,
         name: &'a str,
