@@ -75,11 +75,13 @@ struct BuildConfig<'a> {
     extra_flags: &'a [&'a str],
 }
 
+#[cfg(target_pointer_width = "32")]
 const BUILD_CONFIG_U32: BuildConfig = BuildConfig {
     writer_config: &CLANG_WRITER_U32,
     extra_flags: &[],
 };
 
+#[cfg(target_pointer_width = "64")]
 const BUILD_CONFIG_U64: BuildConfig = BuildConfig {
     writer_config: &CLANG_WRITER_U64,
     extra_flags: &[],

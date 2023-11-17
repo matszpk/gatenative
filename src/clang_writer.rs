@@ -18,6 +18,7 @@ pub struct CLangWriterConfig<'a> {
     one_value: Option<(&'a str, &'a str)>, // for emulate NOT
 }
 
+#[cfg(target_pointer_width = "32")]
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -34,6 +35,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     one_value: None,
 };
 
+#[cfg(target_pointer_width = "64")]
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -489,8 +491,10 @@ mod tests {
 
     #[test]
     fn test_clang_writer() {
-        assert_eq!(
-            r##"#include <stdint.h>
+        #[cfg(target_pointer_width = "32")]
+        {
+            assert_eq!(
+                r##"#include <stdint.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -513,10 +517,10 @@ void gate_sys_func1(const uint32_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U32, false)
-        );
-        assert_eq!(
-            r##"#include <stdint.h>
+                write_test_code(&CLANG_WRITER_U32, false)
+            );
+            assert_eq!(
+                r##"#include <stdint.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -539,10 +543,13 @@ void gate_sys_func1(const uint32_t* input,
     output[48] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U32, true)
-        );
-        assert_eq!(
-            r##"#include <stdint.h>
+                write_test_code(&CLANG_WRITER_U32, true)
+            );
+        }
+        #[cfg(target_pointer_width = "64")]
+        {
+            assert_eq!(
+                r##"#include <stdint.h>
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output) {
     uint64_t v0;
@@ -565,8 +572,35 @@ void gate_sys_func1(const uint64_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U64, false)
-        );
+                write_test_code(&CLANG_WRITER_U64, false)
+            );
+            assert_eq!(
+                r##"#include <stdint.h>
+void gate_sys_func1(const uint64_t* input,
+    uint64_t* output) {
+    uint64_t v0;
+    uint64_t v1;
+    uint64_t v2;
+    uint64_t v3;
+    uint64_t v4;
+    v2 = input[6];
+    v1 = input[11];
+    v0 = input[44];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[48] = v4;
+}
+"##,
+                write_test_code(&CLANG_WRITER_U64, true)
+            );
+        }
         assert_eq!(
             r##"#include <mmintrin.h>
 static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
