@@ -28,6 +28,7 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
         writeln!(self.writer.out, "    vars v0..{}", var_num).unwrap();
     }
     fn gen_load(&mut self, reg: usize, input: usize) {
+        let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
         writeln!(self.writer.out, "    v{} = I{}", reg, input).unwrap();
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
@@ -50,6 +51,10 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
         .unwrap();
     }
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
+        let output = self
+            .output_placement
+            .map(|(p, _)| p[output])
+            .unwrap_or(output);
         writeln!(
             self.writer.out,
             "    O{} = {}v{}",
@@ -139,7 +144,7 @@ fn test_generate_code() {
         out: vec![],
     };
     cw_impl.out.clear();
-    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(3 2)
@@ -158,8 +163,37 @@ EndFunc
 "##
     );
 
+    // in/out placement
+    cw_impl.out.clear();
+    generate_code(
+        &mut cw_impl,
+        "test1",
+        circuit.clone(),
+        false,
+        Some((&[6, 11, 44], 68)),
+        Some((&[48, 72], 88)),
+    );
+    assert_eq!(
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
+        r##"Func test1(3 2)
+    vars v0..5
+    v0 = I6
+    v1 = I11
+    v2 = I44
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    v2 = (v2 and v3)
+    v0 = (v0 impl v1)
+    v0 = (v0 impl v2)
+    O48 = v4
+    O72 = ~v0
+EndFunc
+"##
+    );
+    // edn in/out placement
+
     cw_nimpl.out.clear();
-    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(3 2)
@@ -179,7 +213,7 @@ EndFunc
     );
 
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 2)
@@ -226,7 +260,7 @@ EndFunc
     .unwrap();
 
     cw_impl.out.clear();
-    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 2)
@@ -260,7 +294,7 @@ EndFunc
 "##
     );
     cw_nimpl.out.clear();
-    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(4 2)
@@ -294,7 +328,7 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 2)
@@ -328,7 +362,7 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), true);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), true, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 2)
@@ -374,7 +408,7 @@ EndFunc
     )
     .unwrap();
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 1)
@@ -391,7 +425,7 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), true);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), true, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 1)
@@ -426,7 +460,7 @@ EndFunc
     )
     .unwrap();
     cw_impl.out.clear();
-    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
@@ -451,7 +485,7 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
@@ -478,7 +512,7 @@ EndFunc
 
     let circuit = Circuit::new(4, [], [(0, false), (3, true), (2, false), (1, true)]).unwrap();
     cw_impl.out.clear();
-    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
@@ -495,7 +529,7 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false, None, None);
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)

@@ -265,7 +265,12 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
                     "    const unsigned int ivn = {} * idx;\n",
                     "    const unsigned int ovn = {} * idx;\n"
                 ),
-                self.input_len, self.output_len
+                self.input_placement
+                    .map(|(_, len)| len)
+                    .unwrap_or(self.input_len),
+                self.output_placement
+                    .map(|(_, len)| len)
+                    .unwrap_or(self.output_len)
             )
             .unwrap();
         } else {
@@ -317,6 +322,7 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
+        let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
         if self.writer.config.init_index.is_some() {
             writeln!(self.writer.out, "    v{} = input[ivn + {}];", reg, input).unwrap();
         } else {
@@ -363,6 +369,10 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
+        let output = self
+            .output_placement
+            .map(|(p, _)| p[output])
+            .unwrap_or(output);
         let arg = CLangWriter::<'a, 'b>::format_neg_arg(self.writer.config, neg, reg);
         if self.writer.config.init_index.is_some() {
             writeln!(self.writer.out, "    output[ovn + {}] = {};", output, arg).unwrap();
@@ -431,12 +441,26 @@ impl<'a, 'b, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'b, 'c>> for CLangWriter<'a,
 mod tests {
     use super::*;
 
-    fn write_test_code(cw_config: &CLangWriterConfig) -> String {
+    fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> String {
         let mut out = vec![];
         let mut cw = cw_config.new(&mut out);
         let supported_ops = cw.supported_ops();
         cw.prolog();
-        let mut fw = cw.func_writer("func1", 3, 2, None, None);
+        let mut fw = cw.func_writer(
+            "func1",
+            3,
+            2,
+            if inout_placement {
+                Some((&[6, 11, 44], 68))
+            } else {
+                None
+            },
+            if inout_placement {
+                Some((&[48, 72], 88))
+            } else {
+                None
+            },
+        );
         fw.func_start();
         fw.alloc_vars(5);
         fw.gen_load(2, 0);
@@ -489,7 +513,33 @@ void gate_sys_func1(const uint32_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U32)
+            write_test_code(&CLANG_WRITER_U32, false)
+        );
+        assert_eq!(
+            r##"#include <stdint.h>
+void gate_sys_func1(const uint32_t* input,
+    uint32_t* output) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = input[6];
+    v1 = input[11];
+    v0 = input[44];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[48] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_U32, true)
         );
         assert_eq!(
             r##"#include <stdint.h>
@@ -515,7 +565,7 @@ void gate_sys_func1(const uint64_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U64)
+            write_test_code(&CLANG_WRITER_U64, false)
         );
         assert_eq!(
             r##"#include <mmintrin.h>
@@ -544,7 +594,7 @@ void gate_sys_func1(const __m64* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_INTEL_MMX)
+            write_test_code(&CLANG_WRITER_INTEL_MMX, false)
         );
         assert_eq!(
             r##"#include <xmmintrin.h>
@@ -574,7 +624,7 @@ void gate_sys_func1(const __m128* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_INTEL_SSE)
+            write_test_code(&CLANG_WRITER_INTEL_SSE, false)
         );
         assert_eq!(
             r##"#include <immintrin.h>
@@ -606,7 +656,7 @@ void gate_sys_func1(const __m256* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_INTEL_AVX)
+            write_test_code(&CLANG_WRITER_INTEL_AVX, false)
         );
         assert_eq!(
             r##"#include <immintrin.h>
@@ -640,7 +690,7 @@ void gate_sys_func1(const __m512i* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_INTEL_AVX512)
+            write_test_code(&CLANG_WRITER_INTEL_AVX512, false)
         );
         assert_eq!(
             r##"#include <arm_neon.h>
@@ -667,7 +717,7 @@ void gate_sys_func1(const uint32x4_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_ARM_NEON)
+            write_test_code(&CLANG_WRITER_ARM_NEON, false)
         );
         assert_eq!(
             r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
@@ -696,7 +746,36 @@ void gate_sys_func1(const uint32x4_t* input,
     output[ovn + 0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_OPENCL_U32)
+            write_test_code(&CLANG_WRITER_OPENCL_U32, false)
+        );
+        assert_eq!(
+            r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
+    global uint* output) {
+    const uint idx = get_global_id(0);
+    const unsigned int ivn = 68 * idx;
+    const unsigned int ovn = 88 * idx;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = input[ivn + 6];
+    v1 = input[ivn + 11];
+    v0 = input[ivn + 44];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + 72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + 48] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_OPENCL_U32, true)
         );
     }
 }

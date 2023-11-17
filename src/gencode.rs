@@ -426,6 +426,8 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     name: &'a str,
     circuit: Circuit<T>,
     optimize_negs: bool,
+    input_placement: Option<(&'a [usize], usize)>,
+    output_placement: Option<(&'a [usize], usize)>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -443,7 +445,13 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     let (var_allocs, var_num) = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut func_writer = writer.func_writer(name, input_len, circuit.outputs().len(), None, None);
+    let mut func_writer = writer.func_writer(
+        name,
+        input_len,
+        circuit.outputs().len(),
+        input_placement,
+        output_placement,
+    );
     func_writer.func_start();
     func_writer.alloc_vars(var_num);
 
