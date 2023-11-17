@@ -1,10 +1,12 @@
 use crate::clang_writer::*;
 use gatesim::*;
+use libloading::{Library, Symbol};
 use static_init::dynamic;
+use std::process::Command;
 use thiserror::Error;
 
 use std::env::temp_dir;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -112,6 +114,26 @@ const BUILD_CONFIG_ARM_NEON: BuildConfig = BuildConfig {
     extra_flags: &["-mfpu=neon"],
 };
 
+fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
+    match cpu_ext {
+        CPUExtension::NoExtension => {
+            #[cfg(target_pointer_width = "32")]
+            {
+                BUILD_CONFIG_U32
+            }
+            #[cfg(target_pointer_width = "64")]
+            {
+                BUILD_CONFIG_U64
+            }
+        }
+        CPUExtension::IntelMMX => BUILD_CONFIG_INTEL_MMX,
+        CPUExtension::IntelSSE => BUILD_CONFIG_INTEL_SSE,
+        CPUExtension::IntelAVX => BUILD_CONFIG_INTEL_AVX,
+        CPUExtension::IntelAVX512 => BUILD_CONFIG_INTEL_AVX512,
+        CPUExtension::ARMNEON => BUILD_CONFIG_ARM_NEON,
+    }
+}
+
 // shared library object
 
 #[dynamic]
@@ -148,6 +170,38 @@ impl SharedLib {
             source_path: temp_dir_path.join(format!("gate_x4x_source_{}.c", unix_time)),
             shared_library_path: temp_dir_path.join(format!("gate_x4x_lib_{}.so", unix_time)),
         }
+    }
+
+    fn build(&mut self, source: &[u8]) -> Result<Library, Box<dyn std::error::Error>> {
+        fs::write(&self.source_path, source)?;
+        let extra_flags = get_build_config(self.cpu_ext).extra_flags;
+        let args = {
+            let mut args = vec![];
+            args.extend(extra_flags);
+            args.extend([
+                "-shared",
+                "-FPIC",
+                "-o",
+                self.shared_library_path.to_str().unwrap(),
+                "-Wall",
+                "-O2",
+                self.source_path.to_str().unwrap(),
+            ]);
+            args
+        };
+
+        let output = Command::new("clang").args(args).output()?;
+        if !output.status.success() {
+            return Err(String::from_utf8(output.stderr)?.into());
+        }
+        let lib = unsafe { Library::new(&self.shared_library_path)? };
+        if fs::remove_file(&self.source_path).is_err() {
+            eprintln!("File {:?} doesn't exist", self.source_path);
+        }
+        if fs::remove_file(&self.shared_library_path).is_err() {
+            eprintln!("File {:?} doesn't exist", self.shared_library_path);
+        }
+        Ok(lib)
     }
 }
 
