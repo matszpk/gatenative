@@ -81,7 +81,8 @@ pub trait Executor {
 
 pub trait Builder<E: Executor> {
     type ErrorType;
-    fn build<T: Clone + Copy>(&mut self, circuit: Circuit<T>) -> Result<E, Self::ErrorType>;
+    fn add_circuit<T: Clone + Copy>(&mut self, circuit: Circuit<T>);
+    fn build<T: Clone + Copy>(&mut self) -> Result<Vec<E>, Self::ErrorType>;
     fn word_len(&self) -> u32;
 }
 
