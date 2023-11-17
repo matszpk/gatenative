@@ -41,30 +41,22 @@ pub trait CodeWriter {
     /// Returns preferred variable number in words.
     fn preferred_var_num(&self) -> usize;
     /// Generates prolog.
-    fn prolog(&self, out: &mut Vec<u8>);
+    fn prolog(&mut self);
     /// Generates epilog.
-    fn epilog(&self, out: &mut Vec<u8>);
+    fn epilog(&mut self);
     /// Generates function start with definition.
-    fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize);
+    fn func_start(&mut self, name: &str, input_len: usize, output_len: usize);
     /// Generates function end.
-    fn func_end(&self, out: &mut Vec<u8>, name: &str);
+    fn func_end(&mut self, name: &str);
     /// Generates allocation of local variables to make operations.
-    fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize);
+    fn alloc_vars(&mut self, var_num: usize);
 
     /// Generates Load instruction from input.
-    fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize);
+    fn gen_load(&mut self, reg: usize, input: usize);
     /// Generates operation.
-    fn gen_op(
-        &self,
-        out: &mut Vec<u8>,
-        op: InstrOp,
-        negs: VNegs,
-        dst_arg: usize,
-        arg0: usize,
-        arg1: usize,
-    );
+    fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
     /// Generates Store instruction into output.
-    fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize);
+    fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
 }
 
 pub trait Executor {

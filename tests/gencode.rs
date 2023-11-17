@@ -5,6 +5,7 @@ use int_enum::IntEnum;
 
 struct TestCodeWriter {
     supp_ops: u64,
+    out: Vec<u8>,
 }
 
 use std::io::Write;
@@ -22,35 +23,27 @@ impl CodeWriter for TestCodeWriter {
     fn preferred_var_num(&self) -> usize {
         1000000
     }
-    fn prolog(&self, out: &mut Vec<u8>) {
-        writeln!(out, "Start").unwrap();
+    fn prolog(&mut self) {
+        writeln!(self.out, "Start").unwrap();
     }
-    fn epilog(&self, out: &mut Vec<u8>) {
-        writeln!(out, "End").unwrap();
+    fn epilog(&mut self) {
+        writeln!(self.out, "End").unwrap();
     }
-    fn func_start(&self, out: &mut Vec<u8>, name: &str, input_len: usize, output_len: usize) {
-        writeln!(out, "Func {}({} {})", name, input_len, output_len).unwrap();
+    fn func_start(&mut self, name: &str, input_len: usize, output_len: usize) {
+        writeln!(self.out, "Func {}({} {})", name, input_len, output_len).unwrap();
     }
-    fn func_end(&self, out: &mut Vec<u8>, _name: &str) {
-        writeln!(out, "EndFunc").unwrap();
+    fn func_end(&mut self, _name: &str) {
+        writeln!(self.out, "EndFunc").unwrap();
     }
-    fn alloc_vars(&self, out: &mut Vec<u8>, var_num: usize) {
-        writeln!(out, "    vars v0..{}", var_num).unwrap();
+    fn alloc_vars(&mut self, var_num: usize) {
+        writeln!(self.out, "    vars v0..{}", var_num).unwrap();
     }
-    fn gen_load(&self, out: &mut Vec<u8>, reg: usize, input: usize) {
-        writeln!(out, "    v{} = I{}", reg, input).unwrap();
+    fn gen_load(&mut self, reg: usize, input: usize) {
+        writeln!(self.out, "    v{} = I{}", reg, input).unwrap();
     }
-    fn gen_op(
-        &self,
-        out: &mut Vec<u8>,
-        op: InstrOp,
-        negs: VNegs,
-        dst_arg: usize,
-        arg0: usize,
-        arg1: usize,
-    ) {
+    fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
         writeln!(
-            out,
+            self.out,
             "    v{} = {}(v{} {} {}v{})",
             dst_arg,
             if negs == VNegs::NegOutput { "~" } else { "" },
@@ -67,9 +60,9 @@ impl CodeWriter for TestCodeWriter {
         )
         .unwrap();
     }
-    fn gen_store(&self, out: &mut Vec<u8>, neg: bool, output: usize, reg: usize) {
+    fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
         writeln!(
-            out,
+            self.out,
             "    O{} = {}v{}",
             output,
             if neg { "~" } else { "" },
@@ -99,19 +92,22 @@ fn test_generate_code() {
         | (1u64 << InstrOp::Xor.int_value());
     let basic_impl_ops = basic_ops | (1u64 << InstrOp::Impl.int_value());
     let basic_nimpl_ops = basic_ops | (1u64 << InstrOp::Nimpl.int_value());
-    let cw_impl = TestCodeWriter {
+    let mut cw_impl = TestCodeWriter {
         supp_ops: basic_impl_ops,
+        out: vec![],
     };
-    let cw_nimpl = TestCodeWriter {
+    let mut cw_nimpl = TestCodeWriter {
         supp_ops: basic_nimpl_ops,
+        out: vec![],
     };
-    let cw_basic = TestCodeWriter {
+    let mut cw_basic = TestCodeWriter {
         supp_ops: basic_ops,
+        out: vec![],
     };
-    let mut out = vec![];
-    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    cw_impl.out.clear();
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(3 2)
     vars v0..5
     v0 = I0
@@ -128,10 +124,10 @@ EndFunc
 "##
     );
 
-    let mut out = vec![];
-    generate_code(&cw_nimpl, &mut out, "test1", circuit.clone(), false);
+    cw_nimpl.out.clear();
+    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(3 2)
     vars v0..5
     v0 = I0
@@ -148,10 +144,10 @@ EndFunc
 "##
     );
 
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 2)
     vars v0..5
     v0 = I0
@@ -195,10 +191,10 @@ EndFunc
     )
     .unwrap();
 
-    let mut out = vec![];
-    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    cw_impl.out.clear();
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 2)
     vars v0..9
     v0 = I0
@@ -229,10 +225,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_nimpl, &mut out, "test1", circuit.clone(), false);
+    cw_nimpl.out.clear();
+    generate_code(&mut cw_nimpl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(4 2)
     vars v0..9
     v0 = I0
@@ -263,10 +259,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 2)
     vars v0..9
     v0 = I0
@@ -297,10 +293,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), true);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), true);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 2)
     vars v0..9
     v0 = I0
@@ -343,10 +339,10 @@ EndFunc
         [(6, true)],
     )
     .unwrap();
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 1)
     vars v0..3
     v0 = I0
@@ -360,10 +356,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), true);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), true);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 1)
     vars v0..3
     v0 = I0
@@ -395,10 +391,10 @@ EndFunc
         [(4, false), (8, true), (10, false), (11, true)],
     )
     .unwrap();
-    let mut out = vec![];
-    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    cw_impl.out.clear();
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
     vars v0..6
     v0 = I0
@@ -420,10 +416,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
     vars v0..6
     v0 = I0
@@ -447,10 +443,10 @@ EndFunc
     );
 
     let circuit = Circuit::new(4, [], [(0, false), (3, true), (2, false), (1, true)]).unwrap();
-    let mut out = vec![];
-    generate_code(&cw_impl, &mut out, "test1", circuit.clone(), false);
+    cw_impl.out.clear();
+    generate_code(&mut cw_impl, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
     vars v0..4
     v0 = I0
@@ -464,10 +460,10 @@ EndFunc
 EndFunc
 "##
     );
-    let mut out = vec![];
-    generate_code(&cw_basic, &mut out, "test1", circuit.clone(), false);
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), false);
     assert_eq!(
-        String::from_utf8(out).unwrap(),
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
     vars v0..4
     v0 = I0
