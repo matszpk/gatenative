@@ -113,5 +113,19 @@ mod tests {
             ))
             .unwrap()
         );
+        assert_eq!(
+            CPUExtension::NoExtension,
+            detect_cpu_from_file(&mut BufReader::new(
+                &b"CPU architecture: 8\nFeatures\t: xxx\n"[..]
+            ))
+            .unwrap()
+        );
+        assert_eq!(
+            CPUExtension::ARMNEON,
+            detect_cpu_from_file(&mut BufReader::new(
+                &b"CPU architecture: 8\nFeatures\t: fp\n"[..]
+            ))
+            .unwrap()
+        );
     }
 }
