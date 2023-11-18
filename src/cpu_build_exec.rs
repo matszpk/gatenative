@@ -283,8 +283,8 @@ pub struct CPUBuilder {
     optimize_negs: bool,
 }
 
-impl<'b> CPUBuilder {
-    pub fn new(cpu_ext: CPUExtension, optimize_negs: bool) -> Self {
+impl CPUBuilder {
+    pub fn new_with_cpu_ext(cpu_ext: CPUExtension, optimize_negs: bool) -> Self {
         let clang_config = get_build_config(cpu_ext).writer_config;
         let writer = clang_config.writer();
         Self {
@@ -293,6 +293,10 @@ impl<'b> CPUBuilder {
             writer,
             optimize_negs,
         }
+    }
+
+    pub fn new(optimize_negs: bool) -> Self {
+        Self::new_with_cpu_ext(*CPU_EXTENSION, optimize_negs)
     }
 }
 
