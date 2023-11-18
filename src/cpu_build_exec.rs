@@ -358,6 +358,7 @@ impl Builder<CPUExecutor> for CPUBuilder {
             })
             .collect::<Vec<_>>())
     }
+
     fn word_len(&self) -> u32 {
         self.writer.word_len()
     }
