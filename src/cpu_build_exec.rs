@@ -176,10 +176,6 @@ struct SharedLib {
 }
 
 impl SharedLib {
-    fn new() -> Self {
-        Self::new_with_cpu_ext(*CPU_EXTENSION)
-    }
-
     fn new_with_cpu_ext(cpu_ext: CPUExtension) -> Self {
         let temp_dir_path = temp_dir();
         let unix_time = get_timestamp();
@@ -290,7 +286,7 @@ pub struct CPUBuilder {
 impl<'b> CPUBuilder {
     pub fn new(cpu_ext: CPUExtension, optimize_negs: bool) -> Self {
         let clang_config = get_build_config(cpu_ext).writer_config;
-        let writer = clang_config.new();
+        let writer = clang_config.writer();
         Self {
             cpu_ext,
             entries: vec![],
@@ -343,7 +339,7 @@ impl Builder<CPUExecutor> for CPUBuilder {
             .iter()
             .map(|e| {
                 let lib = lib.clone();
-                let mut exec = CPUExecutor {
+                CPUExecutor {
                     input_len: e.input_len,
                     output_len: e.output_len,
                     real_input_len: e
@@ -358,8 +354,7 @@ impl Builder<CPUExecutor> for CPUBuilder {
                         .unwrap_or(e.output_len),
                     library: lib,
                     sym_name: e.sym_name.clone(),
-                };
-                exec
+                }
             })
             .collect::<Vec<_>>())
     }

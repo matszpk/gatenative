@@ -184,7 +184,7 @@ pub struct CLangWriter<'a> {
 }
 
 impl<'a> CLangWriterConfig<'a> {
-    pub fn new(&'a self) -> CLangWriter<'a> {
+    pub fn writer(&'a self) -> CLangWriter<'a> {
         CLangWriter {
             config: self,
             out: vec![],
@@ -446,7 +446,7 @@ mod tests {
     use super::*;
 
     fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> String {
-        let mut cw = cw_config.new();
+        let mut cw = cw_config.writer();
         let supported_ops = cw.supported_ops();
         cw.prolog();
         let mut fw = cw.func_writer(

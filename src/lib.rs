@@ -13,7 +13,7 @@ pub enum VNegs {
 }
 
 pub mod clang_writer;
-mod cpu_build_exec;
+pub mod cpu_build_exec;
 pub mod gencode;
 mod vbinopcircuit;
 mod vcircuit;
