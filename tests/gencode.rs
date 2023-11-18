@@ -109,6 +109,10 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
             output_placement,
         }
     }
+
+    fn out(self) -> Vec<u8> {
+        self.out
+    }
 }
 
 #[test]

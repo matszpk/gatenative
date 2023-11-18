@@ -7,7 +7,6 @@ use static_init::dynamic;
 use std::process::Command;
 use thiserror::Error;
 
-use std::convert::Infallible;
 use std::env::{self, temp_dir};
 use std::fmt::Debug;
 use std::fs::{self, File};
@@ -34,7 +33,7 @@ pub enum BuildError {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum CPUExtension {
+pub enum CPUExtension {
     NoExtension,
     IntelMMX,
     IntelSSE,
@@ -255,6 +254,7 @@ impl Executor for CPUExecutor {
     fn real_output_len(&self) -> usize {
         self.real_output_len
     }
+
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType> {
         let num = input.len() / self.real_input_len;
         let mut output = vec![0; num * self.real_output_len];
@@ -280,16 +280,29 @@ struct CircuitEntry {
     output_placement: Option<(Vec<usize>, usize)>,
 }
 
-struct CPUBuilder<'b> {
+pub struct CPUBuilder {
     cpu_ext: CPUExtension,
     entries: Vec<CircuitEntry>,
-    writer: CLangWriter<'b, 'b>,
-    source: Vec<u8>,
+    writer: CLangWriter<'static>,
     optimize_negs: bool,
 }
 
-impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
+impl<'b> CPUBuilder {
+    pub fn new(cpu_ext: CPUExtension, optimize_negs: bool) -> Self {
+        let clang_config = get_build_config(cpu_ext).writer_config;
+        let writer = clang_config.new();
+        Self {
+            cpu_ext,
+            entries: vec![],
+            writer,
+            optimize_negs,
+        }
+    }
+}
+
+impl Builder<CPUExecutor> for CPUBuilder {
     type ErrorType = BuildError;
+
     fn add<'a, T>(
         &mut self,
         name: &'a str,
@@ -321,10 +334,11 @@ impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
             output_placement,
         );
     }
-    fn build(&mut self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
+
+    fn build(self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
         let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
-        let lib = Arc::new(shlib.build(&self.source)?);
-        let mut execs = self
+        let lib = Arc::new(shlib.build(&self.writer.out())?);
+        Ok(self
             .entries
             .iter()
             .map(|e| {
@@ -347,8 +361,7 @@ impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
                 };
                 exec
             })
-            .collect::<Vec<_>>();
-        Ok(execs)
+            .collect::<Vec<_>>())
     }
     fn word_len(&self) -> u32 {
         self.writer.word_len()

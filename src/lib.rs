@@ -73,6 +73,8 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
     ) -> FW;
+
+    fn out(self) -> Vec<u8>;
 }
 
 pub trait Executor {
@@ -98,7 +100,7 @@ pub trait Builder<E: Executor> {
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
-    fn build(&mut self) -> Result<Vec<E>, Self::ErrorType>;
+    fn build(self) -> Result<Vec<E>, Self::ErrorType>;
     fn word_len(&self) -> u32;
 }
 

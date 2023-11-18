@@ -169,8 +169,8 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     one_value: None,
 };
 
-pub struct CLangFuncWriter<'a, 'b, 'c> {
-    writer: &'c mut CLangWriter<'a, 'b>,
+pub struct CLangFuncWriter<'a, 'c> {
+    writer: &'c mut CLangWriter<'a>,
     name: &'c str,
     input_len: usize,
     output_len: usize,
@@ -178,18 +178,21 @@ pub struct CLangFuncWriter<'a, 'b, 'c> {
     output_placement: Option<(&'c [usize], usize)>,
 }
 
-pub struct CLangWriter<'a, 'b> {
+pub struct CLangWriter<'a> {
     config: &'a CLangWriterConfig<'a>,
-    out: &'b mut Vec<u8>,
+    out: Vec<u8>,
 }
 
 impl<'a> CLangWriterConfig<'a> {
-    pub fn new<'b>(&'a self, out: &'b mut Vec<u8>) -> CLangWriter<'a, 'b> {
-        CLangWriter { config: self, out }
+    pub fn new(&'a self) -> CLangWriter<'a> {
+        CLangWriter {
+            config: self,
+            out: vec![],
+        }
     }
 }
 
-impl<'a, 'b> CLangWriter<'a, 'b> {
+impl<'a> CLangWriter<'a> {
     fn write_op(out: &mut Vec<u8>, op: &str, args: &[&[u8]]) {
         let mut rest = op;
         let mut arg_index = 0;
@@ -236,7 +239,7 @@ impl<'a, 'b> CLangWriter<'a, 'b> {
     }
 }
 
-impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
+impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_start(&mut self) {
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
@@ -333,29 +336,24 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
         let arg0 = format!("v{}", arg0);
-        let arg1 = CLangWriter::<'a, 'b>::format_neg_arg(
-            self.writer.config,
-            negs == VNegs::NegInput1,
-            arg1,
-        );
+        let arg1 =
+            CLangWriter::<'a>::format_neg_arg(self.writer.config, negs == VNegs::NegInput1, arg1);
         let mut op_vec = vec![];
         let args = [arg0.as_bytes(), arg1.as_bytes()];
         match op {
             InstrOp::And => {
-                CLangWriter::<'a, 'b>::write_op(&mut op_vec, self.writer.config.and_op, &args)
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.and_op, &args)
             }
             InstrOp::Or => {
-                CLangWriter::<'a, 'b>::write_op(&mut op_vec, self.writer.config.or_op, &args)
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.or_op, &args)
             }
             InstrOp::Xor => {
-                CLangWriter::<'a, 'b>::write_op(&mut op_vec, self.writer.config.xor_op, &args)
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.xor_op, &args)
             }
-            InstrOp::Impl => CLangWriter::<'a, 'b>::write_op(
-                &mut op_vec,
-                self.writer.config.impl_op.unwrap(),
-                &args,
-            ),
-            InstrOp::Nimpl => CLangWriter::<'a, 'b>::write_op(
+            InstrOp::Impl => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.impl_op.unwrap(), &args)
+            }
+            InstrOp::Nimpl => CLangWriter::<'a>::write_op(
                 &mut op_vec,
                 self.writer.config.nimpl_op.unwrap(),
                 &args,
@@ -363,7 +361,7 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
         };
         write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
         if negs == VNegs::NegOutput {
-            CLangWriter::<'a, 'b>::write_neg(self.writer.config, &mut self.writer.out, &op_vec);
+            CLangWriter::<'a>::write_neg(self.writer.config, &mut self.writer.out, &op_vec);
         } else {
             self.writer.out.extend(op_vec);
         }
@@ -375,7 +373,7 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
             .output_placement
             .map(|(p, _)| p[output])
             .unwrap_or(output);
-        let arg = CLangWriter::<'a, 'b>::format_neg_arg(self.writer.config, neg, reg);
+        let arg = CLangWriter::<'a>::format_neg_arg(self.writer.config, neg, reg);
         if self.writer.config.init_index.is_some() {
             writeln!(self.writer.out, "    output[ovn + {}] = {};", output, arg).unwrap();
         } else {
@@ -384,7 +382,7 @@ impl<'a, 'b, 'c> FuncWriter for CLangFuncWriter<'a, 'b, 'c> {
     }
 }
 
-impl<'a, 'b, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'b, 'c>> for CLangWriter<'a, 'b> {
+impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
     fn supported_ops(&self) -> u64 {
         let basic_ops = (1u64 << InstrOp::And.int_value())
             | (1u64 << InstrOp::Or.int_value())
@@ -427,8 +425,8 @@ impl<'a, 'b, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'b, 'c>> for CLangWriter<'a,
         output_len: usize,
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
-    ) -> CLangFuncWriter<'a, 'b, 'c> {
-        CLangFuncWriter::<'a, 'b, 'c> {
+    ) -> CLangFuncWriter<'a, 'c> {
+        CLangFuncWriter::<'a, 'c> {
             writer: self,
             name,
             input_len,
@@ -437,6 +435,10 @@ impl<'a, 'b, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'b, 'c>> for CLangWriter<'a,
             output_placement,
         }
     }
+
+    fn out(self) -> Vec<u8> {
+        self.out
+    }
 }
 
 #[cfg(test)]
@@ -444,8 +446,7 @@ mod tests {
     use super::*;
 
     fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> String {
-        let mut out = vec![];
-        let mut cw = cw_config.new(&mut out);
+        let mut cw = cw_config.new();
         let supported_ops = cw.supported_ops();
         cw.prolog();
         let mut fw = cw.func_writer(
@@ -486,7 +487,7 @@ mod tests {
         fw.gen_store(false, 0, 4);
         fw.func_end();
         cw.epilog();
-        String::from_utf8(out).unwrap()
+        String::from_utf8(cw.out()).unwrap()
     }
 
     #[test]
