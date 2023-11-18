@@ -1,5 +1,6 @@
 use crate::clang_writer::*;
-use crate::{Builder, Executor};
+use crate::gencode::generate_code;
+use crate::{Builder, CodeWriter, Executor};
 use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
@@ -8,7 +9,9 @@ use thiserror::Error;
 
 use std::convert::Infallible;
 use std::env::{self, temp_dir};
+use std::fmt::Debug;
 use std::fs::{self, File};
+use std::hash::Hash;
 use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -225,17 +228,17 @@ impl SharedLib {
 
 // CPU Builder
 
-pub struct CPUExecutor<'a> {
+pub struct CPUExecutor {
     input_len: usize,
     output_len: usize,
     real_input_len: usize,
     real_output_len: usize,
     library: Arc<Library>,
-    symbol: Symbol<'a, unsafe extern "C" fn(*const u32, *mut u32)>,
+    sym_name: String,
 }
 
-impl<'a> Executor for CPUExecutor<'a> {
-    type ErrorType = Infallible;
+impl Executor for CPUExecutor {
+    type ErrorType = libloading::Error;
     #[inline]
     fn input_len(&self) -> usize {
         self.input_len
@@ -255,9 +258,11 @@ impl<'a> Executor for CPUExecutor<'a> {
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType> {
         let num = input.len() / self.real_input_len;
         let mut output = vec![0; num * self.real_output_len];
+        let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+            unsafe { self.library.get(self.sym_name.as_bytes())? };
         for i in 0..num {
             unsafe {
-                (*self.symbol)(
+                (symbol)(
                     input[i * self.real_input_len..].as_ptr(),
                     output[i * self.real_output_len..].as_mut_ptr(),
                 );
@@ -267,13 +272,88 @@ impl<'a> Executor for CPUExecutor<'a> {
     }
 }
 
-// struct CPUBuilder<'a> {
-//     cpu_ext: CPUExtension,
-//     source: Vec<u8>,
-// }
-// 
-// impl<'a, 'b> Builder<ExeCPUBuilder<'b> {
-// }
+struct CircuitEntry {
+    sym_name: String,
+    input_len: usize,
+    output_len: usize,
+    input_placement: Option<(Vec<usize>, usize)>,
+    output_placement: Option<(Vec<usize>, usize)>,
+}
+
+struct CPUBuilder<'b> {
+    cpu_ext: CPUExtension,
+    entries: Vec<CircuitEntry>,
+    writer: CLangWriter<'b, 'b>,
+    source: Vec<u8>,
+    optimize_negs: bool,
+}
+
+impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
+    type ErrorType = BuildError;
+    fn add<'a, T>(
+        &mut self,
+        name: &'a str,
+        circuit: Circuit<T>,
+        input_placement: Option<(&'a [usize], usize)>,
+        output_placement: Option<(&'a [usize], usize)>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let name = format!("{}_{}", name, get_timestamp());
+        let sym_name = format!("gate_sys_{}", name);
+        self.entries.push(CircuitEntry {
+            sym_name,
+            input_len: usize::try_from(circuit.input_len()).unwrap(),
+            output_len: circuit.outputs().len(),
+            input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
+            output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
+        });
+        generate_code(
+            &mut self.writer,
+            &name,
+            circuit,
+            self.optimize_negs,
+            input_placement,
+            output_placement,
+        );
+    }
+    fn build(&mut self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
+        let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
+        let lib = Arc::new(shlib.build(&self.source)?);
+        let mut execs = self
+            .entries
+            .iter()
+            .map(|e| {
+                let lib = lib.clone();
+                let mut exec = CPUExecutor {
+                    input_len: e.input_len,
+                    output_len: e.output_len,
+                    real_input_len: e
+                        .input_placement
+                        .as_ref()
+                        .map(|x| x.1)
+                        .unwrap_or(e.input_len),
+                    real_output_len: e
+                        .output_placement
+                        .as_ref()
+                        .map(|x| x.1)
+                        .unwrap_or(e.output_len),
+                    library: lib,
+                    sym_name: e.sym_name.clone(),
+                };
+                exec
+            })
+            .collect::<Vec<_>>();
+        Ok(execs)
+    }
+    fn word_len(&self) -> u32 {
+        self.writer.word_len()
+    }
+}
 
 #[cfg(test)]
 mod tests {

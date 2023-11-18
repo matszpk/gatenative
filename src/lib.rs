@@ -2,6 +2,9 @@ use gatesim::Circuit;
 
 use int_enum::IntEnum;
 
+use std::fmt::Debug;
+use std::hash::Hash;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
     NoNegs,
@@ -83,14 +86,19 @@ pub trait Executor {
 
 pub trait Builder<E: Executor> {
     type ErrorType;
-    fn add<'a, T: Clone + Copy>(
+    fn add<'a, T>(
         &mut self,
         name: &'a str,
         circuit: Circuit<T>,
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
-    );
-    fn build<T: Clone + Copy>(&mut self) -> Result<Vec<E>, Self::ErrorType>;
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug;
+    fn build(&mut self) -> Result<Vec<E>, Self::ErrorType>;
     fn word_len(&self) -> u32;
 }
 
