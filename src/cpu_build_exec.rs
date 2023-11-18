@@ -1,14 +1,17 @@
 use crate::clang_writer::*;
+use crate::{Builder, Executor};
 use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
 use std::process::Command;
 use thiserror::Error;
 
+use std::convert::Infallible;
 use std::env::{self, temp_dir};
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Error, Debug)]
@@ -18,7 +21,7 @@ enum DetectCPUError {
 }
 
 #[derive(Error, Debug)]
-enum BuildError {
+pub enum BuildError {
     #[error("IO error {0}")]
     IOError(#[from] io::Error),
     #[error("Compile error {0}")]
@@ -219,6 +222,58 @@ impl SharedLib {
         Ok(lib)
     }
 }
+
+// CPU Builder
+
+pub struct CPUExecutor<'a> {
+    input_len: usize,
+    output_len: usize,
+    real_input_len: usize,
+    real_output_len: usize,
+    library: Arc<Library>,
+    symbol: Symbol<'a, unsafe extern "C" fn(*const u32, *mut u32)>,
+}
+
+impl<'a> Executor for CPUExecutor<'a> {
+    type ErrorType = Infallible;
+    #[inline]
+    fn input_len(&self) -> usize {
+        self.input_len
+    }
+    #[inline]
+    fn output_len(&self) -> usize {
+        self.output_len
+    }
+    #[inline]
+    fn real_input_len(&self) -> usize {
+        self.real_input_len
+    }
+    #[inline]
+    fn real_output_len(&self) -> usize {
+        self.real_output_len
+    }
+    fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType> {
+        let num = input.len() / self.real_input_len;
+        let mut output = vec![0; num * self.real_output_len];
+        for i in 0..num {
+            unsafe {
+                (*self.symbol)(
+                    input[i * self.real_input_len..].as_ptr(),
+                    output[i * self.real_output_len..].as_mut_ptr(),
+                );
+            }
+        }
+        Ok(output)
+    }
+}
+
+// struct CPUBuilder<'a> {
+//     cpu_ext: CPUExtension,
+//     source: Vec<u8>,
+// }
+// 
+// impl<'a, 'b> Builder<ExeCPUBuilder<'b> {
+// }
 
 #[cfg(test)]
 mod tests {

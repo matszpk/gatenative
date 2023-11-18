@@ -76,19 +76,16 @@ pub trait Executor {
     type ErrorType;
     fn input_len(&self) -> usize;
     fn output_len(&self) -> usize;
+    fn real_input_len(&self) -> usize;
+    fn real_output_len(&self) -> usize;
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
-}
-
-pub struct CircuitEntry<'a, T: Clone + Copy> {
-    circuit: Circuit<T>,
-    input_placement: Option<(&'a [usize], usize)>,
-    output_placement: Option<(&'a [usize], usize)>,
 }
 
 pub trait Builder<E: Executor> {
     type ErrorType;
     fn add<'a, T: Clone + Copy>(
         &mut self,
+        name: &'a str,
         circuit: Circuit<T>,
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
