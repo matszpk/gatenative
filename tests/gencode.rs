@@ -549,4 +549,21 @@ EndFunc
 EndFunc
 "##
     );
+    cw_basic.out.clear();
+    generate_code(&mut cw_basic, "test1", circuit.clone(), true, None, None);
+    assert_eq!(
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
+        r##"Func test1(4 4)
+    vars v0..4
+    v0 = I0
+    v1 = I1
+    v2 = I2
+    v3 = I3
+    O0 = v0
+    O1 = ~v3
+    O2 = v2
+    O3 = ~v1
+EndFunc
+"##
+    );
 }
