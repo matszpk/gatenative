@@ -79,9 +79,15 @@ pub trait Executor {
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
 }
 
+pub struct CircuitEntry<'a, T: Clone + Copy> {
+    circuit: Circuit<T>,
+    input_placement: Option<(&'a [usize], usize)>,
+    output_placement: Option<(&'a [usize], usize)>,
+}
+
 pub trait Builder<E: Executor> {
     type ErrorType;
-    fn add<T: Clone + Copy>(
+    fn add<'a, T: Clone + Copy>(
         &mut self,
         circuit: Circuit<T>,
         input_placement: Option<(&'a [usize], usize)>,
