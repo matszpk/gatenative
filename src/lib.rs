@@ -77,6 +77,11 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn out(self) -> Vec<u8>;
 }
 
+pub trait DataHolder {
+    fn get(&self) -> &[u32];
+    fn get_mut(&mut self) -> &mut [u32];
+}
+
 pub trait Executor {
     type ErrorType;
     fn input_len(&self) -> usize;
@@ -84,6 +89,8 @@ pub trait Executor {
     fn real_input_len(&self) -> usize;
     fn real_output_len(&self) -> usize;
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
+    //fn alloc_data(&mut self) -> DataHolder;
+    //fn alloc_bit_combs(bits: usize) -> DataHolder;
 }
 
 pub trait Builder<E: Executor> {
