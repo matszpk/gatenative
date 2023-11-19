@@ -25,9 +25,30 @@ fn test_cpu_builder_and_exec() {
             Gate::new_xor(7, 9),
             Gate::new_and(7, 9),
         ],
-        [(4, false), (8, true), (10, false), (11, true)],
+        [(4, false), (8, false), (10, false), (11, false)],
     )
     .unwrap();
     builder.add("mul2x2", circuit, None, None);
-    let exec = builder.build().unwrap();
+    let mut execs = builder.build().unwrap();
+    let exec = &mut execs[0];
+    const MUL2X2_INPUT: [u32; 8] = [
+        0b1010101010101010,
+        0u32,
+        0b1100110011001100,
+        0u32,
+        0b1111000011110000,
+        0u32,
+        0b1111111100000000,
+        0u32,
+    ];
+    let out = exec.execute(&MUL2X2_INPUT[..]).unwrap();
+    for i in 0..16 {
+        let a = i & 3;
+        let b = i >> 2;
+        let c = ((out[0] >> i) & 1)
+            + (((out[2] >> i) & 1) << 1)
+            + (((out[4] >> i) & 1) << 2)
+            + (((out[6] >> i) & 1) << 3);
+        assert_eq!((a * b) & 15, c, "{}", i);
+    }
 }

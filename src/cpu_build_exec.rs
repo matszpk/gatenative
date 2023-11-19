@@ -236,6 +236,7 @@ pub struct CPUExecutor {
     output_len: usize,
     real_input_len: usize,
     real_output_len: usize,
+    words_per_real_word: usize,
     library: Arc<Library>,
     sym_name: String,
 }
@@ -260,15 +261,15 @@ impl Executor for CPUExecutor {
     }
 
     fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType> {
-        let num = input.len() / self.real_input_len;
-        let mut output = vec![0; num * self.real_output_len];
+        let num = input.len() / (self.real_input_len * self.words_per_real_word);
+        let mut output = vec![0; num * self.real_output_len * self.words_per_real_word];
         let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
             unsafe { self.library.get(self.sym_name.as_bytes())? };
         for i in 0..num {
             unsafe {
                 (symbol)(
-                    input[i * self.real_input_len..].as_ptr(),
-                    output[i * self.real_output_len..].as_mut_ptr(),
+                    input[i * self.real_input_len * self.words_per_real_word..].as_ptr(),
+                    output[i * self.real_output_len * self.words_per_real_word..].as_mut_ptr(),
                 );
             }
         }
@@ -361,6 +362,7 @@ impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
 
     fn build(mut self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
         self.writer.epilog();
+        let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
         let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
         let lib = Arc::new(shlib.build(&self.writer.out())?);
         Ok(self
@@ -381,6 +383,7 @@ impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
                         .as_ref()
                         .map(|x| x.1)
                         .unwrap_or(e.output_len),
+                    words_per_real_word,
                     library: lib,
                     sym_name: e.sym_name.clone(),
                 }
