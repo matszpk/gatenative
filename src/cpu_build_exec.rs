@@ -284,16 +284,19 @@ struct CircuitEntry {
     output_placement: Option<(Vec<usize>, usize)>,
 }
 
-pub struct CPUBuilder {
+pub struct CPUBuilder<'a> {
     cpu_ext: CPUExtension,
     entries: Vec<CircuitEntry>,
-    writer: CLangWriter<'static>,
+    writer: CLangWriter<'a>,
     optimize_negs: bool,
 }
 
-impl CPUBuilder {
-    pub fn new_with_cpu_ext(cpu_ext: CPUExtension, config: Option<CPUBuilderConfig>) -> Self {
-        let clang_config = get_build_config(cpu_ext).writer_config;
+impl<'a> CPUBuilder<'a> {
+    pub fn new_with_cpu_ext_and_clang_config(
+        cpu_ext: CPUExtension,
+        clang_config: &'a CLangWriterConfig,
+        config: Option<CPUBuilderConfig>,
+    ) -> Self {
         let writer = clang_config.writer();
         Self {
             cpu_ext,
@@ -303,12 +306,24 @@ impl CPUBuilder {
         }
     }
 
+    pub fn new_with_cpu_ext(cpu_ext: CPUExtension, config: Option<CPUBuilderConfig>) -> Self {
+        Self::new_with_cpu_ext_and_clang_config(
+            cpu_ext,
+            get_build_config(cpu_ext).writer_config,
+            config,
+        )
+    }
+
     pub fn new(config: Option<CPUBuilderConfig>) -> Self {
-        Self::new_with_cpu_ext(*CPU_EXTENSION, config)
+        Self::new_with_cpu_ext_and_clang_config(
+            *CPU_EXTENSION,
+            get_build_config(*CPU_EXTENSION).writer_config,
+            config,
+        )
     }
 }
 
-impl Builder<CPUExecutor> for CPUBuilder {
+impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
     type ErrorType = BuildError;
 
     fn add<'a, T>(

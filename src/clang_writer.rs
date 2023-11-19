@@ -52,6 +52,38 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     one_value: None,
 };
 
+pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    include_name: Some("stdint.h"),
+    type_name: "uint64_t",
+    type_bit_len: 64,
+    arg_modifier: None,
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: Some("(~{} | {})"),
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    one_value: None,
+};
+
+pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    include_name: Some("stdint.h"),
+    type_name: "uint64_t",
+    type_bit_len: 64,
+    arg_modifier: None,
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: None,
+    nimpl_op: Some("({} & ~{})"),
+    not_op: Some("~{}"),
+    one_value: None,
+};
+
 pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
