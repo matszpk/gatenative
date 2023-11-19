@@ -9,11 +9,14 @@ fn test_cpu_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
     };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+    };
     for (config_num, (cpu_ext, writer_config, builder_config)) in [
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
-        (NoExtension, &CLANG_WRITER_U64, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ]
     .into_iter()
     .enumerate()
