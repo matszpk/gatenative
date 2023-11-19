@@ -297,7 +297,8 @@ impl<'a> CPUBuilder<'a> {
         clang_config: &'a CLangWriterConfig,
         config: Option<CPUBuilderConfig>,
     ) -> Self {
-        let writer = clang_config.writer();
+        let mut writer = clang_config.writer();
+        writer.prolog();
         Self {
             cpu_ext,
             entries: vec![],
@@ -358,7 +359,8 @@ impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
         );
     }
 
-    fn build(self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
+    fn build(mut self) -> Result<Vec<CPUExecutor>, Self::ErrorType> {
+        self.writer.epilog();
         let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
         let lib = Arc::new(shlib.build(&self.writer.out())?);
         Ok(self
