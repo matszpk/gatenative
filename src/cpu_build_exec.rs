@@ -223,6 +223,14 @@ impl SharedLib {
 
 // CPU Builder
 
+pub struct CPUBuilderConfig {
+    pub optimize_negs: bool,
+}
+
+const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
+    optimize_negs: true,
+};
+
 pub struct CPUExecutor {
     input_len: usize,
     output_len: usize,
@@ -284,19 +292,19 @@ pub struct CPUBuilder {
 }
 
 impl CPUBuilder {
-    pub fn new_with_cpu_ext(cpu_ext: CPUExtension, optimize_negs: bool) -> Self {
+    pub fn new_with_cpu_ext(cpu_ext: CPUExtension, config: Option<CPUBuilderConfig>) -> Self {
         let clang_config = get_build_config(cpu_ext).writer_config;
         let writer = clang_config.writer();
         Self {
             cpu_ext,
             entries: vec![],
             writer,
-            optimize_negs,
+            optimize_negs: config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT).optimize_negs,
         }
     }
 
-    pub fn new(optimize_negs: bool) -> Self {
-        Self::new_with_cpu_ext(*CPU_EXTENSION, optimize_negs)
+    pub fn new(config: Option<CPUBuilderConfig>) -> Self {
+        Self::new_with_cpu_ext(*CPU_EXTENSION, config)
     }
 }
 
