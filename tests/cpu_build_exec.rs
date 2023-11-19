@@ -9,12 +9,15 @@ fn test_cpu_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
     };
-    for (cpu_ext, writer_config, builder_config) in [
+    for (config_num, (cpu_ext, writer_config, builder_config)) in [
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
         (NoExtension, &CLANG_WRITER_U64, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
-    ] {
+    ]
+    .into_iter()
+    .enumerate()
+    {
         let mut builder =
             CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
         let circuit = Circuit::new(
@@ -55,7 +58,7 @@ fn test_cpu_builder_and_exec() {
                 + (((out[2] >> i) & 1) << 1)
                 + (((out[4] >> i) & 1) << 2)
                 + (((out[6] >> i) & 1) << 3);
-            assert_eq!((a * b) & 15, c, "{}", i);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
     }
 }
