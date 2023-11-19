@@ -18,7 +18,6 @@ pub struct CLangWriterConfig<'a> {
     one_value: Option<(&'a str, &'a str)>, // for emulate NOT
 }
 
-#[cfg(target_pointer_width = "32")]
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -35,7 +34,6 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     one_value: None,
 };
 
-#[cfg(target_pointer_width = "64")]
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
