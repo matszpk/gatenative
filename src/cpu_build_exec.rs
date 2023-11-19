@@ -326,12 +326,12 @@ impl<'a> CPUBuilder<'a> {
 impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
     type ErrorType = BuildError;
 
-    fn add<'a, T>(
+    fn add<T>(
         &mut self,
-        name: &'a str,
+        name: &str,
         circuit: Circuit<T>,
-        input_placement: Option<(&'a [usize], usize)>,
-        output_placement: Option<(&'a [usize], usize)>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,

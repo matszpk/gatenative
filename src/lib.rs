@@ -95,12 +95,12 @@ pub trait Executor {
 
 pub trait Builder<E: Executor> {
     type ErrorType;
-    fn add<'a, T>(
+    fn add<T>(
         &mut self,
-        name: &'a str,
+        name: &str,
         circuit: Circuit<T>,
-        input_placement: Option<(&'a [usize], usize)>,
-        output_placement: Option<(&'a [usize], usize)>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
