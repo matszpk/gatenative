@@ -132,7 +132,6 @@ fn test_cpu_builder_and_exec() {
         }
 
         // more complex circuit
-        use GateFunc::*;
         let circuit = Circuit::new(
             24,
             [
