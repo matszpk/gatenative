@@ -256,10 +256,7 @@ where
 
     #[inline]
     fn count_negs(&self) -> usize {
-        self.gates
-            .iter()
-            .map(|(_, n)| usize::from(*n != NoNegs))
-            .sum::<usize>()
+        self.gates.iter().filter(|(_, n)| *n != NoNegs).count()
     }
 }
 
