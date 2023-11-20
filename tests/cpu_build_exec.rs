@@ -67,7 +67,7 @@ fn test_cpu_builder_and_exec() {
         let mul2x2_more_input_combs = {
             let mut input = vec![];
             let mut s = 0x34251u32;
-            for _ in 0..64 * 5 {
+            for _ in 0..64 * 9 {
                 input.push(s & 15);
                 s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
                 s = s.rotate_right(s & 15);
