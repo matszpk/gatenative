@@ -73,9 +73,16 @@ fn test_cpu_builder_and_exec() {
             [(4, false), (8, false), (10, false), (11, false)],
         )
         .unwrap();
-        builder.add("mul2x2", circuit, None, None);
+        builder.add("mul2x2", circuit.clone(), None, None);
+        let input_ps = (&[3, 1, 6, 4][..], 8);
+        let output_ps = (&[5, 3, 1, 4][..], 7);
+        builder.add(
+            "mul2x2p",
+            circuit.clone(),
+            Some(input_ps.clone()),
+            Some(output_ps.clone()),
+        );
         let mut execs = builder.build().unwrap();
-        let exec = &mut execs[0];
         const MUL2X2_INPUT: [u32; 8] = [
             0b1010101010101010,
             0u32,
@@ -86,7 +93,7 @@ fn test_cpu_builder_and_exec() {
             0b1111111100000000,
             0u32,
         ];
-        let out = exec.execute(&MUL2X2_INPUT[..]).unwrap();
+        let out = execs[0].execute(&MUL2X2_INPUT[..]).unwrap();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
@@ -117,7 +124,7 @@ fn test_cpu_builder_and_exec() {
             more_input[idx * 8 + 4 + half_idx] |= ((v >> 2) & 1) << shift;
             more_input[idx * 8 + 6 + half_idx] |= ((v >> 3) & 1) << shift;
         }
-        let out = exec.execute(&more_input).unwrap();
+        let out = execs[0].execute(&more_input).unwrap();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
             let idx = i >> 6;
             let half_idx = (i >> 5) & 1;
@@ -128,6 +135,22 @@ fn test_cpu_builder_and_exec() {
                 + (((out[idx * 8 + 2 + half_idx] >> shift) & 1) << 1)
                 + (((out[idx * 8 + 4 + half_idx] >> shift) & 1) << 2)
                 + (((out[idx * 8 + 6 + half_idx] >> shift) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+        }
+        // execute with input and output placements
+        let mut mul2x2_input_p: [u32; 2 * 8] = [0u32; 2 * 8];
+        for i in 0..4 {
+            mul2x2_input_p[2 * input_ps.0[i]] = MUL2X2_INPUT[2 * i];
+            mul2x2_input_p[2 * input_ps.0[i] + 1] = MUL2X2_INPUT[2 * i + 1];
+        }
+        let out = execs[1].execute(&mul2x2_input_p[..]).unwrap();
+        for i in 0..16 {
+            let a = i & 3;
+            let b = i >> 2;
+            let c = ((out[2 * output_ps.0[0]] >> i) & 1)
+                + (((out[2 * output_ps.0[1]] >> i) & 1) << 1)
+                + (((out[2 * output_ps.0[2]] >> i) & 1) << 2)
+                + (((out[2 * output_ps.0[3]] >> i) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
 
