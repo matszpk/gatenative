@@ -223,7 +223,7 @@ impl SharedLib {
 
 // CPU Builder
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
     pub optimize_negs: bool,
 }

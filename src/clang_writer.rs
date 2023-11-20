@@ -2,7 +2,7 @@ use crate::*;
 
 use std::io::Write;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CLangWriterConfig<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>, // to initialize index in OpenCL kernel
