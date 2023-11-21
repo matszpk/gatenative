@@ -231,20 +231,20 @@ void gate_sys_func1(const __m256* input,
     __m256 v2;
     __m256 v3;
     __m256 v4;
-    v2 = input[0];
-    v1 = input[1];
-    v0 = input[2];
+    v2 = _mm256_loadu_ps((const float*)&input[0]);
+    v1 = _mm256_loadu_ps((const float*)&input[1]);
+    v0 = _mm256_loadu_ps((const float*)&input[2]);
     v2 = _mm256_and_ps(v0, v1);
     v1 = _mm256_or_ps(v2, v1);
     v3 = _mm256_xor_ps(v0, v1);
     v3 = _mm256_xor_ps(_mm256_and_ps(v0, v1), one);
-    output[1] = _mm256_xor_ps(v3, one);
+    _mm256_storeu_ps((float*)&output[1], _mm256_xor_ps(v3, one));
     v2 = _mm256_xor_ps(_mm256_or_ps(v2, v3), one);
     v4 = _mm256_xor_ps(_mm256_xor_ps(v1, v3), one);
     v4 = _mm256_and_ps(v4, _mm256_xor_ps(v1, one));
     v4 = _mm256_xor_ps(v4, _mm256_xor_ps(v1, one));
     v4 = _mm256_andnot_ps(v4, v2);
-    output[0] = v4;
+    _mm256_storeu_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX, false)

@@ -83,7 +83,7 @@ fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
 }
 
 #[dynamic]
-static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
+pub static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
 
 // configurations
 

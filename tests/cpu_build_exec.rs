@@ -3,6 +3,41 @@ use gatenative::cpu_build_exec::*;
 use gatenative::*;
 use gatesim::*;
 
+use std::collections::HashMap;
+
+fn gen_mul_add_input(word_len: usize) -> (CPUDataHolder, Vec<u32>) {
+    let input_map = [
+        0, 4, 7, 10, 13, 16, 19, 22, 1, 3, 6, 9, 12, 15, 18, 21, 2, 5, 8, 11, 14, 17, 20, 23,
+    ];
+    let mut input = vec![0u32; ((1 << 24) >> 5) * 24];
+    let mut exp_output = vec![0u32; ((1 << 24) >> 5) * 8];
+    for a in 0u32..256 {
+        for b in 0u32..256 {
+            for c in 0u32..256 {
+                let i = ((a & 0xff) | ((b & 0xff) << 8) | ((c & 0xff) << 16)) as usize;
+                let idx = (i >> 5) / word_len;
+                let half_idx = (i >> 5) % word_len;
+                let shift = i & 31;
+                let exp = (a.overflowing_mul(b).0).overflowing_add(c).0;
+                for bit in 0..8 {
+                    let ix = input_map[bit];
+                    input[idx * 24 * word_len + ix * word_len + half_idx] |=
+                        ((a >> bit) & 1) << shift;
+                    let ix = input_map[bit + 8];
+                    input[idx * 24 * word_len + ix * word_len + half_idx] |=
+                        ((b >> bit) & 1) << shift;
+                    let ix = input_map[bit + 16];
+                    input[idx * 24 * word_len + ix * word_len + half_idx] |=
+                        ((c >> bit) & 1) << shift;
+                    exp_output[idx * 8 * word_len + bit * word_len + half_idx] |=
+                        ((exp >> bit) & 1) << shift;
+                }
+            }
+        }
+    }
+    (CPUDataHolder::new(input), exp_output)
+}
+
 #[test]
 fn test_cpu_builder_and_exec() {
     use CPUExtension::*;
@@ -13,49 +48,45 @@ fn test_cpu_builder_and_exec() {
         optimize_negs: true,
     };
 
-    let (mul_add_input, mul_add_output) = {
-        let input_map = [
-            0, 4, 7, 10, 13, 16, 19, 22, 1, 3, 6, 9, 12, 15, 18, 21, 2, 5, 8, 11, 14, 17, 20, 23,
-        ];
-        let mut input = vec![0u32; ((1 << 24) >> 5) * 24];
-        let mut exp_output = vec![0u32; ((1 << 24) >> 5) * 8];
-        for a in 0u32..256 {
-            for b in 0u32..256 {
-                for c in 0u32..256 {
-                    let i = ((a & 0xff) | ((b & 0xff) << 8) | ((c & 0xff) << 16)) as usize;
-                    let idx = i >> 6;
-                    let half_idx = (i >> 5) & 1;
-                    let shift = i & 31;
-                    let exp = (a.overflowing_mul(b).0).overflowing_add(c).0;
-                    for bit in 0..8 {
-                        let ix = input_map[bit];
-                        input[idx * 24 * 2 + ix * 2 + half_idx] |= ((a >> bit) & 1) << shift;
-                        let ix = input_map[bit + 8];
-                        input[idx * 24 * 2 + ix * 2 + half_idx] |= ((b >> bit) & 1) << shift;
-                        let ix = input_map[bit + 16];
-                        input[idx * 24 * 2 + ix * 2 + half_idx] |= ((c >> bit) & 1) << shift;
-                        exp_output[idx * 8 * 2 + bit * 2 + half_idx] |= ((exp >> bit) & 1) << shift;
-                    }
-                }
-            }
-        }
-        (CPUDataHolder::new(input), exp_output)
-    };
-
-    for (config_num, (cpu_ext, writer_config, builder_config)) in [
+    let mut mul_add_data_map = HashMap::<usize, (CPUDataHolder, Vec<u32>)>::new();
+    mul_add_data_map.insert(2, gen_mul_add_input(2));
+    let mut configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
-    ]
-    .into_iter()
-    .enumerate()
+    ];
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE
+        || *CPU_EXTENSION == IntelMMX
     {
+        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
+        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
+        mul_add_data_map.insert(4, gen_mul_add_input(4));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
+        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
+        mul_add_data_map.insert(8, gen_mul_add_input(8));
+    }
+    if *CPU_EXTENSION == IntelAVX512 {
+        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
+        mul_add_data_map.insert(16, gen_mul_add_input(16));
+    }
+    if *CPU_EXTENSION == ARMNEON {
+        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
+        mul_add_data_map.insert(4, gen_mul_add_input(4));
+    }
+
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         let mut builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
             cpu_ext,
             writer_config,
             builder_config.clone(),
         );
+        let word_len = (builder.word_len() >> 5) as usize;
         let circuit = Circuit::new(
             4,
             [
@@ -83,34 +114,35 @@ fn test_cpu_builder_and_exec() {
             Some(output_ps.clone()),
         );
         let mut execs = builder.build().unwrap();
-        const MUL2X2_INPUT: [u32; 8] = [
+        const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
             0b1010101010101010,
-            0u32,
             0b1100110011001100,
-            0u32,
             0b1111000011110000,
-            0u32,
             0b1111111100000000,
-            0u32,
         ];
+        let mul2x2_input = MUL2X2_INPUT_TEMPLATE
+            .into_iter()
+            .map(|x| std::iter::once(x).chain(std::iter::repeat(0).take(word_len - 1)))
+            .flatten()
+            .collect::<Vec<_>>();
         let out = execs[0]
-            .execute(&CPUDataHolder::new(MUL2X2_INPUT.to_vec()))
+            .execute(&CPUDataHolder::new(mul2x2_input.clone()))
             .unwrap()
             .release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
             let c = ((out[0] >> i) & 1)
-                + (((out[2] >> i) & 1) << 1)
-                + (((out[4] >> i) & 1) << 2)
-                + (((out[6] >> i) & 1) << 3);
+                + (((out[1 * word_len] >> i) & 1) << 1)
+                + (((out[2 * word_len] >> i) & 1) << 2)
+                + (((out[3 * word_len] >> i) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
         // more inputs
         let mul2x2_more_input_combs = {
             let mut input = vec![];
             let mut s = 0x34251u32;
-            for _ in 0..64 * 9 {
+            for _ in 0..64 * 24 {
                 input.push(s & 15);
                 s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
                 s = s.rotate_right(s & 15);
@@ -121,42 +153,43 @@ fn test_cpu_builder_and_exec() {
             CPUDataHolder::new(vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2]);
         let more_input = more_input_holder.get_mut();
         for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
-            let idx = i >> 6;
-            let half_idx = (i >> 5) & 1;
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
             let shift = i & 31;
-            more_input[idx * 8 + 0 + half_idx] |= (v & 1) << shift;
-            more_input[idx * 8 + 2 + half_idx] |= ((v >> 1) & 1) << shift;
-            more_input[idx * 8 + 4 + half_idx] |= ((v >> 2) & 1) << shift;
-            more_input[idx * 8 + 6 + half_idx] |= ((v >> 3) & 1) << shift;
+            more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
+            more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
+            more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
+            more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
         }
         let out = execs[0].execute(&more_input_holder).unwrap().release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
-            let idx = i >> 6;
-            let half_idx = (i >> 5) & 1;
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
             let shift = i & 31;
             let a = v & 3;
             let b = v >> 2;
-            let c = ((out[idx * 8 + 0 + half_idx] >> shift) & 1)
-                + (((out[idx * 8 + 2 + half_idx] >> shift) & 1) << 1)
-                + (((out[idx * 8 + 4 + half_idx] >> shift) & 1) << 2)
-                + (((out[idx * 8 + 6 + half_idx] >> shift) & 1) << 3);
+            let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
+                + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
+                + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
+                + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
         // execute with input and output placements
-        let mut mul2x2_input_p = CPUDataHolder::new(vec![0u32; 2 * 8]);
+        let mut mul2x2_input_p = CPUDataHolder::new(vec![0u32; word_len * 8]);
         let mul2x2_input_p_slice = mul2x2_input_p.get_mut();
         for i in 0..4 {
-            mul2x2_input_p_slice[2 * input_ps.0[i]] = MUL2X2_INPUT[2 * i];
-            mul2x2_input_p_slice[2 * input_ps.0[i] + 1] = MUL2X2_INPUT[2 * i + 1];
+            for j in 0..word_len {
+                mul2x2_input_p_slice[word_len * input_ps.0[i] + j] = mul2x2_input[word_len * i + j];
+            }
         }
         let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
-            let c = ((out[2 * output_ps.0[0]] >> i) & 1)
-                + (((out[2 * output_ps.0[1]] >> i) & 1) << 1)
-                + (((out[2 * output_ps.0[2]] >> i) & 1) << 2)
-                + (((out[2 * output_ps.0[3]] >> i) & 1) << 3);
+            let c = ((out[word_len * output_ps.0[0]] >> i) & 1)
+                + (((out[word_len * output_ps.0[1]] >> i) & 1) << 1)
+                + (((out[word_len * output_ps.0[2]] >> i) & 1) << 2)
+                + (((out[word_len * output_ps.0[3]] >> i) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
 
@@ -352,12 +385,13 @@ fn test_cpu_builder_and_exec() {
         builder.add("mul_add", circuit, None, None);
         let mut execs = builder.build().unwrap();
         let exec = &mut execs[0];
-        let out = exec.execute(&mul_add_input).unwrap().release();
+        let (mul_add_input, mul_add_output) = mul_add_data_map.get(&word_len).unwrap();
+        let out = exec.execute(mul_add_input).unwrap().release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }
         let mut output = exec.new_data(((1 << 24) >> 5) * 8);
-        exec.execute_reuse(&mul_add_input, &mut output).unwrap();
+        exec.execute_reuse(mul_add_input, &mut output).unwrap();
         let out = output.release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
