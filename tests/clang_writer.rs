@@ -265,20 +265,20 @@ void gate_sys_func1(const __m512i* input,
     __m512i v2;
     __m512i v3;
     __m512i v4;
-    v2 = input[0];
-    v1 = input[1];
-    v0 = input[2];
+    v2 = _mm512_loadu_epi64(&input[0]);
+    v1 = _mm512_loadu_epi64(&input[1]);
+    v0 = _mm512_loadu_epi64(&input[2]);
     v2 = _mm512_and_epi64(v0, v1);
     v1 = _mm512_or_epi64(v2, v1);
     v3 = _mm512_xor_epi64(v0, v1);
     v3 = _mm512_xor_epi64(_mm512_and_epi64(v0, v1), one);
-    output[1] = _mm512_xor_epi64(v3, one);
+    _mm512_storeu_epi64(&output[1], _mm512_xor_epi64(v3, one));
     v2 = _mm512_xor_epi64(_mm512_or_epi64(v2, v3), one);
     v4 = _mm512_xor_epi64(_mm512_xor_epi64(v1, v3), one);
     v4 = _mm512_and_epi64(v4, _mm512_xor_epi64(v1, one));
     v4 = _mm512_xor_epi64(v4, _mm512_xor_epi64(v1, one));
     v4 = _mm512_andnot_epi64(v4, v2);
-    output[0] = v4;
+    _mm512_storeu_epi64(&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX512, false)

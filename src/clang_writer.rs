@@ -182,8 +182,8 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
 };"##,
         "*((const __m512i*)one_value)",
     )),
-    load_op: None,
-    store_op: None,
+    load_op: Some("_mm512_loadu_epi64(&{})"),
+    store_op: Some("_mm512_storeu_epi64(&{}, {})"),
 };
 
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
