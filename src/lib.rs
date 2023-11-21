@@ -91,6 +91,7 @@ pub trait Executor<D: DataHolder> {
     fn real_input_len(&self) -> usize;
     fn real_output_len(&self) -> usize;
     fn execute(&mut self, input: &D) -> Result<D, Self::ErrorType>;
+    fn execute_reuse(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
     fn new_data(&mut self, len: usize) -> D;
     fn new_data_from(&mut self, data: &[u32]) -> D;
 }

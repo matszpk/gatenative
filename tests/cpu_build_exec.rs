@@ -356,5 +356,11 @@ fn test_cpu_builder_and_exec() {
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }
+        let mut output = exec.new_data(((1 << 24) >> 5) * 8);
+        exec.execute_reuse(&mul_add_input, &mut output).unwrap();
+        let out = output.release();
+        for (i, v) in mul_add_output.iter().enumerate() {
+            assert_eq!(*v, out[i], "{}: {}", config_num, i);
+        }
     }
 }
