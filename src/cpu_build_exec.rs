@@ -289,7 +289,11 @@ impl Executor<CPUDataHolder> for CPUExecutor {
         let input = input.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let num = input.len() / (real_input_words);
+        let num = if real_input_words != 0 {
+            input.len() / real_input_words
+        } else {
+            0
+        };
         let mut output = vec![0; num * real_output_words];
         let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
             unsafe { self.library.get(self.sym_name.as_bytes())? };
@@ -313,7 +317,11 @@ impl Executor<CPUDataHolder> for CPUExecutor {
         let input = input.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let num = input.len() / (real_input_words);
+        let num = if real_input_words != 0 {
+            input.len() / real_input_words
+        } else {
+            output.get().len() / real_output_words
+        };
         let output = output.get_mut();
         assert!(output.len() >= real_output_words * num);
         let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
