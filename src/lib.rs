@@ -93,7 +93,7 @@ pub trait Executor<D: DataHolder> {
     fn execute(&mut self, input: &D) -> Result<D, Self::ErrorType>;
     fn execute_reuse(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
     fn new_data(&mut self, len: usize) -> D;
-    fn new_data_from(&mut self, data: &[u32]) -> D;
+    fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
 }
 
 pub trait Builder<D: DataHolder, E: Executor<D>> {

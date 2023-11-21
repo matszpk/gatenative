@@ -331,8 +331,8 @@ impl Executor<CPUDataHolder> for CPUExecutor {
     fn new_data(&mut self, len: usize) -> CPUDataHolder {
         CPUDataHolder::new(vec![0u32; len])
     }
-    fn new_data_from(&mut self, data: &[u32]) -> CPUDataHolder {
-        CPUDataHolder::new(data.to_vec())
+    fn new_data_from_vec(&mut self, data: Vec<u32>) -> CPUDataHolder {
+        CPUDataHolder::new(data)
     }
 }
 
