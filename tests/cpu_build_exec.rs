@@ -39,7 +39,7 @@ fn test_cpu_builder_and_exec() {
                 }
             }
         }
-        (input, exp_output)
+        (CPUDataHolder::new(input), exp_output)
     };
 
     for (config_num, (cpu_ext, writer_config, builder_config)) in [
@@ -93,7 +93,10 @@ fn test_cpu_builder_and_exec() {
             0b1111111100000000,
             0u32,
         ];
-        let out = execs[0].execute(&MUL2X2_INPUT[..]).unwrap();
+        let out = execs[0]
+            .execute(&CPUDataHolder::new(MUL2X2_INPUT.to_vec()))
+            .unwrap()
+            .release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
@@ -114,7 +117,9 @@ fn test_cpu_builder_and_exec() {
             }
             input
         };
-        let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
+        let mut more_input_holder =
+            CPUDataHolder::new(vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2]);
+        let more_input = more_input_holder.get_mut();
         for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
             let idx = i >> 6;
             let half_idx = (i >> 5) & 1;
@@ -124,7 +129,7 @@ fn test_cpu_builder_and_exec() {
             more_input[idx * 8 + 4 + half_idx] |= ((v >> 2) & 1) << shift;
             more_input[idx * 8 + 6 + half_idx] |= ((v >> 3) & 1) << shift;
         }
-        let out = execs[0].execute(&more_input).unwrap();
+        let out = execs[0].execute(&more_input_holder).unwrap().release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
             let idx = i >> 6;
             let half_idx = (i >> 5) & 1;
@@ -138,12 +143,13 @@ fn test_cpu_builder_and_exec() {
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
         // execute with input and output placements
-        let mut mul2x2_input_p: [u32; 2 * 8] = [0u32; 2 * 8];
+        let mut mul2x2_input_p = CPUDataHolder::new(vec![0u32; 2 * 8]);
+        let mul2x2_input_p_slice = mul2x2_input_p.get_mut();
         for i in 0..4 {
-            mul2x2_input_p[2 * input_ps.0[i]] = MUL2X2_INPUT[2 * i];
-            mul2x2_input_p[2 * input_ps.0[i] + 1] = MUL2X2_INPUT[2 * i + 1];
+            mul2x2_input_p_slice[2 * input_ps.0[i]] = MUL2X2_INPUT[2 * i];
+            mul2x2_input_p_slice[2 * input_ps.0[i] + 1] = MUL2X2_INPUT[2 * i + 1];
         }
-        let out = execs[1].execute(&mul2x2_input_p[..]).unwrap();
+        let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
@@ -346,7 +352,7 @@ fn test_cpu_builder_and_exec() {
         builder.add("mul_add", circuit, None, None);
         let mut execs = builder.build().unwrap();
         let exec = &mut execs[0];
-        let out = exec.execute(&mul_add_input).unwrap();
+        let out = exec.execute(&mul_add_input).unwrap().release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }

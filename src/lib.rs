@@ -80,20 +80,22 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
 pub trait DataHolder {
     fn get(&self) -> &[u32];
     fn get_mut(&mut self) -> &mut [u32];
+    fn release(self) -> Vec<u32>;
+    fn free(self);
 }
 
-pub trait Executor {
+pub trait Executor<D: DataHolder> {
     type ErrorType;
     fn input_len(&self) -> usize;
     fn output_len(&self) -> usize;
     fn real_input_len(&self) -> usize;
     fn real_output_len(&self) -> usize;
-    fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType>;
-    //fn alloc_data(&mut self) -> DataHolder;
-    //fn alloc_bit_combs(bits: usize) -> DataHolder;
+    fn execute(&mut self, input: &D) -> Result<D, Self::ErrorType>;
+    fn new_data(&mut self, len: usize) -> D;
+    fn new_data_from(&mut self, data: &[u32]) -> D;
 }
 
-pub trait Builder<E: Executor> {
+pub trait Builder<D: DataHolder, E: Executor<D>> {
     type ErrorType;
     fn add<T>(
         &mut self,

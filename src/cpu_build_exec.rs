@@ -1,6 +1,6 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code;
-use crate::{Builder, CodeWriter, Executor};
+use crate::{Builder, CodeWriter, DataHolder, Executor};
 use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
@@ -223,6 +223,30 @@ impl SharedLib {
 
 // CPU Builder
 
+pub struct CPUDataHolder {
+    buffer: Vec<u32>,
+}
+
+impl CPUDataHolder {
+    #[inline]
+    pub fn new(data: Vec<u32>) -> Self {
+        Self { buffer: data }
+    }
+}
+
+impl DataHolder for CPUDataHolder {
+    fn get(&self) -> &[u32] {
+        &self.buffer
+    }
+    fn get_mut(&mut self) -> &mut [u32] {
+        &mut self.buffer
+    }
+    fn release(self) -> Vec<u32> {
+        self.buffer.to_vec()
+    }
+    fn free(self) {}
+}
+
 #[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
     pub optimize_negs: bool,
@@ -242,7 +266,7 @@ pub struct CPUExecutor {
     sym_name: String,
 }
 
-impl Executor for CPUExecutor {
+impl Executor<CPUDataHolder> for CPUExecutor {
     type ErrorType = libloading::Error;
     #[inline]
     fn input_len(&self) -> usize {
@@ -261,7 +285,8 @@ impl Executor for CPUExecutor {
         self.real_output_len
     }
 
-    fn execute(&mut self, input: &[u32]) -> Result<Vec<u32>, Self::ErrorType> {
+    fn execute(&mut self, input: &CPUDataHolder) -> Result<CPUDataHolder, Self::ErrorType> {
+        let input = input.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = input.len() / (real_input_words);
@@ -276,7 +301,15 @@ impl Executor for CPUExecutor {
                 );
             }
         }
-        Ok(output)
+        Ok(CPUDataHolder {
+            buffer: output.into(),
+        })
+    }
+    fn new_data(&mut self, len: usize) -> CPUDataHolder {
+        CPUDataHolder::new(vec![0u32; len])
+    }
+    fn new_data_from(&mut self, data: &[u32]) -> CPUDataHolder {
+        CPUDataHolder::new(data.to_vec())
     }
 }
 
@@ -328,7 +361,7 @@ impl<'a> CPUBuilder<'a> {
     }
 }
 
-impl<'b> Builder<CPUExecutor> for CPUBuilder<'b> {
+impl<'b> Builder<CPUDataHolder, CPUExecutor> for CPUBuilder<'b> {
     type ErrorType = BuildError;
 
     fn add<T>(
