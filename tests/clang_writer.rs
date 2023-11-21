@@ -219,7 +219,7 @@ void gate_sys_func1(const __m128* input,
     );
     assert_eq!(
         r##"#include <immintrin.h>
-static const unsigned int one_value[8] = {
+static const unsigned int one_value[8] __attribute__((aligned(32))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
@@ -251,7 +251,7 @@ void gate_sys_func1(const __m256* input,
     );
     assert_eq!(
         r##"#include <immintrin.h>
-static const unsigned int one_value[16] = {
+static const unsigned int one_value[16] __attribute__((aligned(64))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,

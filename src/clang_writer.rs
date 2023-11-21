@@ -150,7 +150,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     nimpl_op: Some("_mm256_andnot_ps({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"static const unsigned int one_value[8] = {
+        r##"static const unsigned int one_value[8] __attribute__((aligned(32))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };"##,
@@ -174,7 +174,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
     not_op: None,
     one_value: Some((
-        r##"static const unsigned int one_value[16] = {
+        r##"static const unsigned int one_value[16] __attribute__((aligned(64))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
