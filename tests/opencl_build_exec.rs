@@ -85,6 +85,7 @@ fn test_opencl_builder_and_exec() {
             input
         };
         let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
+        let more_input_num = more_input.len() / 4;
         for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
             let idx = (i >> 5) / word_len;
             let half_idx = (i >> 5) % word_len;
@@ -96,6 +97,24 @@ fn test_opencl_builder_and_exec() {
         }
         let more_input_holder = execs[0].new_data_from_vec(more_input);
         let out = execs[0].execute(&more_input_holder).unwrap().release();
+        for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
+            let shift = i & 31;
+            let a = v & 3;
+            let b = v >> 2;
+            let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
+                + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
+                + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
+                + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+        }
+        // test reusing output data holder
+        let mut out = execs[0].new_data(more_input_num * 4);
+        execs[0]
+            .execute_reuse(&more_input_holder, &mut out)
+            .unwrap();
+        let out = out.release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
             let idx = (i >> 5) / word_len;
             let half_idx = (i >> 5) % word_len;
@@ -117,6 +136,19 @@ fn test_opencl_builder_and_exec() {
         }
         let mul2x2_input_p = execs[1].new_data_from_vec(mul2x2_input_p_slice);
         let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
+        let out_len = out.len();
+        for i in 0..16 {
+            let a = i & 3;
+            let b = i >> 2;
+            let c = ((out[word_len * output_ps.0[0]] >> i) & 1)
+                + (((out[word_len * output_ps.0[1]] >> i) & 1) << 1)
+                + (((out[word_len * output_ps.0[2]] >> i) & 1) << 2)
+                + (((out[word_len * output_ps.0[3]] >> i) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+        }
+        let mut out = execs[1].new_data(out_len);
+        execs[1].execute_reuse(&mul2x2_input_p, &mut out).unwrap();
+        let out = out.release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
