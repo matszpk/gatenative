@@ -1,4 +1,3 @@
-use gatenative::clang_writer::*;
 use gatenative::opencl_build_exec::*;
 use gatenative::*;
 use gatesim::*;
@@ -72,6 +71,41 @@ fn test_opencl_builder_and_exec() {
                 + (((out[1 * word_len] >> i) & 1) << 1)
                 + (((out[2 * word_len] >> i) & 1) << 2)
                 + (((out[3 * word_len] >> i) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+        }
+        // more inputs
+        let mul2x2_more_input_combs = {
+            let mut input = vec![];
+            let mut s = 0x34251u32;
+            for _ in 0..64 * 24 {
+                input.push(s & 15);
+                s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
+                s = s.rotate_right(s & 15);
+            }
+            input
+        };
+        let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
+        for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
+            let shift = i & 31;
+            more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
+            more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
+            more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
+            more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
+        }
+        let more_input_holder = execs[0].new_data_from_vec(more_input);
+        let out = execs[0].execute(&more_input_holder).unwrap().release();
+        for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
+            let shift = i & 31;
+            let a = v & 3;
+            let b = v >> 2;
+            let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
+                + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
+                + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
+                + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
     }
