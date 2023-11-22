@@ -16,6 +16,7 @@ pub mod clang_writer;
 pub mod cpu_build_exec;
 pub mod gencode;
 pub mod opencl_build_exec;
+mod utils;
 mod vbinopcircuit;
 mod vcircuit;
 

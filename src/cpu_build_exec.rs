@@ -1,5 +1,6 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code;
+use crate::utils::get_timestamp;
 use crate::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
@@ -151,22 +152,7 @@ fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
 // shared library object
 
 #[dynamic]
-static mut TIMESTAMP: u128 = {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos()
-};
-
-#[dynamic]
 static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
-
-fn get_timestamp() -> u128 {
-    let mut lock = TIMESTAMP.write();
-    let old = *lock;
-    *lock += 1;
-    old
-}
 
 struct SharedLib {
     cpu_ext: CPUExtension,

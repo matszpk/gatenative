@@ -303,7 +303,6 @@ impl<'a> OpenCLBuilder<'a> {
                 .optimize_negs,
             cl_context: Arc::new(Context::from_device(device).unwrap()),
         }
-        
     }
 }
 
@@ -312,7 +311,7 @@ impl<'a> OpenCLBuilder<'a> {
 //     for OpenCLBuilder<'b>
 // {
 //     type ErrorType = ClError;
-//     
+//
 //     fn add<T>(
 //         &mut self,
 //         name: &str,
@@ -344,7 +343,7 @@ impl<'a> OpenCLBuilder<'a> {
 //             output_placement,
 //         );
 //     }
-//     
+//
 //     fn build(mut self) -> Result<Vec<OpenCLExecutor>, Self::ErrorType> {
 //         self.writer.epilog();
 //         let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
@@ -379,7 +378,7 @@ impl<'a> OpenCLBuilder<'a> {
 //         //     })
 //         //     .collect::<Vec<_>>())
 //     }
-//     
+//
 //     fn word_len(&self) -> u32 {
 //         self.writer.word_len()
 //     }
