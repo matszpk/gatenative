@@ -1,6 +1,6 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code;
-use crate::{Builder, CodeWriter, DataHolder, Executor};
+use crate::*;
 use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
@@ -223,6 +223,28 @@ impl SharedLib {
 
 // CPU Builder
 
+pub struct CPUDataReader<'a> {
+    buffer: &'a [u32],
+}
+
+impl<'a> DataReader for CPUDataReader<'a> {
+    #[inline]
+    fn get(&self) -> &[u32] {
+        self.buffer
+    }
+}
+
+pub struct CPUDataWriter<'a> {
+    buffer: &'a mut [u32],
+}
+
+impl<'a> DataWriter for CPUDataWriter<'a> {
+    #[inline]
+    fn get_mut(&mut self) -> &mut [u32] {
+        self.buffer
+    }
+}
+
 pub struct CPUDataHolder {
     buffer: Vec<u32>,
 }
@@ -234,12 +256,16 @@ impl CPUDataHolder {
     }
 }
 
-impl DataHolder for CPUDataHolder {
-    fn get(&self) -> &[u32] {
-        &self.buffer
+impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder {
+    fn get(&'a self) -> CPUDataReader<'a> {
+        CPUDataReader {
+            buffer: &self.buffer,
+        }
     }
-    fn get_mut(&mut self) -> &mut [u32] {
-        &mut self.buffer
+    fn get_mut(&'a mut self) -> CPUDataWriter<'a> {
+        CPUDataWriter {
+            buffer: &mut self.buffer,
+        }
     }
     fn release(self) -> Vec<u32> {
         self.buffer.to_vec()
@@ -266,7 +292,7 @@ pub struct CPUExecutor {
     sym_name: String,
 }
 
-impl Executor<CPUDataHolder> for CPUExecutor {
+impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for CPUExecutor {
     type ErrorType = libloading::Error;
     #[inline]
     fn input_len(&self) -> usize {
@@ -286,7 +312,8 @@ impl Executor<CPUDataHolder> for CPUExecutor {
     }
 
     fn execute(&mut self, input: &CPUDataHolder) -> Result<CPUDataHolder, Self::ErrorType> {
-        let input = input.get();
+        let input_r = input.get();
+        let input = input_r.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
@@ -314,16 +341,19 @@ impl Executor<CPUDataHolder> for CPUExecutor {
         input: &CPUDataHolder,
         output: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
-        let input = input.get();
+        let input_r = input.get();
+        let input = input_r.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
         let num = if real_input_words != 0 {
             input.len() / real_input_words
         } else {
-            output.get().len() / real_output_words
+            output_len / real_output_words
         };
-        let output = output.get_mut();
-        assert!(output.len() >= real_output_words * num);
+        let mut output_w = output.get_mut();
+        let output = output_w.get_mut();
+        assert!(output_len >= real_output_words * num);
         let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
             unsafe { self.library.get(self.sym_name.as_bytes())? };
         for i in 0..num {
@@ -392,7 +422,9 @@ impl<'a> CPUBuilder<'a> {
     }
 }
 
-impl<'b> Builder<CPUDataHolder, CPUExecutor> for CPUBuilder<'b> {
+impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CPUExecutor>
+    for CPUBuilder<'b>
+{
     type ErrorType = BuildError;
 
     fn add<T>(

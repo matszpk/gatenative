@@ -15,3 +15,9 @@ use libloading::{Library, Symbol};
 use static_init::dynamic;
 use thiserror::Error;
 
+use std::sync::Arc;
+
+// pub struct OpenCLDataHolder {
+//     cmd_queue: Arc<CommandQueue>,
+//     buffer: Buffer<u32>,
+// }

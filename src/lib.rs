@@ -14,8 +14,8 @@ pub enum VNegs {
 
 pub mod clang_writer;
 pub mod cpu_build_exec;
-pub mod opencl_build_exec;
 pub mod gencode;
+pub mod opencl_build_exec;
 mod vbinopcircuit;
 mod vcircuit;
 
@@ -78,14 +78,22 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn out(self) -> Vec<u8>;
 }
 
-pub trait DataHolder {
+pub trait DataReader {
     fn get(&self) -> &[u32];
+}
+
+pub trait DataWriter {
     fn get_mut(&mut self) -> &mut [u32];
+}
+
+pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
+    fn get(&'a self) -> DR;
+    fn get_mut(&'a mut self) -> DW;
     fn release(self) -> Vec<u32>;
     fn free(self);
 }
 
-pub trait Executor<D: DataHolder> {
+pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     type ErrorType;
     fn input_len(&self) -> usize;
     fn output_len(&self) -> usize;
@@ -97,7 +105,14 @@ pub trait Executor<D: DataHolder> {
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
 }
 
-pub trait Builder<D: DataHolder, E: Executor<D>> {
+pub trait Builder<
+    'a,
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D>,
+>
+{
     type ErrorType;
     fn add<T>(
         &mut self,
