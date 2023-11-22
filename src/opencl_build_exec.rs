@@ -208,9 +208,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                 .set_global_work_size(
                     ((num + self.group_len - 1) / self.group_len) * self.group_len,
                 )
-                .enqueue_nd_range(&self.cmd_queue)
-                .unwrap();
-            self.cmd_queue.finish().unwrap();
+                .enqueue_nd_range(&self.cmd_queue)?;
+            self.cmd_queue.finish()?;
         }
         Ok(output)
     }
@@ -237,9 +236,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                 .set_global_work_size(
                     ((num + self.group_len - 1) / self.group_len) * self.group_len,
                 )
-                .enqueue_nd_range(&self.cmd_queue)
-                .unwrap();
-            self.cmd_queue.finish().unwrap();
+                .enqueue_nd_range(&self.cmd_queue)?;
+            self.cmd_queue.finish()?;
         }
         Ok(())
     }
