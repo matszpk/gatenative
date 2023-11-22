@@ -4,7 +4,6 @@ use crate::{Builder, CodeWriter, DataHolder, Executor};
 use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
-use std::process::Command;
 use thiserror::Error;
 
 use std::env::{self, temp_dir};
@@ -13,6 +12,7 @@ use std::fs::{self, File};
 use std::hash::Hash;
 use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
+use std::process::Command;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
