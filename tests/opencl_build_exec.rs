@@ -108,5 +108,23 @@ fn test_opencl_builder_and_exec() {
                 + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
+        // execute with input and output placements
+        let mut mul2x2_input_p_slice = vec![0u32; word_len * 8];
+        for i in 0..4 {
+            for j in 0..word_len {
+                mul2x2_input_p_slice[word_len * input_ps.0[i] + j] = mul2x2_input[word_len * i + j];
+            }
+        }
+        let mul2x2_input_p = execs[1].new_data_from_vec(mul2x2_input_p_slice);
+        let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
+        for i in 0..16 {
+            let a = i & 3;
+            let b = i >> 2;
+            let c = ((out[word_len * output_ps.0[0]] >> i) & 1)
+                + (((out[word_len * output_ps.0[1]] >> i) & 1) << 1)
+                + (((out[word_len * output_ps.0[2]] >> i) & 1) << 2)
+                + (((out[word_len * output_ps.0[3]] >> i) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+        }
     }
 }
