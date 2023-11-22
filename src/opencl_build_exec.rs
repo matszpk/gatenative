@@ -183,6 +183,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     fn real_output_len(&self) -> usize {
         self.real_output_len
     }
+
     fn execute(&mut self, input: &OpenCLDataHolder) -> Result<OpenCLDataHolder, Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
@@ -213,6 +214,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         }
         Ok(output)
     }
+
     fn execute_reuse(
         &mut self,
         input: &OpenCLDataHolder,
@@ -241,6 +243,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         }
         Ok(())
     }
+
     fn new_data(&mut self, len: usize) -> OpenCLDataHolder {
         OpenCLDataHolder::new(
             len,
@@ -249,6 +252,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             CL_MEM_READ_WRITE,
         )
     }
+
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> OpenCLDataHolder {
         let mut output = OpenCLDataHolder::new(
             data.len(),
