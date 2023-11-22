@@ -1,6 +1,8 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code;
+use crate::utils::get_timestamp;
 use crate::*;
+use thiserror::Error;
 
 use opencl3::command_queue::{CommandQueue, CL_QUEUE_PROFILING_ENABLE};
 use opencl3::context::Context;
@@ -267,6 +269,41 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum OpenCLBuildError {
+    OpenCLError(i32),
+    BuildError(String),
+}
+
+impl std::error::Error for OpenCLBuildError {}
+
+impl std::fmt::Display for OpenCLBuildError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            OpenCLBuildError::OpenCLError(err) => {
+                let err = ClError(*err);
+                write!(f, "OpenCL error: {}", err)?;
+            }
+            OpenCLBuildError::BuildError(err) => {
+                write!(f, "Build error: {}", err)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl From<String> for OpenCLBuildError {
+    fn from(v: String) -> Self {
+        OpenCLBuildError::BuildError(v)
+    }
+}
+
+impl From<ClError> for OpenCLBuildError {
+    fn from(v: ClError) -> Self {
+        OpenCLBuildError::OpenCLError(v.0)
+    }
+}
+
 struct CircuitEntry {
     sym_name: String,
     input_len: usize,
@@ -288,7 +325,7 @@ pub struct OpenCLBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
-    cl_context: Arc<Context>,
+    context: Arc<Context>,
 }
 
 impl<'a> OpenCLBuilder<'a> {
@@ -301,85 +338,87 @@ impl<'a> OpenCLBuilder<'a> {
             optimize_negs: config
                 .unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT)
                 .optimize_negs,
-            cl_context: Arc::new(Context::from_device(device).unwrap()),
+            context: Arc::new(Context::from_device(device).unwrap()),
         }
     }
 }
 
-// impl<'b, 'a> Builder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>,
-//                 OpenCLDataHolder, OpenCLExecutor>
-//     for OpenCLBuilder<'b>
-// {
-//     type ErrorType = ClError;
-//
-//     fn add<T>(
-//         &mut self,
-//         name: &str,
-//         circuit: Circuit<T>,
-//         input_placement: Option<(&[usize], usize)>,
-//         output_placement: Option<(&[usize], usize)>,
-//     ) where
-//         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-//         T: Default + TryFrom<usize>,
-//         <T as TryFrom<usize>>::Error: Debug,
-//         usize: TryFrom<T>,
-//         <usize as TryFrom<T>>::Error: Debug,
-//     {
-//         let name = format!("{}_{}", name, get_timestamp());
-//         let sym_name = format!("gate_sys_{}", name);
-//         self.entries.push(CircuitEntry {
-//             sym_name,
-//             input_len: usize::try_from(circuit.input_len()).unwrap(),
-//             output_len: circuit.outputs().len(),
-//             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
-//             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
-//         });
-//         generate_code(
-//             &mut self.writer,
-//             &name,
-//             circuit,
-//             self.optimize_negs,
-//             input_placement,
-//             output_placement,
-//         );
-//     }
-//
-//     fn build(mut self) -> Result<Vec<OpenCLExecutor>, Self::ErrorType> {
-//         self.writer.epilog();
-//         let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
-//         let device = self.cl_context.devices()[0];
-//         let cmd_queue = unsafe {
-//             CommandQueue::create( cl_context, device, 0 )
-//         };
-//         // let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
-//         // let lib = Arc::new(shlib.build(&self.writer.out())?);
-//         // Ok(self
-//         //     .entries
-//         //     .iter()
-//         //     .map(|e| {
-//         //         let lib = lib.clone();
-//         //         CPUExecutor {
-//         //             input_len: e.input_len,
-//         //             output_len: e.output_len,
-//         //             real_input_len: e
-//         //                 .input_placement
-//         //                 .as_ref()
-//         //                 .map(|x| x.1)
-//         //                 .unwrap_or(e.input_len),
-//         //             real_output_len: e
-//         //                 .output_placement
-//         //                 .as_ref()
-//         //                 .map(|x| x.1)
-//         //                 .unwrap_or(e.output_len),
-//         //             words_per_real_word,
-//         //             library: lib,
-//         //             sym_name: e.sym_name.clone(),
-//         //         }
-//         //     })
-//         //     .collect::<Vec<_>>())
-//     }
-//
-//     fn word_len(&self) -> u32 {
-//         self.writer.word_len()
-//     }
-// }
+impl<'b, 'a>
+    Builder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder, OpenCLExecutor>
+    for OpenCLBuilder<'b>
+{
+    type ErrorType = OpenCLBuildError;
+
+    fn add<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let name = format!("{}_{}", name, get_timestamp());
+        let sym_name = format!("gate_sys_{}", name);
+        self.entries.push(CircuitEntry {
+            sym_name,
+            input_len: usize::try_from(circuit.input_len()).unwrap(),
+            output_len: circuit.outputs().len(),
+            input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
+            output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
+        });
+        generate_code(
+            &mut self.writer,
+            &name,
+            circuit,
+            self.optimize_negs,
+            input_placement,
+            output_placement,
+        );
+    }
+
+    fn build(mut self) -> Result<Vec<OpenCLExecutor>, Self::ErrorType> {
+        self.writer.epilog();
+        let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
+        let device = self.context.devices()[0];
+        let cmd_queue = Arc::new(unsafe { CommandQueue::create(&self.context, device, 0)? });
+        let program = Program::create_and_build_from_source(
+            &self.context,
+            &String::from_utf8(self.writer.out()).unwrap(),
+            "",
+        )?;
+        let device = Device::new(device);
+        let group_len = usize::try_from(device.max_work_group_size()?).unwrap();
+        Ok(self
+            .entries
+            .iter()
+            .map(|e| OpenCLExecutor {
+                input_len: e.input_len,
+                output_len: e.output_len,
+                real_input_len: e
+                    .input_placement
+                    .as_ref()
+                    .map(|x| x.1)
+                    .unwrap_or(e.input_len),
+                real_output_len: e
+                    .output_placement
+                    .as_ref()
+                    .map(|x| x.1)
+                    .unwrap_or(e.output_len),
+                words_per_real_word,
+                context: self.context.clone(),
+                cmd_queue: cmd_queue.clone(),
+                group_len,
+                kernel: Kernel::create(&program, &e.sym_name).unwrap(),
+            })
+            .collect::<Vec<_>>())
+    }
+
+    fn word_len(&self) -> u32 {
+        self.writer.word_len()
+    }
+}

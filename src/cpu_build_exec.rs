@@ -14,7 +14,6 @@ use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Error, Debug)]
 enum DetectCPUError {
