@@ -159,16 +159,18 @@ fn test_cpu_builder_and_exec() {
         };
         let mut more_input_holder =
             CPUDataHolder::new(vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2]);
-        let mut more_input_w = more_input_holder.get_mut();
-        let more_input = more_input_w.get_mut();
-        for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
-            let idx = (i >> 5) / word_len;
-            let half_idx = (i >> 5) % word_len;
-            let shift = i & 31;
-            more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
-            more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
-            more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
-            more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
+        {
+            let mut more_input_w = more_input_holder.get_mut();
+            let more_input = more_input_w.get_mut();
+            for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+                let idx = (i >> 5) / word_len;
+                let half_idx = (i >> 5) % word_len;
+                let shift = i & 31;
+                more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
+                more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
+                more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
+                more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
+            }
         }
         let out = execs[0].execute(&more_input_holder).unwrap().release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
@@ -185,11 +187,14 @@ fn test_cpu_builder_and_exec() {
         }
         // execute with input and output placements
         let mut mul2x2_input_p = CPUDataHolder::new(vec![0u32; word_len * 8]);
-        let mut mul2x2_input_p_slice_w = mul2x2_input_p.get_mut();
-        let mul2x2_input_p_slice = mul2x2_input_p_slice_w.get_mut();
-        for i in 0..4 {
-            for j in 0..word_len {
-                mul2x2_input_p_slice[word_len * input_ps.0[i] + j] = mul2x2_input[word_len * i + j];
+        {
+            let mut mul2x2_input_p_slice_w = mul2x2_input_p.get_mut();
+            let mul2x2_input_p_slice = mul2x2_input_p_slice_w.get_mut();
+            for i in 0..4 {
+                for j in 0..word_len {
+                    mul2x2_input_p_slice[word_len * input_ps.0[i] + j] =
+                        mul2x2_input[word_len * i + j];
+                }
             }
         }
         let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
