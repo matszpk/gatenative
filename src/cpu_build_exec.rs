@@ -1,7 +1,6 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code;
 use crate::*;
-use gatesim::*;
 use libloading::{Library, Symbol};
 use static_init::dynamic;
 use thiserror::Error;
