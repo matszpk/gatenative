@@ -56,6 +56,14 @@ fn test_cpu_builder_and_exec() {
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ];
+    #[cfg(target_pointer_width = "32")]
+    {
+        configs.push((NoExtension, &CLANG_WRITER_U32, None));
+        mul_add_data_map.insert(1, gen_mul_add_input(1));
+    }
+    #[cfg(target_pointer_width = "64")]
+    configs.push((NoExtension, &CLANG_WRITER_U64, None));
+
     if *CPU_EXTENSION == IntelAVX512
         || *CPU_EXTENSION == IntelAVX
         || *CPU_EXTENSION == IntelSSE
