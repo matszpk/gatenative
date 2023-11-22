@@ -266,3 +266,121 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         output
     }
 }
+
+struct CircuitEntry {
+    sym_name: String,
+    input_len: usize,
+    output_len: usize,
+    input_placement: Option<(Vec<usize>, usize)>,
+    output_placement: Option<(Vec<usize>, usize)>,
+}
+
+#[derive(Clone, Debug)]
+pub struct OpenCLBuilderConfig {
+    pub optimize_negs: bool,
+}
+
+const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
+    optimize_negs: true,
+};
+
+pub struct OpenCLBuilder<'a> {
+    entries: Vec<CircuitEntry>,
+    writer: CLangWriter<'a>,
+    optimize_negs: bool,
+    cl_context: Arc<Context>,
+}
+
+impl<'a> OpenCLBuilder<'a> {
+    pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
+        let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+        writer.prolog();
+        Self {
+            entries: vec![],
+            writer,
+            optimize_negs: config
+                .unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT)
+                .optimize_negs,
+            cl_context: Arc::new(Context::from_device(device).unwrap()),
+        }
+        
+    }
+}
+
+// impl<'b, 'a> Builder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>,
+//                 OpenCLDataHolder, OpenCLExecutor>
+//     for OpenCLBuilder<'b>
+// {
+//     type ErrorType = ClError;
+//     
+//     fn add<T>(
+//         &mut self,
+//         name: &str,
+//         circuit: Circuit<T>,
+//         input_placement: Option<(&[usize], usize)>,
+//         output_placement: Option<(&[usize], usize)>,
+//     ) where
+//         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+//         T: Default + TryFrom<usize>,
+//         <T as TryFrom<usize>>::Error: Debug,
+//         usize: TryFrom<T>,
+//         <usize as TryFrom<T>>::Error: Debug,
+//     {
+//         let name = format!("{}_{}", name, get_timestamp());
+//         let sym_name = format!("gate_sys_{}", name);
+//         self.entries.push(CircuitEntry {
+//             sym_name,
+//             input_len: usize::try_from(circuit.input_len()).unwrap(),
+//             output_len: circuit.outputs().len(),
+//             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
+//             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
+//         });
+//         generate_code(
+//             &mut self.writer,
+//             &name,
+//             circuit,
+//             self.optimize_negs,
+//             input_placement,
+//             output_placement,
+//         );
+//     }
+//     
+//     fn build(mut self) -> Result<Vec<OpenCLExecutor>, Self::ErrorType> {
+//         self.writer.epilog();
+//         let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
+//         let device = self.cl_context.devices()[0];
+//         let cmd_queue = unsafe {
+//             CommandQueue::create( cl_context, device, 0 )
+//         };
+//         // let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
+//         // let lib = Arc::new(shlib.build(&self.writer.out())?);
+//         // Ok(self
+//         //     .entries
+//         //     .iter()
+//         //     .map(|e| {
+//         //         let lib = lib.clone();
+//         //         CPUExecutor {
+//         //             input_len: e.input_len,
+//         //             output_len: e.output_len,
+//         //             real_input_len: e
+//         //                 .input_placement
+//         //                 .as_ref()
+//         //                 .map(|x| x.1)
+//         //                 .unwrap_or(e.input_len),
+//         //             real_output_len: e
+//         //                 .output_placement
+//         //                 .as_ref()
+//         //                 .map(|x| x.1)
+//         //                 .unwrap_or(e.output_len),
+//         //             words_per_real_word,
+//         //             library: lib,
+//         //             sym_name: e.sym_name.clone(),
+//         //         }
+//         //     })
+//         //     .collect::<Vec<_>>())
+//     }
+//     
+//     fn word_len(&self) -> u32 {
+//         self.writer.word_len()
+//     }
+// }
