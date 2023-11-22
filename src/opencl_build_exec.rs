@@ -2,21 +2,15 @@ use crate::clang_writer::*;
 use crate::gencode::generate_code;
 use crate::utils::get_timestamp;
 use crate::*;
-use thiserror::Error;
 
-use opencl3::command_queue::{CommandQueue, CL_QUEUE_PROFILING_ENABLE};
+use opencl3::command_queue::CommandQueue;
 use opencl3::context::Context;
-use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
+use opencl3::device::Device;
 use opencl3::error_codes::ClError;
 use opencl3::kernel::{ExecuteKernel, Kernel};
-use opencl3::memory::{
-    Buffer, ClMem, CL_MAP_READ, CL_MAP_WRITE, CL_MEM_READ_ONLY, CL_MEM_READ_WRITE,
-    CL_MEM_WRITE_ONLY,
-};
+use opencl3::memory::{Buffer, ClMem, CL_MAP_READ, CL_MAP_WRITE, CL_MEM_READ_WRITE};
 use opencl3::program::Program;
-use opencl3::types::{
-    cl_bool, cl_event, cl_map_flags, cl_mem, cl_mem_flags, cl_uint, CL_BLOCKING, CL_NON_BLOCKING,
-};
+use opencl3::types::{cl_mem, cl_mem_flags, cl_uint, CL_BLOCKING};
 
 use std::sync::Arc;
 
@@ -385,6 +379,7 @@ impl<'b, 'a>
         self.writer.epilog();
         let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
         let device = self.context.devices()[0];
+        #[allow(deprecated)]
         let cmd_queue = Arc::new(unsafe { CommandQueue::create(&self.context, device, 0)? });
         let program = Program::create_and_build_from_source(
             &self.context,
@@ -393,29 +388,30 @@ impl<'b, 'a>
         )?;
         let device = Device::new(device);
         let group_len = usize::try_from(device.max_work_group_size()?).unwrap();
-        Ok(self
-            .entries
+        self.entries
             .iter()
-            .map(|e| OpenCLExecutor {
-                input_len: e.input_len,
-                output_len: e.output_len,
-                real_input_len: e
-                    .input_placement
-                    .as_ref()
-                    .map(|x| x.1)
-                    .unwrap_or(e.input_len),
-                real_output_len: e
-                    .output_placement
-                    .as_ref()
-                    .map(|x| x.1)
-                    .unwrap_or(e.output_len),
-                words_per_real_word,
-                context: self.context.clone(),
-                cmd_queue: cmd_queue.clone(),
-                group_len,
-                kernel: Kernel::create(&program, &e.sym_name).unwrap(),
+            .map(|e| {
+                Ok(OpenCLExecutor {
+                    input_len: e.input_len,
+                    output_len: e.output_len,
+                    real_input_len: e
+                        .input_placement
+                        .as_ref()
+                        .map(|x| x.1)
+                        .unwrap_or(e.input_len),
+                    real_output_len: e
+                        .output_placement
+                        .as_ref()
+                        .map(|x| x.1)
+                        .unwrap_or(e.output_len),
+                    words_per_real_word,
+                    context: self.context.clone(),
+                    cmd_queue: cmd_queue.clone(),
+                    group_len,
+                    kernel: Kernel::create(&program, &e.sym_name)?,
+                })
             })
-            .collect::<Vec<_>>())
+            .collect::<Result<Vec<_>, _>>()
     }
 
     fn word_len(&self) -> u32 {
