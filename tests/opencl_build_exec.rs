@@ -3,6 +3,7 @@ use gatenative::*;
 use gatesim::*;
 
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
+use opencl3::types::CL_BLOCKING;
 
 fn gen_mul_add_input(word_len: usize) -> (Vec<u32>, Vec<u32>) {
     let input_map = [
@@ -389,6 +390,69 @@ fn test_opencl_builder_and_exec() {
         let out = execs[0].execute(&mul_add_input).unwrap().release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
+        }
+    }
+}
+
+#[test]
+fn test_opencl_data_holder() {
+    let no_opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: false,
+    };
+    let opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: true,
+    };
+
+    let device = Device::new(
+        *get_all_devices(CL_DEVICE_TYPE_GPU)
+            .unwrap()
+            .get(0)
+            .expect("No device in platform"),
+    );
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
+        let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
+        let circuit =
+            Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
+        builder.add("mul2x2", circuit.clone(), None, None);
+        let mut execs = builder.build().unwrap();
+        let mut data = execs[0].new_data(10);
+        {
+            let mut wr = data.get_mut();
+            for (i, x) in wr.get_mut().iter_mut().enumerate() {
+                *x = u32::try_from(i * 111).unwrap();
+            }
+        }
+        {
+            let rd = data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(i * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        {
+            let cmd_queue = unsafe { execs[0].command_queue() };
+            let mut out = vec![0u32; 10];
+            unsafe {
+                cmd_queue
+                    .enqueue_read_buffer(data.buffer(), CL_BLOCKING, 0, &mut out[..], &[])
+                    .unwrap();
+            }
+            for (i, x) in out.into_iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(i * 111).unwrap(),
+                    x,
+                    "2: {} {}",
+                    config_num,
+                    i
+                );
+            }
         }
     }
 }

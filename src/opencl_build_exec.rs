@@ -127,10 +127,10 @@ impl OpenCLDataHolder {
         }
     }
 
-    pub fn buffer(&self) -> &Buffer<u32> {
+    pub unsafe fn buffer(&self) -> &Buffer<u32> {
         &self.buffer
     }
-    pub fn buffer_mut(&mut self) -> &mut Buffer<u32> {
+    pub unsafe fn buffer_mut(&mut self) -> &mut Buffer<u32> {
         &mut self.buffer
     }
 }
@@ -168,6 +168,15 @@ pub struct OpenCLExecutor {
     cmd_queue: Arc<CommandQueue>,
     group_len: usize,
     kernel: Kernel,
+}
+
+impl OpenCLExecutor {
+    pub unsafe fn context(&self) -> Arc<Context> {
+        self.context.clone()
+    }
+    pub unsafe fn command_queue(&self) -> Arc<CommandQueue> {
+        self.cmd_queue.clone()
+    }
 }
 
 impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder>
