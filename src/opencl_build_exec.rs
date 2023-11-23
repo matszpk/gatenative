@@ -126,9 +126,20 @@ impl OpenCLDataHolder {
             buffer,
         }
     }
+
+    pub fn buffer(&self) -> &Buffer<u32> {
+        &self.buffer
+    }
+    pub fn buffer_mut(&mut self) -> &mut Buffer<u32> {
+        &mut self.buffer
+    }
 }
 
 impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDataHolder {
+    #[inline]
+    fn len(&'a self) -> usize {
+        self.len
+    }
     fn get(&'a self) -> OpenCLDataReader<'a> {
         OpenCLDataReader::new(self)
     }

@@ -241,6 +241,10 @@ impl CPUDataHolder {
 }
 
 impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder {
+    #[inline]
+    fn len(&'a self) -> usize {
+        self.buffer.len()
+    }
     fn get(&'a self) -> CPUDataReader<'a> {
         CPUDataReader {
             buffer: &self.buffer,

@@ -88,6 +88,7 @@ pub trait DataWriter {
 }
 
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
+    fn len(&'a self) -> usize;
     fn get(&'a self) -> DR;
     fn get_mut(&'a mut self) -> DW;
     fn release(self) -> Vec<u32>;
