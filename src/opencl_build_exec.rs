@@ -355,6 +355,19 @@ impl<'a> OpenCLBuilder<'a> {
             context: Arc::new(Context::from_device(device).unwrap()),
         }
     }
+
+    pub fn new_with_context(context: Arc<Context>, config: Option<OpenCLBuilderConfig>) -> Self {
+        let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+        writer.prolog();
+        Self {
+            entries: vec![],
+            writer,
+            optimize_negs: config
+                .unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT)
+                .optimize_negs,
+            context,
+        }
+    }
 }
 
 impl<'b, 'a>
