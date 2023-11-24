@@ -109,13 +109,12 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
 }
 
-pub trait Builder<
-    'a,
+pub trait Builder<'a, DR, DW, D, E>
+where
     DR: DataReader,
     DW: DataWriter,
     D: DataHolder<'a, DR, DW>,
     E: Executor<'a, DR, DW, D>,
->
 {
     type ErrorType;
     fn add<T>(
