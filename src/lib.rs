@@ -95,6 +95,8 @@ pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn free(self);
 }
 
+// TODO: Add setting up circuit's input by using an integer argument.
+
 pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     type ErrorType;
     fn input_len(&self) -> usize;
