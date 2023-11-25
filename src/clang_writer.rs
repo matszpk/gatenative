@@ -199,7 +199,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: Some("vornq_u32({1}, {0})"),
     nimpl_op: None,
     not_op: Some("vmvnq_u32({})"),
-    one_value: None,
+    one_value: Some(("", "{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }")),
     load_op: None,
     store_op: None,
 };

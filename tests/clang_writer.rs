@@ -286,8 +286,10 @@ void gate_sys_func1(const __m512i* input,
     );
     assert_eq!(
         r##"#include <arm_neon.h>
+
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output) {
+    const uint32x4_t one = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
     uint32x4_t v0;
     uint32x4_t v1;
     uint32x4_t v2;
