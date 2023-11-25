@@ -16,7 +16,7 @@ pub struct CLangWriterConfig<'a> {
     impl_op: Option<&'a str>,
     nimpl_op: Option<&'a str>,
     not_op: Option<&'a str>,
-    one_value: Option<(&'a str, &'a str)>, // for emulate NOT
+    one_value: (&'a str, &'a str), // for emulate NOT
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
 }
@@ -34,7 +34,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
-    one_value: None,
+    one_value: ("", "0xffffffff"),
     load_op: None,
     store_op: None,
 };
@@ -52,7 +52,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
-    one_value: None,
+    one_value: ("", "0xffffffffffffffffULL"),
     load_op: None,
     store_op: None,
 };
@@ -70,7 +70,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     impl_op: Some("(~{} | {})"),
     nimpl_op: None,
     not_op: Some("~{}"),
-    one_value: None,
+    one_value: ("", "0xffffffffffffffffULL"),
     load_op: None,
     store_op: None,
 };
@@ -88,7 +88,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     impl_op: None,
     nimpl_op: Some("({} & ~{})"),
     not_op: Some("~{}"),
-    one_value: None,
+    one_value: ("", "0xffffffffffffffffULL"),
     load_op: None,
     store_op: None,
 };
@@ -106,10 +106,10 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_m_pandn({1}, {0})"),
     not_op: None,
-    one_value: Some((
+    one_value: (
         r##"static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };"##,
         "*((const __m64*)one_value)",
-    )),
+    ),
     load_op: None,
     store_op: None,
 };
@@ -127,11 +127,11 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
     not_op: None,
-    one_value: Some((
+    one_value: (
         r##"static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((const __m128*)one_value)",
-    )),
+    ),
     load_op: None,
     store_op: None,
 };
@@ -149,13 +149,13 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm256_andnot_ps({1}, {0})"),
     not_op: None,
-    one_value: Some((
+    one_value: (
         r##"static const unsigned int one_value[8] __attribute__((aligned(32))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };"##,
         "*((const __m256*)one_value)",
-    )),
+    ),
     load_op: Some("_mm256_loadu_ps((const float*)&{})"),
     store_op: Some("_mm256_storeu_ps((float*)&{}, {})"),
 };
@@ -173,7 +173,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
     not_op: None,
-    one_value: Some((
+    one_value: (
         r##"static const unsigned int one_value[16] __attribute__((aligned(64))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
@@ -181,7 +181,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };"##,
         "*((const __m512i*)one_value)",
-    )),
+    ),
     load_op: Some("_mm512_loadu_epi64(&{})"),
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
 };
@@ -199,7 +199,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: Some("vornq_u32({1}, {0})"),
     nimpl_op: None,
     not_op: Some("vmvnq_u32({})"),
-    one_value: Some(("", "{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }")),
+    one_value: ("", "{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }"),
     load_op: None,
     store_op: None,
 };
@@ -217,7 +217,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
-    one_value: None,
+    one_value: ("", "0xffffffff"),
     load_op: None,
     store_op: None,
 };
@@ -354,7 +354,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             )
             .unwrap();
         }
-        if let Some((_, one_value)) = self.writer.config.one_value {
+        let one_value = self.writer.config.one_value.1;
+        if self.writer.config.not_op.is_none() || self.arg_inputs.is_some() {
             writeln!(
                 self.writer.out,
                 "    const {} one = {};",
@@ -482,8 +483,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         if let Some(include_name) = self.config.include_name {
             writeln!(self.out, "#include <{}>", include_name).unwrap();
         }
-        if let Some((init_one, _)) = self.config.one_value {
-            self.out.extend(init_one.as_bytes());
+        if !self.config.one_value.0.is_empty() {
+            self.out.extend(self.config.one_value.0.as_bytes());
             self.out.push(b'\n');
         }
     }
