@@ -134,6 +134,34 @@ void gate_sys_func1(const uint32_t* input,
 "##,
             write_test_code(&CLANG_WRITER_U32, false, true)
         );
+        assert_eq!(
+            r##"#include <stdint.h>
+void gate_sys_func1(const uint32_t* input,
+    uint32_t* output, unsigned int arg) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = ((arg & 1) != 0) ? one : zero;
+    v1 = input[11];
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[48] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_U32, true, true)
+        );
     }
     {
         assert_eq!(

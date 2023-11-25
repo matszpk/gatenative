@@ -427,7 +427,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
-        let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             writeln!(
                 self.writer.out,
@@ -437,11 +436,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             )
             .unwrap();
         } else {
-            let input = if self.input_placement.is_some() {
-                // set input as from input_placement
-                input
+            let input = if let Some(arg_input) = self.input_map.get(&input) {
+                self.input_placement
+                    .map(|(p, _)| p[input])
+                    .unwrap_or(*arg_input)
             } else {
-                *self.input_map.get(&input).unwrap_or(&input)
+                self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
             };
             let (dst, r) = if self.writer.config.init_index.is_some() {
                 (format!("v{}", reg), format!("input[ivn + {}]", input))
