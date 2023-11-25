@@ -164,7 +164,7 @@ pub struct OpenCLExecutor {
     real_input_len: usize,
     real_output_len: usize,
     words_per_real_word: usize,
-    arg_input_len: usize,
+    have_arg_inputs: bool,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
     group_len: usize,
@@ -222,7 +222,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
         unsafe {
-            if self.arg_input_len != 0 {
+            if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&input.buffer)
@@ -265,7 +265,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
         unsafe {
-            if self.arg_input_len != 0 {
+            if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&input.buffer)
@@ -358,7 +358,7 @@ struct CircuitEntry {
     output_len: usize,
     input_placement: Option<(Vec<usize>, usize)>,
     output_placement: Option<(Vec<usize>, usize)>,
-    arg_input_len: usize,
+    arg_input_len: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -433,7 +433,7 @@ impl<'b, 'a>
             output_len: circuit.outputs().len(),
             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
-            arg_input_len: arg_inputs.map(|x| x.len()).unwrap_or(0),
+            arg_input_len: arg_inputs.map(|x| x.len()),
         });
         generate_code(
             &mut self.writer,
@@ -469,14 +469,14 @@ impl<'b, 'a>
                         .input_placement
                         .as_ref()
                         .map(|x| x.1)
-                        .unwrap_or(e.input_len - e.arg_input_len),
+                        .unwrap_or(e.input_len - e.arg_input_len.unwrap_or(0)),
                     real_output_len: e
                         .output_placement
                         .as_ref()
                         .map(|x| x.1)
                         .unwrap_or(e.output_len),
                     words_per_real_word,
-                    arg_input_len: e.arg_input_len,
+                    have_arg_inputs: e.arg_input_len.is_some(),
                     context: self.context.clone(),
                     cmd_queue: cmd_queue.clone(),
                     group_len,

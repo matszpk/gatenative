@@ -276,7 +276,7 @@ pub struct CPUExecutor {
     real_input_len: usize,
     real_output_len: usize,
     words_per_real_word: usize,
-    arg_input_len: usize,
+    have_arg_inputs: bool,
     library: Arc<Library>,
     sym_name: String,
 }
@@ -315,7 +315,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             0
         };
         let mut output = vec![0; num * real_output_words];
-        if self.arg_input_len != 0 {
+        if self.have_arg_inputs {
             let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32)> =
                 unsafe { self.library.get(self.sym_name.as_bytes())? };
             for i in 0..num {
@@ -362,7 +362,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        if self.arg_input_len != 0 {
+        if self.have_arg_inputs {
             let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32)> =
                 unsafe { self.library.get(self.sym_name.as_bytes())? };
             for i in 0..num {
@@ -402,7 +402,7 @@ struct CircuitEntry {
     output_len: usize,
     input_placement: Option<(Vec<usize>, usize)>,
     output_placement: Option<(Vec<usize>, usize)>,
-    arg_input_len: usize,
+    arg_input_len: Option<usize>,
 }
 
 pub struct CPUBuilder<'a> {
@@ -472,7 +472,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             output_len: circuit.outputs().len(),
             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
-            arg_input_len: arg_inputs.map(|x| x.len()).unwrap_or(0),
+            arg_input_len: arg_inputs.map(|x| x.len()),
         });
         generate_code(
             &mut self.writer,
@@ -502,14 +502,14 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                         .input_placement
                         .as_ref()
                         .map(|x| x.1)
-                        .unwrap_or(e.input_len - e.arg_input_len),
+                        .unwrap_or(e.input_len - e.arg_input_len.unwrap_or(0)),
                     real_output_len: e
                         .output_placement
                         .as_ref()
                         .map(|x| x.1)
                         .unwrap_or(e.output_len),
                     words_per_real_word,
-                    arg_input_len: e.arg_input_len,
+                    have_arg_inputs: e.arg_input_len.is_some(),
                     library: lib,
                     sym_name: e.sym_name.clone(),
                 }
