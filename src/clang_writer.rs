@@ -576,7 +576,6 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                     count += 1;
                 }
             }
-            println!("InputMap: {:?}", input_map);
             (input_map, arg_input_map)
         } else {
             (HashMap::new(), HashMap::new())
