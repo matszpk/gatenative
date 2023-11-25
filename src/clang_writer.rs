@@ -257,6 +257,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_len: usize,
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
+    input_map: HashMap<usize, usize>,
     arg_input_map: HashMap<usize, usize>,
 }
 
@@ -430,12 +431,18 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             writeln!(
                 self.writer.out,
-                "    v{} = ((arg & {}) != 0) ? one : zero",
+                "    v{} = ((arg & {}) != 0) ? one : zero;",
                 reg,
                 1 << arg_bit
             )
             .unwrap();
         } else {
+            let input = if self.input_placement.is_some() {
+                // set input as from input_placement
+                input
+            } else {
+                *self.input_map.get(&input).unwrap_or(&input)
+            };
             let (dst, r) = if self.writer.config.init_index.is_some() {
                 (format!("v{}", reg), format!("input[ivn + {}]", input))
             } else {
@@ -558,6 +565,22 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
     ) -> CLangFuncWriter<'a, 'c> {
+        let (input_map, arg_input_map) = if let Some(arg_inputs) = arg_inputs {
+            let arg_input_map =
+                HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)));
+            let mut input_map = HashMap::new();
+            let mut count = 0;
+            for i in 0..input_len {
+                if !arg_input_map.contains_key(&i) {
+                    input_map.insert(i, count);
+                    count += 1;
+                }
+            }
+            println!("InputMap: {:?}", input_map);
+            (input_map, arg_input_map)
+        } else {
+            (HashMap::new(), HashMap::new())
+        };
         CLangFuncWriter::<'a, 'c> {
             writer: self,
             name,
@@ -565,13 +588,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_len,
             input_placement,
             output_placement,
-            arg_input_map: HashMap::from_iter(
-                arg_inputs
-                    .unwrap_or(&[])
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, x)| (*x, i)),
-            ),
+            input_map,
+            arg_input_map,
         }
     }
 
