@@ -78,7 +78,7 @@ fn test_opencl_builder_and_exec() {
             [(4, false), (8, false), (10, false), (11, false)],
         )
         .unwrap();
-        builder.add("mul2x2", circuit.clone(), None, None);
+        builder.add("mul2x2", circuit.clone(), None, None, None);
         let input_ps = (&[3, 1, 6, 4][..], 8);
         let output_ps = (&[5, 3, 1, 4][..], 7);
         builder.add(
@@ -86,6 +86,7 @@ fn test_opencl_builder_and_exec() {
             circuit.clone(),
             Some(input_ps.clone()),
             Some(output_ps.clone()),
+            None,
         );
         let mut execs = builder.build().unwrap();
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
@@ -384,7 +385,7 @@ fn test_opencl_builder_and_exec() {
         )
         .unwrap();
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
-        builder.add("mul_add", circuit, None, None);
+        builder.add("mul_add", circuit, None, None, None);
         let mut execs = builder.build().unwrap();
         let mul_add_input = execs[0].new_data_from_vec(mul_add_input.clone());
         let out = execs[0].execute(&mul_add_input).unwrap().release();
@@ -415,7 +416,7 @@ fn test_opencl_data_holder() {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit =
             Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
-        builder.add("mul2x2", circuit.clone(), None, None);
+        builder.add("mul2x2", circuit.clone(), None, None, None);
         let mut execs = builder.build().unwrap();
         let mut data = execs[0].new_data(10);
         {

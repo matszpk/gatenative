@@ -428,6 +428,7 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     optimize_negs: bool,
     input_placement: Option<(&'a [usize], usize)>,
     output_placement: Option<(&'a [usize], usize)>,
+    arg_inputs: Option<&'a [usize]>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -451,6 +452,7 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         circuit.outputs().len(),
         input_placement,
         output_placement,
+        arg_inputs,
     );
     func_writer.func_start();
     func_writer.alloc_vars(var_num);

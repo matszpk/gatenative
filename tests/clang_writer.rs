@@ -19,6 +19,7 @@ fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> Stri
         } else {
             None
         },
+        None,
     );
     fw.func_start();
     fw.alloc_vars(5);

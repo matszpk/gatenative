@@ -67,6 +67,8 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     /// Get function writer.
     /// The input_placement and output_placement - real input and output area defintion:
     /// first field - list of real indices. second field - real length.
+    /// The arg_inputs - list of circuit inputs that will be set by integer argument
+    /// (where bits just set input values).
     fn func_writer(
         &'a mut self,
         name: &'a str,
@@ -74,6 +76,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         output_len: usize,
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
+        arg_inputs: Option<&'a [usize]>,
     ) -> FW;
 
     fn out(self) -> Vec<u8>;
@@ -123,6 +126,7 @@ where
         circuit: Circuit<T>,
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
+        arg_inputs: Option<&[usize]>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,

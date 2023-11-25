@@ -421,6 +421,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         circuit: Circuit<T>,
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
+        arg_inputs: Option<&[usize]>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -444,6 +445,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             self.optimize_negs,
             input_placement,
             output_placement,
+            arg_inputs,
         );
     }
 

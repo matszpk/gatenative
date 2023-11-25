@@ -229,6 +229,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_len: usize,
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
+    arg_inputs: Option<&'c [usize]>,
 }
 
 pub struct CLangWriter<'a> {
@@ -496,6 +497,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         output_len: usize,
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
+        arg_inputs: Option<&'c [usize]>,
     ) -> CLangFuncWriter<'a, 'c> {
         CLangFuncWriter::<'a, 'c> {
             writer: self,
@@ -504,6 +506,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_len,
             input_placement,
             output_placement,
+            arg_inputs,
         }
     }
 

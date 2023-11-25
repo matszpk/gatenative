@@ -112,7 +112,7 @@ fn test_cpu_builder_and_exec() {
             [(4, false), (8, false), (10, false), (11, false)],
         )
         .unwrap();
-        builder.add("mul2x2", circuit.clone(), None, None);
+        builder.add("mul2x2", circuit.clone(), None, None, None);
         let input_ps = (&[3, 1, 6, 4][..], 8);
         let output_ps = (&[5, 3, 1, 4][..], 7);
         builder.add(
@@ -120,6 +120,7 @@ fn test_cpu_builder_and_exec() {
             circuit.clone(),
             Some(input_ps.clone()),
             Some(output_ps.clone()),
+            None,
         );
         let mut execs = builder.build().unwrap();
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
@@ -397,7 +398,7 @@ fn test_cpu_builder_and_exec() {
         .unwrap();
         let mut builder =
             CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
-        builder.add("mul_add", circuit, None, None);
+        builder.add("mul_add", circuit, None, None, None);
         let mut execs = builder.build().unwrap();
         let exec = &mut execs[0];
         let (mul_add_input, mul_add_output) = mul_add_data_map.get(&word_len).unwrap();
