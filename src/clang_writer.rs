@@ -359,9 +359,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     "    const unsigned int ivn = {} * idx;\n",
                     "    const unsigned int ovn = {} * idx;\n"
                 ),
-                self.input_placement
-                    .map(|(_, len)| len)
-                    .unwrap_or(self.input_len),
+                self.input_placement.map(|(_, len)| len).unwrap_or(
+                    if self.arg_input_map.is_empty() {
+                        self.input_len
+                    } else {
+                        self.input_len - self.arg_input_map.len()
+                    }
+                ),
                 self.output_placement
                     .map(|(_, len)| len)
                     .unwrap_or(self.output_len)

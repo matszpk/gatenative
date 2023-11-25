@@ -530,4 +530,66 @@ void gate_sys_func1(const uint32x4_t* input,
 "##,
         write_test_code(&CLANG_WRITER_OPENCL_U32, true, false)
     );
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
+    global uint* output, unsigned int arg) {
+    const uint idx = get_global_id(0);
+    const unsigned int ivn = 1 * idx;
+    const unsigned int ovn = 2 * idx;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = ((arg & 1) != 0) ? one : zero;
+    v1 = input[ivn + 0];
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + 1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + 0] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32, false, true)
+    );
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
+    global uint* output, unsigned int arg) {
+    const uint idx = get_global_id(0);
+    const unsigned int ivn = 68 * idx;
+    const unsigned int ovn = 88 * idx;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = ((arg & 1) != 0) ? one : zero;
+    v1 = input[ivn + 11];
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + 72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + 48] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32, true, true)
+    );
 }
