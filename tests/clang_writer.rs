@@ -51,6 +51,47 @@ fn write_test_code(
     String::from_utf8(cw.out()).unwrap()
 }
 
+fn write_test_code_2(
+    cw_config: &CLangWriterConfig,
+    inout_placement: bool,
+    arg_input: bool,
+) -> String {
+    let mut cw = cw_config.writer();
+    cw.prolog();
+    let mut fw = cw.func_writer(
+        "func1",
+        3,
+        2,
+        if inout_placement {
+            Some((&[6, 11, 44, 50, 27], 68))
+        } else {
+            None
+        },
+        if inout_placement {
+            Some((&[48, 72], 88))
+        } else {
+            None
+        },
+        if arg_input { Some(&[0, 3, 2]) } else { None },
+    );
+    fw.func_start();
+    fw.alloc_vars(5);
+    fw.gen_load(4, 0);
+    fw.gen_load(3, 1);
+    fw.gen_load(2, 2);
+    fw.gen_load(1, 3);
+    fw.gen_load(0, 4);
+    fw.gen_op(InstrOp::And, VNegs::NoNegs, 0, 0, 1);
+    fw.gen_op(InstrOp::Or, VNegs::NoNegs, 1, 2, 3);
+    fw.gen_op(InstrOp::Xor, VNegs::NoNegs, 0, 0, 1);
+    fw.gen_op(InstrOp::Or, VNegs::NoNegs, 1, 2, 4);
+    fw.gen_store(true, 0, 0);
+    fw.gen_store(false, 1, 1);
+    fw.func_end();
+    cw.epilog();
+    String::from_utf8(cw.out()).unwrap()
+}
+
 #[test]
 fn test_clang_writer() {
     {
@@ -161,6 +202,32 @@ void gate_sys_func1(const uint32_t* input,
 }
 "##,
             write_test_code(&CLANG_WRITER_U32, true, true)
+        );
+        assert_eq!(
+            r##"#include <stdint.h>
+void gate_sys_func1(const uint32_t* input,
+    uint32_t* output, unsigned int arg) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v4 = ((arg & 1) != 0) ? one : zero;
+    v3 = input[11];
+    v2 = ((arg & 4) != 0) ? one : zero;
+    v1 = ((arg & 2) != 0) ? one : zero;
+    v0 = input[27];
+    v0 = (v0 & v1);
+    v1 = (v2 | v3);
+    v0 = (v0 ^ v1);
+    v1 = (v2 | v4);
+    output[48] = ~v0;
+    output[72] = v1;
+}
+"##,
+            write_test_code_2(&CLANG_WRITER_U32, true, true)
         );
     }
     {
