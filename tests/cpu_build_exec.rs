@@ -135,7 +135,7 @@ fn test_cpu_builder_and_exec() {
             .flatten()
             .collect::<Vec<_>>();
         let out = execs[0]
-            .execute(&CPUDataHolder::new(mul2x2_input.clone()))
+            .execute(&CPUDataHolder::new(mul2x2_input.clone()), 0)
             .unwrap()
             .release();
         for i in 0..16 {
@@ -173,7 +173,7 @@ fn test_cpu_builder_and_exec() {
                 more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
             }
         }
-        let out = execs[0].execute(&more_input_holder).unwrap().release();
+        let out = execs[0].execute(&more_input_holder, 0).unwrap().release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
             let idx = (i >> 5) / word_len;
             let half_idx = (i >> 5) % word_len;
@@ -198,7 +198,7 @@ fn test_cpu_builder_and_exec() {
                 }
             }
         }
-        let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
+        let out = execs[1].execute(&mul2x2_input_p, 0).unwrap().release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
@@ -402,12 +402,12 @@ fn test_cpu_builder_and_exec() {
         let mut execs = builder.build().unwrap();
         let exec = &mut execs[0];
         let (mul_add_input, mul_add_output) = mul_add_data_map.get(&word_len).unwrap();
-        let out = exec.execute(mul_add_input).unwrap().release();
+        let out = exec.execute(mul_add_input, 0).unwrap().release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }
         let mut output = exec.new_data(((1 << 24) >> 5) * 8);
-        exec.execute_reuse(mul_add_input, &mut output).unwrap();
+        exec.execute_reuse(mul_add_input, 0, &mut output).unwrap();
         let out = output.release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);

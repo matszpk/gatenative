@@ -101,7 +101,7 @@ fn test_opencl_builder_and_exec() {
             .flatten()
             .collect::<Vec<_>>();
         let input_holder = execs[0].new_data_from_vec(mul2x2_input.clone());
-        let out = execs[0].execute(&input_holder).unwrap().release();
+        let out = execs[0].execute(&input_holder, 0).unwrap().release();
         for i in 0..16 {
             let a = i & 3;
             let b = i >> 2;
@@ -134,7 +134,7 @@ fn test_opencl_builder_and_exec() {
             more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
         }
         let more_input_holder = execs[0].new_data_from_vec(more_input);
-        let out = execs[0].execute(&more_input_holder).unwrap().release();
+        let out = execs[0].execute(&more_input_holder, 0).unwrap().release();
         for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
             let idx = (i >> 5) / word_len;
             let half_idx = (i >> 5) % word_len;
@@ -150,7 +150,7 @@ fn test_opencl_builder_and_exec() {
         // test reusing output data holder
         let mut out = execs[0].new_data(more_input_num * 4);
         execs[0]
-            .execute_reuse(&more_input_holder, &mut out)
+            .execute_reuse(&more_input_holder, 0, &mut out)
             .unwrap();
         let out = out.release();
         for (i, v) in mul2x2_more_input_combs.into_iter().enumerate() {
@@ -173,7 +173,7 @@ fn test_opencl_builder_and_exec() {
             }
         }
         let mul2x2_input_p = execs[1].new_data_from_vec(mul2x2_input_p_slice);
-        let out = execs[1].execute(&mul2x2_input_p).unwrap().release();
+        let out = execs[1].execute(&mul2x2_input_p, 0).unwrap().release();
         let out_len = out.len();
         for i in 0..16 {
             let a = i & 3;
@@ -185,7 +185,9 @@ fn test_opencl_builder_and_exec() {
             assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
         }
         let mut out = execs[1].new_data(out_len);
-        execs[1].execute_reuse(&mul2x2_input_p, &mut out).unwrap();
+        execs[1]
+            .execute_reuse(&mul2x2_input_p, 0, &mut out)
+            .unwrap();
         let out = out.release();
         for i in 0..16 {
             let a = i & 3;
@@ -388,7 +390,7 @@ fn test_opencl_builder_and_exec() {
         builder.add("mul_add", circuit, None, None, None);
         let mut execs = builder.build().unwrap();
         let mul_add_input = execs[0].new_data_from_vec(mul_add_input.clone());
-        let out = execs[0].execute(&mul_add_input).unwrap().release();
+        let out = execs[0].execute(&mul_add_input, 0).unwrap().release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }

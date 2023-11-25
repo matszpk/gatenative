@@ -106,8 +106,13 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn output_len(&self) -> usize;
     fn real_input_len(&self) -> usize;
     fn real_output_len(&self) -> usize;
-    fn execute(&mut self, input: &D) -> Result<D, Self::ErrorType>;
-    fn execute_reuse(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
+    fn execute(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType>;
+    fn execute_reuse(
+        &mut self,
+        input: &D,
+        arg_input: u32,
+        output: &mut D,
+    ) -> Result<(), Self::ErrorType>;
     fn new_data(&mut self, len: usize) -> D;
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
 }

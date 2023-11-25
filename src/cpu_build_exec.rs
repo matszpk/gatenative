@@ -300,7 +300,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         self.real_output_len
     }
 
-    fn execute(&mut self, input: &CPUDataHolder) -> Result<CPUDataHolder, Self::ErrorType> {
+    fn execute(
+        &mut self,
+        input: &CPUDataHolder,
+        arg_input: u32,
+    ) -> Result<CPUDataHolder, Self::ErrorType> {
         let input_r = input.get();
         let input = input_r.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
@@ -311,14 +315,28 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             0
         };
         let mut output = vec![0; num * real_output_words];
-        let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
-            unsafe { self.library.get(self.sym_name.as_bytes())? };
-        for i in 0..num {
-            unsafe {
-                (symbol)(
-                    input[i * real_input_words..].as_ptr(),
-                    output[i * real_output_words..].as_mut_ptr(),
-                );
+        if self.arg_input_len != 0 {
+            let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        input[i * real_input_words..].as_ptr(),
+                        output[i * real_output_words..].as_mut_ptr(),
+                        arg_input,
+                    );
+                }
+            }
+        } else {
+            let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        input[i * real_input_words..].as_ptr(),
+                        output[i * real_output_words..].as_mut_ptr(),
+                    );
+                }
             }
         }
         Ok(CPUDataHolder {
@@ -328,6 +346,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn execute_reuse(
         &mut self,
         input: &CPUDataHolder,
+        arg_input: u32,
         output: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
         let input_r = input.get();
@@ -343,14 +362,28 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
-            unsafe { self.library.get(self.sym_name.as_bytes())? };
-        for i in 0..num {
-            unsafe {
-                (symbol)(
-                    input[i * real_input_words..].as_ptr(),
-                    output[i * real_output_words..].as_mut_ptr(),
-                );
+        if self.arg_input_len != 0 {
+            let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        input[i * real_input_words..].as_ptr(),
+                        output[i * real_output_words..].as_mut_ptr(),
+                        arg_input,
+                    );
+                }
+            }
+        } else {
+            let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        input[i * real_input_words..].as_ptr(),
+                        output[i * real_output_words..].as_mut_ptr(),
+                    );
+                }
             }
         }
         Ok(())
