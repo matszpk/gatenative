@@ -3,6 +3,8 @@ use gatenative::*;
 use gatesim::*;
 use int_enum::IntEnum;
 
+use std::collections::HashMap;
+
 struct TestFuncWriter<'c> {
     writer: &'c mut TestCodeWriter,
     name: &'c str,
@@ -10,17 +12,29 @@ struct TestFuncWriter<'c> {
     output_len: usize,
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
-    arg_inputs: Option<&'c [usize]>,
+    arg_input_map: HashMap<usize, usize>,
 }
 
 impl<'c> FuncWriter for TestFuncWriter<'c> {
     fn func_start(&mut self) {
-        writeln!(
-            self.writer.out,
-            "Func {}({} {})",
-            self.name, self.input_len, self.output_len
-        )
-        .unwrap();
+        if !self.arg_input_map.is_empty() {
+            writeln!(
+                self.writer.out,
+                "Func {}({} {} {})",
+                self.name,
+                self.input_len,
+                self.output_len,
+                self.arg_input_map.len(),
+            )
+            .unwrap();
+        } else {
+            writeln!(
+                self.writer.out,
+                "Func {}({} {})",
+                self.name, self.input_len, self.output_len
+            )
+            .unwrap();
+        }
     }
     fn func_end(&mut self) {
         writeln!(self.writer.out, "EndFunc").unwrap();
@@ -30,7 +44,11 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
     }
     fn gen_load(&mut self, reg: usize, input: usize) {
         let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
-        writeln!(self.writer.out, "    v{} = I{}", reg, input).unwrap();
+        if let Some(arg_bit) = self.arg_input_map.get(&input) {
+            writeln!(self.writer.out, "    v{} = bit(arg, {})", reg, arg_bit).unwrap();
+        } else {
+            writeln!(self.writer.out, "    v{} = I{}", reg, input).unwrap();
+        }
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
         writeln!(
@@ -109,7 +127,13 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
             output_len,
             input_placement,
             output_placement,
-            arg_inputs,
+            arg_input_map: HashMap::from_iter(
+                arg_inputs
+                    .unwrap_or(&[])
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, x)| (*x, i)),
+            ),
         }
     }
 
@@ -207,6 +231,36 @@ EndFunc
 "##
     );
     // edn in/out placement
+
+    // arg input
+    cw_impl.out.clear();
+    generate_code(
+        &mut cw_impl,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        Some(&[0, 2]),
+    );
+    assert_eq!(
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
+        r##"Func test1(3 2 2)
+    vars v0..5
+    v0 = bit(arg, 0)
+    v1 = I1
+    v2 = bit(arg, 1)
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    v2 = (v2 and v3)
+    v0 = (v0 impl v1)
+    v0 = (v0 impl v2)
+    O0 = v4
+    O1 = ~v0
+EndFunc
+"##
+    );
+    // end arg input
 
     cw_nimpl.out.clear();
     generate_code(
