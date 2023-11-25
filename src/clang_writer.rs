@@ -1,5 +1,6 @@
 use crate::*;
 
+use std::collections::HashMap;
 use std::io::Write;
 
 #[derive(Clone, Debug)]
@@ -256,7 +257,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_len: usize,
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
-    arg_inputs: Option<&'c [usize]>,
+    arg_input_map: HashMap<usize, usize>,
 }
 
 pub struct CLangWriter<'a> {
@@ -322,12 +323,17 @@ impl<'a> CLangWriter<'a> {
 
 impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_start(&mut self) {
+        let arg_input = if !self.arg_input_map.is_empty() {
+            ", unsigned int arg"
+        } else {
+            ""
+        };
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
                 r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}{4}{5}* input,
-    {3}{4}{5}* output) {{
-    {6}"##,
+    {3}{4}{5}* output{6}) {{
+    {7}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -342,6 +348,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     ""
                 },
                 self.writer.config.type_name,
+                arg_input,
                 init_index
             )
             .unwrap();
@@ -363,7 +370,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 r##"{0}{1}void gate_sys_{2}(const {3}{4}{5}* input,
-    {3}{4}{5}* output) {{"##,
+    {3}{4}{5}* output{6}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -377,12 +384,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     ""
                 },
-                self.writer.config.type_name
+                self.writer.config.type_name,
+                arg_input
             )
             .unwrap();
         }
         let zero_value = self.writer.config.zero_value.1;
-        if self.arg_inputs.is_some() {
+        if !self.arg_input_map.is_empty() {
             writeln!(
                 self.writer.out,
                 "    const {} zero = {};",
@@ -391,7 +399,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             .unwrap();
         }
         let one_value = self.writer.config.one_value.1;
-        if self.writer.config.not_op.is_none() || self.arg_inputs.is_some() {
+        if self.writer.config.not_op.is_none() || !self.arg_input_map.is_empty() {
             writeln!(
                 self.writer.out,
                 "    const {} one = {};",
@@ -419,17 +427,27 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
 
     fn gen_load(&mut self, reg: usize, input: usize) {
         let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
-        let (dst, r) = if self.writer.config.init_index.is_some() {
-            (format!("v{}", reg), format!("input[ivn + {}]", input))
+        if let Some(arg_bit) = self.arg_input_map.get(&input) {
+            writeln!(
+                self.writer.out,
+                "    v{} = ((arg & {}) != 0) ? one : zero",
+                reg,
+                1 << arg_bit
+            )
+            .unwrap();
         } else {
-            (format!("v{}", reg), format!("input[{}]", input))
-        };
-        if let Some(ld_op) = self.writer.config.load_op {
-            write!(self.writer.out, "    {} = ", dst).unwrap();
-            CLangWriter::<'a>::write_op(&mut self.writer.out, ld_op, &[r.as_bytes()]);
-            self.writer.out.extend(b";\n");
-        } else {
-            writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
+            let (dst, r) = if self.writer.config.init_index.is_some() {
+                (format!("v{}", reg), format!("input[ivn + {}]", input))
+            } else {
+                (format!("v{}", reg), format!("input[{}]", input))
+            };
+            if let Some(ld_op) = self.writer.config.load_op {
+                write!(self.writer.out, "    {} = ", dst).unwrap();
+                CLangWriter::<'a>::write_op(&mut self.writer.out, ld_op, &[r.as_bytes()]);
+                self.writer.out.extend(b";\n");
+            } else {
+                writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
+            }
         }
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
@@ -547,7 +565,13 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_len,
             input_placement,
             output_placement,
-            arg_inputs,
+            arg_input_map: HashMap::from_iter(
+                arg_inputs
+                    .unwrap_or(&[])
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, x)| (*x, i)),
+            ),
         }
     }
 

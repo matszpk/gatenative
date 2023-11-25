@@ -1,7 +1,11 @@
 use gatenative::clang_writer::*;
 use gatenative::*;
 
-fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> String {
+fn write_test_code(
+    cw_config: &CLangWriterConfig,
+    inout_placement: bool,
+    arg_input: bool,
+) -> String {
     let mut cw = cw_config.writer();
     let supported_ops = cw.supported_ops();
     cw.prolog();
@@ -19,7 +23,7 @@ fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> Stri
         } else {
             None
         },
-        None,
+        if arg_input { Some(&[0, 2]) } else { None },
     );
     fw.func_start();
     fw.alloc_vars(5);
@@ -49,7 +53,6 @@ fn write_test_code(cw_config: &CLangWriterConfig, inout_placement: bool) -> Stri
 
 #[test]
 fn test_clang_writer() {
-    #[cfg(target_pointer_width = "32")]
     {
         assert_eq!(
             r##"#include <stdint.h>
@@ -75,7 +78,7 @@ void gate_sys_func1(const uint32_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U32, false)
+            write_test_code(&CLANG_WRITER_U32, false, false)
         );
         assert_eq!(
             r##"#include <stdint.h>
@@ -101,10 +104,9 @@ void gate_sys_func1(const uint32_t* input,
     output[48] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U32, true)
+            write_test_code(&CLANG_WRITER_U32, true, false)
         );
     }
-    #[cfg(target_pointer_width = "64")]
     {
         assert_eq!(
             r##"#include <stdint.h>
@@ -130,7 +132,7 @@ void gate_sys_func1(const uint64_t* input,
     output[0] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U64, false)
+            write_test_code(&CLANG_WRITER_U64, false, false)
         );
         assert_eq!(
             r##"#include <stdint.h>
@@ -156,7 +158,7 @@ void gate_sys_func1(const uint64_t* input,
     output[48] = v4;
 }
 "##,
-            write_test_code(&CLANG_WRITER_U64, true)
+            write_test_code(&CLANG_WRITER_U64, true, false)
         );
     }
     assert_eq!(
@@ -187,7 +189,7 @@ void gate_sys_func1(const __m64* input,
     output[0] = v4;
 }
 "##,
-        write_test_code(&CLANG_WRITER_INTEL_MMX, false)
+        write_test_code(&CLANG_WRITER_INTEL_MMX, false, false)
     );
     assert_eq!(
         r##"#include <xmmintrin.h>
@@ -218,7 +220,7 @@ void gate_sys_func1(const __m128* input,
     output[0] = v4;
 }
 "##,
-        write_test_code(&CLANG_WRITER_INTEL_SSE, false)
+        write_test_code(&CLANG_WRITER_INTEL_SSE, false, false)
     );
     assert_eq!(
         r##"#include <immintrin.h>
@@ -253,7 +255,7 @@ void gate_sys_func1(const __m256* input,
     _mm256_storeu_ps((float*)&output[0], v4);
 }
 "##,
-        write_test_code(&CLANG_WRITER_INTEL_AVX, false)
+        write_test_code(&CLANG_WRITER_INTEL_AVX, false, false)
     );
     assert_eq!(
         r##"#include <immintrin.h>
@@ -290,7 +292,7 @@ void gate_sys_func1(const __m512i* input,
     _mm512_storeu_epi64(&output[0], v4);
 }
 "##,
-        write_test_code(&CLANG_WRITER_INTEL_AVX512, false)
+        write_test_code(&CLANG_WRITER_INTEL_AVX512, false, false)
     );
     assert_eq!(
         r##"#include <arm_neon.h>
@@ -317,7 +319,7 @@ void gate_sys_func1(const uint32x4_t* input,
     output[0] = v4;
 }
 "##,
-        write_test_code(&CLANG_WRITER_ARM_NEON, false)
+        write_test_code(&CLANG_WRITER_ARM_NEON, false, false)
     );
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
@@ -346,7 +348,7 @@ void gate_sys_func1(const uint32x4_t* input,
     output[ovn + 0] = v4;
 }
 "##,
-        write_test_code(&CLANG_WRITER_OPENCL_U32, false)
+        write_test_code(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned int n, const global uint* input,
@@ -375,6 +377,6 @@ void gate_sys_func1(const uint32x4_t* input,
     output[ovn + 48] = v4;
 }
 "##,
-        write_test_code(&CLANG_WRITER_OPENCL_U32, true)
+        write_test_code(&CLANG_WRITER_OPENCL_U32, true, false)
     );
 }
