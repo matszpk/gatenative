@@ -442,7 +442,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             let input = if let Some(real_input) = self.input_map.get(&input) {
                 self.input_placement
-                    .map(|(p, _)| p[input])
+                    .map(|(p, _)| p[*real_input])
                     .unwrap_or(*real_input)
             } else {
                 self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)

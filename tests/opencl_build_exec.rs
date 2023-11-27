@@ -240,7 +240,7 @@ fn test_opencl_builder_and_exec() {
         .unwrap();
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let arg_input_indices = [0, 3, 5, 8];
-        let (input_ps, input_ps_len) = (&[2, 3, 7, 12, 13, 16, 19, 20, 24, 26, 29, 32][..], 35);
+        let (input_ps, input_ps_len) = (&[3, 7, 13, 19, 20, 26, 29, 32][..], 35);
         let rest_input_indices = {
             let mut rest_input_indices = vec![];
             let mut j = 0;
@@ -282,7 +282,7 @@ fn test_opencl_builder_and_exec() {
             for j in 0..rest_num {
                 xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
                     ((u32::try_from(i).unwrap() >> j) & 1) << bit;
-                let ps_j = input_ps[rest_input_indices[j]];
+                let ps_j = input_ps[j];
                 xcircuit_input_ps[input_ps_len * word_len * idx + word_len * ps_j + widx] |=
                     ((u32::try_from(i).unwrap() >> j) & 1) << bit;
             }

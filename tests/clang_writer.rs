@@ -14,7 +14,11 @@ fn write_test_code(
         3,
         2,
         if inout_placement {
-            Some((&[6, 11, 44], 68))
+            if arg_input {
+                Some((&[11], 68))
+            } else {
+                Some((&[6, 11, 44], 68))
+            }
         } else {
             None
         },
@@ -60,10 +64,14 @@ fn write_test_code_2(
     cw.prolog();
     let mut fw = cw.func_writer(
         "func1",
-        3,
+        5,
         2,
         if inout_placement {
-            Some((&[6, 11, 44, 50, 27], 68))
+            if arg_input {
+                Some((&[11, 27], 68))
+            } else {
+                Some((&[6, 11, 44, 50, 27], 68))
+            }
         } else {
             None
         },
