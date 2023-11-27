@@ -115,6 +115,9 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     ) -> Result<(), Self::ErrorType>;
     fn new_data(&mut self, len: usize) -> D;
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
+    fn try_clone(&self) -> Option<Self>
+    where
+        Self: Sized;
 }
 
 pub trait Builder<'a, DR, DW, D, E>
@@ -139,6 +142,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
+    /// word length in bits
     fn word_len(&self) -> u32;
 }
 

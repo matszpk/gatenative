@@ -315,6 +315,13 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         }
         output
     }
+
+    fn try_clone(&self) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        None
+    }
 }
 
 #[derive(Clone, Debug)]

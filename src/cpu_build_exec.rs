@@ -270,6 +270,7 @@ const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
 };
 
+#[derive(Clone)]
 pub struct CPUExecutor {
     input_len: usize,
     output_len: usize,
@@ -393,6 +394,12 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     }
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> CPUDataHolder {
         CPUDataHolder::new(data)
+    }
+    fn try_clone(&self) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        Some(self.clone())
     }
 }
 
