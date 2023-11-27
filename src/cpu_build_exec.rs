@@ -527,6 +527,10 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
     fn word_len(&self) -> u32 {
         self.writer.word_len()
     }
+
+    fn is_executor_per_thread() -> bool {
+        true
+    }
 }
 
 #[cfg(test)]

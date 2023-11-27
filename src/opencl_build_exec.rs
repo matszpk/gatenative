@@ -496,4 +496,8 @@ impl<'b, 'a>
     fn word_len(&self) -> u32 {
         self.writer.word_len()
     }
+
+    fn is_executor_per_thread() -> bool {
+        false
+    }
 }
