@@ -440,10 +440,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             )
             .unwrap();
         } else {
-            let input = if let Some(arg_input) = self.input_map.get(&input) {
+            let input = if let Some(real_input) = self.input_map.get(&input) {
                 self.input_placement
                     .map(|(p, _)| p[input])
-                    .unwrap_or(*arg_input)
+                    .unwrap_or(*real_input)
             } else {
                 self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
             };
