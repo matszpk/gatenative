@@ -146,6 +146,28 @@ where
     fn is_executor_per_thread() -> bool;
 }
 
+pub trait Mapper {
+    type ErrorType;
+    fn add<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
+        arg_inputs: Option<&[usize]>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug;
+    fn build(self) -> Result<(), Self::ErrorType>;
+    // function: F(data, word_len, arg_input)
+    fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(&[u32], u32, u32) -> Out;
+}
+
 // #[cfg(test)]
 // mod tests {
 //     use super::*;
