@@ -254,6 +254,7 @@ fn test_cpu_builder_and_exec() {
             builder_config.clone(),
         );
         let arg_input_indices = [0, 3, 5, 8];
+        let (input_ps, input_ps_len) = (&[2, 3, 7, 12, 13, 16, 19, 20, 24, 26, 29, 32][..], 35);
         let rest_input_indices = {
             let mut rest_input_indices = vec![];
             let mut j = 0;
@@ -274,11 +275,19 @@ fn test_cpu_builder_and_exec() {
             None,
             Some(&arg_input_indices[..]),
         );
+        builder.add(
+            "xcircuit_input_ps",
+            circuit.clone(),
+            Some((input_ps, input_ps_len)),
+            None,
+            Some(&arg_input_indices[..]),
+        );
         let mut execs = builder.build().unwrap();
         // number of chunks
         let xcircuit_data_num = (((256 >> 5) + word_len - 1) / word_len) * word_len;
         let rest_num = rest_input_indices.len();
         let mut xcircuit_input = vec![0u32; xcircuit_data_num * rest_num];
+        let mut xcircuit_input_ps = vec![0u32; xcircuit_data_num * input_ps_len];
         // prepare input for executor
         for i in 0..256 {
             let idx = (i >> 5) / word_len;
@@ -286,6 +295,9 @@ fn test_cpu_builder_and_exec() {
             let bit = i & 31;
             for j in 0..rest_num {
                 xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
+                    ((u32::try_from(i).unwrap() >> j) & 1) << bit;
+                let ps_j = input_ps[rest_input_indices[j]];
+                xcircuit_input_ps[input_ps_len * word_len * idx + word_len * ps_j + widx] |=
                     ((u32::try_from(i).unwrap() >> j) & 1) << bit;
             }
         }
@@ -311,6 +323,11 @@ fn test_cpu_builder_and_exec() {
             // execute circuit
             let input = execs[0].new_data_from_vec(xcircuit_input.clone());
             let result_out = execs[0].execute(&input, arg_input).unwrap().release();
+            for (i, &exp) in xcircuit_out.iter().enumerate() {
+                assert_eq!(exp, result_out[i], "{}: {} {}", config_num, arg_input, i);
+            }
+            let input = execs[1].new_data_from_vec(xcircuit_input_ps.clone());
+            let result_out = execs[1].execute(&input, arg_input).unwrap().release();
             for (i, exp) in xcircuit_out.into_iter().enumerate() {
                 assert_eq!(exp, result_out[i], "{}: {} {}", config_num, arg_input, i);
             }
