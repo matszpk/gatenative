@@ -17,7 +17,8 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 
-fn decouple_circuit<T>(
+// separate circuit sequentially
+fn separate_circuit_seq<T>(
     circuit: Circuit<T>,
     roots: &[usize],
     max_gates: usize,
