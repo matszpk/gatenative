@@ -67,12 +67,14 @@ where
     new_inputs.extend(cur_nodes);
     let new_inputs = BTreeMap::from_iter(new_inputs.into_iter().enumerate().map(|(i, x)| (x, i)));
     let new_input_len = new_inputs.len();
+    let new_gate_num = visited.len();
 
     (
         Circuit::<T>::new(
             T::try_from(new_input_len).unwrap(),
             visited
                 .iter()
+                .rev()
                 .map(|(orig, new)| {
                     let g = gates[*orig];
                     let gi0 = usize::try_from(g.i0).unwrap();
@@ -81,7 +83,7 @@ where
                         func: g.func,
                         i0: T::try_from(if g.i0 >= circuit.input_len() {
                             if let Some(idx) = visited.get(&gi0) {
-                                idx + new_input_len
+                                (new_gate_num - idx - 1) + new_input_len
                             } else {
                                 new_inputs[&gi0]
                             }
@@ -91,7 +93,7 @@ where
                         .unwrap(),
                         i1: T::try_from(if g.i1 >= circuit.input_len() {
                             if let Some(idx) = visited.get(&gi1) {
-                                idx + new_input_len
+                                (new_gate_num - idx - 1) + new_input_len
                             } else {
                                 new_inputs[&gi1]
                             }
