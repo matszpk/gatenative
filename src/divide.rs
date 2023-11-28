@@ -104,7 +104,12 @@ where
                     }
                 })
                 .collect::<Vec<_>>(),
-            roots.iter().map(|x| (T::try_from(*x).unwrap(), false)),
+            roots.iter().map(|x| {
+                (
+                    T::try_from(new_gate_num - *x - 1 + input_len).unwrap(),
+                    false,
+                )
+            }),
         )
         .unwrap(),
         Vec::<usize>::from_iter(new_inputs.keys().copied()),
