@@ -106,7 +106,16 @@ where
                 .collect::<Vec<_>>(),
             roots.iter().map(|x| {
                 (
-                    T::try_from(new_gate_num - *x - 1 + input_len).unwrap(),
+                    T::try_from(if *x >= input_len {
+                        if let Some(idx) = visited.get(x) {
+                            (new_gate_num - idx - 1) + new_input_len
+                        } else {
+                            new_inputs[x]
+                        }
+                    } else {
+                        new_inputs[x]
+                    })
+                    .unwrap(),
                     false,
                 )
             }),
