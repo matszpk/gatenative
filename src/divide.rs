@@ -81,7 +81,7 @@ where
                     let gi1 = usize::try_from(g.i0).unwrap();
                     Gate {
                         func: g.func,
-                        i0: T::try_from(if g.i0 >= circuit.input_len() {
+                        i0: T::try_from(if gi0 >= input_len {
                             if let Some(idx) = visited.get(&gi0) {
                                 (new_gate_num - idx - 1) + new_input_len
                             } else {
@@ -91,7 +91,7 @@ where
                             new_inputs[&gi0]
                         })
                         .unwrap(),
-                        i1: T::try_from(if g.i1 >= circuit.input_len() {
+                        i1: T::try_from(if gi1 >= input_len {
                             if let Some(idx) = visited.get(&gi1) {
                                 (new_gate_num - idx - 1) + new_input_len
                             } else {
