@@ -54,6 +54,7 @@ where
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
             let way = top.way;
+            // gidx - circuit output index for gate (used in same gate inputs).
             let gidx = T::try_from(input_len + node_index).unwrap();
             let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
 
