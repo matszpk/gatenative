@@ -21,7 +21,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // separate circuit sequentially
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -36,60 +36,74 @@ where
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
     let gates = circuit.gates();
-    let mut visited = vec![false; gate_num];
+    let mut visited = HashSet::new();
 
     let mut depth_map = HashMap::new();
     let mut max_depth = 0;
 
-    for (o, _) in circuit.outputs().iter() {
-        if *o < input_len_t {
-            continue;
-        }
-        let oidx = usize::try_from(*o).unwrap() - input_len;
-        let mut stack = Vec::new();
-        stack.push(StackEntry { node: oidx, way: 0 });
+    // key - circuit output, value - start depth
+    let mut update_map = HashMap::from_iter(circuit.outputs().iter().map(|(x, _)| (*x, 0)));
+    let mut new_update_map = HashMap::new();
 
-        while !stack.is_empty() {
-            let new_depth = T::try_from(stack.len() - 1).unwrap();
-            let top = stack.last_mut().unwrap();
-            let node_index = top.node;
-            let way = top.way;
-            // gidx - circuit output index for gate (used in same gate inputs).
-            let gidx = T::try_from(input_len + node_index).unwrap();
-            let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
+    while !update_map.is_empty() {
+        for (o, sd) in &update_map {
+            if *o < input_len_t {
+                continue;
+            }
+            let oidx = usize::try_from(*o).unwrap() - input_len;
+            let mut stack = Vec::new();
+            stack.push(StackEntry { node: oidx, way: 0 });
 
-            if way == 0 {
-                if !visited[node_index] || new_depth > depth {
-                    visited[node_index] = true;
+            while !stack.is_empty() {
+                let new_depth_u = sd + stack.len() - 1;
+                let new_depth = T::try_from(new_depth_u).unwrap();
+                let top = stack.last_mut().unwrap();
+                let node_index = top.node;
+                let way = top.way;
+                // gidx - circuit output index for gate (used in same gate inputs).
+                let gidx = T::try_from(input_len + node_index).unwrap();
+                let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
+
+                if way == 0 {
+                    if !visited.contains(&node_index) {
+                        visited.insert(node_index);
+                    } else {
+                        if new_depth > depth {
+                            new_update_map.insert(gidx, new_depth_u);
+                        }
+                        stack.pop();
+                        continue;
+                    }
+
+                    top.way += 1;
+                    let gi0 = gates[node_index].i0;
+                    if gi0 >= input_len_t {
+                        stack.push(StackEntry {
+                            node: usize::try_from(gi0).unwrap() - input_len,
+                            way: 0,
+                        });
+                    }
+                } else if way == 1 {
+                    top.way += 1;
+                    let gi1 = gates[node_index].i1;
+                    if gi1 >= input_len_t {
+                        stack.push(StackEntry {
+                            node: usize::try_from(gi1).unwrap() - input_len,
+                            way: 0,
+                        });
+                    }
                 } else {
+                    // allocate and use
                     stack.pop();
-                    continue;
+                    depth_map.insert(gidx, std::cmp::max(depth, new_depth));
+                    max_depth = std::cmp::max(max_depth, stack.len());
                 }
-
-                top.way += 1;
-                let gi0 = gates[node_index].i0;
-                if gi0 >= input_len_t {
-                    stack.push(StackEntry {
-                        node: usize::try_from(gi0).unwrap() - input_len,
-                        way: 0,
-                    });
-                }
-            } else if way == 1 {
-                top.way += 1;
-                let gi1 = gates[node_index].i1;
-                if gi1 >= input_len_t {
-                    stack.push(StackEntry {
-                        node: usize::try_from(gi1).unwrap() - input_len,
-                        way: 0,
-                    });
-                }
-            } else {
-                // allocate and use
-                stack.pop();
-                depth_map.insert(gidx, std::cmp::max(depth, new_depth));
-                max_depth = std::cmp::max(max_depth, stack.len());
             }
         }
+        // replace update
+        std::mem::swap(&mut update_map, &mut new_update_map);
+        new_update_map.clear();
+        visited.clear();
     }
 
     let mut depths = vec![vec![]; max_depth + 1];
