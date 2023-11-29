@@ -260,5 +260,73 @@ mod tests {
             ),
             separate_circuit_seq(&circuit, &[32, 39], 18, 2),
         );
+
+        let circuit = Circuit::new(
+            6,
+            [
+                Gate::new_and(0, 1),     // 6
+                Gate::new_nor(0, 2),     // 7
+                Gate::new_nor(6, 7),     // 8
+                Gate::new_and(0, 3),     // 9
+                Gate::new_xor(0, 4),     // 10
+                Gate::new_nor(9, 10),    // 11
+                Gate::new_nimpl(8, 11),  // 12
+                Gate::new_and(0, 5),     // 13
+                Gate::new_nor(1, 2),     // 14
+                Gate::new_nimpl(13, 14), // 15
+                Gate::new_and(1, 3),     // 16
+                Gate::new_xor(1, 4),     // 17
+                Gate::new_nor(16, 17),   // 18
+                Gate::new_nimpl(15, 18), // 19
+                Gate::new_xor(12, 19),   // 20
+                Gate::new_and(1, 5),     // 21
+                Gate::new_nor(2, 3),     // 22
+                Gate::new_xor(21, 22),   // 23
+                Gate::new_and(2, 4),     // 24
+                Gate::new_xor(2, 5),     // 25
+                Gate::new_nor(24, 25),   // 26
+                Gate::new_nimpl(23, 26), // 27
+                Gate::new_and(3, 4),     // 28
+                Gate::new_nor(3, 5),     // 29
+                Gate::new_and(28, 29),   // 30
+                Gate::new_and(4, 5),     // 31
+                Gate::new_xor(4, 5),     // 32
+                Gate::new_nor(31, 32),   // 33
+                Gate::new_nimpl(30, 33), // 34
+                Gate::new_xor(27, 34),   // 35
+                Gate::new_xor(20, 35),   // 36
+            ],
+            [(36, false)],
+        )
+        .unwrap();
+
+        assert_eq!(
+            (
+                Circuit::new(
+                    16,
+                    [
+                        Gate::new_nor(0, 1),
+                        Gate::new_nor(2, 3),
+                        Gate::new_nimpl(16, 17),
+                        Gate::new_nimpl(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_nimpl(19, 20),
+                        Gate::new_xor(18, 21),
+                        Gate::new_xor(8, 9),
+                        Gate::new_nor(10, 11),
+                        Gate::new_nimpl(23, 24),
+                        Gate::new_and(12, 13),
+                        Gate::new_nor(14, 15),
+                        Gate::new_nimpl(26, 27),
+                        Gate::new_xor(25, 28),
+                        Gate::new_xor(22, 29)
+                    ],
+                    [(30, false)]
+                )
+                .unwrap(),
+                vec![6, 7, 9, 10, 13, 14, 16, 17, 21, 22, 24, 25, 28, 29, 31, 32]
+            ),
+            separate_circuit_seq(&circuit, &[36], 18, 2),
+        );
     }
 }
