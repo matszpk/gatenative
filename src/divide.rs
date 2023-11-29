@@ -100,9 +100,10 @@ where
                 }
             }
         }
-        // replace update
+        // replace update map
         std::mem::swap(&mut update_map, &mut new_update_map);
         new_update_map.clear();
+        // clear visited
         visited.clear();
     }
 
