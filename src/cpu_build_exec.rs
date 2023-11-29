@@ -256,7 +256,7 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
         }
     }
     fn release(self) -> Vec<u32> {
-        self.buffer.to_vec()
+        self.buffer
     }
     fn free(self) {}
 }
