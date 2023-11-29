@@ -18,6 +18,9 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 
+// IDEA: from circuit input to last circuit outputs:
+// move some circuit outputs that will be used later to last outputs by copying.
+
 // separate circuit sequentially
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where

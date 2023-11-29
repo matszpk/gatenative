@@ -93,6 +93,8 @@ pub trait DataWriter {
 
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn len(&'a self) -> usize;
+    // add set_len - set length of buffer
+    //fn set_len(&'a mut self, len: usize);
     fn get(&'a self) -> DR;
     fn get_mut(&'a mut self) -> DW;
     /// release underlying data
