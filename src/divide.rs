@@ -50,7 +50,7 @@ where
                 next_nodes.insert(usize::try_from(g.i1).unwrap());
             }
         }
-        if depth >= min_depth && visited.len() + cur_nodes.len() >= max_gates {
+        if depth >= min_depth && visited.len() + cur_nodes.len() > max_gates {
             break;
         }
         // insert to visited map
@@ -224,7 +224,7 @@ mod tests {
                 .unwrap(),
                 vec![0, 1, 2, 4, 32, 39]
             ),
-            separate_circuit_seq(&circuit, &[46, 53], 20, 2),
+            separate_circuit_seq(&circuit, &[46, 53], 18, 2),
         );
     }
 }
