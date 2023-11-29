@@ -21,7 +21,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // separate circuit sequentially
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -41,7 +41,14 @@ where
     let mut max_depth = 0;
 
     // key - circuit output, value - start depth
-    let mut update_map = HashMap::from_iter(circuit.outputs().iter().map(|(x, _)| (*x, 0)));
+    let mut update_map = circuit
+        .outputs()
+        .iter()
+        .map(|(x, _)| (*x, 0))
+        .collect::<Vec<_>>();
+    // sort update map by gate output index in reverse order
+    update_map.sort();
+    update_map.reverse();
     let mut new_update_map = HashMap::new();
 
     while !update_map.is_empty() {
@@ -101,7 +108,13 @@ where
             }
         }
         // replace update map
-        std::mem::swap(&mut update_map, &mut new_update_map);
+        update_map = new_update_map
+            .iter()
+            .map(|(x, d)| (*x, *d))
+            .collect::<Vec<_>>();
+        // sort update map by gate output index in reverse order
+        update_map.sort();
+        update_map.reverse();
         new_update_map.clear();
         // clear visited
         visited.clear();
@@ -168,7 +181,6 @@ where
     let new_inputs = BTreeMap::from_iter(new_inputs.into_iter().enumerate().map(|(i, x)| (x, i)));
     let visited = BTreeMap::from_iter(visited.into_iter().enumerate().map(|(i, x)| (x, i)));
     let new_input_len = new_inputs.len();
-    let new_gate_num = visited.len();
 
     // println!("new_inputs: {:?}", new_inputs);
     // println!("visited: {:?}", visited);
@@ -226,7 +238,7 @@ where
                         .binary_search_by_key(&T::try_from(*x).unwrap(), |(idx, _)| *idx)
                     {
                         Ok(p) => old_outputs[p].1,
-                        Err(p) => false,
+                        Err(_) => false,
                     },
                 )
             }),
@@ -303,6 +315,27 @@ mod tests {
                         Gate::new_nor(8, 9),
                     ],
                     [(8, false), (10, false)]
+                )
+                .unwrap()
+            )
+        );
+        assert_eq!(
+            vec![vec![10, 12], vec![8, 11], vec![4, 5, 9], vec![6, 7]],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(2, 3),
+                        Gate::new_nimpl(3, 1),
+                        Gate::new_nor(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_nor(8, 9),
+                        Gate::new_nor(5, 9),
+                        Gate::new_xor(6, 11),
+                    ],
+                    [(6, false), (8, false), (10, false), (12, false)]
                 )
                 .unwrap()
             )
