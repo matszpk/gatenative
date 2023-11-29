@@ -345,6 +345,45 @@ mod tests {
             )
         );
         assert_eq!(
+            vec![
+                vec![5, 10, 12, 13, 15],
+                vec![4, 9, 11, 14],
+                vec![3, 8],
+                vec![7],
+                vec![6],
+                vec![2]
+            ],
+            calculate_gate_depths(
+                &Circuit::new(
+                    2,
+                    [
+                        Gate::new_and(0, 1),    // 2
+                        Gate::new_and(1, 2),    // 3
+                        Gate::new_and(1, 3),    // 4
+                        Gate::new_and(0, 4),    // 5
+                        Gate::new_nor(1, 2),    // 6
+                        Gate::new_nor(0, 6),    // 7
+                        Gate::new_nor(1, 7),    // 8
+                        Gate::new_nor(1, 8),    // 9
+                        Gate::new_nor(0, 9),    // 10
+                        Gate::new_nor(1, 2),    // 11
+                        Gate::new_nor(1, 11),   // 12
+                        Gate::new_xor(0, 2),    // 13
+                        Gate::new_nimpl(0, 2),  // 14
+                        Gate::new_nimpl(1, 14), // 15
+                    ],
+                    [
+                        (5, false),
+                        (10, false),
+                        (12, false),
+                        (13, false),
+                        (15, false)
+                    ]
+                )
+                .unwrap()
+            )
+        );
+        assert_eq!(
             vec![vec![4, 8, 10, 11], vec![7, 9], vec![5, 6]],
             calculate_gate_depths(
                 &Circuit::new(
