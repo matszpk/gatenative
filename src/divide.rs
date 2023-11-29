@@ -69,6 +69,7 @@ where
                         visited.insert(node_index);
                     } else {
                         if new_depth > depth {
+                            // add new entry to new update map with new start depth=new_depth
                             new_update_map.insert(gidx, new_depth_u);
                         }
                         stack.pop();
