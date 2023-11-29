@@ -232,5 +232,33 @@ mod tests {
             ),
             separate_circuit_seq(&circuit, &[46, 53], 18, 2),
         );
+
+        assert_eq!(
+            (
+                Circuit::new(
+                    8,
+                    [
+                        Gate::new_and(0, 5),
+                        Gate::new_and(5, 6),
+                        Gate::new_and(5, 7),
+                        Gate::new_and(2, 7),
+                        Gate::new_nimpl(8, 9),
+                        Gate::new_nimpl(10, 11),
+                        Gate::new_nor(12, 13),
+                        Gate::new_and(2, 5),
+                        Gate::new_and(3, 6),
+                        Gate::new_and(4, 7),
+                        Gate::new_and(1, 5),
+                        Gate::new_nimpl(15, 16),
+                        Gate::new_nimpl(17, 18),
+                        Gate::new_nor(19, 20),
+                    ],
+                    [(14, false), (21, false)]
+                )
+                .unwrap(),
+                vec![0, 1, 2, 3, 4, 11, 18, 25]
+            ),
+            separate_circuit_seq(&circuit, &[32, 39], 18, 2),
+        );
     }
 }
