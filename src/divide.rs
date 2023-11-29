@@ -340,6 +340,28 @@ mod tests {
                 .unwrap()
             )
         );
+        assert_eq!(
+            vec![vec![4, 8, 10, 11], vec![7, 9], vec![5, 6]],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 2),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(0, 3),
+                        Gate::new_and(1, 3),
+                        // add a1*b0 + a0*b1
+                        Gate::new_xor(5, 6),
+                        Gate::new_and(5, 6),
+                        // add c(a1*b0 + a0*b1) + a1*b1
+                        Gate::new_xor(7, 9),
+                        Gate::new_and(7, 9),
+                    ],
+                    [(4, false), (8, false), (10, false), (11, false)],
+                )
+                .unwrap()
+            )
+        );
     }
 
     #[test]
