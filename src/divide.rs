@@ -19,12 +19,7 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 
 // separate circuit sequentially
-fn calculate_gate_depths<T>(
-    circuit: &Circuit<T>,
-    roots: &[usize],
-    max_gates: usize,
-    min_depth: usize,
-) -> Vec<Vec<T>>
+fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -63,7 +58,12 @@ where
                 if !visited[node_index] {
                     visited[node_index] = true;
                 } else {
+                    let gidx = T::try_from(input_len + node_index).unwrap();
                     stack.pop();
+                    let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
+                    let new_depth = T::try_from(stack.len()).unwrap();
+                    depth_map.insert(gidx, std::cmp::max(depth, new_depth));
+                    max_depth = std::cmp::max(max_depth, stack.len());
                     continue;
                 }
 
@@ -88,16 +88,15 @@ where
                 // allocate and use
                 let gidx = T::try_from(input_len + node_index).unwrap();
                 stack.pop();
-                let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
                 let new_depth = T::try_from(stack.len()).unwrap();
-                depth_map.insert(gidx, std::cmp::max(depth, new_depth));
+                depth_map.insert(gidx, new_depth);
                 max_depth = std::cmp::max(max_depth, stack.len());
             }
         }
     }
 
     let mut depths = vec![vec![]; max_depth + 1];
-    for (d, v) in depth_map {
+    for (v, d) in depth_map {
         depths[usize::try_from(d).unwrap()].push(v);
     }
     for nodes in &mut depths {
@@ -234,6 +233,50 @@ impl<T: Clone + Copy> DivCircuit<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_calculate_gate_depths() {
+        assert_eq!(
+            vec![vec![10], vec![8, 9], vec![4, 5, 6, 7]],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(2, 3),
+                        Gate::new_nimpl(3, 1),
+                        Gate::new_nor(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_nor(8, 9),
+                    ],
+                    [(10, false)]
+                )
+                .unwrap()
+            )
+        );
+        assert_eq!(
+            vec![vec![10, 11, 12], vec![8, 9], vec![4, 5, 6, 7]],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(2, 3),
+                        Gate::new_nimpl(3, 1),
+                        Gate::new_nor(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_xor(5, 6),
+                        Gate::new_nor(8, 9),
+                        Gate::new_nor(5, 7),
+                    ],
+                    [(10, false), (11, false), (12, false)]
+                )
+                .unwrap()
+            )
+        );
+    }
 
     #[test]
     fn test_separate_circuit_seq() {
