@@ -50,20 +50,18 @@ where
         stack.push(StackEntry { node: oidx, way: 0 });
 
         while !stack.is_empty() {
+            let new_depth = T::try_from(stack.len() - 1).unwrap();
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
             let way = top.way;
+            let gidx = T::try_from(input_len + node_index).unwrap();
+            let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
 
             if way == 0 {
-                if !visited[node_index] {
+                if !visited[node_index] || new_depth > depth {
                     visited[node_index] = true;
                 } else {
-                    let gidx = T::try_from(input_len + node_index).unwrap();
                     stack.pop();
-                    let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
-                    let new_depth = T::try_from(stack.len()).unwrap();
-                    depth_map.insert(gidx, std::cmp::max(depth, new_depth));
-                    max_depth = std::cmp::max(max_depth, stack.len());
                     continue;
                 }
 
@@ -86,10 +84,8 @@ where
                 }
             } else {
                 // allocate and use
-                let gidx = T::try_from(input_len + node_index).unwrap();
                 stack.pop();
-                let new_depth = T::try_from(stack.len()).unwrap();
-                depth_map.insert(gidx, new_depth);
+                depth_map.insert(gidx, std::cmp::max(depth, new_depth));
                 max_depth = std::cmp::max(max_depth, stack.len());
             }
         }
@@ -272,6 +268,25 @@ mod tests {
                         Gate::new_nor(5, 7),
                     ],
                     [(10, false), (11, false), (12, false)]
+                )
+                .unwrap()
+            )
+        );
+        assert_eq!(
+            vec![vec![10], vec![8, 9], vec![4, 5, 6, 7]],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(2, 3),
+                        Gate::new_nimpl(3, 1),
+                        Gate::new_nor(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_nor(8, 9),
+                    ],
+                    [(8, false), (10, false)]
                 )
                 .unwrap()
             )
