@@ -73,6 +73,7 @@ where
     // println!("new_inputs: {:?}", new_inputs);
     // println!("visited: {:?}", visited);
 
+    let old_outputs = circuit.outputs();
     (
         Circuit::<T>::new(
             T::try_from(new_input_len).unwrap(),
@@ -121,7 +122,12 @@ where
                         new_inputs[x]
                     })
                     .unwrap(),
-                    false,
+                    match old_outputs
+                        .binary_search_by_key(&T::try_from(*x).unwrap(), |(idx, _)| *idx)
+                    {
+                        Ok(p) => old_outputs[p].1,
+                        Err(p) => false,
+                    },
                 )
             }),
         )
@@ -195,7 +201,7 @@ mod tests {
                 Gate::new_nimpl(49, 50), // 52
                 Gate::new_nor(51, 52),   // 53
             ],
-            [(46, false), (53, false)],
+            [(46, true), (53, false)],
         )
         .unwrap();
 
@@ -219,7 +225,7 @@ mod tests {
                         Gate::new_nimpl(15, 16),
                         Gate::new_nor(17, 18),
                     ],
-                    [(12, false), (19, false)]
+                    [(12, true), (19, false)]
                 )
                 .unwrap(),
                 vec![0, 1, 2, 4, 32, 39]
