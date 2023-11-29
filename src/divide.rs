@@ -346,38 +346,47 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![5, 10, 12, 13, 15],
-                vec![4, 9, 11, 14],
-                vec![3, 8],
-                vec![7],
-                vec![6],
-                vec![2]
+                vec![15, 20, 23, 24, 26],
+                vec![14, 19, 22, 25],
+                vec![13, 18, 21],
+                vec![17],
+                vec![16],
+                vec![12],
+                vec![10, 11],
+                vec![6, 7, 8, 9],
             ],
             calculate_gate_depths(
                 &Circuit::new(
-                    2,
+                    6,
                     [
-                        Gate::new_and(0, 1),    // 2
-                        Gate::new_and(1, 2),    // 3
-                        Gate::new_and(1, 3),    // 4
-                        Gate::new_and(0, 4),    // 5
-                        Gate::new_nor(1, 2),    // 6
-                        Gate::new_nor(0, 6),    // 7
-                        Gate::new_nor(1, 7),    // 8
-                        Gate::new_nor(1, 8),    // 9
-                        Gate::new_nor(0, 9),    // 10
-                        Gate::new_nor(1, 2),    // 11
-                        Gate::new_nor(1, 11),   // 12
-                        Gate::new_xor(0, 2),    // 13
-                        Gate::new_nimpl(0, 2),  // 14
-                        Gate::new_nimpl(1, 14), // 15
+                        Gate::new_xor(0, 1),    // 6
+                        Gate::new_xor(1, 2),    // 7
+                        Gate::new_xor(3, 4),    // 8
+                        Gate::new_xor(4, 5),    // 9
+                        Gate::new_xor(6, 7),    // 10
+                        Gate::new_xor(8, 9),    // 11
+                        Gate::new_and(10, 11),  // 12
+                        Gate::new_and(1, 12),   // 13
+                        Gate::new_and(1, 13),   // 14
+                        Gate::new_and(0, 14),   // 15
+                        Gate::new_nor(1, 12),   // 16
+                        Gate::new_nor(0, 16),   // 17
+                        Gate::new_nor(1, 17),   // 18
+                        Gate::new_nor(1, 18),   // 19
+                        Gate::new_nor(0, 19),   // 20
+                        Gate::new_nor(1, 12),   // 21
+                        Gate::new_nor(1, 21),   // 22
+                        Gate::new_nor(1, 22),   // 23
+                        Gate::new_xor(0, 12),   // 24
+                        Gate::new_nimpl(0, 12), // 25
+                        Gate::new_nimpl(1, 25), // 26
                     ],
                     [
-                        (5, false),
-                        (10, false),
-                        (12, false),
-                        (13, false),
-                        (15, false)
+                        (15, false),
+                        (20, false),
+                        (23, false),
+                        (24, false),
+                        (26, false)
                     ]
                 )
                 .unwrap()
