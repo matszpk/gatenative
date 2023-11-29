@@ -76,7 +76,11 @@ where
                     } else {
                         if new_depth > depth {
                             // add new entry to new update map with new start depth=new_depth
-                            new_update_map.insert(gidx, new_depth_u);
+                            if let Some(new_sd) = new_update_map.get_mut(&gidx) {
+                                *new_sd = std::cmp::max(*new_sd, new_depth_u);
+                            } else {
+                                new_update_map.insert(gidx, new_depth_u);
+                            }
                         }
                         stack.pop();
                         continue;
@@ -103,7 +107,7 @@ where
                     // allocate and use
                     stack.pop();
                     depth_map.insert(gidx, std::cmp::max(depth, new_depth));
-                    max_depth = std::cmp::max(max_depth, stack.len());
+                    max_depth = std::cmp::max(max_depth, new_depth_u);
                 }
             }
         }
