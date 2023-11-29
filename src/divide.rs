@@ -34,7 +34,6 @@ where
     }
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
-    let gate_num = circuit.len();
     let gates = circuit.gates();
     let mut visited = HashSet::new();
 
