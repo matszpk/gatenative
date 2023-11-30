@@ -178,17 +178,37 @@ where
     let mut gate_count = 0;
     let mut start_depth = 0;
     let depth_num = gate_depths.len();
+    let mut cur_gates = BTreeSet::new();
+    let mut circuits = Vec::<DivCircuitEntry<T>>::new();
+
     for (depth, gates) in gate_depths
         .into_iter()
         .chain(std::iter::once(vec![]))
         .enumerate()
     {
-        gate_count += gates.len();
+        let depth_gate_num = gates.len();
+        gate_count += depth_gate_num;
         if depth == depth_num || (depth - start_depth >= min_depth && gate_count > max_gates) {
             let end_depth = depth;
+            // add all gates that will be used later
+            shared_outputs.extend(
+                gates
+                    .iter()
+                    .filter(|(_, max_depth)| *max_depth >= end_depth)
+                    .copied(),
+            );
+
+            // create circuit
+
+            // remove all shared outputs that are not after this region
+            shared_outputs.retain(|_, max_depth| *max_depth >= end_depth);
+            cur_gates.clear();
+            start_depth = end_depth;
+            gate_count = depth_gate_num;
         }
+        cur_gates.extend(gates);
     }
-    vec![]
+    circuits
 }
 
 impl<T: Clone + Copy> DivCircuit<T> {
