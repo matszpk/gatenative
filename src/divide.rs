@@ -28,7 +28,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // cpartXX - parallel part of sequential part of circuit
 // tbackXX - empty circuit that move back output of previous cparXX to input of next cparXY.
 
-// separate circuit sequentially
+// TODO: add min depths
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -44,10 +44,11 @@ where
     }
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.len();
     let gates = circuit.gates();
     let mut visited = HashSet::new();
 
-    let mut depth_map = HashMap::new();
+    let mut depth_map = vec![0; gate_num];
     let mut max_depth = 0;
 
     // key - circuit output, value - start depth
@@ -72,19 +73,18 @@ where
 
             while !stack.is_empty() {
                 let new_depth_u = sd + stack.len() - 1;
-                let new_depth = T::try_from(new_depth_u).unwrap();
                 let top = stack.last_mut().unwrap();
                 let node_index = top.node;
                 let way = top.way;
                 // gidx - circuit output index for gate (used in same gate inputs).
                 let gidx = T::try_from(input_len + node_index).unwrap();
-                let depth = depth_map.get(&gidx).copied().unwrap_or(T::default());
+                let depth = depth_map[node_index];
 
                 if way == 0 {
                     if !visited.contains(&node_index) {
                         visited.insert(node_index);
                     } else {
-                        if new_depth > depth {
+                        if new_depth_u > depth {
                             // add new entry to new update map with new start depth=new_depth
                             if let Some(new_sd) = new_update_map.get_mut(&gidx) {
                                 *new_sd = std::cmp::max(*new_sd, new_depth_u);
@@ -116,7 +116,7 @@ where
                 } else {
                     // allocate and use
                     stack.pop();
-                    depth_map.insert(gidx, std::cmp::max(depth, new_depth));
+                    depth_map[node_index] = std::cmp::max(depth, new_depth_u);
                     max_depth = std::cmp::max(max_depth, new_depth_u);
                 }
             }
@@ -135,8 +135,8 @@ where
     }
 
     let mut depths = vec![vec![]; max_depth + 1];
-    for (v, d) in depth_map {
-        depths[usize::try_from(d).unwrap()].push(v);
+    for (v, d) in depth_map.into_iter().enumerate() {
+        depths[d].push(T::try_from(input_len + v).unwrap());
     }
     for nodes in &mut depths {
         nodes.sort();
