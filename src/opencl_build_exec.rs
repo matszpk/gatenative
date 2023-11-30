@@ -22,6 +22,11 @@ pub struct OpenCLDataReader<'a> {
 
 impl<'a> OpenCLDataReader<'a> {
     fn new(holder: &'a OpenCLDataHolder, range: &Range<usize>) -> Self {
+        let xrange = if !range.is_empty() {
+            range.start..range.end
+        } else {
+            0..1
+        };
         let mem = unsafe {
             let mut ptr: cl_mem = std::ptr::null_mut();
             holder
@@ -30,8 +35,8 @@ impl<'a> OpenCLDataReader<'a> {
                     &holder.buffer,
                     CL_BLOCKING,
                     CL_MAP_READ,
-                    4 * range.start,
-                    4 * (range.end - range.start),
+                    4 * xrange.start,
+                    4 * (xrange.end - xrange.start),
                     &mut ptr,
                     &[],
                 )
@@ -73,6 +78,11 @@ pub struct OpenCLDataWriter<'a> {
 
 impl<'a> OpenCLDataWriter<'a> {
     fn new(holder: &'a OpenCLDataHolder, range: &Range<usize>) -> Self {
+        let xrange = if !range.is_empty() {
+            range.start..range.end
+        } else {
+            0..1
+        };
         let mem = unsafe {
             let mut ptr: cl_mem = std::ptr::null_mut();
             holder
@@ -81,8 +91,8 @@ impl<'a> OpenCLDataWriter<'a> {
                     &holder.buffer,
                     CL_BLOCKING,
                     CL_MAP_WRITE,
-                    4 * range.start,
-                    4 * (range.end - range.start),
+                    4 * xrange.start,
+                    4 * (xrange.end - xrange.start),
                     &mut ptr,
                     &[],
                 )

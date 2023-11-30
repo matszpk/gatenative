@@ -577,5 +577,68 @@ fn test_opencl_data_holder() {
                 );
             }
         }
+        data.set_range(2..8);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 6);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 2) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 6);
+            for (i, x) in rd.get_mut().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 2) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range_from(3..);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 7);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 3) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 7);
+            for (i, x) in rd.get_mut().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 3) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range(7..2);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 0);
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 0);
+        }
     }
 }
