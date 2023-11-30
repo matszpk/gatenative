@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 pub(crate) struct Placement {
-    id: usize,
+    id: usize, // placement id (common for input and output placement (it can be buffer id)
     placements: Vec<usize>,
     real_len: usize,
 }
@@ -159,12 +159,40 @@ where
 }
 
 // separate circuit sequentially - using depths instead circuit
-// fn separate_circuit_seq<T>(
-//     circuit: &Circuit<T>,
-//     roots: &[usize],
-//     max_gates: usize,
-//     min_depth: usize,
-// ) -> (Circuit<T>, Vec<usize>)
+fn divide_circuit_seq<T>(
+    circuit: Circuit<T>,
+    gate_depths: Vec<Vec<(T, usize)>>,
+    max_gates: usize,
+    min_depth: usize,
+) -> Vec<DivCircuitEntry<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    // shared gate outputs
+    let mut shared_outputs = BTreeMap::<T, usize>::new();
+
+    let mut gate_count = 0;
+    let mut start_depth = 0;
+    let depth_num = gate_depths.len();
+    for (depth, gates) in gate_depths.into_iter().enumerate() {
+        gate_count += gates.len();
+        let (region_to_divide) = if depth == depth_num - 1 {
+            Some((start_depth, depth + 1))
+        } else if depth - start_depth >= min_depth && gate_count > max_gates {
+            gate_count = 0;
+            start_depth = depth;
+            Some((start_depth, depth))
+        } else {
+            None
+        };
+        if let Some(region_to_divide) = region_to_divide {}
+    }
+    vec![]
+}
 
 impl<T: Clone + Copy> DivCircuit<T> {
     pub(crate) fn new(circuit: Circuit<T>, max_gates: usize) -> Self {
