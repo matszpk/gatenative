@@ -538,3 +538,105 @@ fn test_cpu_builder_and_exec() {
         }
     }
 }
+
+#[test]
+fn test_cpu_data_holder() {
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+    };
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
+        let mut builder = CPUBuilder::new(Some(builder_config.clone()));
+        let circuit =
+            Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
+        builder.add("mul2x2", circuit.clone(), None, None, None);
+        let mut execs = builder.build().unwrap();
+        let mut data = execs[0].new_data(10);
+        {
+            let mut wr = data.get_mut();
+            for (i, x) in wr.get_mut().iter_mut().enumerate() {
+                *x = u32::try_from(i * 111).unwrap();
+            }
+        }
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 10);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(i * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range(2..8);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 6);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 2) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 6);
+            for (i, x) in rd.get_mut().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 2) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range_from(3..);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 7);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 3) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 7);
+            for (i, x) in rd.get_mut().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from((i + 3) * 111).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range(7..2);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 0);
+        }
+        {
+            let mut rd = data.get_mut();
+            assert_eq!(rd.get_mut().len(), 0);
+        }
+    }
+}
