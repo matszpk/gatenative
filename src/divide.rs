@@ -178,18 +178,15 @@ where
     let mut gate_count = 0;
     let mut start_depth = 0;
     let depth_num = gate_depths.len();
-    for (depth, gates) in gate_depths.into_iter().enumerate() {
+    for (depth, gates) in gate_depths
+        .into_iter()
+        .chain(std::iter::once(vec![]))
+        .enumerate()
+    {
         gate_count += gates.len();
-        let (region_to_divide) = if depth == depth_num - 1 {
-            Some((start_depth, depth + 1))
-        } else if depth - start_depth >= min_depth && gate_count > max_gates {
-            gate_count = 0;
-            start_depth = depth;
-            Some((start_depth, depth))
-        } else {
-            None
-        };
-        if let Some(region_to_divide) = region_to_divide {}
+        if depth == depth_num || (depth - start_depth >= min_depth && gate_count > max_gates) {
+            let end_depth = depth;
+        }
     }
     vec![]
 }
