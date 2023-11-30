@@ -17,10 +17,11 @@ use std::sync::Arc;
 pub struct OpenCLDataReader<'a> {
     holder: &'a OpenCLDataHolder,
     mem: cl_mem,
+    len: usize,
 }
 
 impl<'a> OpenCLDataReader<'a> {
-    fn new(holder: &'a OpenCLDataHolder) -> Self {
+    fn new(holder: &'a OpenCLDataHolder, range: &Range<usize>) -> Self {
         let mem = unsafe {
             let mut ptr: cl_mem = std::ptr::null_mut();
             holder
@@ -29,22 +30,26 @@ impl<'a> OpenCLDataReader<'a> {
                     &holder.buffer,
                     CL_BLOCKING,
                     CL_MAP_READ,
-                    0,
-                    4 * holder.len,
+                    4 * range.start,
+                    4 * (range.end - range.start),
                     &mut ptr,
                     &[],
                 )
                 .unwrap();
             ptr
         };
-        Self { holder, mem }
+        Self {
+            holder,
+            mem,
+            len: range.end - range.start,
+        }
     }
 }
 
 impl<'a> DataReader for OpenCLDataReader<'a> {
     #[inline]
     fn get(&self) -> &[u32] {
-        unsafe { std::slice::from_raw_parts(self.mem.cast::<u32>(), self.holder.len) }
+        unsafe { std::slice::from_raw_parts(self.mem.cast::<u32>(), self.len) }
     }
 }
 
@@ -63,10 +68,11 @@ impl<'a> Drop for OpenCLDataReader<'a> {
 pub struct OpenCLDataWriter<'a> {
     holder: &'a OpenCLDataHolder,
     mem: cl_mem,
+    len: usize,
 }
 
 impl<'a> OpenCLDataWriter<'a> {
-    fn new(holder: &'a OpenCLDataHolder) -> Self {
+    fn new(holder: &'a OpenCLDataHolder, range: &Range<usize>) -> Self {
         let mem = unsafe {
             let mut ptr: cl_mem = std::ptr::null_mut();
             holder
@@ -75,22 +81,26 @@ impl<'a> OpenCLDataWriter<'a> {
                     &holder.buffer,
                     CL_BLOCKING,
                     CL_MAP_WRITE,
-                    0,
-                    4 * holder.len,
+                    4 * range.start,
+                    4 * (range.end - range.start),
                     &mut ptr,
                     &[],
                 )
                 .unwrap();
             ptr
         };
-        Self { holder, mem }
+        Self {
+            holder,
+            mem,
+            len: range.end - range.start,
+        }
     }
 }
 
 impl<'a> DataWriter for OpenCLDataWriter<'a> {
     #[inline]
     fn get_mut(&mut self) -> &mut [u32] {
-        unsafe { std::slice::from_raw_parts_mut(self.mem.cast::<u32>(), self.holder.len) }
+        unsafe { std::slice::from_raw_parts_mut(self.mem.cast::<u32>(), self.len) }
     }
 }
 
@@ -110,6 +120,7 @@ pub struct OpenCLDataHolder {
     len: usize,
     cmd_queue: Arc<CommandQueue>,
     buffer: Buffer<u32>,
+    range: Range<usize>,
 }
 
 impl OpenCLDataHolder {
@@ -124,6 +135,7 @@ impl OpenCLDataHolder {
             len,
             cmd_queue,
             buffer,
+            range: 0..len,
         }
     }
 
@@ -138,19 +150,31 @@ impl OpenCLDataHolder {
 impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDataHolder {
     #[inline]
     fn len(&'a self) -> usize {
-        self.len
+        self.range.end - self.range.start
+    }
+    fn set_range(&'a mut self, range: Range<usize>) {
+        self.range = std::cmp::min(self.len, range.start)..std::cmp::min(self.len, range.end);
+        if self.range.start >= self.range.end {
+            self.range = 0..0;
+        }
     }
     fn get(&'a self) -> OpenCLDataReader<'a> {
-        OpenCLDataReader::new(self)
+        OpenCLDataReader::new(self, &self.range)
     }
     fn get_mut(&'a mut self) -> OpenCLDataWriter<'a> {
-        OpenCLDataWriter::new(self)
+        OpenCLDataWriter::new(self, &self.range)
     }
     fn release(self) -> Vec<u32> {
-        let mut out = vec![0u32; self.len];
+        let mut out = vec![0u32; self.len()];
         unsafe {
             self.cmd_queue
-                .enqueue_read_buffer(&self.buffer, CL_BLOCKING, 0, &mut out[..], &[])
+                .enqueue_read_buffer(
+                    &self.buffer,
+                    CL_BLOCKING,
+                    4 * self.range.start,
+                    &mut out[..],
+                    &[],
+                )
                 .unwrap();
         }
         out

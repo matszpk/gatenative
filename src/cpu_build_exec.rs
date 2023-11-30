@@ -11,6 +11,7 @@ use std::fmt::Debug;
 use std::fs::{self, File};
 use std::hash::Hash;
 use std::io::{self, BufRead, BufReader};
+use std::ops::Range;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -231,32 +232,44 @@ impl<'a> DataWriter for CPUDataWriter<'a> {
 
 pub struct CPUDataHolder {
     buffer: Vec<u32>,
+    range: Range<usize>,
 }
 
 impl CPUDataHolder {
     #[inline]
     pub fn new(data: Vec<u32>) -> Self {
-        Self { buffer: data }
+        let len = data.len();
+        Self {
+            buffer: data,
+            range: 0..len,
+        }
     }
 }
 
 impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder {
     #[inline]
     fn len(&'a self) -> usize {
-        self.buffer.len()
+        self.range.end - self.range.start
+    }
+    fn set_range(&'a mut self, range: Range<usize>) {
+        self.range = std::cmp::min(self.buffer.len(), range.start)
+            ..std::cmp::min(self.buffer.len(), range.end);
+        if self.range.start >= self.range.end {
+            self.range = 0..0;
+        }
     }
     fn get(&'a self) -> CPUDataReader<'a> {
         CPUDataReader {
-            buffer: &self.buffer,
+            buffer: &self.buffer[self.range.clone()],
         }
     }
     fn get_mut(&'a mut self) -> CPUDataWriter<'a> {
         CPUDataWriter {
-            buffer: &mut self.buffer,
+            buffer: &mut self.buffer[self.range.clone()],
         }
     }
     fn release(self) -> Vec<u32> {
-        self.buffer
+        self.buffer[self.range.clone()].to_vec()
     }
     fn free(self) {}
 }
@@ -340,8 +353,10 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                 }
             }
         }
+        let out_len = output.len();
         Ok(CPUDataHolder {
             buffer: output.into(),
+            range: 0..out_len,
         })
     }
     fn execute_reuse(

@@ -4,6 +4,7 @@ use int_enum::IntEnum;
 
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::{Range, RangeFrom};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
@@ -93,8 +94,12 @@ pub trait DataWriter {
 
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn len(&'a self) -> usize;
-    // set subarea
-    //fn set_subarea(&'a mut self, start: usize, len: usize);
+    // set range
+    fn set_range(&'a mut self, range: Range<usize>);
+    #[inline]
+    fn set_range_from(&'a mut self, range: RangeFrom<usize>) {
+        self.set_range(range.start..usize::MAX);
+    }
     fn get(&'a self) -> DR;
     fn get_mut(&'a mut self) -> DW;
     /// release underlying data
