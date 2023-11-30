@@ -50,7 +50,7 @@ where
     let gates = circuit.gates();
     let mut visited = HashSet::new();
 
-    let mut depth_map = vec![(usize::MAX, 0); gate_num];
+    let mut depth_map = vec![(usize::MAX, 0); input_len + gate_num];
     let mut max_depth = 0;
     // min max depth - maximal depth of min depth of gate
     let mut min_max_depth = 0;
@@ -70,6 +70,9 @@ where
     while !update_map.is_empty() {
         for (o, (min_sd, sd)) in &update_map {
             if *o < input_len_t {
+                let o = usize::try_from(*o).unwrap();
+                let min_depth = depth_map[o].0;
+                depth_map[o].0 = std::cmp::min(min_depth, min_sd + 1);
                 continue;
             }
             let oidx = usize::try_from(*o).unwrap() - input_len;
@@ -87,8 +90,9 @@ where
                 let node_index = top.node;
                 let way = top.way;
                 // gidx - circuit output index for gate (used in same gate inputs).
-                let gidx = T::try_from(input_len + node_index).unwrap();
-                let (lower_depth, upper_depth) = depth_map[node_index];
+                let gidx_u = input_len + node_index;
+                let gidx = T::try_from(gidx_u).unwrap();
+                let (lower_depth, upper_depth) = depth_map[gidx_u];
 
                 if way == 0 {
                     if !visited.contains(&node_index) {
@@ -114,6 +118,10 @@ where
                             node: usize::try_from(gi0).unwrap() - input_len,
                             way: 0,
                         });
+                    } else {
+                        let o = usize::try_from(gi0).unwrap();
+                        let min_depth = depth_map[o].0;
+                        depth_map[o].0 = std::cmp::min(min_depth, min_new_depth_u + 1);
                     }
                 } else if way == 1 {
                     top.way += 1;
@@ -123,12 +131,16 @@ where
                             node: usize::try_from(gi1).unwrap() - input_len,
                             way: 0,
                         });
+                    } else {
+                        let o = usize::try_from(gi1).unwrap();
+                        let min_depth = depth_map[o].0;
+                        depth_map[o].0 = std::cmp::min(min_depth, min_new_depth_u + 1);
                     }
                 } else {
                     // allocate and use
                     stack.pop();
-                    depth_map[node_index].0 = std::cmp::min(lower_depth, min_new_depth_u);
-                    depth_map[node_index].1 = std::cmp::max(upper_depth, new_depth_u);
+                    depth_map[gidx_u].0 = std::cmp::min(lower_depth, min_new_depth_u);
+                    depth_map[gidx_u].1 = std::cmp::max(upper_depth, new_depth_u);
                     max_depth = std::cmp::max(max_depth, new_depth_u);
                 }
             }
@@ -145,12 +157,17 @@ where
         // clear visited
         visited.clear();
     }
+    max_depth += 1;
+    // fix max_depth (from circuit outputs) for circuit inputs.
+    for i in 0..input_len {
+        depth_map[i].1 = max_depth;
+    }
 
     let mut depths = vec![vec![]; max_depth + 1];
     // now put depths in reverse order (from circuit inputs to circuit outputs).
     for (v, (ld, ud)) in depth_map.into_iter().enumerate() {
         assert_ne!(ld, usize::MAX);
-        depths[max_depth - ud].push((T::try_from(input_len + v).unwrap(), max_depth - ld));
+        depths[max_depth - ud].push((T::try_from(v).unwrap(), max_depth - ld));
     }
     for nodes in &mut depths {
         nodes.sort_by_key(|(node, _)| *node);
@@ -181,6 +198,7 @@ where
     let mut cur_gates = BTreeSet::new();
     let mut circuits = Vec::<DivCircuitEntry<T>>::new();
 
+    // TODO: include circuit inputs in depths
     for (depth, gates) in gate_depths
         .into_iter()
         .chain(std::iter::once(vec![]))
@@ -225,9 +243,10 @@ mod tests {
     fn test_calculate_gate_depths() {
         assert_eq!(
             vec![
-                vec![(4, 0), (5, 0), (6, 0), (7, 0)],
-                vec![(8, 1), (9, 1)],
-                vec![(10, 2)]
+                vec![(0, 0), (1, 0), (2, 0), (3, 0)],
+                vec![(4, 1), (5, 1), (6, 1), (7, 1)],
+                vec![(8, 2), (9, 2)],
+                vec![(10, 3)]
             ],
             calculate_gate_depths(
                 &Circuit::new(
@@ -248,9 +267,10 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![(4, 0), (5, 1), (6, 1), (7, 1)],
-                vec![(8, 1), (9, 1)],
-                vec![(10, 2), (11, 2), (12, 2)]
+                vec![(0, 0), (1, 1), (2, 1), (3, 1)],
+                vec![(4, 1), (5, 2), (6, 2), (7, 2)],
+                vec![(8, 2), (9, 2)],
+                vec![(10, 3), (11, 3), (12, 3)]
             ],
             calculate_gate_depths(
                 &Circuit::new(
@@ -273,9 +293,10 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![(4, 1), (5, 1), (6, 0), (7, 0)],
-                vec![(8, 2), (9, 1)],
-                vec![(10, 2)]
+                vec![(0, 1), (1, 1), (2, 1), (3, 0)],
+                vec![(4, 2), (5, 2), (6, 1), (7, 1)],
+                vec![(8, 3), (9, 2)],
+                vec![(10, 3)]
             ],
             calculate_gate_depths(
                 &Circuit::new(
@@ -296,10 +317,11 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![(6, 3), (7, 1)],
-                vec![(4, 2), (5, 2), (9, 2)],
-                vec![(8, 3), (11, 2)],
-                vec![(10, 3), (12, 3)]
+                vec![(0, 2), (1, 2), (2, 3), (3, 3)],
+                vec![(6, 4), (7, 2)],
+                vec![(4, 3), (5, 3), (9, 3)],
+                vec![(8, 4), (11, 3)],
+                vec![(10, 4), (12, 4)]
             ],
             calculate_gate_depths(
                 &Circuit::new(
@@ -322,14 +344,15 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![(6, 4), (7, 4), (8, 4), (9, 4)],
-                vec![(10, 5), (11, 5)],
-                vec![(12, 6)],
-                vec![(16, 3)],
-                vec![(17, 4)],
-                vec![(13, 5), (18, 5), (21, 5)],
-                vec![(14, 6), (19, 6), (22, 6), (25, 6)],
-                vec![(15, 7), (20, 7), (23, 7), (24, 7), (26, 7)],
+                vec![(0, 7), (1, 7), (2, 4), (3, 4), (4, 4), (5, 4)],
+                vec![(6, 5), (7, 5), (8, 5), (9, 5)],
+                vec![(10, 6), (11, 6)],
+                vec![(12, 7)],
+                vec![(16, 4)],
+                vec![(17, 5)],
+                vec![(13, 6), (18, 6), (21, 6)],
+                vec![(14, 7), (19, 7), (22, 7), (25, 7)],
+                vec![(15, 8), (20, 8), (23, 8), (24, 8), (26, 8)],
             ],
             calculate_gate_depths(
                 &Circuit::new(
@@ -370,9 +393,10 @@ mod tests {
         );
         assert_eq!(
             vec![
-                vec![(5, 1), (6, 1)],
-                vec![(7, 1), (9, 1)],
-                vec![(4, 2), (8, 2), (10, 2), (11, 2)]
+                vec![(0, 2), (1, 1), (2, 2), (3, 1)],
+                vec![(5, 2), (6, 2)],
+                vec![(7, 2), (9, 2)],
+                vec![(4, 3), (8, 3), (10, 3), (11, 3)]
             ],
             calculate_gate_depths(
                 &Circuit::new(
