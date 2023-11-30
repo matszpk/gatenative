@@ -21,6 +21,13 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // IDEA: from circuit input to last circuit outputs:
 // move some circuit outputs that will be used later to last outputs by copying.
 
+// IDEA:
+// division layout:
+// cseq0 cseq1 (cpar20 tback20 cpar21 tback21 cpar22 ...) cseq3 ....
+// cseqX - sequential part of circuit
+// cpartXX - parallel part of sequential part of circuit
+// tbackXX - empty circuit that move back output of previous cparXX to input of next cparXY.
+
 // separate circuit sequentially
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<T>>
 where
