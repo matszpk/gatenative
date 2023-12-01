@@ -463,9 +463,9 @@ mod tests {
                     [
                         (15, false),
                         (20, false),
+                        (26, false),
                         (23, false),
-                        (24, false),
-                        (26, false)
+                        (24, false)
                     ]
                 )
                 .unwrap()
@@ -527,19 +527,78 @@ mod tests {
                 Gate::new_nimpl(12, 0), // 25
                 Gate::new_nimpl(1, 25), // 26
             ],
-            [
-                (15, false),
-                (20, true),
-                (23, false),
-                (24, true),
-                (26, true),
-            ],
+            [(15, false), (20, true), (26, true), (23, false), (24, true)],
         )
         .unwrap();
         let depths = calculate_gate_depths(&circuit);
         assert_eq!(
-            vec![Circuit::new(0, [], []).unwrap()],
-            divide_circuit_seq(circuit, depths, 7, 1,)
+            vec![
+                Circuit::new(
+                    6,
+                    [
+                        Gate::new_xor(1, 0),   // 6
+                        Gate::new_xor(1, 2),   // 7
+                        Gate::new_xor(3, 4),   // 8
+                        Gate::new_xor(4, 5),   // 9
+                        Gate::new_xor(6, 7),   // 10
+                        Gate::new_xor(8, 9),   // 11
+                        Gate::new_and(10, 11), // 12
+                    ],
+                    [(0, false), (1, false), (12, false)]
+                )
+                .unwrap(),
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(1, 2), // 13
+                        Gate::new_nor(1, 2), // 16
+                        Gate::new_nor(4, 0), // 17
+                        Gate::new_nor(1, 5), // 18
+                        Gate::new_nor(1, 2), // 21
+                    ],
+                    [
+                        (0, false),
+                        (1, false),
+                        (2, false),
+                        (3, false),
+                        (6, false),
+                        (7, false)
+                    ]
+                )
+                .unwrap(),
+                Circuit::new(
+                    6,
+                    [
+                        Gate::new_and(1, 3),   // 14
+                        Gate::new_nor(1, 4),   // 19
+                        Gate::new_nor(1, 5),   // 22
+                        Gate::new_nimpl(2, 0), // 25
+                    ],
+                    [
+                        (0, false),
+                        (1, false),
+                        (2, false),
+                        (6, false),
+                        (7, false),
+                        (8, false),
+                        (9, false)
+                    ]
+                )
+                .unwrap(),
+                Circuit::new(
+                    7,
+                    [
+                        Gate::new_and(3, 0),   // 15
+                        Gate::new_nor(4, 0),   // 20
+                        Gate::new_nor(1, 5),   // 23
+                        Gate::new_xor(2, 0),   // 24
+                        Gate::new_nimpl(1, 6), // 26
+                    ],
+                    [(7, false), (8, true), (11, true), (9, false), (10, true)]
+                )
+                .unwrap(),
+            ],
+            divide_circuit_seq(circuit, depths, 7, 1)
         );
     }
 }
