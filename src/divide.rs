@@ -422,6 +422,33 @@ mod tests {
         );
         assert_eq!(
             vec![
+                vec![(0, 1), (1, 1), (2, 4), (3, 0)],
+                vec![(6, 4), (7, 1)],
+                vec![(4, 2), (5, 2), (9, 3)],
+                vec![(8, 4), (11, 3)],
+                vec![(10, 4), (12, 4)]
+            ],
+            calculate_gate_depths(
+                &Circuit::new(
+                    4,
+                    [
+                        Gate::new_and(0, 1),
+                        Gate::new_and(1, 2),
+                        Gate::new_and(2, 3),
+                        Gate::new_nimpl(3, 1),
+                        Gate::new_nor(4, 5),
+                        Gate::new_nor(6, 7),
+                        Gate::new_nor(8, 9),
+                        Gate::new_nor(5, 9),
+                        Gate::new_xor(6, 11),
+                    ],
+                    [(6, false), (8, false), (10, false), (12, false), (2, false)]
+                )
+                .unwrap()
+            )
+        );
+        assert_eq!(
+            vec![
                 vec![(0, 7), (1, 7), (2, 0), (3, 0), (4, 0), (5, 0)],
                 vec![(6, 1), (7, 1), (8, 1), (9, 1)],
                 vec![(10, 2), (11, 2)],
