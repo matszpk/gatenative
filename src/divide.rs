@@ -52,8 +52,6 @@ where
 
     let mut depth_map = vec![(usize::MAX, 0); input_len + gate_num];
     let mut max_depth = 0;
-    // min max depth - maximal depth of min depth of gate
-    let mut min_max_depth = 0;
 
     // key - circuit output, value - start depth
     let mut update_map = circuit
@@ -199,8 +197,6 @@ where
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
 
-    let mut buffer_id = 1;
-    let mut next_buffer_id = 2;
     for (depth, slice_gates) in gate_depths
         .into_iter()
         .chain(std::iter::once(vec![]))
@@ -305,7 +301,6 @@ where
             cur_gates.clear();
             start_depth = end_depth;
             gate_count = depth_gate_num;
-            std::mem::swap(&mut buffer_id, &mut next_buffer_id);
         }
         cur_gates.extend(slice_gates.into_iter());
     }
