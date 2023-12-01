@@ -358,7 +358,7 @@ mod tests {
                 &Circuit::new(
                     6,
                     [
-                        Gate::new_xor(0, 1),    // 6
+                        Gate::new_xor(1, 0),    // 6
                         Gate::new_xor(1, 2),    // 7
                         Gate::new_xor(3, 4),    // 8
                         Gate::new_xor(4, 5),    // 9
@@ -367,17 +367,17 @@ mod tests {
                         Gate::new_and(10, 11),  // 12
                         Gate::new_and(1, 12),   // 13
                         Gate::new_and(1, 13),   // 14
-                        Gate::new_and(0, 14),   // 15
+                        Gate::new_and(14, 0),   // 15
                         Gate::new_nor(1, 12),   // 16
-                        Gate::new_nor(0, 16),   // 17
+                        Gate::new_nor(16, 0),   // 17
                         Gate::new_nor(1, 17),   // 18
                         Gate::new_nor(1, 18),   // 19
-                        Gate::new_nor(0, 19),   // 20
+                        Gate::new_nor(19, 0),   // 20
                         Gate::new_nor(1, 12),   // 21
                         Gate::new_nor(1, 21),   // 22
                         Gate::new_nor(1, 22),   // 23
-                        Gate::new_xor(0, 12),   // 24
-                        Gate::new_nimpl(0, 12), // 25
+                        Gate::new_xor(12, 0),   // 24
+                        Gate::new_nimpl(12, 0), // 25
                         Gate::new_nimpl(1, 25), // 26
                     ],
                     [
