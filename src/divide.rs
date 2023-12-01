@@ -184,6 +184,9 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    if circuit.len() <= max_gates {
+        return vec![circuit];
+    }
     // shared gate outputs
     let mut shared_outputs = BTreeMap::<T, usize>::from_iter(gate_depths[0].iter().copied());
 
