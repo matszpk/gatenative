@@ -677,7 +677,11 @@ mod tests {
                 )
                 .unwrap(),
             ],
-            divide_circuit_seq(circuit.clone(), depths, 7, 2)
+            divide_circuit_seq(circuit.clone(), depths.clone(), 7, 2)
+        );
+        assert_eq!(
+            vec![circuit.clone()],
+            divide_circuit_seq(circuit.clone(), depths.clone(), 30, 2)
         );
     }
 }
