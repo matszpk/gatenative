@@ -213,7 +213,6 @@ where
                 start_depth,
                 end_depth
             );
-            let first_subc = start_depth == 1;
             let last_subc = end_depth == depth_num;
             // create circuit
             let mut node_map = BTreeMap::<T, T>::from_iter(
@@ -284,7 +283,6 @@ where
                     })
                     .collect::<Vec<_>>()
             };
-            let subc_output_len = subc_outputs.len();
             println!(
                 "Circuit: {} {:?} {:?}",
                 subc_input_len, subc_gates, subc_outputs
