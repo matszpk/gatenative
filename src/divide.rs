@@ -182,7 +182,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    if circuit.len() <= max_gates {
+    if circuit.len() <= max_gates || gate_depths.len() <= min_depth + 1 {
         return vec![circuit];
     }
     // shared gate outputs
@@ -682,6 +682,10 @@ mod tests {
         assert_eq!(
             vec![circuit.clone()],
             divide_circuit_seq(circuit.clone(), depths.clone(), 30, 2)
+        );
+        assert_eq!(
+            vec![circuit.clone()],
+            divide_circuit_seq(circuit.clone(), depths.clone(), 7, 8)
         );
     }
 }
