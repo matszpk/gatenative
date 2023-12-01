@@ -190,41 +190,123 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     // shared gate outputs
-    let mut shared_outputs = BTreeMap::<T, usize>::new();
+    let mut shared_outputs = BTreeMap::<T, usize>::from_iter(gate_depths[0].iter().copied());
 
     let mut gate_count = 0;
-    let mut start_depth = 0;
+    let mut start_depth = 1;
     let depth_num = gate_depths.len();
     let mut cur_gates = BTreeSet::new();
     let mut circuits = Vec::<DivCircuitEntry<T>>::new();
+    let gates = circuit.gates();
+    let input_len_t = circuit.input_len();
+    let input_len = usize::try_from(input_len_t).unwrap();
 
-    // TODO: include circuit inputs in depths
-    for (depth, gates) in gate_depths
+    let mut buffer_id = 1;
+    let mut next_buffer_id = 2;
+    for (depth, slice_gates) in gate_depths
         .into_iter()
         .chain(std::iter::once(vec![]))
         .enumerate()
+        .skip(1)
     {
-        let depth_gate_num = gates.len();
+        let depth_gate_num = slice_gates.len();
         gate_count += depth_gate_num;
         if depth == depth_num || (depth - start_depth >= min_depth && gate_count > max_gates) {
             let end_depth = depth;
-            // add all gates that will be used later
-            shared_outputs.extend(
-                gates
-                    .iter()
-                    .filter(|(_, max_depth)| *max_depth >= end_depth)
-                    .copied(),
-            );
-
+            let first_subc = start_depth == 1;
+            let last_subc = end_depth == depth_num;
             // create circuit
+            let mut node_map = HashMap::<T, T>::from_iter(
+                shared_outputs
+                    .keys()
+                    .enumerate()
+                    .map(|(i, x)| (*x, T::try_from(i).unwrap())),
+            );
+            let subc_input_len = shared_outputs.len();
+            let mut subc_gates = vec![];
+            // create gates for subcircuit
+            for (i, gidx) in cur_gates.iter().enumerate() {
+                if *gidx < input_len_t {
+                    continue;
+                }
+                let g = gates[usize::try_from(*gidx).unwrap() - input_len];
+                subc_gates.push(Gate {
+                    i0: if g.i0 >= input_len_t {
+                        node_map[&g.i0]
+                    } else {
+                        g.i0
+                    },
+                    i1: if g.i1 >= input_len_t {
+                        node_map[&g.i1]
+                    } else {
+                        g.i1
+                    },
+                    func: g.func,
+                });
+                // add new gate node map
+                node_map.insert(*gidx, T::try_from(i + subc_input_len).unwrap());
+            }
 
             // remove all shared outputs that are not after this region
             shared_outputs.retain(|_, max_depth| *max_depth >= end_depth);
+            // add all gates that will be used later
+            shared_outputs.extend(
+                slice_gates
+                    .iter()
+                    .filter(|(_, max_depth)| *max_depth + 1 >= end_depth)
+                    .copied(),
+            );
+            // create outputs for subcircuit
+            let subc_outputs = if last_subc {
+                circuit
+                    .outputs()
+                    .iter()
+                    .map(|(x, n)| {
+                        if *x >= input_len_t {
+                            (node_map[x], *n)
+                        } else {
+                            (*x, *n)
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                shared_outputs
+                    .iter()
+                    .map(|(x, _)| {
+                        if *x >= input_len_t {
+                            (node_map[x], false)
+                        } else {
+                            (*x, false)
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let subc_output_len = subc_outputs.len();
+            circuits.push(DivCircuitEntry {
+                circuit: Circuit::new(
+                    T::try_from(subc_input_len).unwrap(),
+                    subc_gates,
+                    subc_outputs,
+                )
+                .unwrap(),
+                input_placements: Placement {
+                    id: if first_subc { 0 } else { buffer_id },
+                    placements: vec![], // no placements
+                    real_len: subc_input_len,
+                },
+                output_placements: Placement {
+                    id: if last_subc { 3 } else { next_buffer_id },
+                    placements: vec![], // no placements
+                    real_len: subc_output_len,
+                },
+            });
+            // clean up
             cur_gates.clear();
             start_depth = end_depth;
             gate_count = depth_gate_num;
+            std::mem::swap(&mut buffer_id, &mut next_buffer_id);
         }
-        cur_gates.extend(gates);
+        cur_gates.extend(slice_gates.into_iter().map(|(x, _)| x));
     }
     circuits
 }
