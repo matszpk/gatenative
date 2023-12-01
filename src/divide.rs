@@ -39,6 +39,8 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    // PROBLEM: with max_depth - counting depth of recursively resolved
+    // not directly resolved by direct usage in gate input.
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -183,7 +185,7 @@ fn divide_circuit_seq<T>(
     min_depth: usize,
 ) -> Vec<Circuit<T>>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -213,10 +215,11 @@ where
         gate_count += depth_gate_num;
         if depth == depth_num || (depth - start_depth >= min_depth && gate_count > max_gates) {
             let end_depth = depth;
+            println!("DepthRange {}: {}-{}", circuits.len(), start_depth, end_depth);
             let first_subc = start_depth == 1;
             let last_subc = end_depth == depth_num;
             // create circuit
-            let mut node_map = HashMap::<T, T>::from_iter(
+            let mut node_map = BTreeMap::<T, T>::from_iter(
                 shared_outputs
                     .keys()
                     .enumerate()
@@ -225,7 +228,7 @@ where
             let subc_input_len = shared_outputs.len();
             let mut subc_gates = vec![];
             // create gates for subcircuit
-            for (i, gidx) in cur_gates.iter().enumerate() {
+            for (i, (gidx, _)) in cur_gates.iter().enumerate() {
                 if *gidx < input_len_t {
                     continue;
                 }
@@ -247,15 +250,18 @@ where
                 node_map.insert(*gidx, T::try_from(i + subc_input_len).unwrap());
             }
 
+            println!("NodeMap: {:?}", node_map);
+            println!("SharedOutputs: {:?}", shared_outputs);
             // remove all shared outputs that are not after this region
-            shared_outputs.retain(|_, max_depth| *max_depth >= end_depth);
+            shared_outputs.retain(|_, max_depth| *max_depth + 1 >= end_depth);
             // add all gates that will be used later
             shared_outputs.extend(
-                slice_gates
+                cur_gates
                     .iter()
                     .filter(|(_, max_depth)| *max_depth + 1 >= end_depth)
                     .copied(),
             );
+            println!("SharedOutputs 2: {:?}", shared_outputs);
             // create outputs for subcircuit
             let subc_outputs = if last_subc {
                 circuit
@@ -282,6 +288,7 @@ where
                     .collect::<Vec<_>>()
             };
             let subc_output_len = subc_outputs.len();
+            println!("Circuit: {} {:?} {:?}", subc_input_len, subc_gates, subc_outputs);
             circuits.push(
                 Circuit::new(
                     T::try_from(subc_input_len).unwrap(),
@@ -296,7 +303,7 @@ where
             gate_count = depth_gate_num;
             std::mem::swap(&mut buffer_id, &mut next_buffer_id);
         }
-        cur_gates.extend(slice_gates.into_iter().map(|(x, _)| x));
+        cur_gates.extend(slice_gates.into_iter());
     }
     circuits
 }
@@ -488,6 +495,54 @@ mod tests {
                     [(4, false), (8, false), (10, false), (11, false)],
                 )
                 .unwrap()
+            )
+        );
+    }
+    
+    #[test]
+    fn test_divide_circuit_seq() {
+        let circuit = Circuit::new(
+            6,
+            [
+                Gate::new_xor(1, 0),    // 6
+                Gate::new_xor(1, 2),    // 7
+                Gate::new_xor(3, 4),    // 8
+                Gate::new_xor(4, 5),    // 9
+                Gate::new_xor(6, 7),    // 10
+                Gate::new_xor(8, 9),    // 11
+                Gate::new_and(10, 11),  // 12
+                Gate::new_and(1, 12),   // 13
+                Gate::new_and(1, 13),   // 14
+                Gate::new_and(14, 0),   // 15
+                Gate::new_nor(1, 12),   // 16
+                Gate::new_nor(16, 0),   // 17
+                Gate::new_nor(1, 17),   // 18
+                Gate::new_nor(1, 18),   // 19
+                Gate::new_nor(19, 0),   // 20
+                Gate::new_nor(1, 12),   // 21
+                Gate::new_nor(1, 21),   // 22
+                Gate::new_nor(1, 22),   // 23
+                Gate::new_xor(12, 0),   // 24
+                Gate::new_nimpl(12, 0), // 25
+                Gate::new_nimpl(1, 25), // 26
+            ],
+            [
+                (15, false),
+                (20, false),
+                (23, false),
+                (24, false),
+                (26, false)
+            ]
+        )
+        .unwrap();
+        let depths = calculate_gate_depths(&circuit);
+        assert_eq!(
+            vec![Circuit::new(0, [], []).unwrap()],
+            divide_circuit_seq(
+                circuit,
+                depths,
+                7,
+                1,
             )
         );
     }
