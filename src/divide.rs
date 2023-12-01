@@ -39,8 +39,6 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    // PROBLEM: with max_depth - counting depth of recursively resolved
-    // not directly resolved by direct usage in gate input.
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
