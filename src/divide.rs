@@ -598,7 +598,61 @@ mod tests {
                 )
                 .unwrap(),
             ],
-            divide_circuit_seq(circuit, depths, 7, 1)
+            divide_circuit_seq(circuit.clone(), depths.clone(), 7, 1)
+        );
+        assert_eq!(
+            vec![
+                Circuit::new(
+                    6,
+                    [
+                        Gate::new_xor(1, 0),   // 6
+                        Gate::new_xor(1, 2),   // 7
+                        Gate::new_xor(3, 4),   // 8
+                        Gate::new_xor(4, 5),   // 9
+                        Gate::new_xor(6, 7),   // 10
+                        Gate::new_xor(8, 9),   // 11
+                        Gate::new_and(10, 11), // 12
+                    ],
+                    [(0, false), (1, false), (12, false)]
+                )
+                .unwrap(),
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_and(1, 2), // 13
+                        Gate::new_nor(1, 2), // 16
+                        Gate::new_nor(4, 0), // 17
+                        Gate::new_nor(1, 5), // 18
+                        Gate::new_nor(1, 2), // 21
+                    ],
+                    [
+                        (0, false),
+                        (1, false),
+                        (2, false),
+                        (3, false),
+                        (6, false),
+                        (7, false)
+                    ]
+                )
+                .unwrap(),
+                Circuit::new(
+                    6,
+                    [
+                        Gate::new_and(1, 3),    // 14
+                        Gate::new_and(6, 0),    // 15
+                        Gate::new_nor(1, 4),    // 19
+                        Gate::new_nor(8, 0),    // 20
+                        Gate::new_nor(1, 5),    // 22
+                        Gate::new_nor(1, 10),   // 23
+                        Gate::new_xor(2, 0),    // 24
+                        Gate::new_nimpl(2, 0),  // 25
+                        Gate::new_nimpl(1, 13), // 26
+                    ],
+                    [(7, false), (9, true), (14, true), (11, false), (12, true)]
+                )
+                .unwrap(),
+            ],
+            divide_circuit_seq(circuit.clone(), depths, 7, 2)
         );
     }
 }
