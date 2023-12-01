@@ -181,7 +181,7 @@ fn divide_circuit_seq<T>(
     gate_depths: Vec<Vec<(T, usize)>>,
     max_gates: usize,
     min_depth: usize,
-) -> Vec<DivCircuitEntry<T>>
+) -> Vec<Circuit<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -196,7 +196,7 @@ where
     let mut start_depth = 1;
     let depth_num = gate_depths.len();
     let mut cur_gates = BTreeSet::new();
-    let mut circuits = Vec::<DivCircuitEntry<T>>::new();
+    let mut circuits = vec![];
     let gates = circuit.gates();
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
@@ -282,24 +282,14 @@ where
                     .collect::<Vec<_>>()
             };
             let subc_output_len = subc_outputs.len();
-            circuits.push(DivCircuitEntry {
-                circuit: Circuit::new(
+            circuits.push(
+                Circuit::new(
                     T::try_from(subc_input_len).unwrap(),
                     subc_gates,
                     subc_outputs,
                 )
                 .unwrap(),
-                input_placements: Placement {
-                    id: if first_subc { 0 } else { buffer_id },
-                    placements: vec![], // no placements
-                    real_len: subc_input_len,
-                },
-                output_placements: Placement {
-                    id: if last_subc { 3 } else { next_buffer_id },
-                    placements: vec![], // no placements
-                    real_len: subc_output_len,
-                },
-            });
+            );
             // clean up
             cur_gates.clear();
             start_depth = end_depth;
