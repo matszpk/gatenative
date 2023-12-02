@@ -21,6 +21,10 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // IDEA: from circuit input to last circuit outputs:
 // move some circuit outputs that will be used later to last outputs by copying.
 
+// IDEA: dividing by traversing from circuit outputs to circuit inputs by using DFS.
+// maybe this is better idea than dividing circuit sequantially (as chain subcircuits).
+// this is preferred IDEA.
+
 // IDEA:
 // division layout:
 // cseq0 cseq1 (cpar20 tback20 cpar21 tback21 cpar22 ...) cseq3 ....
