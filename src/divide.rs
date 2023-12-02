@@ -36,6 +36,9 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // returns min_depths with max_depths - list of list of depths.
 // index of main list: depth (from circuit inputs), value - list of gates with max depth
 // (max depth from circuit input).
+// max depth - maximal depth (from circuit input) where is used gate.
+//   important notice: usage counts from X gate that have inputs connected to this gate
+//   from minimal depth of X gate.
 fn calculate_gate_depths<T>(circuit: &Circuit<T>) -> Vec<Vec<(T, usize)>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
