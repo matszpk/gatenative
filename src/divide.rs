@@ -34,7 +34,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 //    3.2. try connect other gate inputs to subcircuit that will be before current subcircuit.
 //         only possible if next subcircuit doesn't have shared gates between
 //         current subcircuit except way from next subcircuit is connected.
-//    3.3. remove that ways where are overflows.
+//    3.3. remove that ways where are overflows. and go to 2 to create next subcircuit.
 // hint: try use one buffer as input and output for one subcircuit.
 // it is possible because code generator always load data first and store data at end of code.
 
