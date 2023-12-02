@@ -38,6 +38,9 @@ pub const INSTR_OP_VALUE_IMPL: u64 = 2;
 pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
 pub const INSTR_OP_VALUE_XOR: u64 = 4;
 
+// TODO: add new argument to circuit code generation:
+// single_data - use only one single data for input and output.
+
 pub trait FuncWriter {
     fn func_start(&mut self);
     /// Generates function end.
