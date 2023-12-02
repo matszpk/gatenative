@@ -23,7 +23,8 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 
 // IDEA: dividing by traversing from circuit outputs to circuit inputs by using DFS.
 // maybe this is better idea than dividing circuit sequantially (as chain subcircuits).
-// this is preferred IDEA.
+// this is preferred IDEA. while traversing include gate outputs usage.
+// choose than way where is smallest gate output usage.
 
 // IDEA:
 // division layout:
