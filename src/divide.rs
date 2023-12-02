@@ -36,7 +36,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 //         current subcircuit except way from next subcircuit is connected.
 //    3.3. remove that ways where are overflows. and go to 1. to create next subcircuit
 //         starting from end (to circuit output) of way where is overflow.
-// hint: try use one buffer as input and output for one subcircuit.
+// hint: try use one buffer as input and output for one subcircuit. warning: RISKY!!!
 // it is possible because code generator always load data first and store data at end of code.
 
 // IDEA:
