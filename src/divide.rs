@@ -25,6 +25,9 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // maybe this is better idea than dividing circuit sequantially (as chain subcircuits).
 // this is preferred IDEA. while traversing include gate outputs usage.
 // choose than way where is smallest gate output usage.
+// algorithm concept: from circuit output:
+// 1. traverse to first circuit input:
+// 2. try connect other circut inputs to further gates by using smallest number of inputs.
 
 // IDEA:
 // division layout:
