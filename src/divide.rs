@@ -28,6 +28,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // algorithm concept: from circuit output:
 // 1. traverse to first circuit input:
 // 2. try connect other circut inputs to further gates by using smallest number of inputs.
+// hint: try use one buffer as input and output for one subcircuit.
 
 // IDEA:
 // division layout:
