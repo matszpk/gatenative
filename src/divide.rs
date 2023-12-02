@@ -26,11 +26,12 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // this is preferred IDEA. while traversing include gate outputs usage.
 // choose than way where is smallest gate output usage.
 // algorithm concept:
-// 0. enqueue circuit outputs as awaiting outputs.
 // 1. from first enqueued output: traverse to first circuit input:
 // 2. try connect other circut inputs to further gates by using smallest number of inputs.
 // 3. if after trying we have some ways that not finished circuit inputs:
-//    then enqueue ways inputs as outputs to awaiting outputs.
+//    3.1. divide into two parts
+//    3.2. try connect other gate inputs to subcircuit that will be before current subcircuit.
+//    3.3. remove that ways where are overflows.
 // hint: try use one buffer as input and output for one subcircuit.
 // it is possible because code generator always load data first and store data at end of code.
 
