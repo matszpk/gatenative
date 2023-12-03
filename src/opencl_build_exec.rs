@@ -244,7 +244,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
-            input.len / real_input_words
+            (input.range.end - input.range.start) / real_input_words
         } else {
             0
         };
@@ -293,9 +293,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
-            input.len / real_input_words
+            (input.range.end - input.range.start) / real_input_words
         } else {
-            output.len / real_output_words
+            (output.range.end - output.range.start) / real_output_words
         };
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
@@ -315,6 +315,46 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&input.buffer)
+                    .set_arg(&output.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            }
+            self.cmd_queue.finish()?;
+        }
+        Ok(())
+    }
+    
+    unsafe fn execute_single_internal(
+        &mut self,
+        output: &mut OpenCLDataHolder,
+        arg_input: u32,
+    ) -> Result<(), Self::ErrorType> {
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let num = if real_input_words != 0 {
+            (output.range.end - output.range.start) / real_input_words
+        } else {
+            0
+        };
+        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_arg_input = cl_uint::from(arg_input);
+        unsafe {
+            if self.have_arg_inputs {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&output.buffer)
+                    .set_arg(&cl_arg_input)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            } else {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
                     .set_arg(&output.buffer)
                     .set_local_work_size(self.group_len)
                     .set_global_work_size(

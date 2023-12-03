@@ -406,6 +406,47 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         }
         Ok(())
     }
+    
+    unsafe fn execute_single_internal(
+        &mut self,
+        output: &mut CPUDataHolder,
+        arg_input: u32,
+    ) -> Result<(), Self::ErrorType> {
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
+        let num = if real_input_words != 0 {
+            output_len / real_input_words
+        } else {
+            0
+        };
+        let mut output_w = output.get_mut();
+        let output = output_w.get_mut();
+        assert!(output_len >= real_output_words * num);
+        if self.have_arg_inputs {
+            let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        output[i * real_output_words..].as_mut_ptr(),
+                        arg_input,
+                    );
+                }
+            }
+        } else {
+            let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
+                unsafe { self.library.get(self.sym_name.as_bytes())? };
+            for i in 0..num {
+                unsafe {
+                    (symbol)(
+                        output[i * real_output_words..].as_mut_ptr(),
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
 
     fn new_data(&mut self, len: usize) -> CPUDataHolder {
         CPUDataHolder::new(vec![0u32; len])

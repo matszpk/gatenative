@@ -224,6 +224,16 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         assert!(!self.is_single_buffer());
         unsafe { self.execute_reuse_internal(input, arg_input, output) }
     }
+
+    unsafe fn execute_single_internal(
+        &mut self,
+        output: &mut D,
+        arg_input: u32,
+    ) -> Result<(), Self::ErrorType>;
+    fn execute_single(&mut self, output: &mut D, arg_input: u32) -> Result<(), Self::ErrorType> {
+        assert!(self.is_single_buffer());
+        unsafe { self.execute_single_internal(output, arg_input) }
+    }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new datafrom vector.
