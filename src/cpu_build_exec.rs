@@ -406,7 +406,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         }
         Ok(())
     }
-    
+
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut CPUDataHolder,
@@ -428,10 +428,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                 unsafe { self.library.get(self.sym_name.as_bytes())? };
             for i in 0..num {
                 unsafe {
-                    (symbol)(
-                        output[i * real_output_words..].as_mut_ptr(),
-                        arg_input,
-                    );
+                    (symbol)(output[i * real_output_words..].as_mut_ptr(), arg_input);
                 }
             }
         } else {
@@ -439,9 +436,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                 unsafe { self.library.get(self.sym_name.as_bytes())? };
             for i in 0..num {
                 unsafe {
-                    (symbol)(
-                        output[i * real_output_words..].as_mut_ptr(),
-                    );
+                    (symbol)(output[i * real_output_words..].as_mut_ptr());
                 }
             }
         }

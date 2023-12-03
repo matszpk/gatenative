@@ -326,7 +326,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         }
         Ok(())
     }
-    
+
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut OpenCLDataHolder,

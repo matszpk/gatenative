@@ -640,5 +640,23 @@ fn test_opencl_data_holder() {
             let mut rd = data.get_mut();
             assert_eq!(rd.get_mut().len(), 0);
         }
+        
+        // test executor
+        let mut input = execs[0].new_data_from_vec(vec![0, 0, 0, 0x11, 0x22, 0x4400, 0x660000]);
+        input.set_range(3..7);
+        {
+            let output = execs[0].execute(&input, 0).unwrap();
+            let rd = output.get();
+            let output = rd.get();
+            assert_eq!([17, 34, 17408, 6684672], output);
+        };
+        data.set_range(4..8);
+        execs[0].execute_reuse(&input, 0, &mut data).unwrap();
+        {
+            data.set_range_from(0..);
+            let rd = data.get();
+            let output = rd.get();
+            assert_eq!([0, 111, 222, 333, 17, 34, 17408, 6684672, 888, 999], output);
+        }
     }
 }
