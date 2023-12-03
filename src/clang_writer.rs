@@ -592,7 +592,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         let real_input_len = if let Some((_, len)) = input_placement {
             len
         } else {
-            input_len
+            input_len - arg_inputs.map(|x| x.len()).unwrap_or(0)
         };
         let real_output_len = if let Some((_, len)) = output_placement {
             len
