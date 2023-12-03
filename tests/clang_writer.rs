@@ -100,6 +100,62 @@ fn write_test_code_2(
     String::from_utf8(cw.out()).unwrap()
 }
 
+fn write_test_code_single_buffer(
+    cw_config: &CLangWriterConfig,
+    inout_placement: bool,
+    arg_input: bool,
+) -> String {
+    let mut cw = cw_config.writer();
+    let supported_ops = cw.supported_ops();
+    cw.prolog();
+    let mut fw = cw.func_writer_ext(
+        "func1",
+        3,
+        3,
+        if inout_placement {
+            if arg_input {
+                Some((&[11], 99))
+            } else {
+                Some((&[6, 11, 44], 99))
+            }
+        } else {
+            None
+        },
+        if inout_placement {
+            Some((&[48, 72, 25], 99))
+        } else {
+            None
+        },
+        if arg_input { Some(&[0, 2]) } else { None },
+        true,
+    );
+    fw.func_start();
+    fw.alloc_vars(5);
+    fw.gen_load(2, 0);
+    fw.gen_load(1, 1);
+    fw.gen_load(0, 2);
+    fw.gen_op(InstrOp::And, VNegs::NoNegs, 2, 0, 1);
+    fw.gen_op(InstrOp::Or, VNegs::NoNegs, 1, 2, 1);
+    fw.gen_op(InstrOp::Xor, VNegs::NoNegs, 3, 0, 1);
+    fw.gen_store(false, 2, 3);
+    fw.gen_op(InstrOp::And, VNegs::NegOutput, 3, 0, 1);
+    if (supported_ops & (1u64 << INSTR_OP_VALUE_IMPL)) != 0 {
+        fw.gen_op(InstrOp::Impl, VNegs::NoNegs, 3, 2, 1);
+    }
+    fw.gen_store(true, 1, 3);
+    fw.gen_op(InstrOp::Or, VNegs::NegOutput, 2, 2, 3);
+    fw.gen_op(InstrOp::Xor, VNegs::NegOutput, 4, 1, 3);
+    fw.gen_op(InstrOp::And, VNegs::NegInput1, 4, 4, 1);
+    fw.gen_op(InstrOp::Xor, VNegs::NegInput1, 4, 4, 1);
+    if (supported_ops & (1u64 << INSTR_OP_VALUE_NIMPL)) != 0 {
+        fw.gen_op(InstrOp::Nimpl, VNegs::NoNegs, 4, 2, 4);
+    }
+    fw.gen_store(false, 0, 4);
+    fw.func_end();
+    cw.epilog();
+    String::from_utf8(cw.out()).unwrap()
+}
+
 #[test]
 fn test_clang_writer() {
     {
@@ -599,5 +655,59 @@ void gate_sys_func1(const uint32x4_t* input,
 }
 "##,
         write_test_code(&CLANG_WRITER_OPENCL_U32, true, true)
+    );
+
+    // single buffer
+    assert_eq!(
+        r##"#include <stdint.h>
+void gate_sys_func1(uint32_t* output) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = output[0];
+    v1 = output[1];
+    v0 = output[2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    output[2] = v3;
+    v3 = ~(v0 & v1);
+    output[1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[0] = v4;
+}
+"##,
+        write_test_code_single_buffer(&CLANG_WRITER_U32, false, false)
+    );
+    assert_eq!(
+        r##"#include <stdint.h>
+void gate_sys_func1(uint32_t* output) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = output[6];
+    v1 = output[11];
+    v0 = output[44];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    output[25] = v3;
+    v3 = ~(v0 & v1);
+    output[72] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[48] = v4;
+}
+"##,
+        write_test_code_single_buffer(&CLANG_WRITER_U32, true, false)
     );
 }
