@@ -339,7 +339,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_start(&mut self) {
         let shift_args = if self.writer.config.buffer_shift {
             if self.single_buffer {
-                "\n    unsigned int input_shift,\n   "
+                "\n    unsigned int output_shift,\n    "
             } else {
                 "\n    unsigned int input_shift, unsigned int output_shift,\n    "
             }
