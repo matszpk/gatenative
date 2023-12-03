@@ -56,6 +56,23 @@ pub trait FuncWriter {
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
 }
 
+fn check_placements(
+    input_placement: Option<(&[usize], usize)>,
+    output_placement: Option<(&[usize], usize)>,
+) -> bool {
+    if let Some((placement, len)) = input_placement {
+        if placement.iter().any(|x| *x >= len) {
+            return false;
+        }
+    }
+    if let Some((placement, len)) = output_placement {
+        if placement.iter().any(|x| *x >= len) {
+            return false;
+        }
+    }
+    return true;
+}
+
 pub trait CodeWriter<'a, FW: FuncWriter> {
     /// It returns bit mask of where bit position is InstrOp integer value - support Instr Ops.
     fn supported_ops(&self) -> u64;
@@ -108,6 +125,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         };
         // check requirements for single buffer
         assert!(!single_buffer || real_input_len == real_output_len);
+        assert!(check_placements(input_placement, output_placement));
 
         unsafe {
             self.func_writer_internal(
