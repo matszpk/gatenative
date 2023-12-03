@@ -1,5 +1,5 @@
 use crate::clang_writer::*;
-use crate::gencode::generate_code;
+use crate::gencode::generate_code_ext;
 use crate::utils::get_timestamp;
 use crate::*;
 
@@ -203,6 +203,7 @@ pub struct OpenCLExecutor {
     cmd_queue: Arc<CommandQueue>,
     group_len: usize,
     kernel: Kernel,
+    single_buffer: bool,
 }
 
 impl OpenCLExecutor {
@@ -400,6 +401,7 @@ struct CircuitEntry {
     input_placement: Option<(Vec<usize>, usize)>,
     output_placement: Option<(Vec<usize>, usize)>,
     arg_input_len: Option<usize>,
+    single_buffer: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -452,13 +454,14 @@ impl<'b, 'a>
 {
     type ErrorType = OpenCLBuildError;
 
-    fn add<T>(
+    fn add_ext<T>(
         &mut self,
         name: &str,
         circuit: Circuit<T>,
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
         arg_inputs: Option<&[usize]>,
+        single_buffer: bool,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -475,8 +478,9 @@ impl<'b, 'a>
             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
             arg_input_len: arg_inputs.map(|x| x.len()),
+            single_buffer,
         });
-        generate_code(
+        generate_code_ext(
             &mut self.writer,
             &name,
             circuit,
@@ -484,6 +488,7 @@ impl<'b, 'a>
             input_placement,
             output_placement,
             arg_inputs,
+            single_buffer,
         );
     }
 
@@ -522,6 +527,7 @@ impl<'b, 'a>
                     cmd_queue: cmd_queue.clone(),
                     group_len,
                     kernel: Kernel::create(&program, &e.sym_name)?,
+                    single_buffer: e.single_buffer,
                 })
             })
             .collect::<Result<Vec<_>, _>>()

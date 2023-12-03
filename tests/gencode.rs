@@ -13,25 +13,28 @@ struct TestFuncWriter<'c> {
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
     arg_input_map: HashMap<usize, usize>,
+    single_buffer: bool,
 }
 
 impl<'c> FuncWriter for TestFuncWriter<'c> {
     fn func_start(&mut self) {
+        let sb = if self.single_buffer { " sb" } else { "" };
         if !self.arg_input_map.is_empty() {
             writeln!(
                 self.writer.out,
-                "Func {}({} {} {})",
+                "Func {}({} {} {}{})",
                 self.name,
                 self.input_len,
                 self.output_len,
                 self.arg_input_map.len(),
+                sb
             )
             .unwrap();
         } else {
             writeln!(
                 self.writer.out,
-                "Func {}({} {})",
-                self.name, self.input_len, self.output_len
+                "Func {}({} {}{})",
+                self.name, self.input_len, self.output_len, sb
             )
             .unwrap();
         }
@@ -46,8 +49,10 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
         let input = self.input_placement.map(|(p, _)| p[input]).unwrap_or(input);
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             writeln!(self.writer.out, "    v{} = bit(arg, {})", reg, arg_bit).unwrap();
-        } else {
+        } else if !self.single_buffer {
             writeln!(self.writer.out, "    v{} = I{}", reg, input).unwrap();
+        } else {
+            writeln!(self.writer.out, "    v{} = O{}", reg, input).unwrap();
         }
     }
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
@@ -119,7 +124,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
-        _single_buffer: bool,
+        single_buffer: bool,
     ) -> TestFuncWriter<'c> {
         TestFuncWriter::<'c> {
             writer: self,
@@ -135,6 +140,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
                     .enumerate()
                     .map(|(i, x)| (*x, i)),
             ),
+            single_buffer,
         }
     }
 
@@ -280,6 +286,35 @@ EndFunc
     v0 = I0
     v1 = I1
     v2 = I2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    v2 = (v2 and v3)
+    v0 = (v0 nimpl v1)
+    v0 = (v2 or v0)
+    O0 = v4
+    O1 = ~v0
+EndFunc
+"##
+    );
+
+    cw_nimpl.out.clear();
+    generate_code_ext(
+        &mut cw_nimpl,
+        "test1",
+        circuit.clone(),
+        false,
+        Some((&[0, 1, 2], 3)),
+        Some((&[0, 1], 3)),
+        None,
+        true,
+    );
+    assert_eq!(
+        String::from_utf8(cw_nimpl.out.clone()).unwrap(),
+        r##"Func test1(3 2 sb)
+    vars v0..5
+    v0 = O0
+    v1 = O1
+    v2 = O2
     v3 = (v0 xor v1)
     v4 = (v2 xor v3)
     v2 = (v2 and v3)

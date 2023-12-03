@@ -423,7 +423,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     }
 }
 
-pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,
     circuit: Circuit<T>,
@@ -431,6 +431,7 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     input_placement: Option<(&'a [usize], usize)>,
     output_placement: Option<(&'a [usize], usize)>,
     arg_inputs: Option<&'a [usize]>,
+    single_buffer: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -448,13 +449,14 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     let (var_allocs, var_num) = gen_var_allocs(&circuit, &mut gen_var_usage(&circuit));
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut func_writer = writer.func_writer(
+    let mut func_writer = writer.func_writer_ext(
         name,
         input_len,
         circuit.outputs().len(),
         input_placement,
         output_placement,
         arg_inputs,
+        single_buffer,
     );
     func_writer.func_start();
     func_writer.alloc_vars(var_num);
@@ -491,6 +493,33 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     }
 
     func_writer.func_end();
+}
+
+pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+    writer: &'a mut CW,
+    name: &'a str,
+    circuit: Circuit<T>,
+    optimize_negs: bool,
+    input_placement: Option<(&'a [usize], usize)>,
+    output_placement: Option<(&'a [usize], usize)>,
+    arg_inputs: Option<&'a [usize]>,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    generate_code_ext(
+        writer,
+        name,
+        circuit,
+        optimize_negs,
+        input_placement,
+        output_placement,
+        arg_inputs,
+        false,
+    );
 }
 
 #[cfg(test)]
