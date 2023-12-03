@@ -7,6 +7,7 @@ use std::io::Write;
 pub struct CLangWriterConfig<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>, // to initialize index in OpenCL kernel
+    buffer_shift: bool,
     include_name: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
@@ -26,6 +27,7 @@ pub struct CLangWriterConfig<'a> {
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("stdint.h"),
     type_name: "uint32_t",
     type_bit_len: 32,
@@ -45,6 +47,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("stdint.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
@@ -64,6 +67,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("stdint.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
@@ -83,6 +87,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
 pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("stdint.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
@@ -102,6 +107,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
 pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("mmintrin.h"),
     type_name: "__m64",
     type_bit_len: 64,
@@ -127,6 +133,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("xmmintrin.h"),
     type_name: "__m128",
     type_bit_len: 128,
@@ -153,6 +160,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("immintrin.h"),
     type_name: "__m256",
     type_bit_len: 256,
@@ -183,6 +191,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("immintrin.h"),
     type_name: "__m512i",
     type_bit_len: 512,
@@ -215,6 +224,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
+    buffer_shift: false,
     include_name: Some("arm_neon.h"),
     type_name: "uint32x4_t",
     type_bit_len: 128,
@@ -234,6 +244,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
 pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: Some("kernel"),
     init_index: Some("const uint idx = get_global_id(0);"),
+    buffer_shift: true,
     include_name: None,
     type_name: "uint",
     type_bit_len: 32,
@@ -269,6 +280,7 @@ pub struct CLangWriter<'a> {
 
 impl<'a> CLangWriterConfig<'a> {
     pub fn writer(&'a self) -> CLangWriter<'a> {
+        assert!(!self.buffer_shift || self.init_index.is_some());
         CLangWriter {
             config: self,
             out: vec![],
@@ -325,6 +337,15 @@ impl<'a> CLangWriter<'a> {
 
 impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_start(&mut self) {
+        let shift_args = if self.writer.config.buffer_shift {
+            if self.single_buffer {
+                "\n    unsigned int input_shift,\n   "
+            } else {
+                "\n    unsigned int input_shift, unsigned int output_shift,\n    "
+            }
+        } else {
+            ""
+        };
         let arg_input = if !self.arg_input_map.is_empty() {
             ", unsigned int arg"
         } else {
@@ -356,7 +377,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}(unsigned int n, {}{}) {{
+                r##"{}{}void gate_sys_{}(unsigned int n, {}{}{}) {{
     {}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
@@ -365,16 +386,27 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     ""
                 },
                 self.name,
+                shift_args,
                 in_out_args,
                 arg_input,
                 init_index
             )
             .unwrap();
+            
+            let (input_shift_part, output_shift_part) = if self.writer.config.buffer_shift {
+                if self.single_buffer {
+                    (" + output_shift", " + output_shift")
+                } else {
+                    (" + input_shift", " + output_shift")
+                }
+            } else {
+                ("", "")
+            };
             write!(
                 self.writer.out,
                 concat!(
-                    "    const unsigned int ivn = {} * idx;\n",
-                    "    const unsigned int ovn = {} * idx;\n"
+                    "    const unsigned int ivn = {} * idx{};\n",
+                    "    const unsigned int ovn = {} * idx{};\n"
                 ),
                 self.input_placement.map(|(_, len)| len).unwrap_or(
                     if self.arg_input_map.is_empty() {
@@ -383,15 +415,17 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         self.input_len - self.arg_input_map.len()
                     }
                 ),
+                input_shift_part,
                 self.output_placement
                     .map(|(_, len)| len)
-                    .unwrap_or(self.output_len)
+                    .unwrap_or(self.output_len),
+                output_shift_part,
             )
             .unwrap();
         } else {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}({}{}) {{"##,
+                r##"{}{}void gate_sys_{}({}{}{}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -399,6 +433,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     ""
                 },
                 self.name,
+                shift_args,
                 in_out_args,
                 arg_input
             )

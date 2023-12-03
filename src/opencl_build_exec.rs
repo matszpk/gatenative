@@ -256,10 +256,14 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         );
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
+        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
@@ -271,6 +275,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             } else {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_local_work_size(self.group_len)
@@ -299,10 +305,14 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         };
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
+        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
@@ -314,6 +324,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             } else {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_local_work_size(self.group_len)
@@ -341,10 +353,12 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         };
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
+        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_output_start)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
                     .set_local_work_size(self.group_len)
@@ -355,6 +369,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             } else {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
+                    .set_arg(&cl_output_start)
                     .set_arg(&output.buffer)
                     .set_local_work_size(self.group_len)
                     .set_global_work_size(
