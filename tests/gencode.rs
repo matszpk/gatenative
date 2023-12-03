@@ -111,7 +111,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
     fn epilog(&mut self) {
         writeln!(self.out, "End").unwrap();
     }
-    fn func_writer_ext(
+    unsafe fn func_writer_internal(
         &'c mut self,
         name: &'c str,
         input_len: usize,

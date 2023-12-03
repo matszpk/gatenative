@@ -74,7 +74,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     /// first field - list of real indices. second field - real length.
     /// The arg_inputs - list of circuit inputs that will be set by integer argument
     /// (where bits just set input values).
-    fn func_writer_ext(
+    unsafe fn func_writer_internal(
         &'a mut self,
         name: &'a str,
         input_len: usize,
@@ -84,6 +84,43 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         arg_inputs: Option<&'a [usize]>,
         single_buffer: bool,
     ) -> FW;
+
+    fn func_writer_ext(
+        &'a mut self,
+        name: &'a str,
+        input_len: usize,
+        output_len: usize,
+        input_placement: Option<(&'a [usize], usize)>,
+        output_placement: Option<(&'a [usize], usize)>,
+        arg_inputs: Option<&'a [usize]>,
+        single_buffer: bool,
+    ) -> FW {
+        // for checking requirements for single_buffer
+        let real_input_len = if let Some((_, len)) = input_placement {
+            len
+        } else {
+            input_len - arg_inputs.map(|x| x.len()).unwrap_or(0)
+        };
+        let real_output_len = if let Some((_, len)) = output_placement {
+            len
+        } else {
+            output_len
+        };
+        // check requirements for single buffer
+        assert!(!single_buffer || real_input_len == real_output_len);
+
+        unsafe {
+            self.func_writer_internal(
+                name,
+                input_len,
+                output_len,
+                input_placement,
+                output_placement,
+                arg_inputs,
+                single_buffer,
+            )
+        }
+    }
 
     fn func_writer(
         &'a mut self,

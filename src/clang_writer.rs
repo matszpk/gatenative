@@ -578,7 +578,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
 
     fn epilog(&mut self) {}
 
-    fn func_writer_ext(
+    unsafe fn func_writer_internal(
         &'c mut self,
         name: &'c str,
         input_len: usize,
@@ -588,20 +588,6 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         arg_inputs: Option<&'c [usize]>,
         single_buffer: bool,
     ) -> CLangFuncWriter<'a, 'c> {
-        // for checking requirements for single_buffer
-        let real_input_len = if let Some((_, len)) = input_placement {
-            len
-        } else {
-            input_len - arg_inputs.map(|x| x.len()).unwrap_or(0)
-        };
-        let real_output_len = if let Some((_, len)) = output_placement {
-            len
-        } else {
-            output_len
-        };
-        // check requirements for single buffer
-        assert!(!single_buffer || real_input_len == real_output_len);
-
         let (input_map, arg_input_map) = if let Some(arg_inputs) = arg_inputs {
             let arg_input_map =
                 HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)));
