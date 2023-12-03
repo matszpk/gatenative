@@ -392,7 +392,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 init_index
             )
             .unwrap();
-            
+
             let (input_shift_part, output_shift_part) = if self.writer.config.buffer_shift {
                 if self.single_buffer {
                     (" + output_shift", " + output_shift")

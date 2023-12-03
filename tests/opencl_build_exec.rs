@@ -640,7 +640,7 @@ fn test_opencl_data_holder() {
             let mut rd = data.get_mut();
             assert_eq!(rd.get_mut().len(), 0);
         }
-        
+
         // test executor
         let mut input = execs[0].new_data_from_vec(vec![0, 0, 0, 0x11, 0x22, 0x4400, 0x660000]);
         input.set_range(3..7);

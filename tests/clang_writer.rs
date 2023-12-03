@@ -746,7 +746,7 @@ void gate_sys_func1(uint32_t* output, unsigned int arg) {
 "##,
         write_test_code_single_buffer(&CLANG_WRITER_U32, true, true)
     );
-    
+
     // single buffer - opencl
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned int n, 
