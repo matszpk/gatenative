@@ -111,7 +111,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
     fn epilog(&mut self) {
         writeln!(self.out, "End").unwrap();
     }
-    fn func_writer(
+    fn func_writer_ext(
         &'c mut self,
         name: &'c str,
         input_len: usize,
@@ -119,6 +119,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
+        _single_buffer: bool,
     ) -> TestFuncWriter<'c> {
         TestFuncWriter::<'c> {
             writer: self,

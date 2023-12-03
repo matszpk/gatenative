@@ -74,6 +74,17 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     /// first field - list of real indices. second field - real length.
     /// The arg_inputs - list of circuit inputs that will be set by integer argument
     /// (where bits just set input values).
+    fn func_writer_ext(
+        &'a mut self,
+        name: &'a str,
+        input_len: usize,
+        output_len: usize,
+        input_placement: Option<(&'a [usize], usize)>,
+        output_placement: Option<(&'a [usize], usize)>,
+        arg_inputs: Option<&'a [usize]>,
+        single_buffer: bool,
+    ) -> FW;
+
     fn func_writer(
         &'a mut self,
         name: &'a str,
@@ -82,7 +93,17 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
         arg_inputs: Option<&'a [usize]>,
-    ) -> FW;
+    ) -> FW {
+        self.func_writer_ext(
+            name,
+            input_len,
+            output_len,
+            input_placement,
+            output_placement,
+            arg_inputs,
+            false,
+        )
+    }
 
     fn func_writer_simple(&'a mut self, name: &'a str, input_len: usize, output_len: usize) -> FW {
         self.func_writer(name, input_len, output_len, None, None, None)

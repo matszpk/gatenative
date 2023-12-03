@@ -259,6 +259,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_placement: Option<(&'c [usize], usize)>,
     input_map: HashMap<usize, usize>,
     arg_input_map: HashMap<usize, usize>,
+    single_buffer: bool,
 }
 
 pub struct CLangWriter<'a> {
@@ -329,12 +330,34 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
+        let in_out_args = if self.single_buffer {
+            format!(
+                "{0}{1}{2}* output",
+                self.writer.config.arg_modifier.unwrap_or(""),
+                if self.writer.config.arg_modifier.is_some() {
+                    " "
+                } else {
+                    ""
+                },
+                self.writer.config.type_name
+            )
+        } else {
+            format!(
+                "const {0}{1}{2}* input,\n    {0}{1}{2}* output",
+                self.writer.config.arg_modifier.unwrap_or(""),
+                if self.writer.config.arg_modifier.is_some() {
+                    " "
+                } else {
+                    ""
+                },
+                self.writer.config.type_name
+            )
+        };
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
-                r##"{0}{1}void gate_sys_{2}(unsigned int n, const {3}{4}{5}* input,
-    {3}{4}{5}* output{6}) {{
-    {7}"##,
+                r##"{}{}void gate_sys_{}(unsigned int n, {}{}) {{
+    {}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -342,13 +365,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     ""
                 },
                 self.name,
-                self.writer.config.arg_modifier.unwrap_or(""),
-                if self.writer.config.arg_modifier.is_some() {
-                    " "
-                } else {
-                    ""
-                },
-                self.writer.config.type_name,
+                in_out_args,
                 arg_input,
                 init_index
             )
@@ -374,8 +391,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(
                 self.writer.out,
-                r##"{0}{1}void gate_sys_{2}(const {3}{4}{5}* input,
-    {3}{4}{5}* output{6}) {{"##,
+                r##"{}{}void gate_sys_{}({}{}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -383,13 +399,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     ""
                 },
                 self.name,
-                self.writer.config.arg_modifier.unwrap_or(""),
-                if self.writer.config.arg_modifier.is_some() {
-                    " "
-                } else {
-                    ""
-                },
-                self.writer.config.type_name,
+                in_out_args,
                 arg_input
             )
             .unwrap();
@@ -440,6 +450,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             )
             .unwrap();
         } else {
+            let arg_name = if self.single_buffer {
+                "output"
+            } else {
+                "input"
+            };
             let input = if let Some(real_input) = self.input_map.get(&input) {
                 self.input_placement
                     .map(|(p, _)| p[*real_input])
@@ -448,9 +463,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
             };
             let (dst, r) = if self.writer.config.init_index.is_some() {
-                (format!("v{}", reg), format!("input[ivn + {}]", input))
+                (
+                    format!("v{}", reg),
+                    format!("{}[ivn + {}]", arg_name, input),
+                )
             } else {
-                (format!("v{}", reg), format!("input[{}]", input))
+                (format!("v{}", reg), format!("{}[{}]", arg_name, input))
             };
             if let Some(ld_op) = self.writer.config.load_op {
                 write!(self.writer.out, "    {} = ", dst).unwrap();
@@ -560,7 +578,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
 
     fn epilog(&mut self) {}
 
-    fn func_writer(
+    fn func_writer_ext(
         &'c mut self,
         name: &'c str,
         input_len: usize,
@@ -568,7 +586,22 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
+        single_buffer: bool,
     ) -> CLangFuncWriter<'a, 'c> {
+        // for checking requirements for single_buffer
+        let real_input_len = if let Some((_, len)) = input_placement {
+            len
+        } else {
+            input_len
+        };
+        let real_output_len = if let Some((_, len)) = output_placement {
+            len
+        } else {
+            output_len
+        };
+        // check requirements for single buffer
+        assert!(!single_buffer || real_input_len == real_output_len);
+
         let (input_map, arg_input_map) = if let Some(arg_inputs) = arg_inputs {
             let arg_input_map =
                 HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)));
@@ -593,6 +626,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_placement,
             input_map,
             arg_input_map,
+            single_buffer,
         }
     }
 
