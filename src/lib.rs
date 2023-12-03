@@ -84,6 +84,10 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         arg_inputs: Option<&'a [usize]>,
     ) -> FW;
 
+    fn func_writer_simple(&'a mut self, name: &'a str, input_len: usize, output_len: usize) -> FW {
+        self.func_writer(name, input_len, output_len, None, None, None)
+    }
+
     fn out(self) -> Vec<u8>;
 }
 
@@ -146,6 +150,7 @@ where
     E: Executor<'a, DR, DW, D>,
 {
     type ErrorType;
+
     // Add new circuit to built. arg_inputs - input that will be set by argument arg_input.
     fn add<T>(
         &mut self,
@@ -160,6 +165,18 @@ where
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
+
+    fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.add(name, circuit, None, None, None);
+    }
+
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
     /// word length in bits
     fn word_len(&self) -> u32;
@@ -169,6 +186,7 @@ where
 
 pub trait Mapper {
     type ErrorType;
+
     fn add<T>(
         &mut self,
         name: &str,
@@ -182,6 +200,18 @@ pub trait Mapper {
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
+
+    fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.add(name, circuit, None, None, None);
+    }
+
     fn build(self) -> Result<(), Self::ErrorType>;
     // function: F(data, word_len, arg_input)
     fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
