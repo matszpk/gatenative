@@ -202,13 +202,28 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn real_input_len(&self) -> usize;
     /// Get real output length (number of entries in area of output placements)
     fn real_output_len(&self) -> usize;
-    fn execute(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType>;
-    fn execute_reuse(
+
+    unsafe fn execute_internal(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType>;
+    fn execute(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType> {
+        assert!(!self.is_single_buffer());
+        unsafe { self.execute_internal(input, arg_input) }
+    }
+
+    unsafe fn execute_reuse_internal(
         &mut self,
         input: &D,
         arg_input: u32,
         output: &mut D,
     ) -> Result<(), Self::ErrorType>;
+    fn execute_reuse(
+        &mut self,
+        input: &D,
+        arg_input: u32,
+        output: &mut D,
+    ) -> Result<(), Self::ErrorType> {
+        assert!(!self.is_single_buffer());
+        unsafe { self.execute_reuse_internal(input, arg_input, output) }
+    }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new datafrom vector.
@@ -217,6 +232,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn try_clone(&self) -> Option<Self>
     where
         Self: Sized;
+    // returns true if executor with single_buffer
+    fn is_single_buffer(&self) -> bool;
 }
 
 pub trait Builder<'a, DR, DW, D, E>

@@ -315,7 +315,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         self.real_output_len
     }
 
-    fn execute(
+    unsafe fn execute_internal(
         &mut self,
         input: &CPUDataHolder,
         arg_input: u32,
@@ -360,7 +360,8 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             range: 0..out_len,
         })
     }
-    fn execute_reuse(
+
+    unsafe fn execute_reuse_internal(
         &mut self,
         input: &CPUDataHolder,
         arg_input: u32,
@@ -405,17 +406,24 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         }
         Ok(())
     }
+
     fn new_data(&mut self, len: usize) -> CPUDataHolder {
         CPUDataHolder::new(vec![0u32; len])
     }
+
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> CPUDataHolder {
         CPUDataHolder::new(data)
     }
+
     fn try_clone(&self) -> Option<Self>
     where
         Self: Sized,
     {
         Some(self.clone())
+    }
+
+    fn is_single_buffer(&self) -> bool {
+        self.single_buffer
     }
 }
 

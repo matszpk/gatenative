@@ -236,7 +236,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         self.real_output_len
     }
 
-    fn execute(
+    unsafe fn execute_internal(
         &mut self,
         input: &OpenCLDataHolder,
         arg_input: u32,
@@ -284,7 +284,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         Ok(output)
     }
 
-    fn execute_reuse(
+    unsafe fn execute_reuse_internal(
         &mut self,
         input: &OpenCLDataHolder,
         arg_input: u32,
@@ -356,6 +356,10 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         Self: Sized,
     {
         None
+    }
+
+    fn is_single_buffer(&self) -> bool {
+        self.single_buffer
     }
 }
 
