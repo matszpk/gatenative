@@ -140,6 +140,8 @@ where
                 // use variable from gate.i0 and gate.i1
                 //
                 if cur_subc_gates.len() >= max_gates {
+                    // generate cur subcircuit input list
+                    //
                     // process current variables for usage
                     for gidx in &cur_subc_gates {
                         if let Some(var_idx) = global_vars[*gidx] {
@@ -152,6 +154,33 @@ where
                         }
                     }
                     // create new subcircuit
+                    let subc_input_len = var_alloc.len();
+                    let mut subc_gates = cur_subc_gates
+                        .iter()
+                        .enumerate()
+                        .map(|(i, gidx)| {
+                            let g: Gate<T> = gates[*gidx];
+                            Gate {
+                                func: g.func,
+                                i0: if g.i0 >= input_len_t {
+                                    let gi0 = usize::try_from(g.i0).unwrap();
+                                    let v = input_len
+                                        + usize::try_from(global_vars[gi0].unwrap()).unwrap();
+                                    T::try_from(v).unwrap()
+                                } else {
+                                    g.i0
+                                },
+                                i1: if g.i1 >= input_len_t {
+                                    let gi1 = usize::try_from(g.i1).unwrap();
+                                    let v = input_len
+                                        + usize::try_from(global_vars[gi1].unwrap()).unwrap();
+                                    T::try_from(v).unwrap()
+                                } else {
+                                    g.i1
+                                },
+                            }
+                        })
+                        .collect::<Vec<_>>();
                     // free
                     cur_subc_gates.clear();
                 }
