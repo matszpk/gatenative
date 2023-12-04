@@ -95,7 +95,7 @@ where
     // index - original gate index, value - option: var index
     let mut global_vars = vec![None; input_len + gate_num];
     let mut cur_subc_gates = BTreeSet::new();
-    let mut var_alloc = VarAllocator::<T>::new();
+    let mut var_alloc = VarAllocator::<usize>::new();
 
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -142,6 +142,50 @@ where
                 if cur_subc_gates.len() >= max_gates {
                     // generate cur subcircuit input list
                     //
+                    let mut subc_inputs = BTreeSet::<usize>::new();
+                    for gidx in &cur_subc_gates {
+                        let g: Gate<T> = gates[*gidx];
+                        let gi0 = usize::try_from(g.i0).unwrap();
+                        let gi1 = usize::try_from(g.i1).unwrap();
+                        subc_inputs.insert(gi0);
+                        subc_inputs.insert(gi1);
+                    }
+                    let subc_input_map = subc_inputs
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, x)| (x, i))
+                        .collect::<HashMap<_, _>>();
+                    // create new subcircuit
+                    let subc_input_len = subc_input_map.len();
+                    let subc_map = HashMap::<usize, usize>::from_iter(
+                        cur_subc_gates.iter().enumerate().map(|(i, x)| (*x, i)),
+                    );
+                    let mut subc_gates = cur_subc_gates
+                        .iter()
+                        .enumerate()
+                        .map(|(i, gidx)| {
+                            let g: Gate<T> = gates[*gidx];
+                            Gate {
+                                func: g.func,
+                                i0: T::try_from({
+                                    let gi0 = usize::try_from(g.i0).unwrap();
+                                    subc_input_map
+                                        .get(&gi0)
+                                        .copied()
+                                        .unwrap_or(subc_input_len + subc_map[&gi0])
+                                })
+                                .unwrap(),
+                                i1: T::try_from({
+                                    let gi1 = usize::try_from(g.i1).unwrap();
+                                    subc_input_map
+                                        .get(&gi1)
+                                        .copied()
+                                        .unwrap_or(subc_input_len + subc_map[&gi1])
+                                })
+                                .unwrap(),
+                            }
+                        })
+                        .collect::<Vec<_>>();
                     // process current variables for usage
                     for gidx in &cur_subc_gates {
                         if let Some(var_idx) = global_vars[*gidx] {
@@ -153,34 +197,6 @@ where
                             global_vars[*gidx] = Some(var_alloc.alloc());
                         }
                     }
-                    // create new subcircuit
-                    let subc_input_len = var_alloc.len();
-                    let mut subc_gates = cur_subc_gates
-                        .iter()
-                        .enumerate()
-                        .map(|(i, gidx)| {
-                            let g: Gate<T> = gates[*gidx];
-                            Gate {
-                                func: g.func,
-                                i0: if g.i0 >= input_len_t {
-                                    let gi0 = usize::try_from(g.i0).unwrap();
-                                    let v = input_len
-                                        + usize::try_from(global_vars[gi0].unwrap()).unwrap();
-                                    T::try_from(v).unwrap()
-                                } else {
-                                    g.i0
-                                },
-                                i1: if g.i1 >= input_len_t {
-                                    let gi1 = usize::try_from(g.i1).unwrap();
-                                    let v = input_len
-                                        + usize::try_from(global_vars[gi1].unwrap()).unwrap();
-                                    T::try_from(v).unwrap()
-                                } else {
-                                    g.i1
-                                },
-                            }
-                        })
-                        .collect::<Vec<_>>();
                     // free
                     cur_subc_gates.clear();
                 }
