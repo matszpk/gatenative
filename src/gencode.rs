@@ -1,3 +1,4 @@
+use crate::utils::gen_var_usage;
 use gatesim::*;
 
 use int_enum::IntEnum;
@@ -61,34 +62,6 @@ where
             false
         }
     }
-}
-
-// var usage - just counter of var usage.
-
-pub(crate) fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut var_usage = vec![T::default(); input_len + circuit.len()];
-    for g in circuit.gates() {
-        let gi0 = usize::try_from(g.i0).unwrap();
-        let gi1 = usize::try_from(g.i1).unwrap();
-        let var_usage_0 = usize::try_from(var_usage[gi0]).unwrap() + 1;
-        var_usage[gi0] = T::try_from(var_usage_0).unwrap();
-        let var_usage_1 = usize::try_from(var_usage[gi1]).unwrap() + 1;
-        var_usage[gi1] = T::try_from(var_usage_1).unwrap();
-    }
-    for (o, _) in circuit.outputs() {
-        let o = usize::try_from(*o).unwrap();
-        let var_usage_0 = usize::try_from(var_usage[o]).unwrap() + 1;
-        var_usage[o] = T::try_from(var_usage_0).unwrap();
-    }
-    var_usage
 }
 
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)

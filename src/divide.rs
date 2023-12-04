@@ -1,4 +1,4 @@
-use crate::gencode::gen_var_usage;
+use crate::utils::gen_var_usage;
 use gatesim::*;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -12,8 +12,8 @@ pub(crate) struct Placement {
 
 pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
     circuit: Circuit<T>,
-    input_ps: Placement,    // input placement
-    output_ps: Placement,   // output placement
+    input_ps: Placement,  // input placement
+    output_ps: Placement, // output placement
 }
 
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
@@ -65,7 +65,7 @@ where
         input_map: HashMap<T, T>,
         output_map: HashMap<T, T>,
     }
-    
+
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
@@ -73,7 +73,7 @@ where
     let mut visited = vec![false; gate_num];
     let mut subcircuits = Vec::<Subcircuit<T>>::new();
     let var_usage = gen_var_usage(&circuit);
-    
+
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             continue;
@@ -117,7 +117,7 @@ where
             }
         }
     }
-    
+
     vec![]
 }
 
