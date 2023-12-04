@@ -1,9 +1,8 @@
-use crate::utils::gen_var_usage;
+use crate::utils::{gen_var_usage, VarAllocator};
 use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::BinaryHeap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -11,56 +10,6 @@ use crate::*;
 
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
-
-pub struct VarAllocator<T> {
-    free_list: BinaryHeap<std::cmp::Reverse<T>>,
-    alloc_map: Vec<bool>,
-}
-
-impl<T> VarAllocator<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    fn new() -> Self {
-        Self {
-            free_list: BinaryHeap::new(),
-            alloc_map: vec![],
-        }
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        self.alloc_map.len()
-    }
-
-    fn alloc(&mut self) -> T {
-        if let Some(std::cmp::Reverse(index)) = self.free_list.pop() {
-            let index_u = usize::try_from(index).unwrap();
-            self.alloc_map[index_u] = true;
-            index
-        } else {
-            let index = self.alloc_map.len();
-            self.alloc_map.push(true);
-            T::try_from(index).unwrap()
-        }
-    }
-
-    fn free(&mut self, index: T) -> bool {
-        let index_u = usize::try_from(index).unwrap();
-        assert!(index_u < self.len());
-        if self.alloc_map[index_u] {
-            self.free_list.push(std::cmp::Reverse(index));
-            self.alloc_map[index_u] = false;
-            true
-        } else {
-            false
-        }
-    }
-}
 
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
@@ -496,35 +445,6 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_var_allocator() {
-        let mut vacc = VarAllocator::new();
-        assert_eq!(0, vacc.alloc());
-        assert_eq!(1, vacc.alloc());
-        assert_eq!(2, vacc.alloc());
-        assert_eq!(3, vacc.alloc());
-        assert_eq!(4, vacc.alloc());
-        assert!(vacc.free(2));
-        assert!(!vacc.free(2));
-        assert!(vacc.free(1));
-        assert!(!vacc.free(1));
-        assert_eq!(1, vacc.alloc());
-        assert!(vacc.free(0));
-        assert!(!vacc.free(0));
-        assert_eq!(0, vacc.alloc());
-        assert_eq!(2, vacc.alloc());
-        assert_eq!(5, vacc.alloc());
-        assert!(vacc.free(4));
-        assert!(vacc.free(1));
-        assert_eq!(1, vacc.alloc());
-        assert!(vacc.free(3));
-        assert_eq!(3, vacc.alloc());
-        assert!(vacc.free(2));
-        assert_eq!(2, vacc.alloc());
-        assert_eq!(4, vacc.alloc());
-        assert_eq!(6, vacc.alloc());
-    }
 
     #[test]
     fn test_gen_var_usage_and_var_allocs() {

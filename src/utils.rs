@@ -3,7 +3,58 @@ use gatesim::*;
 use std::fmt::Debug;
 
 use static_init::dynamic;
+use std::collections::BinaryHeap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+pub struct VarAllocator<T> {
+    free_list: BinaryHeap<std::cmp::Reverse<T>>,
+    alloc_map: Vec<bool>,
+}
+
+impl<T> VarAllocator<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    pub fn new() -> Self {
+        Self {
+            free_list: BinaryHeap::new(),
+            alloc_map: vec![],
+        }
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.alloc_map.len()
+    }
+
+    pub fn alloc(&mut self) -> T {
+        if let Some(std::cmp::Reverse(index)) = self.free_list.pop() {
+            let index_u = usize::try_from(index).unwrap();
+            self.alloc_map[index_u] = true;
+            index
+        } else {
+            let index = self.alloc_map.len();
+            self.alloc_map.push(true);
+            T::try_from(index).unwrap()
+        }
+    }
+
+    pub fn free(&mut self, index: T) -> bool {
+        let index_u = usize::try_from(index).unwrap();
+        assert!(index_u < self.len());
+        if self.alloc_map[index_u] {
+            self.free_list.push(std::cmp::Reverse(index));
+            self.alloc_map[index_u] = false;
+            true
+        } else {
+            false
+        }
+    }
+}
 
 // var usage - just counter of var usage.
 
@@ -46,4 +97,38 @@ pub(crate) fn get_timestamp() -> u128 {
     let old = *lock;
     *lock += 1;
     old
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_var_allocator() {
+        let mut vacc = VarAllocator::new();
+        assert_eq!(0, vacc.alloc());
+        assert_eq!(1, vacc.alloc());
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(3, vacc.alloc());
+        assert_eq!(4, vacc.alloc());
+        assert!(vacc.free(2));
+        assert!(!vacc.free(2));
+        assert!(vacc.free(1));
+        assert!(!vacc.free(1));
+        assert_eq!(1, vacc.alloc());
+        assert!(vacc.free(0));
+        assert!(!vacc.free(0));
+        assert_eq!(0, vacc.alloc());
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(5, vacc.alloc());
+        assert!(vacc.free(4));
+        assert!(vacc.free(1));
+        assert_eq!(1, vacc.alloc());
+        assert!(vacc.free(3));
+        assert_eq!(3, vacc.alloc());
+        assert!(vacc.free(2));
+        assert_eq!(2, vacc.alloc());
+        assert_eq!(4, vacc.alloc());
+        assert_eq!(6, vacc.alloc());
+    }
 }

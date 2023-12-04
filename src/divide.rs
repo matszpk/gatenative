@@ -1,4 +1,4 @@
-use crate::utils::gen_var_usage;
+use crate::utils::{gen_var_usage, VarAllocator};
 use gatesim::*;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -72,7 +72,10 @@ where
     let gates = circuit.gates();
     let mut visited = vec![false; gate_num];
     let mut subcircuits = Vec::<Subcircuit<T>>::new();
-    let var_usage = gen_var_usage(&circuit);
+    let mut var_usage = gen_var_usage(&circuit);
+    let mut cur_subc_gates = BTreeSet::new();
+    let mut cur_vars = BTreeMap::<T, T>::new();
+    let mut var_alloc = VarAllocator::<T>::new();
 
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -86,6 +89,7 @@ where
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
             let way = top.way;
+            let gidx = node_index + input_len;
 
             if way == 0 {
                 if !visited[node_index] {
@@ -113,6 +117,11 @@ where
                     });
                 }
             } else {
+                if cur_subc_gates.len() >= max_gates {
+                    // create new subcircuit
+                }
+                // add new gate to current subcircuit
+                cur_subc_gates.insert(node_index);
                 stack.pop();
             }
         }
