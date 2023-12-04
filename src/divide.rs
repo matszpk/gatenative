@@ -55,6 +55,20 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    if circuit.len() <= max_gates {
+        return vec![DivCircuitEntry {
+            circuit,
+            input_ps: Placement {
+                placements: vec![],
+                real_len: 0,
+            },
+            output_ps: Placement {
+                placements: vec![],
+                real_len: 0,
+            },
+        }];
+    }
+
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -65,6 +79,11 @@ where
         input_map: HashMap<T, T>,
         output_map: HashMap<T, T>,
     }
+    #[derive(Clone, Copy)]
+    struct VarEntry<T> {
+        idx: Option<T>,
+        usage: usize,
+    }
 
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
@@ -73,8 +92,9 @@ where
     let mut visited = vec![false; gate_num];
     let mut subcircuits = Vec::<Subcircuit<T>>::new();
     let mut var_usage = gen_var_usage(&circuit);
+    // index - original gate index, value - option: var index
+    let mut global_vars = vec![None; input_len + gate_num];
     let mut cur_subc_gates = BTreeSet::new();
-    let mut cur_vars = BTreeMap::<T, T>::new();
     let mut var_alloc = VarAllocator::<T>::new();
 
     for (o, _) in circuit.outputs().iter() {
@@ -117,11 +137,26 @@ where
                     });
                 }
             } else {
+                // use variable from gate.i0 and gate.i1
+                //
                 if cur_subc_gates.len() >= max_gates {
+                    // process current variables for usage
+                    for gidx in &cur_subc_gates {
+                        if let Some(var_idx) = global_vars[*gidx] {
+                            if var_usage[*gidx] == T::default() {
+                                // free global variable
+                                global_vars[*gidx] = None;
+                            }
+                        } else {
+                            global_vars[*gidx] = Some(var_alloc.alloc());
+                        }
+                    }
                     // create new subcircuit
+                    // free
+                    cur_subc_gates.clear();
                 }
                 // add new gate to current subcircuit
-                cur_subc_gates.insert(node_index);
+                cur_subc_gates.insert(input_len + node_index);
                 stack.pop();
             }
         }
