@@ -76,8 +76,8 @@ where
     }
     struct Subcircuit<T: Clone + Copy> {
         circuit: Circuit<T>,
-        input_map: HashMap<T, T>,
-        output_map: HashMap<T, T>,
+        input_map: Vec<usize>,
+        output_map: Vec<usize>,
     }
     #[derive(Clone, Copy)]
     struct VarEntry<T> {
@@ -140,8 +140,6 @@ where
                 // use variable from gate.i0 and gate.i1
                 //
                 if cur_subc_gates.len() >= max_gates {
-                    // generate cur subcircuit input list
-                    //
                     let mut subc_inputs = BTreeSet::<usize>::new();
                     for gidx in &cur_subc_gates {
                         let g: Gate<T> = gates[*gidx];
@@ -151,10 +149,14 @@ where
                         subc_inputs.insert(gi1);
                     }
                     let subc_input_map = subc_inputs
-                        .into_iter()
+                        .iter()
                         .enumerate()
-                        .map(|(i, x)| (x, i))
+                        .map(|(i, x)| (*x, i))
                         .collect::<HashMap<_, _>>();
+                    let res_input_map = subc_inputs
+                        .into_iter()
+                        .map(|x| global_vars[x].unwrap())
+                        .collect::<Vec<_>>();
                     // create new subcircuit
                     let subc_input_len = subc_input_map.len();
                     let subc_map = HashMap::<usize, usize>::from_iter(
@@ -212,6 +214,20 @@ where
                             }
                         })
                         .collect::<Vec<_>>();
+                    let res_output_map = cur_subc_gates
+                        .iter()
+                        .filter_map(|gidx| {
+                            if global_vars[*gidx].is_some() {
+                                if subc_map.contains_key(gidx) {
+                                    Some(global_vars[*gidx].unwrap())
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
                     subcircuits.push(Subcircuit {
                         circuit: Circuit::new(
                             T::try_from(subc_input_len).unwrap(),
@@ -219,8 +235,8 @@ where
                             subc_outputs,
                         )
                         .unwrap(),
-                        input_map: HashMap::new(),
-                        output_map: HashMap::new(),
+                        input_map: res_input_map,
+                        output_map: res_output_map,
                     });
                     // free
                     cur_subc_gates.clear();
