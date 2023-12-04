@@ -197,6 +197,31 @@ where
                             global_vars[*gidx] = Some(var_alloc.alloc());
                         }
                     }
+                    // generate outputs
+                    let subc_outputs = cur_subc_gates
+                        .iter()
+                        .filter_map(|gidx| {
+                            if global_vars[*gidx].is_some() {
+                                if let Some(v) = subc_map.get(gidx) {
+                                    Some((T::try_from(*v).unwrap(), false))
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                    subcircuits.push(Subcircuit {
+                        circuit: Circuit::new(
+                            T::try_from(subc_input_len).unwrap(),
+                            subc_gates,
+                            subc_outputs,
+                        )
+                        .unwrap(),
+                        input_map: HashMap::new(),
+                        output_map: HashMap::new(),
+                    });
                     // free
                     cur_subc_gates.clear();
                 }
