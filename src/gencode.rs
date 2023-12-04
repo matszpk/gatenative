@@ -12,8 +12,6 @@ use crate::*;
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 
-// TODO: make direct moved input to output as last with using one variable.
-
 pub struct VarAllocator<T> {
     free_list: BinaryHeap<std::cmp::Reverse<T>>,
     alloc_map: Vec<bool>,
