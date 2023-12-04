@@ -577,6 +577,8 @@ fn test_cpu_data_holder() {
         let circuit =
             Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
         builder.add("mul2x2", circuit.clone(), None, None, None);
+        let circuit = Circuit::new(4, [], [(0, true), (1, true), (2, true), (3, true)]).unwrap();
+        builder.add_ext("mul2x2sb", circuit, None, None, None, true);
         let mut execs = builder.build().unwrap();
         let mut data = execs[0].new_data(10);
         {
@@ -678,6 +680,17 @@ fn test_cpu_data_holder() {
             let rd = data.get();
             let output = rd.get();
             assert_eq!([0, 111, 222, 333, 17, 34, 17408, 6684672, 888, 999], output);
+        }
+        data.set_range(5..9);
+        execs[1].execute_single(&mut data, 0).unwrap();
+        {
+            data.set_range_from(0..);
+            let rd = data.get();
+            let output = rd.get();
+            assert_eq!(
+                [0, 111, 222, 333, 17, !34, !17408, !6684672, !888, 999],
+                output
+            );
         }
     }
 }
