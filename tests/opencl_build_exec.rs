@@ -560,6 +560,32 @@ fn test_opencl_data_holder() {
         builder.add("mul2x2", circuit.clone(), None, None, None);
         let circuit = Circuit::new(4, [], [(0, true), (1, true), (2, true), (3, true)]).unwrap();
         builder.add_ext("mul2x2sb", circuit, None, None, None, true);
+        let circuit = Circuit::new(
+            8,
+            [
+                Gate::new_xor(0, 4),
+                Gate::new_xor(1, 5),
+                Gate::new_xor(2, 6),
+                Gate::new_xor(3, 7),
+            ],
+            [(8, false), (9, false), (10, false), (11, false)],
+        )
+        .unwrap();
+        builder.add(
+            "mul2x2arg",
+            circuit.clone(),
+            None,
+            None,
+            Some(&[4, 5, 6, 7]),
+        );
+        builder.add_ext(
+            "mul2x2argsb",
+            circuit.clone(),
+            None,
+            None,
+            Some(&[4, 5, 6, 7]),
+            true,
+        );
         let mut execs = builder.build().unwrap();
         let mut data = execs[0].new_data(10);
         {
@@ -687,6 +713,40 @@ fn test_opencl_data_holder() {
             let output = rd.get();
             assert_eq!(
                 [0, 111, 222, 333, 17, !34, !17408, !6684672, !888, 999],
+                output
+            );
+        }
+        // with arg_input
+        let mut input = execs[2].new_data_from_vec(vec![0, 0x11, 0x22, 0x4400, 0x660000, 0, 0, 0]);
+        input.set_range(1..5);
+        {
+            let output = execs[2].execute(&input, 0b1011).unwrap();
+            let rd = output.get();
+            let output = rd.get();
+            assert_eq!([!17, !34, 17408, !6684672], output);
+        };
+        let mut input = execs[2].new_data_from_vec(vec![4, 56, 23, 212, 11, 55, 77, 11, 542]);
+        let mut output = execs[2].new_data_from_vec(vec![9, 7, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0]);
+        input.set_range(3..7);
+        output.set_range(6..10);
+        execs[2].execute_reuse(&input, 0b1101, &mut output).unwrap();
+        {
+            output.set_range_from(0..);
+            let rd = output.get();
+            let output = rd.get();
+            assert_eq!([9, 7, 0, 0, 0, 0, !212, 11, !55, !77, 0, 0], output);
+        }
+        let mut data = execs[2].new_data_from_vec(vec![
+            77, 33, 11, 923, 13, 456, 951, 21, 11, 561, 103, 34, 833, 221, 895,
+        ]);
+        data.set_range(9..13);
+        execs[3].execute_single(&mut data, 0b1001).unwrap();
+        {
+            data.set_range_from(0..);
+            let rd = data.get();
+            let output = rd.get();
+            assert_eq!(
+                [77, 33, 11, 923, 13, 456, 951, 21, 11, !561, 103, 34, !833, 221, 895],
                 output
             );
         }
