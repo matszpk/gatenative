@@ -1,3 +1,4 @@
+use crate::gencode::gen_var_usage;
 use gatesim::*;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -5,15 +6,14 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 pub(crate) struct Placement {
-    id: usize, // placement id (common for input and output placement (it can be buffer id)
     placements: Vec<usize>,
     real_len: usize,
 }
 
 pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
     circuit: Circuit<T>,
-    input_placements: Placement,
-    output_placements: Placement,
+    input_ps: Placement,    // input placement
+    output_ps: Placement,   // output placement
 }
 
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
@@ -41,6 +41,85 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 //         * part for next subcircuit (executed as second)
 // hint: try use one buffer as input and output for one subcircuit. warning: RISKY!!!
 // it is possible because code generator always load data first and store data at end of code.
+
+// separate circuit sequentially - using depths instead circuit
+fn divide_circuit_traverse<T>(
+    circuit: Circuit<T>,
+    gate_depths: Vec<Vec<(T, usize)>>,
+    max_gates: usize,
+) -> Vec<DivCircuitEntry<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    #[derive(Clone, Copy)]
+    struct StackEntry {
+        node: usize,
+        way: usize,
+    }
+    struct Subcircuit<T: Clone + Copy> {
+        circuit: Circuit<T>,
+        input_map: HashMap<T, T>,
+        output_map: HashMap<T, T>,
+    }
+    
+    let input_len_t = circuit.input_len();
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.len();
+    let gates = circuit.gates();
+    let mut visited = vec![false; gate_num];
+    let mut subcircuits = Vec::<Subcircuit<T>>::new();
+    let var_usage = gen_var_usage(&circuit);
+    
+    for (o, _) in circuit.outputs().iter() {
+        if *o < input_len_t {
+            continue;
+        }
+        let oidx = usize::try_from(*o).unwrap() - input_len;
+        let mut stack = Vec::new();
+        stack.push(StackEntry { node: oidx, way: 0 });
+
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let node_index = top.node;
+            let way = top.way;
+
+            if way == 0 {
+                if !visited[node_index] {
+                    visited[node_index] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+
+                top.way += 1;
+                let gi0 = gates[node_index].i0;
+                if gi0 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi0).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else if way == 1 {
+                top.way += 1;
+                let gi1 = gates[node_index].i1;
+                if gi1 >= input_len_t {
+                    stack.push(StackEntry {
+                        node: usize::try_from(gi1).unwrap() - input_len,
+                        way: 0,
+                    });
+                }
+            } else {
+                stack.pop();
+            }
+        }
+    }
+    
+    vec![]
+}
 
 // IDEA:
 // division layout:

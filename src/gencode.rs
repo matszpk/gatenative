@@ -65,7 +65,7 @@ where
 
 // var usage - just counter of var usage.
 
-fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<T>
+pub(crate) fn gen_var_usage<T>(circuit: &Circuit<T>) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
