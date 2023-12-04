@@ -39,6 +39,8 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 //    3.4. divide next subcircuit with overflow into two parts:
 //         * part for current subcircuit (executed as first)
 //         * part for next subcircuit (executed as second)
+// better algorithm: just traverse (DFS) collect gates if len(gate) >= max_gates then
+// create new subcircuit.
 // hint: try use one buffer as input and output for one subcircuit. warning: RISKY!!!
 // it is possible because code generator always load data first and store data at end of code.
 
@@ -137,8 +139,6 @@ where
                     });
                 }
             } else {
-                // use variable from gate.i0 and gate.i1
-                //
                 if cur_subc_gates.len() >= max_gates {
                     let mut subc_inputs = BTreeSet::<usize>::new();
                     for gidx in &cur_subc_gates {
@@ -241,6 +241,8 @@ where
                     // free
                     cur_subc_gates.clear();
                 }
+                // use variable from gate.i0 and gate.i1
+                //
                 // add new gate to current subcircuit
                 cur_subc_gates.insert(input_len + node_index);
                 stack.pop();
