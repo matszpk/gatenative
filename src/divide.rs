@@ -71,8 +71,10 @@ where
     #[derive(Debug)]
     struct Subcircuit<T: Clone + Copy> {
         circuit: Circuit<T>,
-        input_map: Vec<usize>,
-        output_map: Vec<usize>,
+        // input_ps - input placement
+        input_ps: Vec<usize>,
+        // output_ps - output placement
+        output_ps: Vec<usize>,
     }
     #[derive(Clone, Copy)]
     struct VarEntry<T> {
@@ -121,6 +123,7 @@ where
                 }
             }
         } else {
+            // collect used gate outputs later to inputs
             for gidx in cur_subc_gates.iter() {
                 let g: Gate<T> = gates[*gidx - input_len];
                 let gi0 = usize::try_from(g.i0).unwrap();
@@ -134,6 +137,7 @@ where
             }
         }
         if last {
+            // if last circuit then add to subcircuit's inputs circuit outputs
             for (o, _) in circuit.outputs() {
                 let o = usize::try_from(*o).unwrap();
                 if !cur_subc_gates.contains(&o) {
@@ -147,10 +151,12 @@ where
             .enumerate()
             .map(|(i, x)| (*x, i))
             .collect::<HashMap<_, _>>();
-        let res_input_map = subc_inputs
+        // input placement indices
+        let input_ps = subc_inputs
             .into_iter()
             .map(|x| global_vars[x].unwrap())
             .collect::<Vec<_>>();
+
         // create new subcircuit
         let subc_input_len = subc_input_map.len();
         let subc_map = HashMap::<usize, usize>::from_iter(
@@ -161,6 +167,7 @@ where
         );
         println!("Sub_input_cmap: {:?}", subc_input_map);
         println!("Subcmap: {:?}", subc_map);
+        // generate subcircuit gates
         let subc_gates = cur_subc_gates
             .iter()
             .map(|gidx| {
@@ -243,7 +250,8 @@ where
                 })
                 .collect::<Vec<_>>()
         };
-        let res_output_map = if !last {
+        // generate placements indices - as res_output_map
+        let output_ps = if !last {
             // if not last subcircuit
             let mut res_output_map = cur_subc_gates
                 .iter()
@@ -260,15 +268,15 @@ where
                 })
                 .collect::<Vec<_>>();
             if subcircuits.is_empty() {
-                res_output_map.extend(
-                    used_inputs.into_iter().enumerate().filter_map(|(i, used)| {
+                res_output_map.extend(used_inputs.into_iter().enumerate().filter_map(
+                    |(i, used)| {
                         if !used {
                             Some(i)
                         } else {
                             None
                         }
-                    }),
-                );
+                    },
+                ));
             }
             res_output_map
         } else {
@@ -285,8 +293,8 @@ where
                 subc_outputs,
             )
             .unwrap(),
-            input_map: res_input_map,
-            output_map: res_output_map,
+            input_ps,
+            output_ps,
         });
         println!("GlobalVars: {:?}", global_vars);
         println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
@@ -386,7 +394,7 @@ where
             circuit: sc.circuit,
             input_ps: if i != 0 {
                 Some(Placement {
-                    placements: sc.input_map,
+                    placements: sc.input_ps,
                     real_len: placement_len,
                 })
             } else {
@@ -394,7 +402,7 @@ where
             },
             output_ps: if i != subcircuit_num - 1 {
                 Some(Placement {
-                    placements: sc.output_map,
+                    placements: sc.output_ps,
                     real_len: placement_len,
                 })
             } else {
