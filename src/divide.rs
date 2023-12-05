@@ -95,9 +95,6 @@ where
     for i in 0..input_len {
         global_vars[i] = Some(var_alloc.alloc());
     }
-    for (o, _) in circuit.outputs() {
-        global_vars[usize::try_from(*o).unwrap()] = Some(var_alloc.alloc());
-    }
 
     let mut push_subcircuit = |cur_subc_gates: &mut BTreeSet<usize>,
                                var_usage: &mut [T],
