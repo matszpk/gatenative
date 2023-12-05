@@ -45,11 +45,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // it is possible because code generator always load data first and store data at end of code.
 
 // separate circuit sequentially - using depths instead circuit
-fn divide_circuit_traverse<T>(
-    circuit: Circuit<T>,
-    gate_depths: Vec<Vec<(T, usize)>>,
-    max_gates: usize,
-) -> Vec<DivCircuitEntry<T>>
+fn divide_circuit_traverse<T>(circuit: Circuit<T>, max_gates: usize) -> Vec<DivCircuitEntry<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
@@ -103,6 +99,7 @@ where
         global_vars[i] = Some(i);
     }
 
+    let last_output = circuit.outputs().last().unwrap().0;
     for (o, _) in circuit.outputs().iter() {
         let oidx = usize::try_from(*o).unwrap() - input_len;
         let mut stack = Vec::new();
@@ -114,7 +111,6 @@ where
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
             let way = top.way;
-            let gidx = node_index + input_len;
 
             if way == 0 {
                 if !visited[node_index] {
@@ -144,12 +140,17 @@ where
             } else {
                 if cur_subc_gates.len() >= max_gates {
                     let mut subc_inputs = BTreeSet::<usize>::new();
-                    for gidx in &cur_subc_gates {
-                        let g: Gate<T> = gates[*gidx];
-                        let gi0 = usize::try_from(g.i0).unwrap();
-                        let gi1 = usize::try_from(g.i1).unwrap();
-                        subc_inputs.insert(gi0);
-                        subc_inputs.insert(gi1);
+                    if subcircuits.is_empty() {
+                        // first subcircuit
+                        subc_inputs.extend(0..input_len);
+                    } else {
+                        for gidx in &cur_subc_gates {
+                            let g: Gate<T> = gates[*gidx];
+                            let gi0 = usize::try_from(g.i0).unwrap();
+                            let gi1 = usize::try_from(g.i1).unwrap();
+                            subc_inputs.insert(gi0);
+                            subc_inputs.insert(gi1);
+                        }
                     }
                     let subc_input_map = subc_inputs
                         .iter()
@@ -163,29 +164,25 @@ where
                     // create new subcircuit
                     let subc_input_len = subc_input_map.len();
                     let subc_map = HashMap::<usize, usize>::from_iter(
-                        cur_subc_gates.iter().enumerate().map(|(i, x)| (*x, i)),
+                        cur_subc_gates
+                            .iter()
+                            .enumerate()
+                            .map(|(i, x)| (*x, i + subc_input_len)),
                     );
-                    let mut subc_gates = cur_subc_gates
+                    let subc_gates = cur_subc_gates
                         .iter()
-                        .enumerate()
-                        .map(|(i, gidx)| {
+                        .map(|gidx| {
                             let g: Gate<T> = gates[*gidx];
                             Gate {
                                 func: g.func,
                                 i0: T::try_from({
                                     let gi0 = usize::try_from(g.i0).unwrap();
-                                    subc_input_map
-                                        .get(&gi0)
-                                        .copied()
-                                        .unwrap_or(subc_input_len + subc_map[&gi0])
+                                    subc_input_map.get(&gi0).copied().unwrap_or(subc_map[&gi0])
                                 })
                                 .unwrap(),
                                 i1: T::try_from({
                                     let gi1 = usize::try_from(g.i1).unwrap();
-                                    subc_input_map
-                                        .get(&gi1)
-                                        .copied()
-                                        .unwrap_or(subc_input_len + subc_map[&gi1])
+                                    subc_input_map.get(&gi1).copied().unwrap_or(subc_map[&gi1])
                                 })
                                 .unwrap(),
                             }
@@ -193,7 +190,7 @@ where
                         .collect::<Vec<_>>();
                     // process current variables for usage
                     for gidx in &cur_subc_gates {
-                        if let Some(var_idx) = global_vars[*gidx] {
+                        if global_vars[*gidx].is_some() {
                             if var_usage[*gidx] == T::default() {
                                 // free global variable
                                 global_vars[*gidx] = None;
@@ -203,34 +200,60 @@ where
                         }
                     }
                     // generate outputs
-                    let subc_outputs = cur_subc_gates
-                        .iter()
-                        .filter_map(|gidx| {
-                            if global_vars[*gidx].is_some() {
-                                if let Some(v) = subc_map.get(gidx) {
-                                    Some((T::try_from(*v).unwrap(), false))
+                    let subc_outputs = if last_output != *o {
+                        cur_subc_gates
+                            .iter()
+                            .filter_map(|gidx| {
+                                if global_vars[*gidx].is_some() {
+                                    if let Some(v) = subc_map.get(gidx) {
+                                        Some((T::try_from(*v).unwrap(), false))
+                                    } else {
+                                        None
+                                    }
                                 } else {
                                     None
                                 }
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>();
-                    let res_output_map = cur_subc_gates
-                        .iter()
-                        .filter_map(|gidx| {
-                            if global_vars[*gidx].is_some() {
-                                if subc_map.contains_key(gidx) {
-                                    Some(global_vars[*gidx].unwrap())
+                            })
+                            .collect::<Vec<_>>()
+                    } else {
+                        circuit
+                            .outputs()
+                            .iter()
+                            .map(|(o, n)| {
+                                let o = usize::try_from(*o).unwrap();
+                                if let Some(v) = subc_map.get(&o) {
+                                    (T::try_from(*v).unwrap(), *n)
+                                } else {
+                                    (T::try_from(global_vars[o].unwrap()).unwrap(), *n)
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                    };
+                    let res_output_map = if last_output != *o {
+                        cur_subc_gates
+                            .iter()
+                            .filter_map(|gidx| {
+                                if global_vars[*gidx].is_some() {
+                                    if subc_map.contains_key(gidx) {
+                                        Some(global_vars[*gidx].unwrap())
+                                    } else {
+                                        None
+                                    }
                                 } else {
                                     None
                                 }
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>();
+                            })
+                            .collect::<Vec<_>>()
+                    } else {
+                        circuit
+                            .outputs()
+                            .iter()
+                            .map(|(o, _)| {
+                                let o = usize::try_from(*o).unwrap();
+                                global_vars[o].unwrap()
+                            })
+                            .collect::<Vec<_>>()
+                    };
                     subcircuits.push(Subcircuit {
                         circuit: Circuit::new(
                             T::try_from(subc_input_len).unwrap(),
@@ -257,10 +280,6 @@ where
                 stack.pop();
             }
         }
-        // usage variable from output
-        let o = oidx + input_len;
-        let vusage = usize::try_from(var_usage[o]).unwrap();
-        var_usage[o] = T::try_from(vusage - 1).unwrap();
     }
 
     vec![]
