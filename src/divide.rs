@@ -12,8 +12,8 @@ pub(crate) struct Placement {
 
 pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
     circuit: Circuit<T>,
-    input_ps: Placement,  // input placement
-    output_ps: Placement, // output placement
+    input_ps: Option<Placement>,  // input placement
+    output_ps: Option<Placement>, // output placement
 }
 
 pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
@@ -56,14 +56,8 @@ where
     if circuit.len() <= max_gates {
         return vec![DivCircuitEntry {
             circuit,
-            input_ps: Placement {
-                placements: vec![],
-                real_len: 0,
-            },
-            output_ps: Placement {
-                placements: vec![],
-                real_len: 0,
-            },
+            input_ps: None,
+            output_ps: None,
         }];
     }
 
@@ -201,6 +195,7 @@ where
                     }
                     // generate outputs
                     let subc_outputs = if last_output != *o {
+                        // if not last subcircuit
                         cur_subc_gates
                             .iter()
                             .filter_map(|gidx| {
@@ -216,6 +211,7 @@ where
                             })
                             .collect::<Vec<_>>()
                     } else {
+                        // if last subcircuit - then get from circuit outputs
                         circuit
                             .outputs()
                             .iter()
@@ -230,6 +226,7 @@ where
                             .collect::<Vec<_>>()
                     };
                     let res_output_map = if last_output != *o {
+                        // if not last subcircuit
                         cur_subc_gates
                             .iter()
                             .filter_map(|gidx| {
@@ -245,6 +242,7 @@ where
                             })
                             .collect::<Vec<_>>()
                     } else {
+                        // if last subcircuit - then get from circuit outputs
                         circuit
                             .outputs()
                             .iter()
@@ -282,7 +280,31 @@ where
         }
     }
 
-    vec![]
+    let placement_len = var_alloc.len();
+    let subcircuit_num = subcircuits.len();
+    subcircuits
+        .into_iter()
+        .enumerate()
+        .map(|(i, sc)| DivCircuitEntry {
+            circuit: sc.circuit,
+            input_ps: if i != 0 {
+                Some(Placement {
+                    placements: sc.input_map,
+                    real_len: placement_len,
+                })
+            } else {
+                None
+            },
+            output_ps: if i != subcircuit_num - 1 {
+                Some(Placement {
+                    placements: sc.output_map,
+                    real_len: placement_len,
+                })
+            } else {
+                None
+            },
+        })
+        .collect::<Vec<_>>()
 }
 
 // IDEA:
