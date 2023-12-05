@@ -97,7 +97,9 @@ where
     }
 
     let mut push_subcircuit =
-        |cur_subc_gates: &mut BTreeSet<usize>, var_usage: &mut [T], last: bool| {
+        |cur_subc_gates: &mut BTreeSet<usize>, var_usage: &mut [T],
+                global_vars: &mut [Option<usize>],
+                var_alloc: &mut VarAllocator<usize>, last: bool| {
             {
                 println!("Subcircuit {}", subcircuits.len());
                 println!("  gates: {:?}", cur_subc_gates);
@@ -295,16 +297,27 @@ where
                 }
             } else {
                 if cur_subc_gates.len() >= max_gates {
-                    push_subcircuit(&mut cur_subc_gates, &mut var_usage, false);
+                    push_subcircuit(&mut cur_subc_gates, &mut var_usage,
+                                    &mut global_vars, &mut var_alloc, false);
                 }
                 // use variable from gate.i0 and gate.i1
                 let g = gates[node_index];
                 let gi0 = usize::try_from(g.i0).unwrap();
                 let vusage = usize::try_from(var_usage[gi0]).unwrap();
                 var_usage[gi0] = T::try_from(vusage - 1).unwrap();
+                if var_usage[gi0] == T::default() {
+                    if let Some(v) = global_vars[gi0] {
+                        var_alloc.free(v);
+                    }
+                }
                 let gi1 = usize::try_from(g.i1).unwrap();
                 let vusage = usize::try_from(var_usage[gi1]).unwrap();
                 var_usage[gi1] = T::try_from(vusage - 1).unwrap();
+                if var_usage[gi1] == T::default() {
+                    if let Some(v) = global_vars[gi1] {
+                        var_alloc.free(v);
+                    }
+                }
                 // add new gate to current subcircuit
                 cur_subc_gates.insert(input_len + node_index);
                 stack.pop();
@@ -312,7 +325,7 @@ where
         }
     }
 
-    push_subcircuit(&mut cur_subc_gates, &mut var_usage, true);
+    push_subcircuit(&mut cur_subc_gates, &mut var_usage, &mut global_vars, &mut var_alloc, true);
 
     let placement_len = var_alloc.len();
     let subcircuit_num = subcircuits.len();
