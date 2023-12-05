@@ -99,13 +99,16 @@ where
     let mut cur_subc_gates = BTreeSet::new();
     let mut var_alloc = VarAllocator::<usize>::new();
 
+    for i in 0..input_len {
+        global_vars[i] = Some(i);
+    }
+
     for (o, _) in circuit.outputs().iter() {
-        if *o < input_len_t {
-            continue;
-        }
         let oidx = usize::try_from(*o).unwrap() - input_len;
         let mut stack = Vec::new();
-        stack.push(StackEntry { node: oidx, way: 0 });
+        if *o >= input_len_t {
+            stack.push(StackEntry { node: oidx, way: 0 });
+        }
 
         while !stack.is_empty() {
             let top = stack.last_mut().unwrap();
@@ -242,12 +245,22 @@ where
                     cur_subc_gates.clear();
                 }
                 // use variable from gate.i0 and gate.i1
-                //
+                let g = gates[node_index];
+                let gi0 = usize::try_from(g.i0).unwrap();
+                let vusage = usize::try_from(var_usage[gi0]).unwrap();
+                var_usage[gi0] = T::try_from(vusage - 1).unwrap();
+                let gi1 = usize::try_from(g.i1).unwrap();
+                let vusage = usize::try_from(var_usage[gi1]).unwrap();
+                var_usage[gi1] = T::try_from(vusage - 1).unwrap();
                 // add new gate to current subcircuit
                 cur_subc_gates.insert(input_len + node_index);
                 stack.pop();
             }
         }
+        // usage variable from output
+        let o = oidx + input_len;
+        let vusage = usize::try_from(var_usage[o]).unwrap();
+        var_usage[o] = T::try_from(vusage - 1).unwrap();
     }
 
     vec![]
