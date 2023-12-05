@@ -46,7 +46,7 @@ pub(crate) struct DivCircuit<T: Clone + Copy>(Vec<DivCircuitEntry<T>>);
 // hint: try use one buffer as input and output for one subcircuit. warning: RISKY!!!
 // it is possible because code generator always load data first and store data at end of code.
 
-// separate circuit sequentially - using depths instead circuit
+// separate circuit while traversing
 fn divide_circuit_traverse<T>(circuit: Circuit<T>, max_gates: usize) -> Vec<DivCircuitEntry<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
