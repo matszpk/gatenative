@@ -5,11 +5,13 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Placement {
     placements: Vec<usize>,
     real_len: usize,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
     circuit: Circuit<T>,
     input_ps: Option<Placement>,  // input placement
@@ -973,6 +975,44 @@ mod tests {
         assert_eq!(
             vec![circuit.clone()],
             divide_circuit_seq(circuit.clone(), depths.clone(), 7, 8)
+        );
+    }
+
+    #[test]
+    fn test_divide_circuit_traverse() {
+        assert_eq!(
+            Vec::<DivCircuitEntry<_>>::new(),
+            divide_circuit_traverse(
+                Circuit::new(
+                    6,
+                    [
+                        Gate::new_xor(1, 0),    // 6
+                        Gate::new_xor(1, 2),    // 7
+                        Gate::new_xor(3, 4),    // 8
+                        Gate::new_xor(4, 5),    // 9
+                        Gate::new_xor(6, 7),    // 10
+                        Gate::new_xor(8, 9),    // 11
+                        Gate::new_and(10, 11),  // 12
+                        Gate::new_and(1, 12),   // 13
+                        Gate::new_and(1, 13),   // 14
+                        Gate::new_and(14, 0),   // 15
+                        Gate::new_nor(1, 12),   // 16
+                        Gate::new_nor(16, 0),   // 17
+                        Gate::new_nor(1, 17),   // 18
+                        Gate::new_nor(1, 18),   // 19
+                        Gate::new_nor(19, 0),   // 20
+                        Gate::new_nor(1, 12),   // 21
+                        Gate::new_nor(1, 21),   // 22
+                        Gate::new_nor(1, 22),   // 23
+                        Gate::new_xor(12, 0),   // 24
+                        Gate::new_nimpl(12, 0), // 25
+                        Gate::new_nimpl(1, 25), // 26
+                    ],
+                    [(15, false), (20, true), (26, true), (23, false), (24, true)],
+                )
+                .unwrap(),
+                7
+            )
         );
     }
 }
