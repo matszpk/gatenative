@@ -68,6 +68,7 @@ where
         node: usize,
         way: usize,
     }
+    #[derive(Debug)]
     struct Subcircuit<T: Clone + Copy> {
         circuit: Circuit<T>,
         input_map: Vec<usize>,
@@ -92,7 +93,7 @@ where
     let mut var_alloc = VarAllocator::<usize>::new();
 
     for i in 0..input_len {
-        global_vars[i] = Some(i);
+        global_vars[i] = Some(var_alloc.alloc());
     }
 
     let last_output = circuit.outputs().last().unwrap().0;
@@ -135,6 +136,8 @@ where
                 }
             } else {
                 if cur_subc_gates.len() >= max_gates {
+                    println!("Subcircuit {}", subcircuits.len());
+                    println!("  gates: {:?}", cur_subc_gates);
                     let mut subc_inputs = BTreeSet::<usize>::new();
                     if subcircuits.is_empty() {
                         // first subcircuit
@@ -144,8 +147,12 @@ where
                             let g: Gate<T> = gates[*gidx];
                             let gi0 = usize::try_from(g.i0).unwrap();
                             let gi1 = usize::try_from(g.i1).unwrap();
-                            subc_inputs.insert(gi0);
-                            subc_inputs.insert(gi1);
+                            if global_vars[gi0].is_some() {
+                                subc_inputs.insert(gi0);
+                            }
+                            if global_vars[gi1].is_some() {
+                                subc_inputs.insert(gi1);
+                            }
                         }
                     }
                     let subc_input_map = subc_inputs
@@ -165,20 +172,32 @@ where
                             .enumerate()
                             .map(|(i, x)| (*x, i + subc_input_len)),
                     );
+                    println!("Sub_input_cmap: {:?}", subc_input_map);
+                    println!("Subcmap: {:?}", subc_map);
                     let subc_gates = cur_subc_gates
                         .iter()
                         .map(|gidx| {
-                            let g: Gate<T> = gates[*gidx];
+                            let g: Gate<T> = gates[*gidx - input_len];
+                            let gi0 = usize::try_from(g.i0).unwrap();
+                            println!("G: {} {}", gidx, g);
                             Gate {
                                 func: g.func,
                                 i0: T::try_from({
                                     let gi0 = usize::try_from(g.i0).unwrap();
-                                    subc_input_map.get(&gi0).copied().unwrap_or(subc_map[&gi0])
+                                    if let Some(t) = subc_input_map.get(&gi0) {
+                                        *t
+                                    } else {
+                                        subc_map[&gi0]
+                                    }
                                 })
                                 .unwrap(),
                                 i1: T::try_from({
                                     let gi1 = usize::try_from(g.i1).unwrap();
-                                    subc_input_map.get(&gi1).copied().unwrap_or(subc_map[&gi1])
+                                    if let Some(t) = subc_input_map.get(&gi1) {
+                                        *t
+                                    } else {
+                                        subc_map[&gi1]
+                                    }
                                 })
                                 .unwrap(),
                             }
@@ -264,6 +283,8 @@ where
                         input_map: res_input_map,
                         output_map: res_output_map,
                     });
+                    println!("GlobalVars: {:?}", global_vars);
+                    println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
                     // free
                     cur_subc_gates.clear();
                 }
