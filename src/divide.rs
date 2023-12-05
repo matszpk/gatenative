@@ -80,6 +80,7 @@ where
         usage: usize,
     }
 
+    println!("DivideStart");
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
@@ -104,9 +105,21 @@ where
         println!("Subcircuit {}", subcircuits.len());
         println!("  gates: {:?}", cur_subc_gates);
         let mut subc_inputs = BTreeSet::<usize>::new();
+        let mut used_inputs = vec![false; input_len];
         if subcircuits.is_empty() {
             // first subcircuit
             subc_inputs.extend(0..input_len);
+            for gidx in cur_subc_gates.iter() {
+                let g: Gate<T> = gates[*gidx - input_len];
+                let gi0 = usize::try_from(g.i0).unwrap();
+                let gi1 = usize::try_from(g.i1).unwrap();
+                if gi0 < input_len {
+                    used_inputs[gi0] = true;
+                }
+                if gi1 < input_len {
+                    used_inputs[gi1] = true;
+                }
+            }
         } else {
             for gidx in cur_subc_gates.iter() {
                 let g: Gate<T> = gates[*gidx - input_len];
@@ -190,7 +203,7 @@ where
         // generate outputs
         let subc_outputs = if !last {
             // if not last subcircuit
-            cur_subc_gates
+            let mut subc_outputs = cur_subc_gates
                 .iter()
                 .filter_map(|gidx| {
                     if global_vars[*gidx].is_some() {
@@ -203,7 +216,18 @@ where
                         None
                     }
                 })
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>();
+            if subcircuits.is_empty() {
+                subc_outputs.extend(used_inputs.iter().enumerate().filter_map(|(i, used)| {
+                    if !used {
+                        let i = T::try_from(i).unwrap();
+                        Some((i, false))
+                    } else {
+                        None
+                    }
+                }));
+            }
+            subc_outputs
         } else {
             // if last subcircuit - then get from circuit outputs
             circuit
@@ -221,7 +245,7 @@ where
         };
         let res_output_map = if !last {
             // if not last subcircuit
-            cur_subc_gates
+            let mut res_output_map = cur_subc_gates
                 .iter()
                 .filter_map(|gidx| {
                     if global_vars[*gidx].is_some() {
@@ -234,7 +258,19 @@ where
                         None
                     }
                 })
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>();
+            if subcircuits.is_empty() {
+                res_output_map.extend(
+                    used_inputs.into_iter().enumerate().filter_map(|(i, used)| {
+                        if !used {
+                            Some(i)
+                        } else {
+                            None
+                        }
+                    }),
+                );
+            }
+            res_output_map
         } else {
             // if last subcircuit - then get from circuit outputs
             vec![]
@@ -1208,6 +1244,128 @@ mod tests {
                 },
             ],
             divide_circuit_traverse(circuit.clone(), 9)
+        );
+        assert_eq!(
+            vec![
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        6,
+                        [
+                            Gate::new_xor(1, 0), // 6
+                            Gate::new_xor(1, 2), // 7
+                            Gate::new_xor(3, 4), // 8
+                            Gate::new_xor(6, 7), // 10
+                        ],
+                        [(8, false), (9, false), (5, false)]
+                    )
+                    .unwrap(),
+                    input_ps: None,
+                    output_ps: Some(Placement {
+                        placements: vec![2, 3, 5],
+                        real_len: 6
+                    }),
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        5,
+                        [
+                            Gate::new_xor(1, 2), // 9
+                            Gate::new_xor(3, 5), // 11
+                            Gate::new_and(4, 6), // 12
+                            Gate::new_and(0, 7), // 13
+                        ],
+                        [(7, false), (8, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![1, 4, 5, 2, 3],
+                        real_len: 6
+                    }),
+                    output_ps: Some(Placement {
+                        placements: vec![2, 3],
+                        real_len: 6
+                    })
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        4,
+                        [
+                            Gate::new_and(1, 3), // 14
+                            Gate::new_and(4, 0), // 15
+                            Gate::new_nor(1, 2), // 16
+                            Gate::new_nor(6, 0), // 17
+                        ],
+                        [(5, false), (7, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 1, 2, 3],
+                        real_len: 6
+                    }),
+                    output_ps: Some(Placement {
+                        placements: vec![3, 4],
+                        real_len: 6
+                    })
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        4,
+                        [
+                            Gate::new_nor(1, 3),   // 18
+                            Gate::new_nor(1, 4),   // 19
+                            Gate::new_nor(5, 0),   // 20
+                            Gate::new_nimpl(2, 0), // 25
+                        ],
+                        [(6, false), (7, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 1, 2, 4],
+                        real_len: 6
+                    }),
+                    output_ps: Some(Placement {
+                        placements: vec![4, 5],
+                        real_len: 6
+                    })
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        3,
+                        [
+                            Gate::new_nor(0, 1),   // 21
+                            Gate::new_nor(0, 3),   // 22
+                            Gate::new_nor(0, 4),   // 23
+                            Gate::new_nimpl(0, 2), // 26
+                        ],
+                        [(5, false), (6, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![1, 2, 5],
+                        real_len: 6
+                    }),
+                    output_ps: Some(Placement {
+                        placements: vec![1, 5],
+                        real_len: 6
+                    })
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        6,
+                        [
+                            Gate::new_xor(1, 0),   // 24
+                        ],
+                        [(2, false), (3, true), (5, true), (4, false), (6, true)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 2, 3, 4, 1, 5],
+                        real_len: 6
+                    }),
+                    output_ps: None
+                },
+            ],
+            divide_circuit_traverse(circuit.clone(), 4)
         );
     }
 }
