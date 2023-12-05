@@ -153,7 +153,6 @@ where
                 .iter()
                 .map(|gidx| {
                     let g: Gate<T> = gates[*gidx - input_len];
-                    let gi0 = usize::try_from(g.i0).unwrap();
                     println!("G: {} {}", gidx, g);
                     Gate {
                         func: g.func,
@@ -1043,7 +1042,74 @@ mod tests {
     #[test]
     fn test_divide_circuit_traverse() {
         assert_eq!(
-            Vec::<DivCircuitEntry<_>>::new(),
+            vec![
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        6,
+                        [
+                            Gate::new_xor(1, 0),   // 6
+                            Gate::new_xor(1, 2),   // 7
+                            Gate::new_xor(3, 4),   // 8
+                            Gate::new_xor(4, 5),   // 9
+                            Gate::new_xor(6, 7),   // 10
+                            Gate::new_xor(8, 9),   // 11
+                            Gate::new_and(10, 11), // 12
+                        ],
+                        [(12, false)]
+                    )
+                    .unwrap(),
+                    input_ps: None,
+                    output_ps: Some(Placement {
+                        placements: vec![2],
+                        real_len: 6
+                    }),
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        3,
+                        [
+                            Gate::new_and(1, 2), // 13
+                            Gate::new_and(1, 3), // 14
+                            Gate::new_and(4, 0), // 15
+                            Gate::new_nor(1, 2), // 16
+                            Gate::new_nor(6, 0), // 17
+                            Gate::new_nor(1, 7), // 18
+                            Gate::new_nor(1, 8), // 19
+                        ],
+                        [(5, false), (9, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 1, 2],
+                        real_len: 6
+                    }),
+                    output_ps: Some(Placement {
+                        placements: vec![3, 4],
+                        real_len: 6
+                    }),
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        5,
+                        [
+                            Gate::new_nor(4, 0),    // 20
+                            Gate::new_nor(1, 2),    // 21
+                            Gate::new_nor(1, 6),    // 22
+                            Gate::new_nor(1, 7),    // 23
+                            Gate::new_xor(2, 0),    // 24
+                            Gate::new_nimpl(2, 0),  // 25
+                            Gate::new_nimpl(1, 10), // 26
+                        ],
+                        [(3, false), (5, true), (11, true), (8, false), (9, true)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 1, 2, 3, 4],
+                        real_len: 6
+                    }),
+                    output_ps: None,
+                },
+            ],
             divide_circuit_traverse(
                 Circuit::new(
                     6,
