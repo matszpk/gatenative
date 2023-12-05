@@ -185,7 +185,7 @@ where
                         // free global variable
                         global_vars[*gidx] = None;
                     }
-                } else {
+                } else if var_usage[*gidx] != T::default() {
                     global_vars[*gidx] = Some(var_alloc.alloc());
                 }
             }
@@ -316,6 +316,7 @@ where
                 var_usage[gi0] = T::try_from(vusage - 1).unwrap();
                 if var_usage[gi0] == T::default() {
                     if let Some(v) = global_vars[gi0] {
+                        println!("FreeAlloc: {:?} {:?}", gi0, v);
                         var_alloc.free(v);
                     }
                 }
@@ -324,6 +325,7 @@ where
                 var_usage[gi1] = T::try_from(vusage - 1).unwrap();
                 if var_usage[gi1] == T::default() {
                     if let Some(v) = global_vars[gi1] {
+                        println!("FreeAlloc: {:?} {:?}", gi1, v);
                         var_alloc.free(v);
                     }
                 }
