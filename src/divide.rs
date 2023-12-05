@@ -95,168 +95,175 @@ where
     for i in 0..input_len {
         global_vars[i] = Some(var_alloc.alloc());
     }
+    for (o, _) in circuit.outputs() {
+        global_vars[usize::try_from(*o).unwrap()] = Some(var_alloc.alloc());
+    }
 
-    let mut push_subcircuit =
-        |cur_subc_gates: &mut BTreeSet<usize>, var_usage: &mut [T],
-                global_vars: &mut [Option<usize>],
-                var_alloc: &mut VarAllocator<usize>, last: bool| {
-            {
-                println!("Subcircuit {}", subcircuits.len());
-                println!("  gates: {:?}", cur_subc_gates);
-                let mut subc_inputs = BTreeSet::<usize>::new();
-                if subcircuits.is_empty() {
-                    // first subcircuit
-                    subc_inputs.extend(0..input_len);
-                } else {
-                    for gidx in cur_subc_gates.iter() {
-                        let g: Gate<T> = gates[*gidx - input_len];
-                        let gi0 = usize::try_from(g.i0).unwrap();
-                        let gi1 = usize::try_from(g.i1).unwrap();
-                        if global_vars[gi0].is_some() {
-                            subc_inputs.insert(gi0);
-                        }
-                        if global_vars[gi1].is_some() {
-                            subc_inputs.insert(gi1);
-                        }
+    let mut push_subcircuit = |cur_subc_gates: &mut BTreeSet<usize>,
+                               var_usage: &mut [T],
+                               global_vars: &mut [Option<usize>],
+                               var_alloc: &mut VarAllocator<usize>,
+                               last: bool| {
+        {
+            println!("Subcircuit {}", subcircuits.len());
+            println!("  gates: {:?}", cur_subc_gates);
+            let mut subc_inputs = BTreeSet::<usize>::new();
+            if subcircuits.is_empty() {
+                // first subcircuit
+                subc_inputs.extend(0..input_len);
+            } else {
+                for gidx in cur_subc_gates.iter() {
+                    let g: Gate<T> = gates[*gidx - input_len];
+                    let gi0 = usize::try_from(g.i0).unwrap();
+                    let gi1 = usize::try_from(g.i1).unwrap();
+                    if global_vars[gi0].is_some() {
+                        subc_inputs.insert(gi0);
+                    }
+                    if global_vars[gi1].is_some() {
+                        subc_inputs.insert(gi1);
                     }
                 }
-                let subc_input_map = subc_inputs
+            }
+            if last {
+                for (o, _) in circuit.outputs() {
+                    let o = usize::try_from(*o).unwrap();
+                    if !cur_subc_gates.contains(&o) {
+                        subc_inputs.insert(o);
+                    }
+                }
+            }
+
+            let subc_input_map = subc_inputs
+                .iter()
+                .enumerate()
+                .map(|(i, x)| (*x, i))
+                .collect::<HashMap<_, _>>();
+            let res_input_map = subc_inputs
+                .into_iter()
+                .map(|x| global_vars[x].unwrap())
+                .collect::<Vec<_>>();
+            // create new subcircuit
+            let subc_input_len = subc_input_map.len();
+            let subc_map = HashMap::<usize, usize>::from_iter(
+                cur_subc_gates
                     .iter()
                     .enumerate()
-                    .map(|(i, x)| (*x, i))
-                    .collect::<HashMap<_, _>>();
-                let res_input_map = subc_inputs
-                    .into_iter()
-                    .map(|x| global_vars[x].unwrap())
-                    .collect::<Vec<_>>();
-                // create new subcircuit
-                let subc_input_len = subc_input_map.len();
-                let subc_map = HashMap::<usize, usize>::from_iter(
-                    cur_subc_gates
-                        .iter()
-                        .enumerate()
-                        .map(|(i, x)| (*x, i + subc_input_len)),
-                );
-                println!("Sub_input_cmap: {:?}", subc_input_map);
-                println!("Subcmap: {:?}", subc_map);
-                let subc_gates = cur_subc_gates
+                    .map(|(i, x)| (*x, i + subc_input_len)),
+            );
+            println!("Sub_input_cmap: {:?}", subc_input_map);
+            println!("Subcmap: {:?}", subc_map);
+            let subc_gates = cur_subc_gates
+                .iter()
+                .map(|gidx| {
+                    let g: Gate<T> = gates[*gidx - input_len];
+                    let gi0 = usize::try_from(g.i0).unwrap();
+                    println!("G: {} {}", gidx, g);
+                    Gate {
+                        func: g.func,
+                        i0: T::try_from({
+                            let gi0 = usize::try_from(g.i0).unwrap();
+                            if let Some(t) = subc_input_map.get(&gi0) {
+                                *t
+                            } else {
+                                subc_map[&gi0]
+                            }
+                        })
+                        .unwrap(),
+                        i1: T::try_from({
+                            let gi1 = usize::try_from(g.i1).unwrap();
+                            if let Some(t) = subc_input_map.get(&gi1) {
+                                *t
+                            } else {
+                                subc_map[&gi1]
+                            }
+                        })
+                        .unwrap(),
+                    }
+                })
+                .collect::<Vec<_>>();
+            // process current variables for usage
+            for gidx in cur_subc_gates.iter() {
+                if global_vars[*gidx].is_some() {
+                    if var_usage[*gidx] == T::default() {
+                        // free global variable
+                        global_vars[*gidx] = None;
+                    }
+                } else {
+                    global_vars[*gidx] = Some(var_alloc.alloc());
+                }
+            }
+            // generate outputs
+            let subc_outputs = if !last {
+                // if not last subcircuit
+                cur_subc_gates
                     .iter()
-                    .map(|gidx| {
-                        let g: Gate<T> = gates[*gidx - input_len];
-                        let gi0 = usize::try_from(g.i0).unwrap();
-                        println!("G: {} {}", gidx, g);
-                        Gate {
-                            func: g.func,
-                            i0: T::try_from({
-                                let gi0 = usize::try_from(g.i0).unwrap();
-                                if let Some(t) = subc_input_map.get(&gi0) {
-                                    *t
-                                } else {
-                                    subc_map[&gi0]
-                                }
-                            })
-                            .unwrap(),
-                            i1: T::try_from({
-                                let gi1 = usize::try_from(g.i1).unwrap();
-                                if let Some(t) = subc_input_map.get(&gi1) {
-                                    *t
-                                } else {
-                                    subc_map[&gi1]
-                                }
-                            })
-                            .unwrap(),
+                    .filter_map(|gidx| {
+                        if global_vars[*gidx].is_some() {
+                            if let Some(v) = subc_map.get(gidx) {
+                                Some((T::try_from(*v).unwrap(), false))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
                         }
                     })
-                    .collect::<Vec<_>>();
-                // process current variables for usage
-                for gidx in cur_subc_gates.iter() {
-                    if global_vars[*gidx].is_some() {
-                        if var_usage[*gidx] == T::default() {
-                            // free global variable
-                            global_vars[*gidx] = None;
+                    .collect::<Vec<_>>()
+            } else {
+                // if last subcircuit - then get from circuit outputs
+                circuit
+                    .outputs()
+                    .iter()
+                    .map(|(o, n)| {
+                        let o = usize::try_from(*o).unwrap();
+                        if let Some(v) = subc_map.get(&o) {
+                            (T::try_from(*v).unwrap(), *n)
+                        } else {
+                            (T::try_from(subc_input_map[&o]).unwrap(), *n)
                         }
-                    } else {
-                        global_vars[*gidx] = Some(var_alloc.alloc());
-                    }
-                }
-                // generate outputs
-                let subc_outputs = if !last {
-                    // if not last subcircuit
-                    cur_subc_gates
-                        .iter()
-                        .filter_map(|gidx| {
-                            if global_vars[*gidx].is_some() {
-                                if let Some(v) = subc_map.get(gidx) {
-                                    Some((T::try_from(*v).unwrap(), false))
-                                } else {
-                                    None
-                                }
+                    })
+                    .collect::<Vec<_>>()
+            };
+            let res_output_map = if !last {
+                // if not last subcircuit
+                cur_subc_gates
+                    .iter()
+                    .filter_map(|gidx| {
+                        if global_vars[*gidx].is_some() {
+                            if subc_map.contains_key(gidx) {
+                                Some(global_vars[*gidx].unwrap())
                             } else {
                                 None
                             }
-                        })
-                        .collect::<Vec<_>>()
-                } else {
-                    // if last subcircuit - then get from circuit outputs
-                    circuit
-                        .outputs()
-                        .iter()
-                        .map(|(o, n)| {
-                            let o = usize::try_from(*o).unwrap();
-                            if let Some(v) = subc_map.get(&o) {
-                                (T::try_from(*v).unwrap(), *n)
-                            } else {
-                                (T::try_from(global_vars[o].unwrap()).unwrap(), *n)
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                };
-                let res_output_map = if !last {
-                    // if not last subcircuit
-                    cur_subc_gates
-                        .iter()
-                        .filter_map(|gidx| {
-                            if global_vars[*gidx].is_some() {
-                                if subc_map.contains_key(gidx) {
-                                    Some(global_vars[*gidx].unwrap())
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                } else {
-                    // if last subcircuit - then get from circuit outputs
-                    circuit
-                        .outputs()
-                        .iter()
-                        .map(|(o, _)| {
-                            let o = usize::try_from(*o).unwrap();
-                            global_vars[o].unwrap()
-                        })
-                        .collect::<Vec<_>>()
-                };
-                println!("Subcgates: {:?}", subc_gates);
-                println!("Subcoutputs: {:?}", subc_outputs);
-                subcircuits.push(Subcircuit {
-                    circuit: Circuit::new(
-                        T::try_from(subc_input_len).unwrap(),
-                        subc_gates,
-                        subc_outputs,
-                    )
-                    .unwrap(),
-                    input_map: res_input_map,
-                    output_map: res_output_map,
-                });
-                println!("GlobalVars: {:?}", global_vars);
-                println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
-                println!("VarUsage: {:?}", var_usage);
-                // free
-                cur_subc_gates.clear();
-            }
-        };
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                // if last subcircuit - then get from circuit outputs
+                vec![]
+            };
+            println!("Subcinputlen: {}", subc_input_len);
+            println!("Subcgates: {:?}", subc_gates);
+            println!("Subcoutputs: {:?}", subc_outputs);
+            subcircuits.push(Subcircuit {
+                circuit: Circuit::new(
+                    T::try_from(subc_input_len).unwrap(),
+                    subc_gates,
+                    subc_outputs,
+                )
+                .unwrap(),
+                input_map: res_input_map,
+                output_map: res_output_map,
+            });
+            println!("GlobalVars: {:?}", global_vars);
+            println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
+            println!("VarUsage: {:?}", var_usage);
+            // free
+            cur_subc_gates.clear();
+        }
+    };
 
     for (o, _) in circuit.outputs().iter() {
         let oidx = usize::try_from(*o).unwrap() - input_len;
@@ -297,8 +304,13 @@ where
                 }
             } else {
                 if cur_subc_gates.len() >= max_gates {
-                    push_subcircuit(&mut cur_subc_gates, &mut var_usage,
-                                    &mut global_vars, &mut var_alloc, false);
+                    push_subcircuit(
+                        &mut cur_subc_gates,
+                        &mut var_usage,
+                        &mut global_vars,
+                        &mut var_alloc,
+                        false,
+                    );
                 }
                 // use variable from gate.i0 and gate.i1
                 let g = gates[node_index];
@@ -325,7 +337,13 @@ where
         }
     }
 
-    push_subcircuit(&mut cur_subc_gates, &mut var_usage, &mut global_vars, &mut var_alloc, true);
+    push_subcircuit(
+        &mut cur_subc_gates,
+        &mut var_usage,
+        &mut global_vars,
+        &mut var_alloc,
+        true,
+    );
 
     let placement_len = var_alloc.len();
     let subcircuit_num = subcircuits.len();
