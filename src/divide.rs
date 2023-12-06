@@ -24,7 +24,7 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 // separate circuit while traversing through circuit
 fn divide_circuit_traverse<T>(circuit: Circuit<T>, max_gates: usize) -> Vec<DivCircuitEntry<T>>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -44,7 +44,6 @@ where
         way: usize,
     }
 
-    println!("DivideStart");
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
@@ -66,8 +65,6 @@ where
                                global_vars: &mut [Option<T>],
                                var_alloc: &mut VarAllocator<T>,
                                last: bool| {
-        println!("Subcircuit {}", subcircuits.len());
-        println!("  gates: {:?}", cur_subc_gates);
         let mut subc_inputs = BTreeSet::<usize>::new();
         let mut used_inputs = vec![false; input_len];
         if subcircuits.is_empty() {
@@ -127,14 +124,11 @@ where
                 .enumerate()
                 .map(|(i, x)| (*x, i + subc_input_len)),
         );
-        println!("Sub_input_cmap: {:?}", subc_input_map);
-        println!("Subcmap: {:?}", subc_map);
         // generate subcircuit gates
         let subc_gates = cur_subc_gates
             .iter()
             .map(|gidx| {
                 let g: Gate<T> = gates[*gidx - input_len];
-                println!("G: {} {}", gidx, g);
                 Gate {
                     func: g.func,
                     i0: T::try_from({
@@ -248,9 +242,6 @@ where
             // if last subcircuit - then nothing
             vec![]
         };
-        println!("Subcinputlen: {}", subc_input_len);
-        println!("Subcgates: {:?}", subc_gates);
-        println!("Subcoutputs: {:?}", subc_outputs);
         let first = subcircuits.is_empty();
         subcircuits.push(DivCircuitEntry {
             circuit: Circuit::new(
@@ -276,9 +267,6 @@ where
                 None
             },
         });
-        println!("GlobalVars: {:?}", global_vars);
-        println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
-        println!("VarUsage: {:?}", var_usage);
         // clear current subcircuit gates
         cur_subc_gates.clear();
     };
@@ -339,7 +327,6 @@ where
                     if let Some(v) = global_vars[gi0] {
                         // free in var allocator. do not free in global vars - because
                         // it can be used later
-                        println!("FreeAlloc: {:?} {:?}", gi0, v);
                         var_alloc.free(v);
                     }
                 }
@@ -350,7 +337,6 @@ where
                     if let Some(v) = global_vars[gi1] {
                         // free in var allocator. do not free in global vars - because
                         // it can be used later
-                        println!("FreeAlloc: {:?} {:?}", gi1, v);
                         var_alloc.free(v);
                     }
                 }
