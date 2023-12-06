@@ -345,7 +345,6 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         arg_input: u32,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
-        let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
             (output.range.end - output.range.start) / real_input_words
         } else {
