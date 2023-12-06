@@ -7,7 +7,7 @@ use std::hash::Hash;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Placement {
-    ps: Vec<usize>,
+    ps: Vec<usize>, // placement
     real_len: usize,
 }
 
