@@ -297,7 +297,7 @@ where
         println!("GlobalVars: {:?}", global_vars);
         println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
         println!("VarUsage: {:?}", var_usage);
-        // free
+        // clear current subcircuit gates
         cur_subc_gates.clear();
     };
 
@@ -379,6 +379,7 @@ where
         }
     }
 
+    // generate last subcircuit
     push_subcircuit(
         &mut cur_subc_gates,
         &mut var_usage,
