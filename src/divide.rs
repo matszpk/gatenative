@@ -843,5 +843,112 @@ mod tests {
             ],
             divide_circuit_traverse(circuit.clone(), 5)
         );
+
+        let circuit = Circuit::new(
+            2,
+            [
+                Gate::new_xor(0, 1),     // 2
+                Gate::new_and(0, 1),     // 3
+                Gate::new_nimpl(0, 1),   // 4
+                Gate::new_nor(0, 1),     // 5
+                Gate::new_xor(2, 3),     // 6
+                Gate::new_xor(4, 5),     // 7
+                Gate::new_nor(2, 3),     // 8
+                Gate::new_nor(4, 5),     // 9
+                Gate::new_xor(6, 7),     // 10
+                Gate::new_xor(8, 9),     // 11
+                Gate::new_xor(10, 11),   // 12
+                Gate::new_nor(10, 11),   // 13
+                Gate::new_nimpl(11, 10), // 14
+                Gate::new_and(10, 11),   // 15
+                Gate::new_nor(12, 13),   // 16
+                Gate::new_nor(14, 15),   // 17
+                Gate::new_and(12, 13),   // 18
+                Gate::new_and(14, 15),   // 19
+                Gate::new_xor(16, 17),   // 20
+                Gate::new_xor(18, 19),   // 21
+                Gate::new_nor(20, 21),   // 22
+                Gate::new_and(20, 21),   // 23
+                Gate::new_nimpl(21, 20), // 24
+                Gate::new_xor(20, 21),   // 25
+                Gate::new_nor(22, 23),   // 26
+                Gate::new_nor(24, 25),   // 27
+                Gate::new_and(22, 23),   // 28
+                Gate::new_and(24, 25),   // 29
+                Gate::new_xor(26, 27),   // 30
+                Gate::new_xor(28, 29),   // 31
+            ],
+            [(30, false), (31, true)],
+        )
+        .unwrap();
+        assert_eq!(
+            vec![
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        2,
+                        [
+                            Gate::new_xor(0, 1),     // 2
+                            Gate::new_and(0, 1),     // 3
+                            Gate::new_nimpl(0, 1),   // 4
+                            Gate::new_nor(0, 1),     // 5
+                            Gate::new_xor(2, 3),     // 6
+                            Gate::new_xor(4, 5),     // 7
+                            Gate::new_nor(2, 3),     // 8
+                            Gate::new_nor(4, 5),     // 9
+                            Gate::new_xor(6, 7),     // 10
+                            Gate::new_xor(8, 9),     // 11
+                            Gate::new_xor(10, 11),   // 12
+                            Gate::new_nor(10, 11),   // 13
+                            Gate::new_nimpl(11, 10), // 14
+                            Gate::new_and(10, 11),   // 15
+                            Gate::new_nor(12, 13),   // 16
+                        ],
+                        [
+                            (12, false),
+                            (13, false),
+                            (14, false),
+                            (15, false),
+                            (16, false)
+                        ]
+                    )
+                    .unwrap(),
+                    input_ps: None,
+                    output_ps: Some(Placement {
+                        ps: vec![0, 1, 2, 3, 4],
+                        real_len: 5
+                    }),
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        5,
+                        [
+                            Gate::new_nor(2, 3),   // 17
+                            Gate::new_and(0, 1),   // 18
+                            Gate::new_and(2, 3),   // 19
+                            Gate::new_xor(4, 5),   // 20
+                            Gate::new_xor(6, 7),   // 21
+                            Gate::new_nor(8, 9),   // 22
+                            Gate::new_and(8, 9),   // 23
+                            Gate::new_nimpl(9, 8), // 24
+                            Gate::new_xor(8, 9),   // 25
+                            Gate::new_nor(10, 11), // 26
+                            Gate::new_nor(12, 13), // 27
+                            Gate::new_and(10, 11), // 28
+                            Gate::new_and(12, 13), // 29
+                            Gate::new_xor(14, 15), // 30
+                            Gate::new_xor(16, 17), // 31
+                        ],
+                        [(18, false), (19, true)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        ps: vec![0, 1, 2, 3, 4],
+                        real_len: 5
+                    }),
+                    output_ps: None,
+                },
+            ],
+            divide_circuit_traverse(circuit.clone(), 15)
+        );
     }
 }
