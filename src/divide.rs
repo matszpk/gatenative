@@ -55,7 +55,7 @@ where
     // index - original gate index, value - option: var index
     let mut global_vars = vec![None; input_len + gate_num];
     let mut cur_subc_gates = BTreeSet::new();
-    let mut var_alloc = VarAllocator::<usize>::new();
+    let mut var_alloc = VarAllocator::<T>::new();
 
     for i in 0..input_len {
         global_vars[i] = Some(var_alloc.alloc());
@@ -63,8 +63,8 @@ where
 
     let mut push_subcircuit = |cur_subc_gates: &mut BTreeSet<usize>,
                                var_usage: &mut [T],
-                               global_vars: &mut [Option<usize>],
-                               var_alloc: &mut VarAllocator<usize>,
+                               global_vars: &mut [Option<T>],
+                               var_alloc: &mut VarAllocator<T>,
                                last: bool| {
         println!("Subcircuit {}", subcircuits.len());
         println!("  gates: {:?}", cur_subc_gates);
@@ -116,7 +116,7 @@ where
         // input placement indices
         let input_ps = subc_inputs
             .into_iter()
-            .map(|x| global_vars[x].unwrap())
+            .map(|x| usize::try_from(global_vars[x].unwrap()).unwrap())
             .collect::<Vec<_>>();
 
         // create new subcircuit
@@ -223,7 +223,7 @@ where
                 .filter_map(|gidx| {
                     if global_vars[*gidx].is_some() {
                         if subc_map.contains_key(gidx) {
-                            Some(global_vars[*gidx].unwrap())
+                            Some(usize::try_from(global_vars[*gidx].unwrap()).unwrap())
                         } else {
                             None
                         }
