@@ -21,30 +21,7 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 // IDEA: from circuit input to last circuit outputs:
 // move some circuit outputs that will be used later to last outputs by copying.
 
-// IDEA: dividing by traversing from circuit outputs to circuit inputs by using DFS.
-// maybe this is better idea than dividing circuit sequantially (as chain subcircuits).
-// this is preferred IDEA. while traversing include gate outputs usage.
-// choose than way where is smallest gate output usage.
-// algorithm concept:
-// 1. from first enqueued output: traverse to first circuit input:
-// 2. try connect other circut inputs to further gates by using smallest number of inputs.
-// 3. if after trying we have some ways that not finished circuit inputs.
-//    then one of it can be done:
-//    3.1. divide into two parts
-//    3.2. try connect other gate inputs to subcircuit that will be before current subcircuit.
-//         only possible if next subcircuit doesn't have shared gates between
-//         current subcircuit except way from next subcircuit is connected.
-//    3.3. remove that ways where are overflows. and go to 1. to create next subcircuit
-//         starting from end (to circuit output) of way where is overflow.
-//    3.4. divide next subcircuit with overflow into two parts:
-//         * part for current subcircuit (executed as first)
-//         * part for next subcircuit (executed as second)
-// better algorithm: just traverse (DFS) collect gates if len(gate) >= max_gates then
-// create new subcircuit.
-// hint: try use one buffer as input and output for one subcircuit. warning: RISKY!!!
-// it is possible because code generator always load data first and store data at end of code.
-
-// separate circuit while traversing
+// separate circuit while traversing through circuit
 fn divide_circuit_traverse<T>(circuit: Circuit<T>, max_gates: usize) -> Vec<DivCircuitEntry<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
