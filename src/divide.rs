@@ -192,6 +192,7 @@ where
             })
             .collect::<Vec<_>>();
         // process current variables for usage
+        // T::default is zero in T.
         for gidx in cur_subc_gates.iter() {
             if global_vars[*gidx].is_some() {
                 if var_usage[*gidx] == T::default() {
@@ -220,6 +221,8 @@ where
                 })
                 .collect::<Vec<_>>();
             if subcircuits.is_empty() {
+                // if some input is not used in first subcircuit then will be added
+                // as direct output of this subcircuit
                 subc_outputs.extend(used_inputs.iter().enumerate().filter_map(|(i, used)| {
                     if !used {
                         let i = T::try_from(i).unwrap();
@@ -245,10 +248,10 @@ where
                 })
                 .collect::<Vec<_>>()
         };
-        // generate placements indices - as res_output_map
+        // generate placements indices
         let output_ps = if !last {
             // if not last subcircuit
-            let mut res_output_map = cur_subc_gates
+            let mut output_ps = cur_subc_gates
                 .iter()
                 .filter_map(|gidx| {
                     if global_vars[*gidx].is_some() {
@@ -263,17 +266,17 @@ where
                 })
                 .collect::<Vec<_>>();
             if subcircuits.is_empty() {
-                res_output_map.extend(used_inputs.into_iter().enumerate().filter_map(
-                    |(i, used)| {
-                        if !used {
-                            Some(i)
-                        } else {
-                            None
-                        }
-                    },
-                ));
+                // if some input is not used in first subcircuit then will be added
+                // as direct output of this subcircuit
+                output_ps.extend(used_inputs.into_iter().enumerate().filter_map(|(i, used)| {
+                    if !used {
+                        Some(i)
+                    } else {
+                        None
+                    }
+                }));
             }
-            res_output_map
+            output_ps
         } else {
             // if last subcircuit - then get from circuit outputs
             vec![]
