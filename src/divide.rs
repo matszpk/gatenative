@@ -1396,5 +1396,67 @@ mod tests {
             }],
             divide_circuit_traverse(circuit.clone(), 30)
         );
+
+        // multiply 2x2 bit circuit
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(0, 2),
+                Gate::new_and(1, 2),
+                Gate::new_and(0, 3),
+                Gate::new_and(1, 3),
+                // add a1*b0 + a0*b1
+                Gate::new_xor(5, 6),
+                Gate::new_and(5, 6),
+                // add c(a1*b0 + a0*b1) + a1*b1
+                Gate::new_xor(7, 9),
+                Gate::new_and(7, 9),
+            ],
+            [(4, false), (8, false), (10, false), (11, false)],
+        )
+        .unwrap();
+        assert_eq!(
+            vec![
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        4,
+                        [
+                            Gate::new_and(0, 2),
+                            Gate::new_and(1, 2),
+                            Gate::new_and(0, 3),
+                            Gate::new_and(1, 3),
+                            // add a1*b0 + a0*b1
+                            Gate::new_xor(5, 6),
+                        ],
+                        [(4, false), (5, false), (6, false), (7, false), (8, false)]
+                    )
+                    .unwrap(),
+                    input_ps: None,
+                    output_ps: Some(Placement {
+                        placements: vec![0, 1, 2, 3, 4],
+                        real_len: 5
+                    }),
+                },
+                DivCircuitEntry {
+                    circuit: Circuit::new(
+                        5,
+                        [
+                            Gate::new_and(1, 2),
+                            // add c(a1*b0 + a0*b1) + a1*b1
+                            Gate::new_xor(3, 5),
+                            Gate::new_and(3, 5),
+                        ],
+                        [(0, false), (4, false), (6, false), (7, false)]
+                    )
+                    .unwrap(),
+                    input_ps: Some(Placement {
+                        placements: vec![0, 1, 2, 3, 4],
+                        real_len: 5
+                    }),
+                    output_ps: None,
+                },
+            ],
+            divide_circuit_traverse(circuit.clone(), 5)
+        );
     }
 }
