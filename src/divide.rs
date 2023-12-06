@@ -7,7 +7,7 @@ use std::hash::Hash;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Placement {
-    placements: Vec<usize>,
+    ps: Vec<usize>,
     real_len: usize,
 }
 
@@ -215,7 +215,7 @@ where
                 })
                 .collect::<Vec<_>>()
         };
-        // generate placements indices
+        // generate placement indices
         let output_ps = if !last {
             // if not last subcircuit
             let mut output_ps = cur_subc_gates
@@ -261,7 +261,7 @@ where
             .unwrap(),
             input_ps: if !first {
                 Some(Placement {
-                    placements: input_ps,
+                    ps: input_ps,
                     real_len: 0,
                 })
             } else {
@@ -269,7 +269,7 @@ where
             },
             output_ps: if !last {
                 Some(Placement {
-                    placements: output_ps,
+                    ps: output_ps,
                     real_len: 0,
                 })
             } else {
@@ -435,7 +435,7 @@ mod tests {
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        placements: vec![2],
+                        ps: vec![2],
                         real_len: 6
                     }),
                 },
@@ -455,11 +455,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2],
+                        ps: vec![0, 1, 2],
                         real_len: 6
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![3, 4],
+                        ps: vec![3, 4],
                         real_len: 6
                     }),
                 },
@@ -479,7 +479,7 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3, 4],
+                        ps: vec![0, 1, 2, 3, 4],
                         real_len: 6
                     }),
                     output_ps: None,
@@ -508,7 +508,7 @@ mod tests {
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        placements: vec![2, 3],
+                        ps: vec![2, 3],
                         real_len: 7
                     }),
                 },
@@ -530,11 +530,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3],
+                        ps: vec![0, 1, 2, 3],
                         real_len: 7
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![3, 4, 5, 6],
+                        ps: vec![3, 4, 5, 6],
                         real_len: 7
                     }),
                 },
@@ -550,7 +550,7 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3, 4, 5, 6],
+                        ps: vec![0, 1, 2, 3, 4, 5, 6],
                         real_len: 7
                     }),
                     output_ps: None,
@@ -574,7 +574,7 @@ mod tests {
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        placements: vec![2, 3, 5],
+                        ps: vec![2, 3, 5],
                         real_len: 6
                     }),
                 },
@@ -591,11 +591,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![1, 4, 5, 2, 3],
+                        ps: vec![1, 4, 5, 2, 3],
                         real_len: 6
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![2, 3],
+                        ps: vec![2, 3],
                         real_len: 6
                     })
                 },
@@ -612,11 +612,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3],
+                        ps: vec![0, 1, 2, 3],
                         real_len: 6
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![3, 4],
+                        ps: vec![3, 4],
                         real_len: 6
                     })
                 },
@@ -633,11 +633,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 4],
+                        ps: vec![0, 1, 2, 4],
                         real_len: 6
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![4, 5],
+                        ps: vec![4, 5],
                         real_len: 6
                     })
                 },
@@ -654,11 +654,11 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![1, 2, 5],
+                        ps: vec![1, 2, 5],
                         real_len: 6
                     }),
                     output_ps: Some(Placement {
-                        placements: vec![1, 5],
+                        ps: vec![1, 5],
                         real_len: 6
                     })
                 },
@@ -672,7 +672,7 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 2, 3, 4, 1, 5],
+                        ps: vec![0, 2, 3, 4, 1, 5],
                         real_len: 6
                     }),
                     output_ps: None
@@ -735,7 +735,7 @@ mod tests {
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3, 4],
+                        ps: vec![0, 1, 2, 3, 4],
                         real_len: 5
                     }),
                 },
@@ -752,7 +752,7 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 1, 2, 3, 4],
+                        ps: vec![0, 1, 2, 3, 4],
                         real_len: 5
                     }),
                     output_ps: None,
@@ -811,7 +811,7 @@ mod tests {
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        placements: vec![1, 2, 3, 4, 6, 0, 5],
+                        ps: vec![1, 2, 3, 4, 6, 0, 5],
                         real_len: 7
                     }),
                 },
@@ -835,7 +835,7 @@ mod tests {
                     )
                     .unwrap(),
                     input_ps: Some(Placement {
-                        placements: vec![0, 5, 1, 2, 3, 4, 6],
+                        ps: vec![0, 5, 1, 2, 3, 4, 6],
                         real_len: 7
                     }),
                     output_ps: None,
