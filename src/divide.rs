@@ -355,6 +355,8 @@ where
                 var_usage[gi0] = T::try_from(vusage - 1).unwrap();
                 if var_usage[gi0] == T::default() {
                     if let Some(v) = global_vars[gi0] {
+                        // free in var allocator. do not free in global vars - because
+                        // it can be used later
                         println!("FreeAlloc: {:?} {:?}", gi0, v);
                         var_alloc.free(v);
                     }
@@ -364,6 +366,8 @@ where
                 var_usage[gi1] = T::try_from(vusage - 1).unwrap();
                 if var_usage[gi1] == T::default() {
                     if let Some(v) = global_vars[gi1] {
+                        // free in var allocator. do not free in global vars - because
+                        // it can be used later
                         println!("FreeAlloc: {:?} {:?}", gi1, v);
                         var_alloc.free(v);
                     }
