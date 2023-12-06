@@ -43,14 +43,6 @@ where
         node: usize,
         way: usize,
     }
-    #[derive(Debug)]
-    struct Subcircuit<T: Clone + Copy> {
-        circuit: Circuit<T>,
-        // input_ps - input placement
-        input_ps: Vec<usize>,
-        // output_ps - output placement
-        output_ps: Vec<usize>,
-    }
 
     println!("DivideStart");
     let input_len_t = circuit.input_len();
@@ -58,7 +50,7 @@ where
     let gate_num = circuit.len();
     let gates = circuit.gates();
     let mut visited = vec![false; gate_num];
-    let mut subcircuits = Vec::<Subcircuit<T>>::new();
+    let mut subcircuits = Vec::<DivCircuitEntry<T>>::new();
     let mut var_usage = gen_var_usage(&circuit);
     // index - original gate index, value - option: var index
     let mut global_vars = vec![None; input_len + gate_num];
@@ -259,15 +251,30 @@ where
         println!("Subcinputlen: {}", subc_input_len);
         println!("Subcgates: {:?}", subc_gates);
         println!("Subcoutputs: {:?}", subc_outputs);
-        subcircuits.push(Subcircuit {
+        let first = subcircuits.is_empty();
+        subcircuits.push(DivCircuitEntry {
             circuit: Circuit::new(
                 T::try_from(subc_input_len).unwrap(),
                 subc_gates,
                 subc_outputs,
             )
             .unwrap(),
-            input_ps,
-            output_ps,
+            input_ps: if !first {
+                Some(Placement {
+                    placements: input_ps,
+                    real_len: 0,
+                })
+            } else {
+                None
+            },
+            output_ps: if !last {
+                Some(Placement {
+                    placements: output_ps,
+                    real_len: 0,
+                })
+            } else {
+                None
+            },
         });
         println!("GlobalVars: {:?}", global_vars);
         println!("Subcircuit last: {:?}", subcircuits.last().unwrap());
@@ -364,30 +371,15 @@ where
     );
 
     let placement_len = var_alloc.len();
-    let subcircuit_num = subcircuits.len();
+    for sc in &mut subcircuits {
+        if let Some(ps) = &mut sc.input_ps {
+            ps.real_len = placement_len;
+        }
+        if let Some(ps) = &mut sc.output_ps {
+            ps.real_len = placement_len;
+        }
+    }
     subcircuits
-        .into_iter()
-        .enumerate()
-        .map(|(i, sc)| DivCircuitEntry {
-            circuit: sc.circuit,
-            input_ps: if i != 0 {
-                Some(Placement {
-                    placements: sc.input_ps,
-                    real_len: placement_len,
-                })
-            } else {
-                None
-            },
-            output_ps: if i != subcircuit_num - 1 {
-                Some(Placement {
-                    placements: sc.output_ps,
-                    real_len: placement_len,
-                })
-            } else {
-                None
-            },
-        })
-        .collect::<Vec<_>>()
 }
 
 #[cfg(test)]
