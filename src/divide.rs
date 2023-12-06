@@ -1378,5 +1378,23 @@ mod tests {
             ],
             divide_circuit_traverse(circuit.clone(), 4)
         );
+        // if no division
+        assert_eq!(
+            vec![DivCircuitEntry {
+                circuit: circuit.clone(),
+                input_ps: None,
+                output_ps: None
+            }],
+            divide_circuit_traverse(circuit.clone(), 21)
+        );
+        // if no division
+        assert_eq!(
+            vec![DivCircuitEntry {
+                circuit: circuit.clone(),
+                input_ps: None,
+                output_ps: None
+            }],
+            divide_circuit_traverse(circuit.clone(), 30)
+        );
     }
 }
