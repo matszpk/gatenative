@@ -245,7 +245,7 @@ where
             }
             output_ps
         } else {
-            // if last subcircuit - then get from circuit outputs
+            // if last subcircuit - then nothing
             vec![]
         };
         println!("Subcinputlen: {}", subc_input_len);
