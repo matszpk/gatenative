@@ -76,11 +76,6 @@ where
         // output_ps - output placement
         output_ps: Vec<usize>,
     }
-    #[derive(Clone, Copy)]
-    struct VarEntry<T> {
-        idx: Option<T>,
-        usage: usize,
-    }
 
     println!("DivideStart");
     let input_len_t = circuit.input_len();
