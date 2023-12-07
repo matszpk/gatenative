@@ -552,7 +552,14 @@ mod tests {
                             Gate::new_xor(3, 4), // 8
                             Gate::new_xor(6, 7), // 10
                         ],
-                        [(8, false), (9, false), (0, false), (1, false), (4, false), (5, false)]
+                        [
+                            (8, false),
+                            (9, false),
+                            (0, false),
+                            (1, false),
+                            (4, false),
+                            (5, false)
+                        ]
                     )
                     .unwrap(),
                     input_ps: None,
