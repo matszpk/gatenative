@@ -61,7 +61,7 @@ where
             let mut output = self.new_data(num * self.real_output_len());
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
-                    exec.execute_reuse_internal(&input, arg_input, &mut buffer)?;
+                    exec.execute_reuse_internal(input, arg_input, &mut buffer)?;
                 } else if exec_len == i + 1 {
                     exec.execute_reuse_internal(&buffer, 0, &mut output)?;
                 } else {
@@ -85,13 +85,28 @@ where
         arg_input: u32,
         output: &mut D,
     ) -> Result<(), E::ErrorType> {
-        if self.executors.len() != 1 {
-            unsafe {
-                self.executors
-                    .first_mut()
-                    .unwrap()
-                    .execute_reuse_internal(input, arg_input, output)
+        let exec_len = self.executors.len();
+        if exec_len != 1 {
+            let input_len = input.len();
+            let output_len = output.len();
+            let input_chunk_len = self.real_input_len();
+            let output_chunk_len = self.real_output_len();
+            let num = if input_chunk_len != 0 {
+                input_len / input_chunk_len
+            } else {
+                output_len / output_chunk_len
+            };
+            let mut buffer = self.new_data(num * self.buffer_len);
+            for (i, exec) in self.executors.iter_mut().enumerate() {
+                if i == 0 {
+                    exec.execute_reuse_internal(input, arg_input, &mut buffer)?;
+                } else if exec_len == i + 1 {
+                    exec.execute_reuse_internal(&buffer, 0, output)?;
+                } else {
+                    exec.execute_single_internal(&mut buffer, 0)?;
+                }
             }
+            Ok(())
         } else {
             unsafe {
                 self.executors
@@ -107,13 +122,22 @@ where
         output: &mut D,
         arg_input: u32,
     ) -> Result<(), E::ErrorType> {
-        if self.executors.len() != 1 {
-            unsafe {
-                self.executors
-                    .first_mut()
-                    .unwrap()
-                    .execute_single_internal(output, arg_input)
+        let exec_len = self.executors.len();
+        if exec_len != 1 {
+            let output_len = output.len();
+            let output_chunk_len = self.real_output_len();
+            let num = output_len / output_chunk_len;
+            let mut buffer = self.new_data(num * self.buffer_len);
+            for (i, exec) in self.executors.iter_mut().enumerate() {
+                if i == 0 {
+                    exec.execute_reuse_internal(output, arg_input, &mut buffer)?;
+                } else if exec_len == i + 1 {
+                    exec.execute_reuse_internal(&buffer, 0, output)?;
+                } else {
+                    exec.execute_single_internal(&mut buffer, 0)?;
+                }
             }
+            Ok(())
         } else {
             unsafe {
                 self.executors
