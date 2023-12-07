@@ -15,6 +15,7 @@ pub enum VNegs {
 
 pub mod clang_writer;
 pub mod cpu_build_exec;
+pub mod div_build_exec;
 mod divide;
 pub mod gencode;
 pub mod opencl_build_exec;

@@ -22,7 +22,10 @@ pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
 // move some circuit outputs that will be used later to last outputs by copying.
 
 // separate circuit while traversing through circuit
-fn divide_circuit_traverse<T>(circuit: Circuit<T>, max_gates: usize) -> Vec<DivCircuitEntry<T>>
+pub(crate) fn divide_circuit_traverse<T>(
+    circuit: Circuit<T>,
+    max_gates: usize,
+) -> Vec<DivCircuitEntry<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -38,7 +41,6 @@ where
         }];
     }
 
-    #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
         way: usize,
