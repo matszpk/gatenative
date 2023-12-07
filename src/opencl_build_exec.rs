@@ -159,7 +159,7 @@ impl OpenCLDataHolder {
 
 impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDataHolder {
     #[inline]
-    fn len(&'a self) -> usize {
+    fn len(&self) -> usize {
         self.range.end - self.range.start
     }
     fn set_range(&'a mut self, range: Range<usize>) {

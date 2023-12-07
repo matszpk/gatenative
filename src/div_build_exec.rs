@@ -19,7 +19,7 @@ where
     E: Executor<'a, DR, DW, D>,
 {
     executors: Vec<E>,
-    placements: Vec<DivPlacements>,
+    buffer_len: usize,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -57,11 +57,9 @@ where
             } else {
                 0
             };
-            let mut buffer = self.new_data(num * 
-                self.placements[0].input_ps.as_ref().unwrap().real_len);
+            let mut buffer = self.new_data(num * self.buffer_len);
             let mut output = self.new_data(num * self.real_output_len());
             for (i, exec) in self.executors.iter_mut().enumerate() {
-                let placements = &self.placements[i];
                 if i == 0 {
                     exec.execute_reuse_internal(&input, arg_input, &mut buffer)?;
                 } else if exec_len == i + 1 {
@@ -149,7 +147,7 @@ where
                     .into_iter()
                     .map(|ex| ex.unwrap())
                     .collect::<Vec<_>>(),
-                placements: self.placements.clone(),
+                buffer_len: self.buffer_len,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
@@ -262,7 +260,7 @@ where
             }
             execs.push(DivExecutor {
                 executors: circuit_execs,
-                placements: circuit_placements,
+                buffer_len: circuit_placements[0].input_ps.as_ref().unwrap().real_len,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,

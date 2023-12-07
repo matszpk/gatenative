@@ -248,7 +248,7 @@ impl CPUDataHolder {
 
 impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder {
     #[inline]
-    fn len(&'a self) -> usize {
+    fn len(&self) -> usize {
         self.range.end - self.range.start
     }
     fn set_range(&'a mut self, range: Range<usize>) {
