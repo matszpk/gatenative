@@ -48,11 +48,28 @@ where
     }
 
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u32) -> Result<D, E::ErrorType> {
-        unsafe {
-            self.executors
-                .first_mut()
-                .unwrap()
-                .execute_internal(input, arg_input)
+        if self.executors.len() != 1 {
+            // let input_len = input.len();
+            // let input_chunk_len = self.real_input_len();
+            // let num = if input_chunk_len {
+            //     input_len / input_chunk_len
+            // } else {
+            //     0
+            // };
+            // let buffer = self.new_data(num * self.placements[0].real_len);
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_internal(input, arg_input)
+            }
+        } else {
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_internal(input, arg_input)
+            }
         }
     }
 
@@ -62,11 +79,20 @@ where
         arg_input: u32,
         output: &mut D,
     ) -> Result<(), E::ErrorType> {
-        unsafe {
-            self.executors
-                .first_mut()
-                .unwrap()
-                .execute_reuse_internal(input, arg_input, output)
+        if self.executors.len() != 1 {
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_reuse_internal(input, arg_input, output)
+            }
+        } else {
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_reuse_internal(input, arg_input, output)
+            }
         }
     }
 
@@ -75,11 +101,20 @@ where
         output: &mut D,
         arg_input: u32,
     ) -> Result<(), E::ErrorType> {
-        unsafe {
-            self.executors
-                .first_mut()
-                .unwrap()
-                .execute_single_internal(output, arg_input)
+        if self.executors.len() != 1 {
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_single_internal(output, arg_input)
+            }
+        } else {
+            unsafe {
+                self.executors
+                    .first_mut()
+                    .unwrap()
+                    .execute_single_internal(output, arg_input)
+            }
         }
     }
 
@@ -193,7 +228,12 @@ where
                         .map(|p| (p.ps.as_slice(), p.real_len))
                 },
                 if i == 0 { arg_inputs } else { None },
-                single_buffer && subcircuits_num == 1,
+                if i + 1 == subcircuits_num {
+                    single_buffer && subcircuits_num == 1
+                } else {
+                    // for subcircuits after first and before last
+                    true
+                },
             );
         }
         self.placements.push(circuit_placements);
