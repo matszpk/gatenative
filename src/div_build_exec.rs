@@ -112,6 +112,8 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     builder: B,
+    max_gates: usize,
+    placements: Vec<DivPlacements>,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -143,6 +145,38 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
+        let subcircuits = divide_circuit_traverse(circuit, self.max_gates);
+        let subcircuits_num = subcircuits.len();
+        for (i, subcircuit) in subcircuits.into_iter().enumerate() {
+            self.placements.push(DivPlacements {
+                input_ps: subcircuit.input_ps,
+                output_ps: subcircuit.output_ps,
+            });
+            let last_placement = self.placements.last().unwrap();
+            let name_0 = format!("{}_{}", name, i);
+            self.builder.add_ext(
+                &name_0,
+                subcircuit.circuit,
+                if i == 0 {
+                    input_placement
+                } else {
+                    last_placement
+                        .input_ps
+                        .as_ref()
+                        .map(|p| (p.ps.as_slice(), p.real_len))
+                },
+                if i + 1 == subcircuits_num {
+                    output_placement
+                } else {
+                    last_placement
+                        .output_ps
+                        .as_ref()
+                        .map(|p| (p.ps.as_slice(), p.real_len))
+                },
+                if i == 0 { arg_inputs } else { None },
+                single_buffer && subcircuits_num == 1,
+            );
+        }
     }
 
     fn build(self) -> Result<Vec<DivExecutor<'a, DR, DW, D, E>>, B::ErrorType> {

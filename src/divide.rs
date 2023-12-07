@@ -7,15 +7,15 @@ use std::hash::Hash;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Placement {
-    ps: Vec<usize>, // placement
-    real_len: usize,
+    pub(crate) ps: Vec<usize>, // placement
+    pub(crate) real_len: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct DivCircuitEntry<T: Clone + Copy> {
-    circuit: Circuit<T>,
-    input_ps: Option<Placement>,  // input placement
-    output_ps: Option<Placement>, // output placement
+    pub(crate) circuit: Circuit<T>,
+    pub(crate) input_ps: Option<Placement>,  // input placement
+    pub(crate) output_ps: Option<Placement>, // output placement
 }
 
 // IDEA: from circuit input to last circuit outputs:
