@@ -48,6 +48,16 @@ fn test_div_builder_and_exec_cpu() {
             )
             .unwrap();
             builder.add("mul2x2", circuit.clone(), None, None, None);
+            let input_ps = (&[3, 1, 6, 4][..], 8);
+            let output_ps = (&[5, 3, 1, 4][..], 7);
+            builder.add(
+                "mul2x2p",
+                circuit.clone(),
+                Some(input_ps.clone()),
+                Some(output_ps.clone()),
+                None,
+            );
+            builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
             let mut execs = builder.build().unwrap();
 
             const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
@@ -113,6 +123,46 @@ fn test_div_builder_and_exec_cpu() {
                     + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
                     + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
                     + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
+                assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+            }
+            // execute with input and output placements
+            let mut mul2x2_input_p = CPUDataHolder::new(vec![0u32; word_len * 8]);
+            {
+                let mut mul2x2_input_p_slice_w = mul2x2_input_p.get_mut();
+                let mul2x2_input_p_slice = mul2x2_input_p_slice_w.get_mut();
+                for i in 0..4 {
+                    for j in 0..word_len {
+                        mul2x2_input_p_slice[word_len * input_ps.0[i] + j] =
+                            mul2x2_input[word_len * i + j];
+                    }
+                }
+            }
+            let out = execs[1].execute(&mul2x2_input_p, 0).unwrap().release();
+            for i in 0..16 {
+                let a = i & 3;
+                let b = i >> 2;
+                let c = ((out[word_len * output_ps.0[0]] >> i) & 1)
+                    + (((out[word_len * output_ps.0[1]] >> i) & 1) << 1)
+                    + (((out[word_len * output_ps.0[2]] >> i) & 1) << 2)
+                    + (((out[word_len * output_ps.0[3]] >> i) & 1) << 3);
+                assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
+            }
+            // execute circuit with single buffer
+            let mul2x2_input = MUL2X2_INPUT_TEMPLATE
+                .into_iter()
+                .map(|x| std::iter::once(x).chain(std::iter::repeat(0).take(word_len - 1)))
+                .flatten()
+                .collect::<Vec<_>>();
+            let mut out = execs[2].new_data_from_vec(mul2x2_input.clone());
+            execs[2].execute_single(&mut out, 0).unwrap();
+            let out = out.release();
+            for i in 0..16 {
+                let a = i & 3;
+                let b = i >> 2;
+                let c = ((out[0] >> i) & 1)
+                    + (((out[1 * word_len] >> i) & 1) << 1)
+                    + (((out[2 * word_len] >> i) & 1) << 2)
+                    + (((out[3 * word_len] >> i) & 1) << 3);
                 assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
             }
         }

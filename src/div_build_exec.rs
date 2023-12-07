@@ -20,6 +20,7 @@ where
 {
     executors: Vec<E>,
     buffer_len: usize,
+    single_buffer: bool,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -161,6 +162,7 @@ where
                     .map(|ex| ex.unwrap())
                     .collect::<Vec<_>>(),
                 buffer_len: self.buffer_len,
+                single_buffer: self.single_buffer,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
@@ -171,13 +173,14 @@ where
     }
 
     fn is_single_buffer(&self) -> bool {
-        self.executors.first().unwrap().is_single_buffer()
+        self.single_buffer
     }
 }
 
 struct CircuitInfo {
     subcircuit_num: usize,
     buffer_len: usize,
+    single_buffer: bool,
 }
 
 pub struct DivBuilder<'a, DR, DW, D, E, B>
@@ -291,6 +294,7 @@ where
         self.circuit_infos.push(CircuitInfo {
             subcircuit_num,
             buffer_len,
+            single_buffer,
         });
     }
 
@@ -307,6 +311,7 @@ where
             execs.push(DivExecutor {
                 executors: circuit_execs,
                 buffer_len: circuit_infos.buffer_len,
+                single_buffer: circuit_infos.single_buffer,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
