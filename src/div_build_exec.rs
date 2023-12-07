@@ -171,6 +171,11 @@ where
     }
 }
 
+struct CircuitInfo {
+    subcircuit_num: usize,
+    buffer_len: usize,
+}
+
 pub struct DivBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader,
@@ -181,11 +186,32 @@ where
 {
     builder: B,
     max_gates: usize,
-    placements: Vec<Vec<DivPlacements>>,
+    circuit_infos: Vec<CircuitInfo>,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
     e: PhantomData<&'a E>,
+}
+
+impl<'a, DR, DW, D, E, B> DivBuilder<'a, DR, DW, D, E, B>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D>,
+    B: Builder<'a, DR, DW, D, E>,
+{
+    pub fn new(builder: B, max_gates: usize) -> Self {
+        DivBuilder {
+            builder,
+            max_gates,
+            circuit_infos: vec![],
+            d: PhantomData,
+            dr: PhantomData,
+            dw: PhantomData,
+            e: PhantomData,
+        }
+    }
 }
 
 impl<'a, DR, DW, D, E, B> Builder<'a, DR, DW, D, DivExecutor<'a, DR, DW, D, E>>
@@ -214,14 +240,17 @@ where
         <usize as TryFrom<T>>::Error: Debug,
     {
         let subcircuits = divide_circuit_traverse(circuit, self.max_gates);
-        let subcircuits_num = subcircuits.len();
-        let mut circuit_placements = vec![];
+        let subcircuit_num = subcircuits.len();
+        let buffer_len = subcircuits[0]
+            .output_ps
+            .as_ref()
+            .map(|ps| ps.real_len)
+            .unwrap_or_default();
         for (i, subcircuit) in subcircuits.into_iter().enumerate() {
-            circuit_placements.push(DivPlacements {
+            let last_placement = DivPlacements {
                 input_ps: subcircuit.input_ps,
                 output_ps: subcircuit.output_ps,
-            });
-            let last_placement = circuit_placements.last().unwrap();
+            };
             let name_0 = format!("{}_{}", name, i);
             self.builder.add_ext(
                 &name_0,
@@ -235,7 +264,7 @@ where
                         .as_ref()
                         .map(|p| (p.ps.as_slice(), p.real_len))
                 },
-                if i + 1 == subcircuits_num {
+                if i + 1 == subcircuit_num {
                     output_placement
                 } else {
                     // use placement from subcircuit
@@ -245,35 +274,34 @@ where
                         .map(|p| (p.ps.as_slice(), p.real_len))
                 },
                 if i == 0 { arg_inputs } else { None },
-                if i + 1 == subcircuits_num {
+                if i + 1 == subcircuit_num {
                     // if only one subcircuit then apply single_buffer
-                    single_buffer && subcircuits_num == 1
+                    single_buffer && subcircuit_num == 1
                 } else {
                     // for subcircuits after first and before last
                     i != 0
                 },
             );
         }
-        self.placements.push(circuit_placements);
+        self.circuit_infos.push(CircuitInfo {
+            subcircuit_num,
+            buffer_len,
+        });
     }
 
     fn build(self) -> Result<Vec<DivExecutor<'a, DR, DW, D, E>>, B::ErrorType> {
         let all_circuit_execs = self.builder.build()?;
         let mut execs = vec![];
         let mut all_circuit_execs = all_circuit_execs.into_iter();
-        for circuit_placements in self.placements {
-            let subcircuits_num = circuit_placements.len();
+        for circuit_infos in self.circuit_infos {
+            let subcircuit_num = circuit_infos.subcircuit_num;
             let mut circuit_execs = vec![];
-            for _ in 0..subcircuits_num {
+            for _ in 0..subcircuit_num {
                 circuit_execs.push(all_circuit_execs.next().unwrap());
             }
             execs.push(DivExecutor {
                 executors: circuit_execs,
-                buffer_len: circuit_placements[0]
-                    .output_ps
-                    .as_ref()
-                    .map(|ps| ps.real_len)
-                    .unwrap_or_default(),
+                buffer_len: circuit_infos.buffer_len,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
