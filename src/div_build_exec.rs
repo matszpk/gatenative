@@ -232,7 +232,7 @@ where
                     single_buffer && subcircuits_num == 1
                 } else {
                     // for subcircuits after first and before last
-                    true
+                    i != 0
                 },
             );
         }
