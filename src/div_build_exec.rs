@@ -34,15 +34,19 @@ where
 {
     type ErrorType = E::ErrorType;
 
+    #[inline]
     fn input_len(&self) -> usize {
         self.executors.first().unwrap().input_len()
     }
+    #[inline]
     fn output_len(&self) -> usize {
         self.executors.last().unwrap().output_len()
     }
+    #[inline]
     fn real_input_len(&self) -> usize {
         self.executors.first().unwrap().real_input_len()
     }
+    #[inline]
     fn real_output_len(&self) -> usize {
         self.executors.last().unwrap().real_output_len()
     }
