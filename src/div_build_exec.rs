@@ -70,12 +70,7 @@ where
             }
             Ok(output)
         } else {
-            unsafe {
-                self.executors
-                    .first_mut()
-                    .unwrap()
-                    .execute_internal(input, arg_input)
-            }
+            unsafe { self.executors[0].execute_internal(input, arg_input) }
         }
     }
 
@@ -108,12 +103,7 @@ where
             }
             Ok(())
         } else {
-            unsafe {
-                self.executors
-                    .first_mut()
-                    .unwrap()
-                    .execute_reuse_internal(input, arg_input, output)
-            }
+            unsafe { self.executors[0].execute_reuse_internal(input, arg_input, output) }
         }
     }
 
@@ -139,12 +129,7 @@ where
             }
             Ok(())
         } else {
-            unsafe {
-                self.executors
-                    .first_mut()
-                    .unwrap()
-                    .execute_single_internal(output, arg_input)
-            }
+            unsafe { self.executors[0].execute_single_internal(output, arg_input) }
         }
     }
 
