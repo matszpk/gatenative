@@ -214,6 +214,7 @@ where
                 if i == 0 {
                     input_placement
                 } else {
+                    // use placement from subcircuit
                     last_placement
                         .input_ps
                         .as_ref()
@@ -222,6 +223,7 @@ where
                 if i + 1 == subcircuits_num {
                     output_placement
                 } else {
+                    // use placement from subcircuit
                     last_placement
                         .output_ps
                         .as_ref()
@@ -229,6 +231,7 @@ where
                 },
                 if i == 0 { arg_inputs } else { None },
                 if i + 1 == subcircuits_num {
+                    // if only one subcircuit then apply single_buffer
                     single_buffer && subcircuits_num == 1
                 } else {
                     // for subcircuits after first and before last
