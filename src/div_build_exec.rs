@@ -202,6 +202,7 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     pub fn new(builder: B, max_gates: usize) -> Self {
+        assert!(builder.is_empty());
         DivBuilder {
             builder,
             max_gates,
@@ -312,6 +313,10 @@ where
 
     fn word_len(&self) -> u32 {
         self.builder.word_len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.circuit_infos.is_empty()
     }
 
     fn is_executor_per_thread() -> bool {

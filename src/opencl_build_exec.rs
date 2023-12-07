@@ -595,6 +595,10 @@ impl<'b, 'a>
         self.writer.word_len()
     }
 
+    fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
     fn is_executor_per_thread() -> bool {
         false
     }

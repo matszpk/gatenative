@@ -593,6 +593,10 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         self.writer.word_len()
     }
 
+    fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
     fn is_executor_per_thread() -> bool {
         true
     }

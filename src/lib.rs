@@ -310,6 +310,8 @@ where
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
     /// word length in bits
     fn word_len(&self) -> u32;
+    // if no added circuit to built
+    fn is_empty(&self) -> bool;
     /// executor can be used per thread
     fn is_executor_per_thread() -> bool;
 }
