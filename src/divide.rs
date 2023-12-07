@@ -72,15 +72,10 @@ where
         if subcircuits.is_empty() {
             // first subcircuit
             subc_inputs.extend(0..input_len);
-            for gidx in cur_subc_gates.iter() {
-                let g: Gate<T> = gates[*gidx - input_len];
-                let gi0 = usize::try_from(g.i0).unwrap();
-                let gi1 = usize::try_from(g.i1).unwrap();
-                if gi0 < input_len {
-                    used_inputs[gi0] = true;
-                }
-                if gi1 < input_len {
-                    used_inputs[gi1] = true;
+            for i in 0..input_len {
+                // mark that input is already used and not be used later
+                if var_usage[i] == T::default() {
+                    used_inputs[i] = true;
                 }
             }
         } else {
@@ -418,12 +413,12 @@ mod tests {
                             Gate::new_xor(8, 9),   // 11
                             Gate::new_and(10, 11), // 12
                         ],
-                        [(12, false)]
+                        [(12, false), (0, false), (1, false)]
                     )
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        ps: vec![2],
+                        ps: vec![2, 0, 1],
                         real_len: 6
                     }),
                 },
@@ -491,12 +486,12 @@ mod tests {
                             Gate::new_and(1, 12),  // 13
                             Gate::new_and(1, 13),  // 14
                         ],
-                        [(12, false), (14, false)]
+                        [(12, false), (14, false), (0, false), (1, false)]
                     )
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        ps: vec![2, 3],
+                        ps: vec![2, 3, 0, 1],
                         real_len: 7
                     }),
                 },
@@ -557,12 +552,12 @@ mod tests {
                             Gate::new_xor(3, 4), // 8
                             Gate::new_xor(6, 7), // 10
                         ],
-                        [(8, false), (9, false), (5, false)]
+                        [(8, false), (9, false), (0, false), (1, false), (4, false), (5, false)]
                     )
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        ps: vec![2, 3, 5],
+                        ps: vec![2, 3, 0, 1, 4, 5],
                         real_len: 6
                     }),
                 },
@@ -754,58 +749,15 @@ mod tests {
                     circuit: Circuit::new(
                         4,
                         [
-                            Gate::new_and(0, 2),
-                            Gate::new_and(1, 2),
-                            Gate::new_and(0, 3),
-                            Gate::new_and(1, 3),
-                            // add a1*b0 + a0*b1
-                            Gate::new_xor(5, 6),
-                        ],
-                        [(4, false), (5, false), (6, false), (7, false), (8, false)]
-                    )
-                    .unwrap(),
-                    input_ps: None,
-                    output_ps: Some(Placement {
-                        ps: vec![0, 1, 2, 3, 4],
-                        real_len: 5
-                    }),
-                },
-                DivCircuitEntry {
-                    circuit: Circuit::new(
-                        5,
-                        [
-                            Gate::new_and(1, 2),
-                            // add c(a1*b0 + a0*b1) + a1*b1
-                            Gate::new_xor(3, 5),
-                            Gate::new_and(3, 5),
-                        ],
-                        [(0, false), (4, false), (6, false), (7, false)]
-                    )
-                    .unwrap(),
-                    input_ps: Some(Placement {
-                        ps: vec![0, 1, 2, 3, 4],
-                        real_len: 5
-                    }),
-                    output_ps: None,
-                },
-            ],
-            divide_circuit_traverse(circuit.clone(), 5)
-        );
-        assert_eq!(
-            vec![
-                DivCircuitEntry {
-                    circuit: Circuit::new(
-                        4,
-                        [
                             Gate::new_and(0, 2), // 4
                             Gate::new_and(1, 2), // 5
                         ],
-                        [(4, false), (5, false), (3, false)]
+                        [(4, false), (5, false), (0, false), (1, false), (3, false)]
                     )
                     .unwrap(),
                     input_ps: None,
                     output_ps: Some(Placement {
-                        ps: vec![2, 4, 3],
+                        ps: vec![2, 4, 0, 1, 3],
                         real_len: 6
                     }),
                 },
