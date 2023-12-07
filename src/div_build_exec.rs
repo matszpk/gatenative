@@ -95,7 +95,25 @@ where
     where
         Self: Sized,
     {
-        None
+        let cloned_execs = self
+            .executors
+            .iter()
+            .map(|ex| ex.try_clone())
+            .collect::<Vec<_>>();
+        if cloned_execs.iter().all(|ex| ex.is_some()) {
+            Some(DivExecutor {
+                executors: cloned_execs
+                    .into_iter()
+                    .map(|ex| ex.unwrap())
+                    .collect::<Vec<_>>(),
+                placements: self.placements.clone(),
+                d: PhantomData,
+                dr: PhantomData,
+                dw: PhantomData,
+            })
+        } else {
+            None
+        }
     }
 
     fn is_single_buffer(&self) -> bool {
