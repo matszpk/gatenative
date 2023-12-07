@@ -113,7 +113,7 @@ where
 {
     builder: B,
     max_gates: usize,
-    placements: Vec<DivPlacements>,
+    placements: Vec<Vec<DivPlacements>>,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -147,12 +147,13 @@ where
     {
         let subcircuits = divide_circuit_traverse(circuit, self.max_gates);
         let subcircuits_num = subcircuits.len();
+        let mut circuit_placements = vec![];
         for (i, subcircuit) in subcircuits.into_iter().enumerate() {
-            self.placements.push(DivPlacements {
+            circuit_placements.push(DivPlacements {
                 input_ps: subcircuit.input_ps,
                 output_ps: subcircuit.output_ps,
             });
-            let last_placement = self.placements.last().unwrap();
+            let last_placement = circuit_placements.last().unwrap();
             let name_0 = format!("{}_{}", name, i);
             self.builder.add_ext(
                 &name_0,
@@ -177,11 +178,28 @@ where
                 single_buffer && subcircuits_num == 1,
             );
         }
+        self.placements.push(circuit_placements);
     }
 
     fn build(self) -> Result<Vec<DivExecutor<'a, DR, DW, D, E>>, B::ErrorType> {
-        self.builder.build()?;
-        Ok(vec![])
+        let all_circuit_execs = self.builder.build()?;
+        let mut execs = vec![];
+        let mut all_circuit_execs = all_circuit_execs.into_iter();
+        for circuit_placements in self.placements {
+            let subcircuits_num = circuit_placements.len();
+            let mut circuit_execs = vec![];
+            for _ in 0..subcircuits_num {
+                circuit_execs.push(all_circuit_execs.next().unwrap());
+            }
+            execs.push(DivExecutor {
+                executors: circuit_execs,
+                placements: circuit_placements,
+                d: PhantomData,
+                dr: PhantomData,
+                dw: PhantomData,
+            });
+        }
+        Ok(execs)
     }
 
     fn word_len(&self) -> u32 {
