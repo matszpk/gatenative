@@ -347,8 +347,3 @@ pub trait Mapper {
     where
         F: FnMut(&[u32], u32, u32) -> Out;
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-// }
