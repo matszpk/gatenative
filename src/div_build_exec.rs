@@ -284,7 +284,7 @@ where
             }
             execs.push(DivExecutor {
                 executors: circuit_execs,
-                buffer_len: circuit_placements[0].input_ps.as_ref().unwrap().real_len,
+                buffer_len: circuit_placements[0].output_ps.as_ref().unwrap().real_len,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
