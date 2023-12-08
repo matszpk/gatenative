@@ -166,7 +166,7 @@ fn test_div_builder_and_exec_cpu() {
                 assert_eq!((a * b) & 15, c, "{}: {}", config_num, i);
             }
         }
-        
+
         // arg_input example
         for max_gates in [5, 10, 13, 16, 20, 100] {
             let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
