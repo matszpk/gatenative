@@ -22,7 +22,7 @@ fn test_div_builder_and_exec_cpu() {
     .into_iter()
     .enumerate()
     {
-        for max_gates in [2, 5, 100] {
+        for max_gates in [2, 3, 4, 5, 100] {
             let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
                 CPUExtension::NoExtension,
                 writer_config,
