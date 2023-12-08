@@ -296,3 +296,49 @@ fn test_div_builder_and_exec_cpu() {
         }
     }
 }
+
+#[test]
+fn test_div_executor_cpu_clone() {
+    let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+        CPUExtension::NoExtension,
+        &CLANG_WRITER_U32,
+        None,
+    );
+    let mut builder = DivBuilder::new(builder, 2);
+    let circuit = Circuit::new(
+        4,
+        [
+            Gate::new_and(0, 2),
+            Gate::new_and(1, 2),
+            Gate::new_and(0, 3),
+            Gate::new_and(1, 3),
+            // add a1*b0 + a0*b1
+            Gate::new_xor(5, 6),
+            Gate::new_and(5, 6),
+            // add c(a1*b0 + a0*b1) + a1*b1
+            Gate::new_xor(7, 9),
+            Gate::new_and(7, 9),
+        ],
+        [(4, false), (8, false), (8, true), (10, false), (11, false)],
+    )
+    .unwrap();
+    builder.add("mul2x2", circuit.clone(), None, None, None);
+    builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+    let execs = builder.build().unwrap();
+    {
+        let exec0 = execs[0].try_clone().unwrap();
+        assert_eq!(exec0.input_len(), execs[0].input_len());
+        assert_eq!(exec0.output_len(), execs[0].output_len());
+        assert_eq!(exec0.real_input_len(), execs[0].real_input_len());
+        assert_eq!(exec0.real_output_len(), execs[0].real_output_len());
+        assert_eq!(exec0.is_single_buffer(), execs[0].is_single_buffer());
+    }
+    {
+        let exec1 = execs[1].try_clone().unwrap();
+        assert_eq!(exec1.input_len(), execs[1].input_len());
+        assert_eq!(exec1.output_len(), execs[1].output_len());
+        assert_eq!(exec1.real_input_len(), execs[1].real_input_len());
+        assert_eq!(exec1.real_output_len(), execs[1].real_output_len());
+        assert_eq!(exec1.is_single_buffer(), execs[1].is_single_buffer());
+    }
+}
