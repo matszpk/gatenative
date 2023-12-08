@@ -140,7 +140,14 @@ impl OpenCLDataHolder {
         cmd_queue: Arc<CommandQueue>,
         flags: cl_mem_flags,
     ) -> OpenCLDataHolder {
-        let buffer = unsafe { Buffer::create(context, flags, len, std::ptr::null_mut()).unwrap() };
+        let mut buffer =
+            unsafe { Buffer::create(context, flags, len, std::ptr::null_mut()).unwrap() };
+        unsafe {
+            cmd_queue
+                .enqueue_fill_buffer(&mut buffer, &[0u32], 0, 4 * len, &[])
+                .unwrap();
+            cmd_queue.finish().unwrap();
+        }
         Self {
             len,
             cmd_queue,

@@ -91,7 +91,7 @@ fn test_div_builder_and_exec_opencl() {
                 input
             };
             let mut more_input_holder =
-                execs[0].new_data_from_vec(vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2]);
+                execs[0].new_data((mul2x2_more_input_combs.len() >> 6) * 4 * 2);
             {
                 let mut more_input_w = more_input_holder.get_mut();
                 let more_input = more_input_w.get_mut();
