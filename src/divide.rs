@@ -33,6 +33,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    assert!(max_gates != 0);
     if circuit.len() <= max_gates {
         return vec![DivCircuitEntry {
             circuit,
