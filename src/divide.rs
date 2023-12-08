@@ -689,6 +689,19 @@ mod tests {
             }],
             divide_circuit_traverse(circuit.clone(), 30)
         );
+        // if no division
+        assert_eq!(
+            vec![DivCircuitEntry {
+                circuit: Circuit::new(4, [], [(3, true), (1, false), (0, true), (2, true)],)
+                    .unwrap(),
+                input_ps: None,
+                output_ps: None
+            }],
+            divide_circuit_traverse(
+                Circuit::new(4, [], [(3, true), (1, false), (0, true), (2, true)],).unwrap(),
+                21
+            )
+        );
 
         // multiply 2x2 bit circuit
         let circuit = Circuit::new(
