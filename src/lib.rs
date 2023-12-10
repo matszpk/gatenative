@@ -311,6 +311,8 @@ where
     fn is_empty(&self) -> bool;
     /// executor can be used per thread
     fn is_executor_per_thread() -> bool;
+    // preferred input count for this builder
+    fn preferred_input_count(&self) -> usize;
 }
 
 // TODO: redesign mapper interface
@@ -352,6 +354,4 @@ pub trait MapperBuilder<E: MapperExecutor> {
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
-
-    fn preferred_input_count() -> usize;
 }

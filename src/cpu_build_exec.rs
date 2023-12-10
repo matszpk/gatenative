@@ -600,6 +600,10 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
     fn is_executor_per_thread() -> bool {
         true
     }
+
+    fn preferred_input_count(&self) -> usize {
+        64
+    }
 }
 
 #[cfg(test)]

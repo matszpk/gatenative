@@ -609,4 +609,18 @@ impl<'b, 'a>
     fn is_executor_per_thread() -> bool {
         false
     }
+
+    fn preferred_input_count(&self) -> usize {
+        self.context
+            .devices()
+            .into_iter()
+            .map(|device_id| {
+                let device = Device::new(device_id.clone());
+                let group_len = usize::try_from(device.max_work_group_size().unwrap()).unwrap();
+                let compute_units = usize::try_from(device.max_compute_units().unwrap()).unwrap();
+                compute_units * group_len * 4
+            })
+            .max()
+            .unwrap()
+    }
 }

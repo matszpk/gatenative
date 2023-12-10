@@ -343,4 +343,8 @@ where
     fn is_executor_per_thread() -> bool {
         B::is_executor_per_thread()
     }
+
+    fn preferred_input_count(&self) -> usize {
+        self.builder.preferred_input_count()
+    }
 }
