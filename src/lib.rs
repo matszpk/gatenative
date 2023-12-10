@@ -352,4 +352,6 @@ pub trait MapperBuilder<E: MapperExecutor> {
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
+
+    fn preferred_input_count() -> usize;
 }
