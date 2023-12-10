@@ -618,7 +618,7 @@ impl<'b, 'a>
                 let device = Device::new(device_id.clone());
                 let group_len = usize::try_from(device.max_work_group_size().unwrap()).unwrap();
                 let compute_units = usize::try_from(device.max_compute_units().unwrap()).unwrap();
-                compute_units * group_len * 4
+                compute_units * group_len
             })
             .max()
             .unwrap()
