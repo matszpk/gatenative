@@ -314,7 +314,16 @@ where
 }
 
 // TODO: redesign mapper interface
-pub trait Mapper {
+pub trait MapperExecutor {
+    type ErrorType;
+
+    // function: F(data, word_len, arg_input)
+    fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(&[u32], u32, u32) -> Out;
+}
+
+pub trait MapperBuilder<E: MapperExecutor> {
     type ErrorType;
 
     fn add<T>(
@@ -324,31 +333,6 @@ pub trait Mapper {
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
         arg_inputs: Option<&[usize]>,
-    ) where
-        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-        T: Default + TryFrom<usize>,
-        <T as TryFrom<usize>>::Error: Debug,
-        usize: TryFrom<T>,
-        <usize as TryFrom<T>>::Error: Debug,
-    {
-        self.add_ext(
-            name,
-            circuit,
-            input_placement,
-            output_placement,
-            arg_inputs,
-            false,
-        );
-    }
-
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        input_placement: Option<(&[usize], usize)>,
-        output_placement: Option<(&[usize], usize)>,
-        arg_inputs: Option<&[usize]>,
-        single_buffer: bool,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -367,9 +351,5 @@ pub trait Mapper {
         self.add(name, circuit, None, None, None);
     }
 
-    fn build(self) -> Result<(), Self::ErrorType>;
-    // function: F(data, word_len, arg_input)
-    fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
-    where
-        F: FnMut(&[u32], u32, u32) -> Out;
+    fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 }
