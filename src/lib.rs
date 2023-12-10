@@ -324,10 +324,10 @@ where
 {
     type ErrorType;
 
-    // function: F(input data, output data, word_len, arg_input)
+    // function: F(input data, output data, arg_input)
     fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(&D, &D, u32, u32) -> Out;
+        F: FnMut(&D, &D, u32) -> Out;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -365,4 +365,7 @@ where
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
+
+    /// word length in bits
+    fn word_len(&self) -> u32;
 }
