@@ -322,7 +322,6 @@ where
     fn preferred_input_count(&self) -> usize;
 }
 
-// TODO: redesign mapper interface
 pub trait MapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader,
