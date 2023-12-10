@@ -325,7 +325,7 @@ where
     type ErrorType;
 
     // function: F(input data, output data, arg_input)
-    fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F>(&mut self, input: &D, f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(&D, &D, u32) -> Out;
 }
