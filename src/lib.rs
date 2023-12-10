@@ -332,7 +332,7 @@ pub trait MapperBuilder<E: MapperExecutor> {
         circuit: Circuit<T>,
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
-        arg_inputs: Option<&[usize]>,
+        arg_inputs: &[usize],
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -340,7 +340,7 @@ pub trait MapperBuilder<E: MapperExecutor> {
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
-    fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: Option<&[usize]>)
+    fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
