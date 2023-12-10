@@ -26,6 +26,18 @@ where
     dw: PhantomData<&'a DW>,
 }
 
+impl<'a, DR, DW, D, E> DivExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D>,
+{
+    pub fn buffer_len(&self) -> usize {
+        self.buffer_len
+    }
+}
+
 impl<'a, DR, DW, D, E> Executor<'a, DR, DW, D> for DivExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
