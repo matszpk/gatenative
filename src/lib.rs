@@ -326,13 +326,30 @@ pub trait MapperExecutor {
 pub trait MapperBuilder<E: MapperExecutor> {
     type ErrorType;
 
-    fn add<T>(&mut self, name: &str, circuit: Circuit<T>)
-    where
+    fn add<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
+        arg_inputs: Option<&[usize]>,
+    ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
+
+    fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: Option<&[usize]>)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.add(name, circuit, None, None, arg_inputs);
+    }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 }
