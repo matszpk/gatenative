@@ -314,6 +314,10 @@ where
     fn is_empty(&self) -> bool;
     /// executor can be used per thread
     fn is_executor_per_thread() -> bool;
+    /// data holder can be used between any executor
+    fn is_data_holder_global() -> bool;
+    /// data holder can be used between any executor created by one builder
+    fn is_data_holder_in_builder() -> bool;
     // preferred input count for this builder
     fn preferred_input_count(&self) -> usize;
 }
@@ -331,6 +335,10 @@ where
     fn execute<Out, F>(&mut self, input: &D, f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(&D, &D, u32) -> Out;
+    /// Create new data - length is number of 32-bit words
+    fn new_data(&mut self, len: usize) -> D;
+    /// Create new datafrom vector.
+    fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>

@@ -601,6 +601,14 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         true
     }
 
+    fn is_data_holder_global() -> bool {
+        true
+    }
+
+    fn is_data_holder_in_builder() -> bool {
+        true
+    }
+
     fn preferred_input_count(&self) -> usize {
         64
     }

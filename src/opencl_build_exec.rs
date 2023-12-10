@@ -610,6 +610,14 @@ impl<'b, 'a>
         false
     }
 
+    fn is_data_holder_global() -> bool {
+        false
+    }
+
+    fn is_data_holder_in_builder() -> bool {
+        true
+    }
+
     fn preferred_input_count(&self) -> usize {
         self.context
             .devices()

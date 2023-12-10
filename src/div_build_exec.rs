@@ -344,6 +344,14 @@ where
         B::is_executor_per_thread()
     }
 
+    fn is_data_holder_global() -> bool {
+        B::is_data_holder_global()
+    }
+
+    fn is_data_holder_in_builder() -> bool {
+        B::is_data_holder_in_builder()
+    }
+
     fn preferred_input_count(&self) -> usize {
         self.builder.preferred_input_count()
     }
