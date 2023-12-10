@@ -313,6 +313,7 @@ where
     fn is_executor_per_thread() -> bool;
 }
 
+// TODO: redesign mapper interface
 pub trait Mapper {
     type ErrorType;
 
