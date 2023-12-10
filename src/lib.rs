@@ -362,4 +362,9 @@ where
 
     /// word length in bits
     fn word_len(&self) -> u32;
+
+    /// data holder can be used between any executor
+    fn is_data_holder_global() -> bool;
+    /// data holder can be used between any executor created by one builder
+    fn is_data_holder_in_builder() -> bool;
 }
