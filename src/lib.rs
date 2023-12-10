@@ -124,7 +124,10 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         // check requirements for single buffer
         assert!(!single_buffer || real_input_len == real_output_len);
         assert!(check_placements(input_placement, output_placement));
-        assert!(arg_inputs.unwrap_or(&[]).iter().all(|x| *x < input_len));
+        if let Some(arg_inputs) = arg_inputs {
+            assert!(arg_inputs.len() <= 32);
+            assert!(arg_inputs.iter().all(|x| *x < input_len));
+        }
 
         unsafe {
             self.func_writer_internal(
