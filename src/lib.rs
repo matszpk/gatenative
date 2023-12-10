@@ -316,16 +316,27 @@ where
 }
 
 // TODO: redesign mapper interface
-pub trait MapperExecutor {
+pub trait MapperExecutor<'a, DR, DW, D>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+{
     type ErrorType;
 
-    // function: F(data, word_len, arg_input)
+    // function: F(input data, output data, word_len, arg_input)
     fn execute<Out, F>(&mut self, input: &[u32], f: F) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(&[u32], u32, u32) -> Out;
+        F: FnMut(&D, &D, u32, u32) -> Out;
 }
 
-pub trait MapperBuilder<E: MapperExecutor> {
+pub trait MapperBuilder<'a, DR, DW, D, E>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: MapperExecutor<'a, DR, DW, D>,
+{
     type ErrorType;
 
     fn add<T>(
