@@ -4,7 +4,7 @@ use std::hash::Hash;
 
 use std::marker::PhantomData;
 
-struct BasicMapperExecutor<'a, DR, DW, D, E>
+pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
     DW: DataWriter,
@@ -32,6 +32,10 @@ where
         self.executor.input_len()
     }
     #[inline]
+    fn real_input_len(&self) -> usize {
+        self.executor.real_input_len()
+    }
+    #[inline]
     fn output_len(&self) -> usize {
         self.executor.output_len()
     }
@@ -40,7 +44,7 @@ where
     where
         F: FnMut(Out, &D, &D, u32) -> Out,
     {
-        let input_len = self.input_len();
+        let input_len = self.real_input_len();
         let count = if input_len != 0 {
             input.len() / input_len
         } else {

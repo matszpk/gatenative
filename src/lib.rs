@@ -333,6 +333,8 @@ where
 
     /// Get circuit input length (number of inputs)
     fn input_len(&self) -> usize;
+    /// Get real input length (number of entries in area of input placements)
+    fn real_input_len(&self) -> usize;
     /// Get circuit output length (number of outputs)
     fn output_len(&self) -> usize;
     // function: F(input data, output data, arg_input)
