@@ -66,6 +66,10 @@ where
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D {
         self.executor.new_data_from_vec(data)
     }
+
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D {
+        self.executor.new_data_from_slice(data)
+    }
 }
 
 pub struct BasicMapperBuilder<'a, DR, DW, D, E, B>

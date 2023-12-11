@@ -244,6 +244,13 @@ impl CPUDataHolder {
             range: 0..len,
         }
     }
+    pub fn new_from_slice(data: &[u32]) -> Self {
+        let len = data.len();
+        Self {
+            buffer: data.to_vec(),
+            range: 0..len,
+        }
+    }
 }
 
 impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder {
@@ -449,6 +456,10 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
 
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> CPUDataHolder {
         CPUDataHolder::new(data)
+    }
+
+    fn new_data_from_slice(&mut self, data: &[u32]) -> CPUDataHolder {
+        CPUDataHolder::new_from_slice(data)
     }
 
     fn try_clone(&self) -> Option<Self>

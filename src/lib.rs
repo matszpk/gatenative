@@ -238,8 +238,10 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
-    /// Create new datafrom vector.
+    /// Create new data from vector.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
+    /// Create new data from slice.
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D;
     /// try clone executor if possible
     fn try_clone(&self) -> Option<Self>
     where
@@ -343,8 +345,10 @@ where
         F: FnMut(Out, &D, &D, u32) -> Out;
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
-    /// Create new datafrom vector.
+    /// Create new data from vector.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
+    /// Create new data from slice.
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>

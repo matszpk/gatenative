@@ -398,6 +398,10 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     }
 
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> OpenCLDataHolder {
+        self.new_data_from_slice(&data)
+    }
+
+    fn new_data_from_slice(&mut self, data: &[u32]) -> OpenCLDataHolder {
         let mut output = OpenCLDataHolder::new(
             data.len(),
             &self.context,

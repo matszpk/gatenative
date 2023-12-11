@@ -158,6 +158,13 @@ where
         self.executors.first_mut().unwrap().new_data_from_vec(data)
     }
 
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D {
+        self.executors
+            .first_mut()
+            .unwrap()
+            .new_data_from_slice(data)
+    }
+
     fn try_clone(&self) -> Option<Self>
     where
         Self: Sized,
