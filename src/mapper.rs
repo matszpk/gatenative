@@ -80,6 +80,26 @@ where
     e: PhantomData<&'a E>,
 }
 
+impl<'a, DR, DW, D, E, B> BasicMapperBuilder<'a, DR, DW, D, E, B>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D>,
+    B: Builder<'a, DR, DW, D, E>,
+{
+    pub fn new(builder: B) -> Self {
+        Self {
+            builder,
+            arg_input_lens: vec![],
+            d: PhantomData,
+            dr: PhantomData,
+            dw: PhantomData,
+            e: PhantomData,
+        }
+    }
+}
+
 impl<'a, DR, DW, D, E, B> MapperBuilder<'a, DR, DW, D, BasicMapperExecutor<'a, DR, DW, D, E>>
     for BasicMapperBuilder<'a, DR, DW, D, E, B>
 where
