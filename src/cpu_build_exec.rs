@@ -458,6 +458,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         Some(self.clone())
     }
 
+    #[inline]
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
     }
@@ -589,26 +590,32 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             .collect::<Vec<_>>())
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.writer.word_len()
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    #[inline]
     fn is_executor_per_thread() -> bool {
         true
     }
 
+    #[inline]
     fn is_data_holder_global() -> bool {
         true
     }
 
+    #[inline]
     fn is_data_holder_in_builder() -> bool {
         true
     }
 
+    #[inline]
     fn preferred_input_count(&self) -> usize {
         64
     }

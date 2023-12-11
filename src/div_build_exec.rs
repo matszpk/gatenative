@@ -184,6 +184,7 @@ where
         }
     }
 
+    #[inline]
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
     }
@@ -332,26 +333,32 @@ where
         Ok(execs)
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.builder.word_len()
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         self.circuit_infos.is_empty()
     }
 
+    #[inline]
     fn is_executor_per_thread() -> bool {
         B::is_executor_per_thread()
     }
 
+    #[inline]
     fn is_data_holder_global() -> bool {
         B::is_data_holder_global()
     }
 
+    #[inline]
     fn is_data_holder_in_builder() -> bool {
         B::is_data_holder_in_builder()
     }
 
+    #[inline]
     fn preferred_input_count(&self) -> usize {
         self.builder.preferred_input_count()
     }

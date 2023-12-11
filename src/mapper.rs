@@ -98,7 +98,8 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.builder.add(name, circuit, None, None, Some(arg_inputs));
+        self.builder
+            .add(name, circuit, None, None, Some(arg_inputs));
     }
 
     fn build(self) -> Result<Vec<BasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {

@@ -419,6 +419,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         None
     }
 
+    #[inline]
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
     }
@@ -598,22 +599,27 @@ impl<'b, 'a>
             .collect::<Result<Vec<_>, _>>()
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.writer.word_len()
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    #[inline]
     fn is_executor_per_thread() -> bool {
         false
     }
 
+    #[inline]
     fn is_data_holder_global() -> bool {
         false
     }
 
+    #[inline]
     fn is_data_holder_in_builder() -> bool {
         true
     }
