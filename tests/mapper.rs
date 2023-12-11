@@ -5,7 +5,7 @@ use gatenative::*;
 use gatesim::*;
 
 #[test]
-fn test_mapper_builder_and_exec() {
+fn test_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
     };
