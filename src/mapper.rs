@@ -73,6 +73,7 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     builder: B,
+    arg_input_lens: Vec<usize>,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -98,22 +99,44 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
+        assert!(arg_inputs.len() <= 32);
+        self.arg_input_lens.push(arg_inputs.len());
         self.builder
             .add(name, circuit, None, None, Some(arg_inputs));
     }
 
     fn build(self) -> Result<Vec<BasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {
-        Ok(vec![])
+        self.builder.build().map(|execs| {
+            execs
+                .into_iter()
+                .zip(self.arg_input_lens)
+                .map(|(e, arg_len)| BasicMapperExecutor {
+                    executor: e,
+                    arg_input_max: u32::try_from((1u64 << arg_len) - 1u64).unwrap(),
+                    d: PhantomData,
+                    dr: PhantomData,
+                    dw: PhantomData,
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.builder.word_len()
     }
 
+    #[inline]
     fn is_data_holder_global() -> bool {
         B::is_data_holder_global()
     }
+    #[inline]
     fn is_data_holder_in_builder() -> bool {
         B::is_data_holder_in_builder()
+    }
+
+    #[inline]
+    fn preferred_input_count(&self) -> usize {
+        self.builder.preferred_input_count()
     }
 }

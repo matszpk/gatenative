@@ -371,4 +371,6 @@ where
     fn is_data_holder_global() -> bool;
     /// data holder can be used between any executor created by one builder
     fn is_data_holder_in_builder() -> bool;
+    // preferred input count for this builder
+    fn preferred_input_count(&self) -> usize;
 }
