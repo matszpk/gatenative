@@ -18,6 +18,7 @@ pub mod cpu_build_exec;
 pub mod div_build_exec;
 mod divide;
 pub mod gencode;
+pub mod mapper;
 pub mod opencl_build_exec;
 mod utils;
 mod vbinopcircuit;
@@ -330,10 +331,14 @@ where
 {
     type ErrorType;
 
+    /// Get circuit input length (number of inputs)
+    fn input_len(&self) -> usize;
+    /// Get circuit output length (number of outputs)
+    fn output_len(&self) -> usize;
     // function: F(input data, output data, arg_input)
-    fn execute<Out, F>(&mut self, input: &D, f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(&D, &D, u32) -> Out;
+        F: FnMut(Out, &D, &D, u32) -> Out;
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new datafrom vector.
