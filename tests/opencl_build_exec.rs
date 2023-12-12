@@ -760,5 +760,58 @@ fn test_opencl_data_holder() {
                 assert_eq!(array[i], *x, "1: {} {}", config_num, i);
             }
         }
+
+        // process tests
+        let mut data = execs[0].new_data(10);
+        {
+            let mut wr = data.get_mut();
+            for (i, x) in wr.get_mut().iter_mut().enumerate() {
+                *x = u32::try_from(i * 337).unwrap();
+            }
+        }
+        assert!(data.process(|d| d
+            .iter()
+            .enumerate()
+            .all(|(i, v)| *v == u32::try_from(i * 337).unwrap())));
+        // process_mut tests
+        data.process_mut(|d| {
+            for (i, v) in d.iter_mut().enumerate() {
+                *v *= 7 * u32::try_from(i).unwrap();
+            }
+        });
+        {
+            let rd = data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(7 * 337 * i * i).unwrap(),
+                    *x,
+                    "1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        data.set_range(1..7);
+        assert!(data.process(|d| d
+            .iter()
+            .enumerate()
+            .all(|(i, v)| *v == u32::try_from((i + 1) * (i + 1) * 7 * 337).unwrap())));
+        data.set_range(2..8);
+        data.process_mut(|d| {
+            for (i, v) in d.iter_mut().enumerate() {
+                *v += 5 * u32::try_from(i).unwrap()
+            }
+        });
+        data.set_range_from(0..);
+        {
+            let rd = data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                let mut exp = u32::try_from(7 * 337 * i * i).unwrap();
+                if i >= 2 && i < 8 {
+                    exp += 5 * u32::try_from(i - 2).unwrap()
+                }
+                assert_eq!(exp, *x, "1: {} {}", config_num, i);
+            }
+        }
     }
 }
