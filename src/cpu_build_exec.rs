@@ -258,7 +258,7 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
-    fn set_range(&'a mut self, range: Range<usize>) {
+    fn set_range(&mut self, range: Range<usize>) {
         self.range = std::cmp::min(self.buffer.len(), range.start)
             ..std::cmp::min(self.buffer.len(), range.end);
         if self.range.start >= self.range.end {

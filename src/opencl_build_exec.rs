@@ -169,7 +169,7 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
-    fn set_range(&'a mut self, range: Range<usize>) {
+    fn set_range(&mut self, range: Range<usize>) {
         self.range = std::cmp::min(self.len, range.start)..std::cmp::min(self.len, range.end);
         if self.range.start >= self.range.end {
             self.range = 0..0;

@@ -181,9 +181,9 @@ pub trait DataWriter {
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn len(&self) -> usize;
     // set range
-    fn set_range(&'a mut self, range: Range<usize>);
+    fn set_range(&mut self, range: Range<usize>);
     #[inline]
-    fn set_range_from(&'a mut self, range: RangeFrom<usize>) {
+    fn set_range_from(&mut self, range: RangeFrom<usize>) {
         self.set_range(range.start..usize::MAX);
     }
     fn get(&'a self) -> DR;
