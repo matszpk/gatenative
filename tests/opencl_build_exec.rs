@@ -750,5 +750,15 @@ fn test_opencl_data_holder() {
                 output
             );
         }
+
+        // test new from slice
+        let array = [3, 5, 2, 11, 581, 521];
+        let data = execs[0].new_data_from_slice(&array[..]);
+        {
+            let rd = data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(array[i], *x, "1: {} {}", config_num, i);
+            }
+        }
     }
 }
