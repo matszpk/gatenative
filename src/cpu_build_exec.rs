@@ -275,6 +275,18 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
             buffer: &mut self.buffer[self.range.clone()],
         }
     }
+    fn process<F, Out>(&self, mut f: F) -> Out
+    where
+        F: FnMut(&[u32]) -> Out,
+    {
+        f(&self.buffer)
+    }
+    fn process_mut<F, Out>(&mut self, mut f: F) -> Out
+    where
+        F: FnMut(&mut [u32]) -> Out,
+    {
+        f(&mut self.buffer)
+    }
     fn release(self) -> Vec<u32> {
         self.buffer[self.range.clone()].to_vec()
     }

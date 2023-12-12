@@ -181,6 +181,20 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
     fn get_mut(&'a mut self) -> OpenCLDataWriter<'a> {
         OpenCLDataWriter::new(self, &self.range)
     }
+    fn process<F, Out>(&self, mut f: F) -> Out
+    where
+        F: FnMut(&[u32]) -> Out,
+    {
+        let r = OpenCLDataReader::new(self, &self.range);
+        f(r.get())
+    }
+    fn process_mut<F, Out>(&mut self, mut f: F) -> Out
+    where
+        F: FnMut(&mut [u32]) -> Out,
+    {
+        let mut w = OpenCLDataWriter::new(self, &self.range);
+        f(w.get_mut())
+    }
     fn release(self) -> Vec<u32> {
         let mut out = vec![0u32; self.len()];
         unsafe {

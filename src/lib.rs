@@ -188,6 +188,12 @@ pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     }
     fn get(&'a self) -> DR;
     fn get_mut(&'a mut self) -> DW;
+    fn process<F, Out>(&self, f: F) -> Out
+    where
+        F: FnMut(&[u32]) -> Out;
+    fn process_mut<F, Out>(&mut self, f: F) -> Out
+    where
+        F: FnMut(&mut [u32]) -> Out;
     /// release underlying data
     fn release(self) -> Vec<u32>;
     // free
@@ -343,6 +349,21 @@ where
     fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &D, &D, u32) -> Out;
+    fn execute_direct<'b, Out: Clone, F>(
+        &mut self,
+        input: &'b D,
+        init: Out,
+        mut f: F,
+    ) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(Out, &[u32], &[u32], u32) -> Out,
+    {
+        self.execute(input, init, |out, input, output, arg_input| {
+            input.process(|inputx| {
+                output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
+            })
+        })
+    }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.
