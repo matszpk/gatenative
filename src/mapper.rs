@@ -226,7 +226,7 @@ where
         Out: Clone + Send + Sync,
     {
         (0..=self.arg_input_max)
-            .par_bridge()
+            .into_par_iter()
             .map(|arg| {
                 self.executor
                     .try_clone()
