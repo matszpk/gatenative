@@ -361,3 +361,5 @@ where
         self.builder.preferred_input_count()
     }
 }
+
+// TODO: Add adapter to ParMapper for Mapper
