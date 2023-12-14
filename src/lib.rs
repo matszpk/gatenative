@@ -417,25 +417,39 @@ where
     /// Get circuit output length (number of outputs)
     fn output_len(&self) -> usize;
     // function: F(input data, output data, arg_input)
-    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F, G>(
+        &mut self,
+        input: &D,
+        init: Out,
+        f: F,
+        g: G,
+    ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync;
-    fn execute_direct<'b, Out: Clone, F>(
+    fn execute_direct<'b, Out: Clone, F, G>(
         &mut self,
         input: &'b D,
         init: Out,
         f: F,
+        g: G,
     ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(Out, &[u32], &[u32], u32) -> Out + Send + Sync,
+        G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        self.execute(input, init, |out, input, output, arg_input| {
-            input.process(|inputx| {
-                output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
-            })
-        })
+        self.execute(
+            input,
+            init,
+            |out, input, output, arg_input| {
+                input.process(|inputx| {
+                    output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
+                })
+            },
+            g,
+        )
     }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;

@@ -211,33 +211,52 @@ where
         self.executor.output_len()
     }
 
-    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F, G>(
+        &mut self,
+        input: &D,
+        init: Out,
+        f: F,
+        g: G,
+    ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
         let result = (0..=self.arg_input_max)
-            .map(|x| Ok((init.clone(), x)))
+            .map(|x| Ok((init.clone(), x, true)))
             .par_bridge()
             .reduce(
-                || Ok((init.clone(), 0)),
-                |out, a| {
-                    let mut executor = self.executor.try_clone().unwrap();
-                    if let Ok((out, _)) = out {
-                        if let Ok((_, arg)) = a {
-                            executor
-                                .execute(input, arg)
-                                .map(|output| f(out, input, &output, arg))
-                                .map(|out| (out, 0))
+                || Ok((init.clone(), u32::MAX, false)),
+                |a, b| {
+                    if let Ok((out_a, arg_a, do_exec_a)) = a {
+                        if let Ok((out_b, arg_b, do_exec_b)) = b {
+                            if do_exec_a && do_exec_b {
+                                Ok((g(out_a, out_b), u32::MAX, true))
+                            } else if do_exec_a && do_exec_b {
+                                panic!("Unexpected!");
+                            } else if do_exec_a {
+                                let mut executor = self.executor.try_clone().unwrap();
+                                executor
+                                    .execute(input, arg_a)
+                                    .map(|output| f(out_b, input, &output, arg_a))
+                                    .map(|out| (out, 0, true))
+                            } else {
+                                let mut executor = self.executor.try_clone().unwrap();
+                                executor
+                                    .execute(input, arg_b)
+                                    .map(|output| f(out_a, input, &output, arg_b))
+                                    .map(|out| (out, 0, true))
+                            }
                         } else {
-                            panic!("Unexpected");
+                            b
                         }
                     } else {
-                        out
+                        a
                     }
                 },
             );
-        result.map(|(out, _)| out)
+        result.map(|(out, _, _)| out)
     }
 
     fn new_data(&mut self, len: usize) -> D {
