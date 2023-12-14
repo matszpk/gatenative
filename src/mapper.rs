@@ -7,7 +7,7 @@ use std::hash::Hash;
 
 use std::marker::PhantomData;
 
-// TODO: Add adapter to ParMapper for Mapper
+// TODO: Add adapter from Mapper to ParMapper
 
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
