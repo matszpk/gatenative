@@ -40,6 +40,7 @@ where
         self.executor.output_len()
     }
 
+    // TODO: Add parallel execution of circuit execution if possible
     fn execute<Out, F>(&mut self, input: &D, init: Out, mut f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &D, &D, u32) -> Out,
