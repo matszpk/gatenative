@@ -7,6 +7,8 @@ use std::hash::Hash;
 
 use std::marker::PhantomData;
 
+// TODO: Add adapter to ParMapper for Mapper
+
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -361,5 +363,3 @@ where
         self.builder.preferred_input_count()
     }
 }
-
-// TODO: Add adapter to ParMapper for Mapper
