@@ -16,8 +16,8 @@ fn test_basic_mapper_builder_and_exec() {
     for (config_num, (writer_config, builder_config)) in [
         (&CLANG_WRITER_U32, &no_opt_neg_config),
         (&CLANG_WRITER_U32, &opt_neg_config),
-        // (&CLANG_WRITER_U64, &no_opt_neg_config),
-        // (&CLANG_WRITER_U64, &opt_neg_config),
+        (&CLANG_WRITER_U64, &no_opt_neg_config),
+        (&CLANG_WRITER_U64, &opt_neg_config),
     ]
     .into_iter()
     .enumerate()
@@ -217,54 +217,56 @@ fn test_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
-        // number of chunks
-        let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
-        let rest_num = rest_input_indices_2.len();
-        let mut xcircuit_input = vec![0u32; xcircuit_data_num * rest_num];
-        // prepare input for executor
-        for i in 0..32 {
-            let idx = (i >> 5) / word_len;
-            let widx = (i >> 5) % word_len;
-            let bit = i & 31;
-            for j in 0..rest_num {
-                xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
-                    ((u32::try_from(i).unwrap() >> j) & 1) << bit;
+        if word_len == 1 {
+            // number of chunks
+            let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
+            let rest_num = rest_input_indices_2.len();
+            let mut xcircuit_input = vec![0u32; xcircuit_data_num * rest_num];
+            // prepare input for executor
+            for i in 0..32 {
+                let idx = (i >> 5) / word_len;
+                let widx = (i >> 5) % word_len;
+                let bit = i & 31;
+                for j in 0..rest_num {
+                    xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
+                        ((u32::try_from(i).unwrap() >> j) & 1) << bit;
+                }
             }
-        }
-        let input = execs[1].new_data_from_vec(xcircuit_input.clone());
-        assert!(
-            execs[1]
-                .execute(&input, true, |out, _, result_out, arg_input| {
-                    let mut input = vec![false; 8];
-                    let mut xcircuit_out = vec![0u32; xcircuit_data_num];
-                    // fill inputs by arg_inputs
-                    for (i, v) in arg_input_indices_2.iter().enumerate() {
-                        input[*v] = ((arg_input >> i) & 1) != 0;
-                    }
-                    // prepare expected output
-                    for rest in 0..32 {
-                        // fill input by rest of bits of input
-                        for (i, v) in rest_input_indices_2.iter().enumerate() {
-                            input[*v] = ((rest >> i) & 1) != 0;
+            let input = execs[1].new_data_from_vec(xcircuit_input.clone());
+            assert!(
+                execs[1]
+                    .execute(&input, true, |out, _, result_out, arg_input| {
+                        let mut input = vec![false; 8];
+                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                        // fill inputs by arg_inputs
+                        for (i, v) in arg_input_indices_2.iter().enumerate() {
+                            input[*v] = ((arg_input >> i) & 1) != 0;
                         }
-                        let value = circuit2.eval(input.clone())[0];
-                        let idx = (rest >> 5) / word_len;
-                        let widx = (rest >> 5) % word_len;
-                        let bit = rest & 31;
-                        xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
-                    }
-                    // execute circuit
-                    let result_out = result_out.get();
-                    let result_out = result_out.get();
-                    out && xcircuit_out
-                        .into_iter()
-                        .enumerate()
-                        .all(|(i, exp)| result_out[i] == exp)
-                })
-                .unwrap(),
-            "{}",
-            config_num
-        );
+                        // prepare expected output
+                        for rest in 0..32 {
+                            // fill input by rest of bits of input
+                            for (i, v) in rest_input_indices_2.iter().enumerate() {
+                                input[*v] = ((rest >> i) & 1) != 0;
+                            }
+                            let value = circuit2.eval(input.clone())[0];
+                            let idx = (rest >> 5) / word_len;
+                            let widx = (rest >> 5) % word_len;
+                            let bit = rest & 31;
+                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                        }
+                        // execute circuit
+                        let result_out = result_out.get();
+                        let result_out = result_out.get();
+                        out && xcircuit_out
+                            .into_iter()
+                            .enumerate()
+                            .all(|(i, exp)| result_out[i] == exp)
+                    })
+                    .unwrap(),
+                "{}",
+                config_num
+            );
+        }
     }
 }
 
@@ -491,58 +493,60 @@ fn test_par_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
-        // number of chunks
-        let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
-        let rest_num = rest_input_indices_2.len();
-        let mut xcircuit_input = vec![0u32; xcircuit_data_num * rest_num];
-        // prepare input for executor
-        for i in 0..32 {
-            let idx = (i >> 5) / word_len;
-            let widx = (i >> 5) % word_len;
-            let bit = i & 31;
-            for j in 0..rest_num {
-                xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
-                    ((u32::try_from(i).unwrap() >> j) & 1) << bit;
+        if word_len == 1 {
+            // number of chunks
+            let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
+            let rest_num = rest_input_indices_2.len();
+            let mut xcircuit_input = vec![0u32; xcircuit_data_num * rest_num];
+            // prepare input for executor
+            for i in 0..32 {
+                let idx = (i >> 5) / word_len;
+                let widx = (i >> 5) % word_len;
+                let bit = i & 31;
+                for j in 0..rest_num {
+                    xcircuit_input[rest_num * word_len * idx + word_len * j + widx] |=
+                        ((u32::try_from(i).unwrap() >> j) & 1) << bit;
+                }
             }
-        }
-        let input = execs[1].new_data_from_vec(xcircuit_input.clone());
-        assert!(
-            execs[1]
-                .execute(
-                    &input,
-                    true,
-                    |_, result_out, arg_input| {
-                        let mut input = vec![false; 8];
-                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
-                        // fill inputs by arg_inputs
-                        for (i, v) in arg_input_indices_2.iter().enumerate() {
-                            input[*v] = ((arg_input >> i) & 1) != 0;
-                        }
-                        // prepare expected output
-                        for rest in 0..32 {
-                            // fill input by rest of bits of input
-                            for (i, v) in rest_input_indices_2.iter().enumerate() {
-                                input[*v] = ((rest >> i) & 1) != 0;
+            let input = execs[1].new_data_from_vec(xcircuit_input.clone());
+            assert!(
+                execs[1]
+                    .execute(
+                        &input,
+                        true,
+                        |_, result_out, arg_input| {
+                            let mut input = vec![false; 8];
+                            let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                            // fill inputs by arg_inputs
+                            for (i, v) in arg_input_indices_2.iter().enumerate() {
+                                input[*v] = ((arg_input >> i) & 1) != 0;
                             }
-                            let value = circuit2.eval(input.clone())[0];
-                            let idx = (rest >> 5) / word_len;
-                            let widx = (rest >> 5) % word_len;
-                            let bit = rest & 31;
-                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
-                        }
-                        // execute circuit
-                        let result_out = result_out.get();
-                        let result_out = result_out.get();
-                        xcircuit_out
-                            .into_iter()
-                            .enumerate()
-                            .all(|(i, exp)| result_out[i] == exp)
-                    },
-                    |out1, out2| out1 && out2
-                )
-                .unwrap(),
-            "{}",
-            config_num
-        );
+                            // prepare expected output
+                            for rest in 0..32 {
+                                // fill input by rest of bits of input
+                                for (i, v) in rest_input_indices_2.iter().enumerate() {
+                                    input[*v] = ((rest >> i) & 1) != 0;
+                                }
+                                let value = circuit2.eval(input.clone())[0];
+                                let idx = (rest >> 5) / word_len;
+                                let widx = (rest >> 5) % word_len;
+                                let bit = rest & 31;
+                                xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                            }
+                            // execute circuit
+                            let result_out = result_out.get();
+                            let result_out = result_out.get();
+                            xcircuit_out
+                                .into_iter()
+                                .enumerate()
+                                .all(|(i, exp)| result_out[i] == exp)
+                        },
+                        |out1, out2| out1 && out2
+                    )
+                    .unwrap(),
+                "{}",
+                config_num
+            );
+        }
     }
 }
