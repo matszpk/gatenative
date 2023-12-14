@@ -425,9 +425,10 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        F: Fn(&D, &D, u32) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync;
+
     fn execute_direct<'b, Out: Clone, F, G>(
         &mut self,
         input: &'b D,
@@ -436,17 +437,15 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(Out, &[u32], &[u32], u32) -> Out + Send + Sync,
+        F: Fn(&[u32], &[u32], u32) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
         self.execute(
             input,
             init,
-            |out, input, output, arg_input| {
-                input.process(|inputx| {
-                    output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
-                })
+            |input, output, arg_input| {
+                input.process(|inputx| output.process(|outputx| f(inputx, outputx, arg_input)))
             },
             g,
         )

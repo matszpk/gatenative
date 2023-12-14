@@ -421,7 +421,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                 .execute(
                     &input,
                     true,
-                    |out, _, result_out, arg_input| {
+                    |_, result_out, arg_input| {
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -443,7 +443,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                         // execute circuit
                         let result_out = result_out.get();
                         let result_out = result_out.get();
-                        out && xcircuit_out
+                        xcircuit_out
                             .into_iter()
                             .enumerate()
                             .all(|(i, exp)| result_out[i] == exp)
@@ -460,7 +460,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                 .execute_direct(
                     &input,
                     true,
-                    |out, _, result_out, arg_input| {
+                    |_, result_out, arg_input| {
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -480,7 +480,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                             xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                         }
                         // execute circuit
-                        out && xcircuit_out
+                        xcircuit_out
                             .into_iter()
                             .enumerate()
                             .all(|(i, exp)| result_out[i] == exp)
@@ -511,7 +511,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                 .execute(
                     &input,
                     true,
-                    |out, _, result_out, arg_input| {
+                    |_, result_out, arg_input| {
                         let mut input = vec![false; 8];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -533,7 +533,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                         // execute circuit
                         let result_out = result_out.get();
                         let result_out = result_out.get();
-                        out && xcircuit_out
+                        xcircuit_out
                             .into_iter()
                             .enumerate()
                             .all(|(i, exp)| result_out[i] == exp)

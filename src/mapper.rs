@@ -219,35 +219,26 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        F: Fn(&D, &D, u32) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        let result = (0..=self.arg_input_max)
-            .map(|x| Ok((init.clone(), x, true)))
+        println!("Execute:");
+        (0..=self.arg_input_max)
             .par_bridge()
+            .map(|arg| {
+                let mut executor = self.executor.try_clone().unwrap();
+                println!("Exec a {}", arg);
+                executor
+                    .execute(input, arg)
+                    .map(|output| f(input, &output, arg))
+            })
             .reduce(
-                || Ok((init.clone(), u32::MAX, false)),
+                || Ok(init.clone()),
                 |a, b| {
-                    if let Ok((out_a, arg_a, do_exec_a)) = a {
-                        if let Ok((out_b, arg_b, do_exec_b)) = b {
-                            if do_exec_a && do_exec_b {
-                                Ok((g(out_a, out_b), u32::MAX, true))
-                            } else if do_exec_a && do_exec_b {
-                                panic!("Unexpected!");
-                            } else if do_exec_a {
-                                let mut executor = self.executor.try_clone().unwrap();
-                                executor
-                                    .execute(input, arg_a)
-                                    .map(|output| f(out_b, input, &output, arg_a))
-                                    .map(|out| (out, 0, true))
-                            } else {
-                                let mut executor = self.executor.try_clone().unwrap();
-                                executor
-                                    .execute(input, arg_b)
-                                    .map(|output| f(out_a, input, &output, arg_b))
-                                    .map(|out| (out, 0, true))
-                            }
+                    if let Ok(av) = a {
+                        if let Ok(bv) = b {
+                            Ok(g(av, bv))
                         } else {
                             b
                         }
@@ -255,8 +246,7 @@ where
                         a
                     }
                 },
-            );
-        result.map(|(out, _, _)| out)
+            )
     }
 
     fn new_data(&mut self, len: usize) -> D {
