@@ -223,13 +223,12 @@ where
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        println!("Execute:");
         (0..=self.arg_input_max)
             .par_bridge()
             .map(|arg| {
-                let mut executor = self.executor.try_clone().unwrap();
-                println!("Exec a {}", arg);
-                executor
+                self.executor
+                    .try_clone()
+                    .unwrap()
                     .execute(input, arg)
                     .map(|output| f(input, &output, arg))
             })
