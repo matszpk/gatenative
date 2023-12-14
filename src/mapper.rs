@@ -1,4 +1,7 @@
 use crate::*;
+
+use rayon::prelude::*;
+
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -40,7 +43,6 @@ where
         self.executor.output_len()
     }
 
-    // TODO: Add parallel execution of circuit execution if possible
     fn execute<Out, F>(&mut self, input: &D, init: Out, mut f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &D, &D, u32) -> Out,
@@ -140,6 +142,188 @@ where
                 .into_iter()
                 .zip(self.arg_input_lens)
                 .map(|(e, arg_len)| BasicMapperExecutor {
+                    executor: e,
+                    arg_input_max: u32::try_from((1u64 << arg_len) - 1u64).unwrap(),
+                    d: PhantomData,
+                    dr: PhantomData,
+                    dw: PhantomData,
+                })
+                .collect::<Vec<_>>()
+        })
+    }
+
+    #[inline]
+    fn word_len(&self) -> u32 {
+        self.builder.word_len()
+    }
+
+    #[inline]
+    fn is_data_holder_global() -> bool {
+        B::is_data_holder_global()
+    }
+    #[inline]
+    fn is_data_holder_in_builder() -> bool {
+        B::is_data_holder_in_builder()
+    }
+
+    #[inline]
+    fn preferred_input_count(&self) -> usize {
+        self.builder.preferred_input_count()
+    }
+}
+
+// parallel
+pub struct ParBasicMapperExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+{
+    executor: E,
+    arg_input_max: u32,
+    d: PhantomData<&'a D>,
+    dr: PhantomData<&'a DR>,
+    dw: PhantomData<&'a DW>,
+}
+
+impl<'a, DR, DW, D, E> ParMapperExecutor<'a, DR, DW, D> for ParBasicMapperExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+{
+    type ErrorType = E::ErrorType;
+
+    #[inline]
+    fn input_len(&self) -> usize {
+        self.executor.input_len()
+    }
+    #[inline]
+    fn real_input_len(&self) -> usize {
+        self.executor.real_input_len()
+    }
+    #[inline]
+    fn output_len(&self) -> usize {
+        self.executor.output_len()
+    }
+
+    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
+    where
+        F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        Out: Clone + Send + Sync,
+    {
+        let result = (0..=self.arg_input_max)
+            .map(|x| Ok((init.clone(), x)))
+            .par_bridge()
+            .reduce(
+                || Ok((init.clone(), 0)),
+                |out, a| {
+                    let mut executor = self.executor.try_clone().unwrap();
+                    if let Ok((out, _)) = out {
+                        if let Ok((_, arg)) = a {
+                            executor
+                                .execute(input, arg)
+                                .map(|output| f(out, input, &output, arg))
+                                .map(|out| (out, 0))
+                        } else {
+                            panic!("Unexpected");
+                        }
+                    } else {
+                        out
+                    }
+                },
+            );
+        result.map(|(out, _)| out)
+    }
+
+    fn new_data(&mut self, len: usize) -> D {
+        self.executor.new_data(len)
+    }
+
+    fn new_data_from_vec(&mut self, data: Vec<u32>) -> D {
+        self.executor.new_data_from_vec(data)
+    }
+
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D {
+        self.executor.new_data_from_slice(data)
+    }
+}
+
+pub struct ParBasicMapperBuilder<'a, DR, DW, D, E, B>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    B: Builder<'a, DR, DW, D, E>,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+{
+    builder: B,
+    arg_input_lens: Vec<usize>,
+    d: PhantomData<&'a D>,
+    dr: PhantomData<&'a DR>,
+    dw: PhantomData<&'a DW>,
+    e: PhantomData<&'a E>,
+}
+
+impl<'a, DR, DW, D, E, B> ParBasicMapperBuilder<'a, DR, DW, D, E, B>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    B: Builder<'a, DR, DW, D, E>,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+{
+    pub fn new(builder: B) -> Self {
+        assert!(B::is_data_holder_global() && B::is_executor_per_thread());
+        Self {
+            builder,
+            arg_input_lens: vec![],
+            d: PhantomData,
+            dr: PhantomData,
+            dw: PhantomData,
+            e: PhantomData,
+        }
+    }
+}
+
+impl<'a, DR, DW, D, E, B> ParMapperBuilder<'a, DR, DW, D, ParBasicMapperExecutor<'a, DR, DW, D, E>>
+    for ParBasicMapperBuilder<'a, DR, DW, D, E, B>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    B: Builder<'a, DR, DW, D, E>,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+{
+    type ErrorType = B::ErrorType;
+
+    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        assert!(arg_inputs.len() <= 32);
+        self.arg_input_lens.push(arg_inputs.len());
+        self.builder
+            .add(name, circuit, None, None, Some(arg_inputs));
+    }
+
+    fn build(self) -> Result<Vec<ParBasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {
+        self.builder.build().map(|execs| {
+            execs
+                .into_iter()
+                .zip(self.arg_input_lens)
+                .map(|(e, arg_len)| ParBasicMapperExecutor {
                     executor: e,
                     arg_input_max: u32::try_from((1u64 << arg_len) - 1u64).unwrap(),
                     d: PhantomData,

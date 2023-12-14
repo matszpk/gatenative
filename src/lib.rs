@@ -401,3 +401,76 @@ where
     // preferred input count for this builder
     fn preferred_input_count(&self) -> usize;
 }
+
+pub trait ParMapperExecutor<'a, DR, DW, D>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+{
+    type ErrorType;
+
+    /// Get circuit input length (number of inputs)
+    fn input_len(&self) -> usize;
+    /// Get real input length (number of entries in area of input placements)
+    fn real_input_len(&self) -> usize;
+    /// Get circuit output length (number of outputs)
+    fn output_len(&self) -> usize;
+    // function: F(input data, output data, arg_input)
+    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
+    where
+        F: Fn(Out, &D, &D, u32) -> Out + Send + Sync,
+        Out: Clone + Send + Sync;
+    fn execute_direct<'b, Out: Clone, F>(
+        &mut self,
+        input: &'b D,
+        init: Out,
+        f: F,
+    ) -> Result<Out, Self::ErrorType>
+    where
+        F: Fn(Out, &[u32], &[u32], u32) -> Out + Send + Sync,
+        Out: Clone + Send + Sync,
+    {
+        self.execute(input, init, |out, input, output, arg_input| {
+            input.process(|inputx| {
+                output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
+            })
+        })
+    }
+    /// Create new data - length is number of 32-bit words
+    fn new_data(&mut self, len: usize) -> D;
+    /// Create new data from vector.
+    fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
+    /// Create new data from slice.
+    fn new_data_from_slice(&mut self, data: &[u32]) -> D;
+}
+
+pub trait ParMapperBuilder<'a, DR, DW, D, E>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: ParMapperExecutor<'a, DR, DW, D> + Send + Sync,
+{
+    type ErrorType;
+
+    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug;
+
+    fn build(self) -> Result<Vec<E>, Self::ErrorType>;
+
+    /// word length in bits
+    fn word_len(&self) -> u32;
+
+    /// data holder can be used between any executor
+    fn is_data_holder_global() -> bool;
+    /// data holder can be used between any executor created by one builder
+    fn is_data_holder_in_builder() -> bool;
+    // preferred input count for this builder
+    fn preferred_input_count(&self) -> usize;
+}
