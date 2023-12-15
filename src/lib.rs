@@ -6,6 +6,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Range, RangeFrom};
 
+// TODO: Add special Builder that for arg_input execute differently optimized circuit
+// instead same - for 000xxxx - use circuit000, for 001xxxx use circuit001
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
     NoNegs,
