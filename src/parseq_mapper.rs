@@ -34,13 +34,13 @@ where
     }
 }
 
-pub struct ParSeqDataWriter<PDW, SDW>
+pub enum ParSeqDataWriter<PDW, SDW>
 where
     PDW: DataWriter + Send + Sync,
     SDW: DataWriter + Send + Sync,
 {
-    par_writer: PDW,
-    seq_writers: Vec<SDW>,
+    Par(PDW),
+    Seq(SDW),
 }
 
 impl<PDW, SDW> DataWriter for ParSeqDataWriter<PDW, SDW>
@@ -49,19 +49,9 @@ where
     SDW: DataWriter + Send + Sync,
 {
     fn get_mut(&mut self) -> &mut [u32] {
-        self.par_writer.get_mut()
-    }
-}
-
-impl<PDW, SDW> Drop for ParSeqDataWriter<PDW, SDW>
-where
-    PDW: DataWriter + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-{
-    fn drop(&mut self) {
-        let par_data = self.par_writer.get_mut();
-        for sw in &mut self.seq_writers {
-            sw.get_mut().copy_from_slice(par_data);
+        match self {
+            ParSeqDataWriter::Par(p) => p.get_mut(),
+            ParSeqDataWriter::Seq(s) => s.get_mut(),
         }
     }
 }
@@ -75,45 +65,12 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
-    All { par: PD, seqs: Vec<SD> },
-    ParRef(&'a PD),
-    SeqRef(usize, &'a SD),
+    ParRef(&'a mut PD),
+    SeqRef(usize, &'a mut SD),
     PDR(PhantomData<&'a PDR>),
     PDW(PhantomData<&'a PDW>),
     SDR(PhantomData<&'a SDR>),
     SDW(PhantomData<&'a SDW>),
-}
-
-impl<'a, PDR, PDW, PD, SDR, SDW, SD> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
-where
-    PDR: DataReader + Send + Sync,
-    PDW: DataWriter + Send + Sync,
-    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-    SDR: DataReader + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
-{
-    fn par_ref(&'a self) -> Self {
-        match self {
-            Self::All { par, .. } => Self::ParRef(&par),
-            Self::ParRef(par) => Self::ParRef(par),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-    fn seq_ref(&'a self, index: usize) -> Self {
-        match self {
-            Self::All { seqs, .. } => Self::SeqRef(index, &seqs[index]),
-            Self::SeqRef(r_index, seq) => {
-                assert_eq!(*r_index, index);
-                Self::SeqRef(index, seq)
-            }
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
 }
 
 impl<'a, PDR, PDW, PD, SDR, SDW, SD>
@@ -129,7 +86,6 @@ where
 {
     fn len(&self) -> usize {
         match self {
-            Self::All { par, .. } => par.len(),
             Self::ParRef(par) => par.len(),
             Self::SeqRef(_, seq) => seq.len(),
             _ => {
@@ -139,19 +95,17 @@ where
     }
 
     fn set_range(&mut self, range: Range<usize>) {
-        if let Self::All { par, seqs } = self {
-            par.set_range(range.clone());
-            for s in seqs {
-                s.set_range(range.clone());
+        match self {
+            Self::ParRef(par) => par.set_range(range.clone()),
+            Self::SeqRef(_, seq) => seq.set_range(range.clone()),
+            _ => {
+                panic!("Unexpected kind");
             }
-        } else {
-            panic!("Unsupported");
         }
     }
 
     fn get(&'a self) -> ParSeqDataReader<PDR, SDR> {
         match self {
-            Self::All { par, .. } => ParSeqDataReader::Par(par.get()),
             Self::ParRef(par) => ParSeqDataReader::Par(par.get()),
             Self::SeqRef(_, seq) => ParSeqDataReader::Seq(seq.get()),
             _ => {
@@ -160,13 +114,12 @@ where
         }
     }
     fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
-        if let Self::All { par, seqs } = self {
-            ParSeqDataWriter {
-                par_writer: par.get_mut(),
-                seq_writers: seqs.iter_mut().map(|x| x.get_mut()).collect::<Vec<_>>(),
+        match self {
+            Self::ParRef(par) => ParSeqDataWriter::Par(par.get_mut()),
+            Self::SeqRef(_, seq) => ParSeqDataWriter::Seq(seq.get_mut()),
+            _ => {
+                panic!("Unexpected kind");
             }
-        } else {
-            panic!("Unsupported");
         }
     }
 
@@ -175,7 +128,6 @@ where
         F: FnMut(&[u32]) -> Out,
     {
         match self {
-            Self::All { par, .. } => par.process(f),
             Self::ParRef(par) => par.process(f),
             Self::SeqRef(_, seq) => seq.process(f),
             _ => {
@@ -188,28 +140,17 @@ where
     where
         F: FnMut(&mut [u32]) -> Out,
     {
-        if let Self::All { par, seqs } = self {
-            par.process_mut(|par_data| {
-                let out = f(par_data);
-                for s in seqs.iter_mut() {
-                    s.process_mut(|data| data.copy_from_slice(par_data));
-                }
-                out
-            })
-        } else {
-            panic!("Unsupported");
+        match self {
+            Self::ParRef(par) => par.process_mut(f),
+            Self::SeqRef(_, seq) => seq.process_mut(f),
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
     }
 
     fn release(self) -> Vec<u32> {
         match self {
-            Self::All { par, seqs } => {
-                let out = par.release();
-                for s in seqs {
-                    s.free();
-                }
-                out
-            }
             Self::ParRef(par) => par.get().get().to_vec(),
             Self::SeqRef(_, seq) => seq.get().get().to_vec(),
             _ => {
@@ -220,18 +161,48 @@ where
 
     fn free(self) {
         match self {
-            Self::All { par, seqs } => {
-                par.free();
-                for s in seqs {
-                    s.free();
-                }
-            }
             Self::ParRef(_) => {}
             Self::SeqRef(_, _) => {}
             _ => {
                 panic!("Unexpected kind");
             }
         }
+    }
+}
+
+pub struct ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+{
+    par: PD,
+    seqs: Vec<SD>,
+    pdr: PhantomData<&'a PDR>,
+    pdw: PhantomData<&'a PDW>,
+    sdr: PhantomData<&'a SDR>,
+    sdw: PhantomData<&'a SDW>,
+}
+
+impl<'a, PDR, PDW, PD, SDR, SDW, SD> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+{
+    #[inline]
+    pub fn par_ref(&'a mut self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::ParRef(&mut self.par)
+    }
+    #[inline]
+    pub fn seq_ref(&'a mut self, index: usize) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::SeqRef(index, &mut self.seqs[index])
     }
 }
 
@@ -267,12 +238,7 @@ where
 }
 
 impl<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
-    ParMapperExecutor<
-        'a,
-        ParSeqDataReader<PDR, SDR>,
-        ParSeqDataWriter<PDW, SDW>,
-        ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
-    > for ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+    ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
 where
     PDR: DataReader + Send + Sync,
     PDW: DataWriter + Send + Sync,
@@ -285,24 +251,22 @@ where
     SE: Executor<'a, SDR, SDW, SD> + Send,
     <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
 {
-    type ErrorType = ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>;
-
-    fn input_len(&self) -> usize {
+    pub fn input_len(&self) -> usize {
         self.par.input_len()
     }
-    fn real_input_len(&self) -> usize {
+    pub fn real_input_len(&self) -> usize {
         self.par.real_input_len()
     }
-    fn output_len(&self) -> usize {
+    pub fn output_len(&self) -> usize {
         self.par.output_len()
     }
-    fn execute<Out, F, G>(
+    pub fn execute<Out, F, G>(
         &mut self,
         input: &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
         init: Out,
         f: F,
         g: G,
-    ) -> Result<Out, Self::ErrorType>
+    ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
         F: Fn(
                 &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
@@ -317,42 +281,76 @@ where
         Ok(init)
     }
 
-    fn new_data(&mut self, len: usize) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::All {
+    pub fn execute_direct<'b, Out: Clone, F, G>(
+        &mut self,
+        input: &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+        init: Out,
+        f: F,
+        g: G,
+    ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
+    where
+        F: Fn(&[u32], &[u32], u32) -> Out + Send + Sync,
+        G: Fn(Out, Out) -> Out + Send + Sync,
+        Out: Clone + Send + Sync,
+    {
+        self.execute(
+            input,
+            init,
+            |input, output, arg_input| {
+                input.process(|inputx| output.process(|outputx| f(inputx, outputx, arg_input)))
+            },
+            g,
+        )
+    }
+
+    pub fn new_data(&mut self, len: usize) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqAllDataHolder {
             par: self.par.new_data(len),
             seqs: self
                 .seqs
                 .iter_mut()
                 .map(|s| s.lock().unwrap().new_data(len))
                 .collect::<Vec<_>>(),
+            pdr: PhantomData,
+            pdw: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
         }
     }
 
-    fn new_data_from_vec(
+    pub fn new_data_from_vec(
         &mut self,
         data: Vec<u32>,
-    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::All {
+    ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqAllDataHolder {
             par: self.par.new_data_from_slice(&data),
             seqs: self
                 .seqs
                 .iter_mut()
                 .map(|s| s.lock().unwrap().new_data_from_slice(&data))
                 .collect::<Vec<_>>(),
+            pdr: PhantomData,
+            pdw: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
         }
     }
 
-    fn new_data_from_slice(
+    pub fn new_data_from_slice(
         &mut self,
         data: &[u32],
-    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::All {
+    ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqAllDataHolder {
             par: self.par.new_data_from_slice(data),
             seqs: self
                 .seqs
                 .iter_mut()
                 .map(|s| s.lock().unwrap().new_data_from_slice(data))
                 .collect::<Vec<_>>(),
+            pdr: PhantomData,
+            pdw: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
         }
     }
 }
@@ -429,33 +427,8 @@ where
             se: PhantomData,
         }
     }
-}
 
-impl<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
-    ParMapperBuilder<
-        'a,
-        ParSeqDataReader<PDR, SDR>,
-        ParSeqDataWriter<PDW, SDW>,
-        ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
-        ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
-    > for ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
-where
-    PDR: DataReader + Send + Sync,
-    PDW: DataWriter + Send + Sync,
-    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
-    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
-    PB: Builder<'a, PDR, PDW, PD, PE>,
-    SDR: DataReader + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
-    SE: Executor<'a, SDR, SDW, SD> + Send,
-    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
-    SB: Builder<'a, SDR, SDW, SD, SE>,
-{
-    type ErrorType = ParSeqMapperBuilderError<PB::ErrorType, SB::ErrorType>;
-
-    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
+    pub fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -470,10 +443,12 @@ where
         }
     }
 
-    fn build(
+    pub fn build(
         self,
-    ) -> Result<Vec<ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>>, Self::ErrorType>
-    {
+    ) -> Result<
+        Vec<ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>>,
+        ParSeqMapperBuilderError<PB::ErrorType, SB::ErrorType>,
+    > {
         let par_execs = self.par.build()?;
         let mut seq_execs = HashMap::new();
         let seqs_len = self.seqs.len();
@@ -507,17 +482,13 @@ where
             .collect::<Vec<_>>())
     }
 
-    fn word_len(&self) -> u32 {
-        panic!("Use other way!");
-    }
-
-    fn is_data_holder_global() -> bool {
+    pub fn is_data_holder_global() -> bool {
         PB::is_data_holder_global() && SB::is_data_holder_global()
     }
-    fn is_data_holder_in_builder() -> bool {
+    pub fn is_data_holder_in_builder() -> bool {
         PB::is_data_holder_in_builder() && SB::is_data_holder_in_builder()
     }
-    fn preferred_input_count(&self) -> usize {
+    pub fn preferred_input_count(&self) -> usize {
         std::cmp::max(
             self.par.preferred_input_count(),
             self.seqs

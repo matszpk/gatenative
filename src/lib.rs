@@ -437,7 +437,7 @@ where
     /// G - main join function
     fn execute_direct<'b, Out: Clone, F, G>(
         &mut self,
-        input: &'b D,
+        input: &D,
         init: Out,
         f: F,
         g: G,
