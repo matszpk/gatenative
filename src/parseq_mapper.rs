@@ -8,7 +8,7 @@ use std::hash::Hash;
 
 use std::marker::PhantomData;
 use std::sync::{
-    atomic::{self, AtomicBool, AtomicU32},
+    atomic::{self, AtomicU64},
     Arc, Mutex,
 };
 
@@ -334,17 +334,16 @@ where
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        let arg_count = Arc::new(AtomicU32::new(0));
-        let end = Arc::new(AtomicBool::new(false));
-
+        let arg_count = Arc::new(AtomicU64::new(0));
         let results = self.thread_pool.broadcast(|ctx| {
             let mut thread_result = Ok(init.clone());
-            while !end.load(atomic::Ordering::SeqCst) {
+            loop {
                 let thread_idx = ctx.index();
-                let arg = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
-                if arg == self.arg_input_max {
-                    end.store(true, atomic::Ordering::SeqCst);
+                let arg_u64 = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
+                if arg_u64 > u64::from(self.arg_input_max) {
+                    break;
                 }
+                let arg = u32::try_from(arg_u64).unwrap();
                 let result = if thread_idx < self.num_threads {
                     self.par
                         .try_clone()
