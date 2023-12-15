@@ -372,3 +372,134 @@ where
         self.builder.preferred_input_count()
     }
 }
+
+// ParSeqMapper - mapper that join parallel and sequential mapper
+
+pub struct ParSeqDataWriter<PDW: DataWriter + Send + Sync, SDW: DataWriter> {
+    par_writer: PDW,
+    seq_writers: Vec<SDW>,
+}
+
+impl<PDW: DataWriter + Send + Sync, SDW: DataWriter> DataWriter for ParSeqDataWriter<PDW, SDW> {
+    fn get_mut(&mut self) -> &mut [u32] {
+        self.par_writer.get_mut()
+    }
+}
+
+impl<PDW: DataWriter + Send + Sync, SDW: DataWriter> Drop for ParSeqDataWriter<PDW, SDW> {
+    fn drop(&mut self) {
+        let par_data = self.par_writer.get_mut();
+        for sw in &mut self.seq_writers {
+            sw.get_mut().copy_from_slice(par_data);
+        }
+    }
+}
+
+pub struct ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    SDR: DataReader,
+    SDW: DataWriter,
+    SD: DataHolder<'a, SDR, SDW>,
+{
+    par: PD,       // parallel data holder
+    seqs: Vec<SD>, // sequential data holders
+    pdr: PhantomData<&'a PDR>,
+    pdw: PhantomData<&'a PDW>,
+    sdr: PhantomData<&'a SDR>,
+    sdw: PhantomData<&'a SDW>,
+}
+
+impl<'a, PDR, PDW, PD, SDR, SDW, SD> DataHolder<'a, PDR, ParSeqDataWriter<PDW, SDW>>
+    for ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    SDR: DataReader,
+    SDW: DataWriter,
+    SD: DataHolder<'a, SDR, SDW>,
+{
+    fn len(&self) -> usize {
+        self.par.len()
+    }
+
+    fn set_range(&mut self, range: Range<usize>) {
+        self.par.set_range(range.clone());
+        for s in &mut self.seqs {
+            s.set_range(range.clone());
+        }
+    }
+
+    fn get(&'a self) -> PDR {
+        self.par.get()
+    }
+    fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
+        ParSeqDataWriter {
+            par_writer: self.par.get_mut(),
+            seq_writers: self
+                .seqs
+                .iter_mut()
+                .map(|x| x.get_mut())
+                .collect::<Vec<_>>(),
+        }
+    }
+    fn process<F, Out>(&self, f: F) -> Out
+    where
+        F: FnMut(&[u32]) -> Out,
+    {
+        self.par.process(f)
+    }
+
+    fn process_mut<F, Out>(&mut self, mut f: F) -> Out
+    where
+        F: FnMut(&mut [u32]) -> Out,
+    {
+        self.par.process_mut(|par_data| {
+            let out = f(par_data);
+            for s in &mut self.seqs {
+                s.process_mut(|data| data.copy_from_slice(par_data));
+            }
+            out
+        })
+    }
+
+    fn release(self) -> Vec<u32> {
+        let out = self.par.release();
+        for s in self.seqs {
+            s.free();
+        }
+        out
+    }
+
+    fn free(self) {
+        self.par.free();
+        for s in self.seqs {
+            s.free();
+        }
+    }
+}
+
+pub struct ParSeqDataExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    SDR: DataReader,
+    SDW: DataWriter,
+    SD: DataHolder<'a, SDR, SDW>,
+    SE: Executor<'a, SDR, SDW, SD>,
+{
+    par: PE,
+    seqs: Vec<SE>,
+    pdr: PhantomData<&'a PDR>,
+    pdw: PhantomData<&'a PDW>,
+    pd: PhantomData<&'a PD>,
+    sdr: PhantomData<&'a SDR>,
+    sdw: PhantomData<&'a SDW>,
+    sd: PhantomData<&'a SD>,
+}
