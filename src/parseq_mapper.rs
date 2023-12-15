@@ -385,6 +385,45 @@ where
 }
 
 impl<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
+    ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    PB: Builder<'a, PDR, PDW, PD, PE>,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+    SE: Executor<'a, SDR, SDW, SD> + Send,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
+    SB: Builder<'a, SDR, SDW, SD, SE>,
+{
+    pub fn new(par_builder: PB, seq_builders: impl IntoIterator<Item = SB>) -> Self {
+        assert!(par_builder.is_empty());
+        Self {
+            par: par_builder,
+            seqs: seq_builders
+                .into_iter()
+                .map(|sb| {
+                    assert!(sb.is_empty());
+                    sb
+                })
+                .collect::<Vec<_>>(),
+            pdr: PhantomData,
+            pdw: PhantomData,
+            pd: PhantomData,
+            pe: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
+            sd: PhantomData,
+            se: PhantomData,
+        }
+    }
+}
+
+impl<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
     ParMapperBuilder<
         'a,
         ParSeqDataReader<PDR, SDR>,
