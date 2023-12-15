@@ -339,11 +339,8 @@ where
 
         let results = self.thread_pool.broadcast(|ctx| {
             let mut thread_result = Ok(init.clone());
-            loop {
+            while !end.load(atomic::Ordering::SeqCst) {
                 let thread_idx = ctx.index();
-                if end.load(atomic::Ordering::SeqCst) {
-                    break;
-                }
                 let arg = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
                 if arg == self.arg_input_max {
                     end.store(true, atomic::Ordering::SeqCst);
