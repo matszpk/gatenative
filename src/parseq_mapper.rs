@@ -283,6 +283,8 @@ where
     par: PE,
     seqs: Vec<Mutex<SE>>,
     arg_input_max: u32,
+    thread_pool: rayon::ThreadPool,
+    num_threads: usize,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -335,13 +337,7 @@ where
         let arg_count = Arc::new(AtomicU32::new(0));
         let end = Arc::new(AtomicBool::new(false));
 
-        let num_threads = rayon::current_num_threads();
-        let thread_pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(num_threads + self.seqs.len())
-            .build()
-            .unwrap();
-
-        let results = thread_pool.broadcast(|ctx| {
+        let results = self.thread_pool.broadcast(|ctx| {
             let mut thread_result = Ok(init.clone());
             loop {
                 let thread_idx = ctx.index();
@@ -352,7 +348,7 @@ where
                 if arg == self.arg_input_max {
                     end.store(true, atomic::Ordering::SeqCst);
                 }
-                let result = if thread_idx < num_threads {
+                let result = if thread_idx < self.num_threads {
                     self.par
                         .try_clone()
                         .unwrap()
@@ -360,7 +356,7 @@ where
                         .map(|output| f(&input.par_ref(), ParSeqObject::Par(&output), arg))
                         .map_err(|e| ParSeqMapperExecutorError::ParError(e))
                 } else {
-                    let i = thread_idx - num_threads;
+                    let i = thread_idx - self.num_threads;
                     self.seqs[i]
                         .lock()
                         .unwrap()
@@ -598,6 +594,7 @@ where
                 }
             }
         }
+        let num_threads = rayon::current_num_threads();
         Ok(par_execs
             .into_iter()
             .enumerate()
@@ -607,6 +604,11 @@ where
                     .map(|x| seq_execs.remove(&(x, i)).unwrap())
                     .collect::<Vec<_>>(),
                 arg_input_max: u32::try_from((1u64 << self.arg_input_lens[i]) - 1u64).unwrap(),
+                thread_pool: rayon::ThreadPoolBuilder::new()
+                    .num_threads(num_threads + seqs_len)
+                    .build()
+                    .unwrap(),
+                num_threads,
                 pdr: PhantomData,
                 pdw: PhantomData,
                 pd: PhantomData,
