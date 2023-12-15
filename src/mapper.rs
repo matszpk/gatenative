@@ -1,6 +1,7 @@
 use crate::*;
 
 use rayon::prelude::*;
+use thiserror::Error;
 
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -375,6 +376,27 @@ where
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParSeqDataSelect {
+    All,
+    Par,
+    Seq(usize),
+}
+
+pub enum ParSeqDataReader<PDR: DataReader + Send + Sync, SDR: DataReader> {
+    Par(PDR),
+    Seq(SDR),
+}
+
+impl<PDR: DataReader + Send + Sync, SDR: DataReader> DataReader for ParSeqDataReader<PDR, SDR> {
+    fn get(&self) -> &[u32] {
+        match self {
+            ParSeqDataReader::Par(p) => p.get(),
+            ParSeqDataReader::Seq(s) => s.get(),
+        }
+    }
+}
+
 pub struct ParSeqDataWriter<PDW: DataWriter + Send + Sync, SDW: DataWriter> {
     par_writer: PDW,
     seq_writers: Vec<SDW>,
@@ -406,13 +428,30 @@ where
 {
     par: PD,       // parallel data holder
     seqs: Vec<SD>, // sequential data holders
+    select: ParSeqDataSelect,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     sdr: PhantomData<&'a SDR>,
     sdw: PhantomData<&'a SDW>,
 }
 
-impl<'a, PDR, PDW, PD, SDR, SDW, SD> DataHolder<'a, PDR, ParSeqDataWriter<PDW, SDW>>
+impl<'a, PDR, PDW, PD, SDR, SDW, SD> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    SDR: DataReader,
+    SDW: DataWriter,
+    SD: DataHolder<'a, SDR, SDW>,
+{
+    #[inline]
+    pub fn selector(&self) -> ParSeqDataSelect {
+        self.select
+    }
+}
+
+impl<'a, PDR, PDW, PD, SDR, SDW, SD>
+    DataHolder<'a, ParSeqDataReader<PDR, SDR>, ParSeqDataWriter<PDW, SDW>>
     for ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
 where
     PDR: DataReader + Send + Sync,
@@ -423,20 +462,30 @@ where
     SD: DataHolder<'a, SDR, SDW>,
 {
     fn len(&self) -> usize {
-        self.par.len()
+        match self.select {
+            ParSeqDataSelect::All => self.par.len(),
+            ParSeqDataSelect::Par => self.par.len(),
+            ParSeqDataSelect::Seq(i) => self.seqs[i].len(),
+        }
     }
 
     fn set_range(&mut self, range: Range<usize>) {
+        assert!(matches!(self.select, ParSeqDataSelect::All));
         self.par.set_range(range.clone());
         for s in &mut self.seqs {
             s.set_range(range.clone());
         }
     }
 
-    fn get(&'a self) -> PDR {
-        self.par.get()
+    fn get(&'a self) -> ParSeqDataReader<PDR, SDR> {
+        match self.select {
+            ParSeqDataSelect::All => ParSeqDataReader::Par(self.par.get()),
+            ParSeqDataSelect::Par => ParSeqDataReader::Par(self.par.get()),
+            ParSeqDataSelect::Seq(i) => ParSeqDataReader::Seq(self.seqs[i].get()),
+        }
     }
     fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
+        assert!(matches!(self.select, ParSeqDataSelect::All));
         ParSeqDataWriter {
             par_writer: self.par.get_mut(),
             seq_writers: self
@@ -446,17 +495,23 @@ where
                 .collect::<Vec<_>>(),
         }
     }
+
     fn process<F, Out>(&self, f: F) -> Out
     where
         F: FnMut(&[u32]) -> Out,
     {
-        self.par.process(f)
+        match self.select {
+            ParSeqDataSelect::All => self.par.process(f),
+            ParSeqDataSelect::Par => self.par.process(f),
+            ParSeqDataSelect::Seq(i) => self.seqs[i].process(f),
+        }
     }
 
     fn process_mut<F, Out>(&mut self, mut f: F) -> Out
     where
         F: FnMut(&mut [u32]) -> Out,
     {
+        assert!(matches!(self.select, ParSeqDataSelect::All));
         self.par.process_mut(|par_data| {
             let out = f(par_data);
             for s in &mut self.seqs {
@@ -467,6 +522,7 @@ where
     }
 
     fn release(self) -> Vec<u32> {
+        assert!(matches!(self.select, ParSeqDataSelect::All));
         let out = self.par.release();
         for s in self.seqs {
             s.free();
@@ -482,21 +538,12 @@ where
     }
 }
 
-pub enum ParSeqExecutorError<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
-where
-    PDR: DataReader + Send + Sync,
-    PDW: DataWriter + Send + Sync,
-    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
-    PE::ErrorType: Send,
-    SDR: DataReader,
-    SDW: DataWriter,
-    SD: DataHolder<'a, SDR, SDW>,
-    SE: Executor<'a, SDR, SDW, SD>,
-    SE::ErrorType: Send,
-{
-    ParError(PE::ErrorType),
-    SeqError(SE::ErrorType),
+#[derive(Error, Debug)]
+pub enum ParSeqExecutorError<PE, SE> {
+    #[error("ParError {0}")]
+    ParError(#[from] PE),
+    #[error("SeqError for {0} {1}")]
+    SeqError(usize, SE),
 }
 
 pub struct ParSeqDataExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
