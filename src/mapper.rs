@@ -837,6 +837,13 @@ where
         PB::is_data_holder_in_builder() && SB::is_data_holder_in_builder()
     }
     fn preferred_input_count(&self) -> usize {
-        panic!("Use other way!");
+        std::cmp::max(
+            self.par.preferred_input_count(),
+            self.seqs
+                .iter()
+                .map(|x| x.preferred_input_count())
+                .max()
+                .unwrap(),
+        )
     }
 }
