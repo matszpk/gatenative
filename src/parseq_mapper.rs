@@ -12,12 +12,20 @@ use std::sync::Mutex;
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
-pub enum ParSeqDataReader<PDR: DataReader + Send + Sync, SDR: DataReader> {
+pub enum ParSeqDataReader<PDR, SDR>
+where
+    PDR: DataReader + Send + Sync,
+    SDR: DataReader + Send + Sync,
+{
     Par(PDR),
     Seq(SDR),
 }
 
-impl<PDR: DataReader + Send + Sync, SDR: DataReader> DataReader for ParSeqDataReader<PDR, SDR> {
+impl<PDR, SDR> DataReader for ParSeqDataReader<PDR, SDR>
+where
+    PDR: DataReader + Send + Sync,
+    SDR: DataReader + Send + Sync,
+{
     fn get(&self) -> &[u32] {
         match self {
             ParSeqDataReader::Par(p) => p.get(),
