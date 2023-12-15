@@ -12,6 +12,12 @@ use std::sync::Mutex;
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParSeqSelection {
+    Par,
+    Seq(usize),
+}
+
 pub enum ParSeqDataReader<PDR, SDR>
 where
     PDR: DataReader + Send + Sync,
@@ -289,7 +295,7 @@ where
         g: G,
     ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
-        F: Fn(&[u32], &[u32], u32) -> Out + Send + Sync,
+        F: Fn(ParSeqSelection, &[u32], &[u32], u32) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
@@ -297,7 +303,14 @@ where
             input,
             init,
             |input, output, arg_input| {
-                input.process(|inputx| output.process(|outputx| f(inputx, outputx, arg_input)))
+                let sel = match input {
+                    ParSeqDataHolder::ParRef(_) => ParSeqSelection::Par,
+                    ParSeqDataHolder::SeqRef(i, _) => ParSeqSelection::Seq(*i),
+                    _ => {
+                        panic!("Unexpected");
+                    }
+                };
+                input.process(|inputx| output.process(|outputx| f(sel, inputx, outputx, arg_input)))
             },
             g,
         )
