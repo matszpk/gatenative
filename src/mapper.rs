@@ -376,12 +376,12 @@ where
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ParSeqDataSelect {
-    All,
-    Par,
-    Seq(usize),
-}
+// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+// pub enum ParSeqDataSelect {
+//     All,
+//     Par,
+//     Seq(usize),
+// }
 
 pub enum ParSeqDataReader<PDR: DataReader + Send + Sync, SDR: DataReader> {
     Par(PDR),
@@ -417,7 +417,7 @@ impl<PDW: DataWriter + Send + Sync, SDW: DataWriter> Drop for ParSeqDataWriter<P
     }
 }
 
-pub struct ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+pub enum ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
 where
     PDR: DataReader + Send + Sync,
     PDW: DataWriter + Send + Sync,
@@ -426,13 +426,13 @@ where
     SDW: DataWriter,
     SD: DataHolder<'a, SDR, SDW>,
 {
-    par: PD,       // parallel data holder
-    seqs: Vec<SD>, // sequential data holders
-    select: ParSeqDataSelect,
-    pdr: PhantomData<&'a PDR>,
-    pdw: PhantomData<&'a PDW>,
-    sdr: PhantomData<&'a SDR>,
-    sdw: PhantomData<&'a SDW>,
+    All { par: PD, seqs: Vec<SD> },
+    ParRef(&'a PD),
+    SeqRef(usize, &'a SD),
+    PDR(PhantomData<&'a PDR>),
+    PDW(PhantomData<&'a PDW>),
+    SDR(PhantomData<&'a SDR>),
+    SDW(PhantomData<&'a SDW>),
 }
 
 impl<'a, PDR, PDW, PD, SDR, SDW, SD> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
@@ -444,9 +444,26 @@ where
     SDW: DataWriter,
     SD: DataHolder<'a, SDR, SDW>,
 {
-    #[inline]
-    pub fn selector(&self) -> ParSeqDataSelect {
-        self.select
+    fn par_ref(&'a self) -> Self {
+        match self {
+            Self::All { par, .. } => Self::ParRef(&par),
+            Self::ParRef(par) => Self::ParRef(par),
+            _ => {
+                panic!("Unexpected kind");
+            }
+        }
+    }
+    fn seq_ref(&'a self, index: usize) -> Self {
+        match self {
+            Self::All { seqs, .. } => Self::SeqRef(index, &seqs[index]),
+            Self::SeqRef(r_index, seq) => {
+                assert_eq!(*r_index, index);
+                Self::SeqRef(index, seq)
+            }
+            _ => {
+                panic!("Unexpected kind");
+            }
+        }
     }
 }
 
@@ -462,37 +479,45 @@ where
     SD: DataHolder<'a, SDR, SDW>,
 {
     fn len(&self) -> usize {
-        match self.select {
-            ParSeqDataSelect::All => self.par.len(),
-            ParSeqDataSelect::Par => self.par.len(),
-            ParSeqDataSelect::Seq(i) => self.seqs[i].len(),
+        match self {
+            Self::All { par, .. } => par.len(),
+            Self::ParRef(par) => par.len(),
+            Self::SeqRef(_, seq) => seq.len(),
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
     }
 
     fn set_range(&mut self, range: Range<usize>) {
-        assert!(matches!(self.select, ParSeqDataSelect::All));
-        self.par.set_range(range.clone());
-        for s in &mut self.seqs {
-            s.set_range(range.clone());
+        if let Self::All { par, seqs } = self {
+            par.set_range(range.clone());
+            for s in seqs {
+                s.set_range(range.clone());
+            }
+        } else {
+            panic!("Unsupported");
         }
     }
 
     fn get(&'a self) -> ParSeqDataReader<PDR, SDR> {
-        match self.select {
-            ParSeqDataSelect::All => ParSeqDataReader::Par(self.par.get()),
-            ParSeqDataSelect::Par => ParSeqDataReader::Par(self.par.get()),
-            ParSeqDataSelect::Seq(i) => ParSeqDataReader::Seq(self.seqs[i].get()),
+        match self {
+            Self::All { par, .. } => ParSeqDataReader::Par(par.get()),
+            Self::ParRef(par) => ParSeqDataReader::Par(par.get()),
+            Self::SeqRef(_, seq) => ParSeqDataReader::Seq(seq.get()),
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
     }
     fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
-        assert!(matches!(self.select, ParSeqDataSelect::All));
-        ParSeqDataWriter {
-            par_writer: self.par.get_mut(),
-            seq_writers: self
-                .seqs
-                .iter_mut()
-                .map(|x| x.get_mut())
-                .collect::<Vec<_>>(),
+        if let Self::All { par, seqs } = self {
+            ParSeqDataWriter {
+                par_writer: par.get_mut(),
+                seq_writers: seqs.iter_mut().map(|x| x.get_mut()).collect::<Vec<_>>(),
+            }
+        } else {
+            panic!("Unsupported");
         }
     }
 
@@ -500,10 +525,13 @@ where
     where
         F: FnMut(&[u32]) -> Out,
     {
-        match self.select {
-            ParSeqDataSelect::All => self.par.process(f),
-            ParSeqDataSelect::Par => self.par.process(f),
-            ParSeqDataSelect::Seq(i) => self.seqs[i].process(f),
+        match self {
+            Self::All { par, .. } => par.process(f),
+            Self::ParRef(par) => par.process(f),
+            Self::SeqRef(_, seq) => seq.process(f),
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
     }
 
@@ -511,29 +539,49 @@ where
     where
         F: FnMut(&mut [u32]) -> Out,
     {
-        assert!(matches!(self.select, ParSeqDataSelect::All));
-        self.par.process_mut(|par_data| {
-            let out = f(par_data);
-            for s in &mut self.seqs {
-                s.process_mut(|data| data.copy_from_slice(par_data));
-            }
-            out
-        })
+        if let Self::All { par, seqs } = self {
+            par.process_mut(|par_data| {
+                let out = f(par_data);
+                for s in seqs.iter_mut() {
+                    s.process_mut(|data| data.copy_from_slice(par_data));
+                }
+                out
+            })
+        } else {
+            panic!("Unsupported");
+        }
     }
 
     fn release(self) -> Vec<u32> {
-        assert!(matches!(self.select, ParSeqDataSelect::All));
-        let out = self.par.release();
-        for s in self.seqs {
-            s.free();
+        match self {
+            Self::All { par, seqs } => {
+                let out = par.release();
+                for s in seqs {
+                    s.free();
+                }
+                out
+            }
+            Self::ParRef(par) => par.get().get().to_vec(),
+            Self::SeqRef(_, seq) => seq.get().get().to_vec(),
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
-        out
     }
 
     fn free(self) {
-        self.par.free();
-        for s in self.seqs {
-            s.free();
+        match self {
+            Self::All { par, seqs } => {
+                par.free();
+                for s in seqs {
+                    s.free();
+                }
+            }
+            Self::ParRef(_) => {}
+            Self::SeqRef(_, _) => {}
+            _ => {
+                panic!("Unexpected kind");
+            }
         }
     }
 }
