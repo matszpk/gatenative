@@ -463,7 +463,7 @@ where
     DR: DataReader + Send + Sync,
     DW: DataWriter + Send + Sync,
     D: DataHolder<'a, DR, DW> + Send + Sync,
-    E: ParMapperExecutor<'a, DR, DW, D> + Send + Sync,
+    E: ParMapperExecutor<'a, DR, DW, D>,
 {
     type ErrorType;
 
