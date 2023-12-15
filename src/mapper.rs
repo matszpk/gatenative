@@ -376,13 +376,6 @@ where
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
-// #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-// pub enum ParSeqDataSelect {
-//     All,
-//     Par,
-//     Seq(usize),
-// }
-
 pub enum ParSeqDataReader<PDR: DataReader + Send + Sync, SDR: DataReader> {
     Par(PDR),
     Seq(SDR),
