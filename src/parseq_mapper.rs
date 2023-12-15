@@ -1,6 +1,5 @@
 use crate::*;
 
-use rayon::{self, prelude::*};
 use thiserror::Error;
 
 use std::collections::HashMap;
@@ -13,7 +12,6 @@ use std::sync::{
     atomic::{self, AtomicBool, AtomicU32},
     Arc, Mutex,
 };
-use std::thread;
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
@@ -177,7 +175,7 @@ where
         }
     }
 
-    fn process_mut<F, Out>(&mut self, mut f: F) -> Out
+    fn process_mut<F, Out>(&mut self, f: F) -> Out
     where
         F: FnMut(&mut [u32]) -> Out,
     {
@@ -371,7 +369,7 @@ where
                     .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
             };
             let mut old_result_x = final_result.lock().unwrap();
-            let mut old_result_x = old_result_x.deref_mut();
+            let old_result_x = old_result_x.deref_mut();
             if let Ok(old_result) = old_result_x {
                 match result {
                     Ok(result) => {
