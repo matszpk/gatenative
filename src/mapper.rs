@@ -3,6 +3,7 @@ use crate::*;
 use rayon::prelude::*;
 use thiserror::Error;
 
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -711,5 +712,131 @@ where
                 .map(|s| s.lock().unwrap().new_data_from_slice(data))
                 .collect::<Vec<_>>(),
         }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum ParSeqMapperBuilderError<PE, SE> {
+    #[error("ParError {0}")]
+    ParError(#[from] PE),
+    #[error("SeqError for {0} {1}")]
+    SeqError(usize, SE),
+}
+
+pub struct ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    PB: Builder<'a, PDR, PDW, PD, PE>,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+    SE: Executor<'a, SDR, SDW, SD> + Send,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
+    SB: Builder<'a, SDR, SDW, SD, SE>,
+{
+    par: PB,
+    seqs: Vec<SB>,
+    pdr: PhantomData<&'a PDR>,
+    pdw: PhantomData<&'a PDW>,
+    pd: PhantomData<&'a PD>,
+    pe: PhantomData<&'a PE>,
+    sdr: PhantomData<&'a SDR>,
+    sdw: PhantomData<&'a SDW>,
+    sd: PhantomData<&'a SD>,
+    se: PhantomData<&'a SE>,
+}
+
+impl<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
+    ParMapperBuilder<
+        'a,
+        ParSeqDataReader<PDR, SDR>,
+        ParSeqDataWriter<PDW, SDW>,
+        ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+        ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
+    > for ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    PB: Builder<'a, PDR, PDW, PD, PE>,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+    SE: Executor<'a, SDR, SDW, SD> + Send,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
+    SB: Builder<'a, SDR, SDW, SD, SE>,
+{
+    type ErrorType = ParSeqMapperBuilderError<PB::ErrorType, SB::ErrorType>;
+
+    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.par
+            .add(name, circuit.clone(), None, None, Some(arg_inputs));
+        for s in &mut self.seqs {
+            s.add(name, circuit.clone(), None, None, Some(arg_inputs));
+        }
+    }
+
+    fn build(
+        self,
+    ) -> Result<Vec<ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>>, Self::ErrorType>
+    {
+        let par_execs = self.par.build()?;
+        let mut seq_execs = HashMap::new();
+        let seqs_len = self.seqs.len();
+        for (i, s) in self.seqs.into_iter().enumerate() {
+            match s.build() {
+                Ok(execs) => {
+                    for (j, e) in execs.into_iter().enumerate() {
+                        seq_execs.insert((i, j), Mutex::new(e));
+                    }
+                }
+                Err(err) => {
+                    return Err(ParSeqMapperBuilderError::SeqError(i, err));
+                }
+            }
+        }
+        Ok(par_execs
+            .into_iter()
+            .enumerate()
+            .map(|(i, par)| ParSeqMapperExecutor {
+                par,
+                seqs: (0..seqs_len)
+                    .map(|x| seq_execs.remove(&(x, i)).unwrap())
+                    .collect::<Vec<_>>(),
+                pdr: PhantomData,
+                pdw: PhantomData,
+                pd: PhantomData,
+                sdr: PhantomData,
+                sdw: PhantomData,
+                sd: PhantomData,
+            })
+            .collect::<Vec<_>>())
+    }
+
+    fn word_len(&self) -> u32 {
+        panic!("Use other way!");
+    }
+
+    fn is_data_holder_global() -> bool {
+        PB::is_data_holder_global() && SB::is_data_holder_global()
+    }
+    fn is_data_holder_in_builder() -> bool {
+        PB::is_data_holder_in_builder() && SB::is_data_holder_in_builder()
+    }
+    fn preferred_input_count(&self) -> usize {
+        panic!("Use other way!");
     }
 }
