@@ -20,6 +20,7 @@ mod divide;
 pub mod gencode;
 pub mod mapper;
 pub mod opencl_build_exec;
+pub mod parseq_mapper;
 mod utils;
 mod vbinopcircuit;
 mod vcircuit;
