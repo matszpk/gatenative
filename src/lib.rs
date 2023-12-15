@@ -345,10 +345,12 @@ where
     fn real_input_len(&self) -> usize;
     /// Get circuit output length (number of outputs)
     fn output_len(&self) -> usize;
-    // function: F(input data, output data, arg_input)
+    // function: F - main reduce function: F(input data, output data, arg_input)
     fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &D, &D, u32) -> Out;
+
+    // function: F - main reduce function: F(input data, output data, arg_input)
     fn execute_direct<'b, Out: Clone, F>(
         &mut self,
         input: &'b D,
@@ -416,7 +418,8 @@ where
     fn real_input_len(&self) -> usize;
     /// Get circuit output length (number of outputs)
     fn output_len(&self) -> usize;
-    // function: F(input data, output data, arg_input)
+    /// execute. F - main reduce function: F(input data, output data, arg_input)
+    /// G - main join function
     fn execute<Out, F, G>(
         &mut self,
         input: &D,
@@ -429,6 +432,8 @@ where
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync;
 
+    /// execute. F - main reduce function: F(input data, output data, arg_input)
+    /// G - main join function
     fn execute_direct<'b, Out: Clone, F, G>(
         &mut self,
         input: &'b D,
