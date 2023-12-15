@@ -7,6 +7,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use std::marker::PhantomData;
+use std::sync::Mutex;
 
 // TODO: Add adapter from Mapper to ParMapper
 
@@ -592,14 +593,14 @@ where
 }
 
 #[derive(Error, Debug)]
-pub enum ParSeqExecutorError<PE, SE> {
+pub enum ParSeqMapperExecutorError<PE, SE> {
     #[error("ParError {0}")]
     ParError(#[from] PE),
     #[error("SeqError for {0} {1}")]
     SeqError(usize, SE),
 }
 
-pub struct ParSeqDataExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+pub struct ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
 where
     PDR: DataReader + Send + Sync,
     PDW: DataWriter + Send + Sync,
@@ -613,7 +614,7 @@ where
     <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
 {
     par: PE,
-    seqs: Vec<SE>,
+    seqs: Vec<Mutex<SE>>,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -628,7 +629,7 @@ impl<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
         ParSeqDataReader<PDR, SDR>,
         ParSeqDataWriter<PDW, SDW>,
         ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
-    > for ParSeqDataExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+    > for ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
 where
     PDR: DataReader + Send + Sync,
     PDW: DataWriter + Send + Sync,
@@ -641,7 +642,7 @@ where
     SE: Executor<'a, SDR, SDW, SD> + Send,
     <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
 {
-    type ErrorType = ParSeqExecutorError<PE::ErrorType, SE::ErrorType>;
+    type ErrorType = ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>;
 
     fn input_len(&self) -> usize {
         self.par.input_len()
@@ -679,7 +680,7 @@ where
             seqs: self
                 .seqs
                 .iter_mut()
-                .map(|s| s.new_data(len))
+                .map(|s| s.lock().unwrap().new_data(len))
                 .collect::<Vec<_>>(),
         }
     }
@@ -693,7 +694,7 @@ where
             seqs: self
                 .seqs
                 .iter_mut()
-                .map(|s| s.new_data_from_slice(&data))
+                .map(|s| s.lock().unwrap().new_data_from_slice(&data))
                 .collect::<Vec<_>>(),
         }
     }
@@ -707,7 +708,7 @@ where
             seqs: self
                 .seqs
                 .iter_mut()
-                .map(|s| s.new_data_from_slice(data))
+                .map(|s| s.lock().unwrap().new_data_from_slice(data))
                 .collect::<Vec<_>>(),
         }
     }
