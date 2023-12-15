@@ -52,6 +52,7 @@ where
         F: FnMut(Out, &D, &D, u32) -> Out,
     {
         let input_len = self.real_input_len();
+        // calculate chunk count
         let count = if input_len != 0 {
             input.len() / input_len
         } else {
@@ -59,6 +60,7 @@ where
         };
         let mut output = self.executor.new_data(count * self.output_len());
         let mut out = init;
+        // just execute
         for arg in 0..=self.arg_input_max {
             self.executor.execute_reuse(input, arg, &mut output)?;
             out = f(out, input, &output, arg);
@@ -230,6 +232,7 @@ where
         (0..=self.arg_input_max)
             .into_par_iter()
             .map(|arg| {
+                // just execute executor
                 self.executor
                     .try_clone()
                     .unwrap()
@@ -239,8 +242,10 @@ where
             .reduce(
                 || Ok(init.clone()),
                 |a, b| {
+                    // check whether is ok otherwise return error
                     if let Ok(av) = a {
                         if let Ok(bv) = b {
+                            // join results
                             Ok(g(av, bv))
                         } else {
                             b
