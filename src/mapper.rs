@@ -186,7 +186,7 @@ where
     DW: DataWriter + Send + Sync,
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: Executor<'a, DR, DW, D> + Send + Sync,
-    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    E::ErrorType: Send,
 {
     executor: E,
     arg_input_max: u32,
@@ -201,7 +201,7 @@ where
     DW: DataWriter + Send + Sync,
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: Executor<'a, DR, DW, D> + Send + Sync,
-    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    E::ErrorType: Send,
 {
     type ErrorType = E::ErrorType;
 
@@ -278,7 +278,7 @@ where
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: Executor<'a, DR, DW, D> + Send + Sync,
     B: Builder<'a, DR, DW, D, E>,
-    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    E::ErrorType: Send,
 {
     builder: B,
     arg_input_lens: Vec<usize>,
@@ -295,7 +295,7 @@ where
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: Executor<'a, DR, DW, D> + Send + Sync,
     B: Builder<'a, DR, DW, D, E>,
-    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    E::ErrorType: Send,
 {
     pub fn new(builder: B) -> Self {
         assert!(B::is_data_holder_global() && B::is_executor_per_thread());
@@ -319,7 +319,7 @@ where
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: Executor<'a, DR, DW, D> + Send + Sync,
     B: Builder<'a, DR, DW, D, E>,
-    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    E::ErrorType: Send,
 {
     type ErrorType = B::ErrorType;
 
@@ -482,6 +482,23 @@ where
     }
 }
 
+pub enum ParSeqExecutorError<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + Send + Sync,
+    PE::ErrorType: Send,
+    SDR: DataReader,
+    SDW: DataWriter,
+    SD: DataHolder<'a, SDR, SDW>,
+    SE: Executor<'a, SDR, SDW, SD>,
+    SE::ErrorType: Send,
+{
+    ParError(PE::ErrorType),
+    SeqError(SE::ErrorType),
+}
+
 pub struct ParSeqDataExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
 where
     PDR: DataReader + Send + Sync,
@@ -493,6 +510,7 @@ where
     SDW: DataWriter,
     SD: DataHolder<'a, SDR, SDW>,
     SE: Executor<'a, SDR, SDW, SD>,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
 {
     par: PE,
     seqs: Vec<SE>,
