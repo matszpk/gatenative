@@ -106,6 +106,7 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     pub fn new(builder: B) -> Self {
+        assert!(builder.is_empty());
         Self {
             builder,
             arg_input_lens: vec![],
@@ -298,6 +299,7 @@ where
 {
     pub fn new(builder: B) -> Self {
         assert!(B::is_data_holder_global() && B::is_executor_per_thread());
+        assert!(builder.is_empty());
         Self {
             builder,
             arg_input_lens: vec![],
