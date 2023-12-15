@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 
 // TODO: Add adapter from Mapper to ParMapper
 
-// TOOD: Add mapper that join parallel-mapper and one or more sequential-mappers.
+// TODO: Add mapper that join parallel-mapper and one or more sequential-mappers.
 
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
