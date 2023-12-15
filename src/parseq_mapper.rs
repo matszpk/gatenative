@@ -304,6 +304,7 @@ where
     }
 
     pub fn new_data(&mut self, len: usize) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        assert!((len & 15) == 0);
         ParSeqAllDataHolder {
             par: self.par.new_data(len),
             seqs: self
@@ -322,6 +323,7 @@ where
         &mut self,
         data: Vec<u32>,
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        assert!((data.len() & 15) == 0);
         ParSeqAllDataHolder {
             par: self.par.new_data_from_slice(&data),
             seqs: self
@@ -340,6 +342,7 @@ where
         &mut self,
         data: &[u32],
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        assert!((data.len() & 15) == 0);
         ParSeqAllDataHolder {
             par: self.par.new_data_from_slice(data),
             seqs: self
@@ -480,6 +483,18 @@ where
                 sd: PhantomData,
             })
             .collect::<Vec<_>>())
+    }
+
+    pub fn par_word_len(&self) -> u32 {
+        self.par.word_len()
+    }
+
+    pub fn seq_word_len(&self, index: usize) -> u32 {
+        self.seqs[index].word_len()
+    }
+
+    pub fn seq_builder_num(&self) -> usize {
+        self.seqs.len()
     }
 
     pub fn is_data_holder_global() -> bool {
