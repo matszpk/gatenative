@@ -7,7 +7,6 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use std::marker::PhantomData;
-use std::ops::DerefMut;
 use std::sync::{
     atomic::{self, AtomicBool, AtomicU32},
     Arc, Mutex,
@@ -342,46 +341,55 @@ where
             .build()
             .unwrap();
 
-        let final_result = Mutex::new(Ok(init));
-        thread_pool.broadcast(|ctx| {
-            let thread_idx = ctx.index();
-            if end.load(atomic::Ordering::SeqCst) {
-                return;
-            }
-            let arg = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
-            if arg == self.arg_input_max {
-                end.store(true, atomic::Ordering::SeqCst);
-            }
-            let result = if thread_idx < num_threads {
-                self.par
-                    .try_clone()
-                    .unwrap()
-                    .execute(&input.par, arg)
-                    .map(|output| f(&input.par_ref(), ParSeqObject::Par(&output), arg))
-                    .map_err(|e| ParSeqMapperExecutorError::ParError(e))
-            } else {
-                let i = thread_idx - num_threads;
-                self.seqs[i]
-                    .lock()
-                    .unwrap()
-                    .execute(&input.seqs[i], arg)
-                    .map(|output| f(&input.seq_ref(i), ParSeqObject::Seq(&output), arg))
-                    .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
-            };
-            let mut old_result_x = final_result.lock().unwrap();
-            let old_result_x = old_result_x.deref_mut();
-            if let Ok(old_result) = old_result_x {
-                match result {
-                    Ok(result) => {
-                        *old_result_x = Ok(g(old_result.clone(), result));
-                    }
-                    Err(e) => {
-                        *old_result_x = Err(e);
-                    }
+        let results = thread_pool.broadcast(|ctx| {
+            let mut thread_result = Ok(init.clone());
+            loop {
+                let thread_idx = ctx.index();
+                if end.load(atomic::Ordering::SeqCst) {
+                    break;
+                }
+                let arg = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
+                if arg == self.arg_input_max {
+                    end.store(true, atomic::Ordering::SeqCst);
+                }
+                let result = if thread_idx < num_threads {
+                    self.par
+                        .try_clone()
+                        .unwrap()
+                        .execute(&input.par, arg)
+                        .map(|output| f(&input.par_ref(), ParSeqObject::Par(&output), arg))
+                        .map_err(|e| ParSeqMapperExecutorError::ParError(e))
+                } else {
+                    let i = thread_idx - num_threads;
+                    self.seqs[i]
+                        .lock()
+                        .unwrap()
+                        .execute(&input.seqs[i], arg)
+                        .map(|output| f(&input.seq_ref(i), ParSeqObject::Seq(&output), arg))
+                        .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
                 };
+                if let Ok(a) = thread_result {
+                    thread_result = match result {
+                        Ok(result) => Ok(g(a.clone(), result)),
+                        Err(e) => Err(e),
+                    };
+                }
             }
+            thread_result
         });
-        final_result.into_inner().unwrap()
+        results.into_iter().fold(Ok(init), |a, b| {
+            // check whether is ok otherwise return error
+            if let Ok(av) = a {
+                if let Ok(bv) = b {
+                    // join results
+                    Ok(g(av, bv))
+                } else {
+                    b
+                }
+            } else {
+                a
+            }
+        })
     }
 
     pub fn execute_direct<Out: Clone, F, G>(
