@@ -1,6 +1,6 @@
 use crate::*;
 
-use rayon::prelude::*;
+use rayon::{self, prelude::*};
 use thiserror::Error;
 
 use std::collections::HashMap;
@@ -8,9 +8,36 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use std::marker::PhantomData;
-use std::sync::Mutex;
+use std::ops::DerefMut;
+use std::sync::{
+    atomic::{self, AtomicBool, AtomicU32},
+    Arc, Mutex,
+};
+use std::thread;
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
+
+pub enum ParSeqObject<T1, T2> {
+    Par(T1),
+    Seq(T2),
+}
+
+impl<T1, T2> ParSeqObject<T1, T2> {
+    pub fn par(self) -> Option<T1> {
+        if let Self::Par(o) = self {
+            Some(o)
+        } else {
+            None
+        }
+    }
+    pub fn seq(self) -> Option<T2> {
+        if let Self::Seq(o) = self {
+            Some(o)
+        } else {
+            None
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParSeqSelection {
@@ -71,8 +98,10 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
-    ParRef(&'a mut PD),
-    SeqRef(usize, &'a mut SD),
+    ParRef(&'a PD),
+    SeqRef(usize, &'a SD),
+    ParRefMut(&'a mut PD),
+    SeqRefMut(usize, &'a mut SD),
     PDR(PhantomData<&'a PDR>),
     PDW(PhantomData<&'a PDW>),
     SDR(PhantomData<&'a SDR>),
@@ -94,6 +123,8 @@ where
         match self {
             Self::ParRef(par) => par.len(),
             Self::SeqRef(_, seq) => seq.len(),
+            Self::ParRefMut(par) => par.len(),
+            Self::SeqRefMut(_, seq) => seq.len(),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -102,8 +133,8 @@ where
 
     fn set_range(&mut self, range: Range<usize>) {
         match self {
-            Self::ParRef(par) => par.set_range(range.clone()),
-            Self::SeqRef(_, seq) => seq.set_range(range.clone()),
+            Self::ParRefMut(par) => par.set_range(range.clone()),
+            Self::SeqRefMut(_, seq) => seq.set_range(range.clone()),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -114,6 +145,8 @@ where
         match self {
             Self::ParRef(par) => ParSeqDataReader::Par(par.get()),
             Self::SeqRef(_, seq) => ParSeqDataReader::Seq(seq.get()),
+            Self::ParRefMut(par) => ParSeqDataReader::Par(par.get()),
+            Self::SeqRefMut(_, seq) => ParSeqDataReader::Seq(seq.get()),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -121,8 +154,8 @@ where
     }
     fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
         match self {
-            Self::ParRef(par) => ParSeqDataWriter::Par(par.get_mut()),
-            Self::SeqRef(_, seq) => ParSeqDataWriter::Seq(seq.get_mut()),
+            Self::ParRefMut(par) => ParSeqDataWriter::Par(par.get_mut()),
+            Self::SeqRefMut(_, seq) => ParSeqDataWriter::Seq(seq.get_mut()),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -136,6 +169,8 @@ where
         match self {
             Self::ParRef(par) => par.process(f),
             Self::SeqRef(_, seq) => seq.process(f),
+            Self::ParRefMut(par) => par.process(f),
+            Self::SeqRefMut(_, seq) => seq.process(f),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -147,8 +182,8 @@ where
         F: FnMut(&mut [u32]) -> Out,
     {
         match self {
-            Self::ParRef(par) => par.process_mut(f),
-            Self::SeqRef(_, seq) => seq.process_mut(f),
+            Self::ParRefMut(par) => par.process_mut(f),
+            Self::SeqRefMut(_, seq) => seq.process_mut(f),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -159,6 +194,8 @@ where
         match self {
             Self::ParRef(par) => par.get().get().to_vec(),
             Self::SeqRef(_, seq) => seq.get().get().to_vec(),
+            Self::ParRefMut(par) => par.get().get().to_vec(),
+            Self::SeqRefMut(_, seq) => seq.get().get().to_vec(),
             _ => {
                 panic!("Unexpected kind");
             }
@@ -169,6 +206,8 @@ where
         match self {
             Self::ParRef(_) => {}
             Self::SeqRef(_, _) => {}
+            Self::ParRefMut(_) => {}
+            Self::SeqRefMut(_, _) => {}
             _ => {
                 panic!("Unexpected kind");
             }
@@ -203,12 +242,23 @@ where
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
     #[inline]
-    pub fn par_ref(&'a mut self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::ParRef(&mut self.par)
+    pub fn par_ref(&'a self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::ParRef(&self.par)
     }
     #[inline]
-    pub fn seq_ref(&'a mut self, index: usize) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::SeqRef(index, &mut self.seqs[index])
+    pub fn seq_ref(&'a self, index: usize) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::SeqRef(index, &self.seqs[index])
+    }
+    #[inline]
+    pub fn par_ref_mut(&'a mut self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::ParRefMut(&mut self.par)
+    }
+    #[inline]
+    pub fn seq_ref_mut(
+        &'a mut self,
+        index: usize,
+    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
     }
 }
 
@@ -235,6 +285,7 @@ where
 {
     par: PE,
     seqs: Vec<Mutex<SE>>,
+    arg_input_max: u32,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -268,7 +319,7 @@ where
     }
     pub fn execute<Out, F, G>(
         &mut self,
-        input: &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+        input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
         init: Out,
         f: F,
         g: G,
@@ -276,7 +327,7 @@ where
     where
         F: Fn(
                 &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
-                &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+                ParSeqObject<&PD, &SD>,
                 u32,
             ) -> Out
             + Send
@@ -284,12 +335,60 @@ where
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        Ok(init)
+        let arg_count = Arc::new(AtomicU32::new(0));
+        let end = Arc::new(AtomicBool::new(false));
+
+        let num_threads = rayon::current_num_threads();
+        let thread_pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(num_threads + self.seqs.len())
+            .build()
+            .unwrap();
+
+        let final_result = Mutex::new(Ok(init));
+        thread_pool.broadcast(|ctx| {
+            let thread_idx = ctx.index();
+            if end.load(atomic::Ordering::SeqCst) {
+                return;
+            }
+            let arg = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
+            if arg == self.arg_input_max {
+                end.store(true, atomic::Ordering::SeqCst);
+            }
+            let result = if thread_idx < num_threads {
+                self.par
+                    .try_clone()
+                    .unwrap()
+                    .execute(&input.par, arg)
+                    .map(|output| f(&input.par_ref(), ParSeqObject::Par(&output), arg))
+                    .map_err(|e| ParSeqMapperExecutorError::ParError(e))
+            } else {
+                let i = thread_idx - num_threads;
+                self.seqs[i]
+                    .lock()
+                    .unwrap()
+                    .execute(&input.seqs[i], arg)
+                    .map(|output| f(&input.seq_ref(i), ParSeqObject::Seq(&output), arg))
+                    .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
+            };
+            let mut old_result_x = final_result.lock().unwrap();
+            let mut old_result_x = old_result_x.deref_mut();
+            if let Ok(old_result) = old_result_x {
+                match result {
+                    Ok(result) => {
+                        *old_result_x = Ok(g(old_result.clone(), result));
+                    }
+                    Err(e) => {
+                        *old_result_x = Err(e);
+                    }
+                };
+            }
+        });
+        final_result.into_inner().unwrap()
     }
 
-    pub fn execute_direct<'b, Out: Clone, F, G>(
+    pub fn execute_direct<Out: Clone, F, G>(
         &mut self,
-        input: &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+        input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
         init: Out,
         f: F,
         g: G,
@@ -302,15 +401,25 @@ where
         self.execute(
             input,
             init,
-            |input, output, arg_input| {
-                let sel = match input {
-                    ParSeqDataHolder::ParRef(_) => ParSeqSelection::Par,
-                    ParSeqDataHolder::SeqRef(i, _) => ParSeqSelection::Seq(*i),
-                    _ => {
-                        panic!("Unexpected");
-                    }
-                };
-                input.process(|inputx| output.process(|outputx| f(sel, inputx, outputx, arg_input)))
+            |input, output, arg_input| match input {
+                ParSeqDataHolder::ParRefMut(_) => {
+                    let output = output.par().unwrap();
+                    input.process(|inputx| {
+                        output
+                            .process(|outputx| f(ParSeqSelection::Par, inputx, outputx, arg_input))
+                    })
+                }
+                ParSeqDataHolder::SeqRefMut(i, _) => {
+                    let output = output.seq().unwrap();
+                    input.process(|inputx| {
+                        output.process(|outputx| {
+                            f(ParSeqSelection::Seq(*i), inputx, outputx, arg_input)
+                        })
+                    })
+                }
+                _ => {
+                    panic!("Unexpected");
+                }
             },
             g,
         )
@@ -396,6 +505,7 @@ where
 {
     par: PB,
     seqs: Vec<SB>,
+    arg_input_lens: Vec<usize>,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -433,6 +543,7 @@ where
                     sb
                 })
                 .collect::<Vec<_>>(),
+            arg_input_lens: vec![],
             pdr: PhantomData,
             pdw: PhantomData,
             pd: PhantomData,
@@ -452,6 +563,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
+        self.arg_input_lens.push(arg_inputs.len());
         self.par
             .add(name, circuit.clone(), None, None, Some(arg_inputs));
         for s in &mut self.seqs {
@@ -488,6 +600,7 @@ where
                 seqs: (0..seqs_len)
                     .map(|x| seq_execs.remove(&(x, i)).unwrap())
                     .collect::<Vec<_>>(),
+                arg_input_max: u32::try_from((1u64 << self.arg_input_lens[i]) - 1u64).unwrap(),
                 pdr: PhantomData,
                 pdw: PhantomData,
                 pd: PhantomData,
