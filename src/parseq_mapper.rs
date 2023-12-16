@@ -249,6 +249,30 @@ where
         ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
     }
 
+    pub fn process<F, Out>(&self, mut f: F) -> Vec<Out>
+    where
+        F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
+    {
+        let mut out = vec![];
+        out.push(f(ParSeqObject::Par(&self.par)));
+        for (i, s) in self.seqs.iter().enumerate() {
+            out.push(f(ParSeqObject::Seq((i, s))));
+        }
+        out
+    }
+
+    pub fn process_mut<F, Out>(&mut self, mut f: F) -> Vec<Out>
+    where
+        F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,
+    {
+        let mut out = vec![];
+        out.push(f(ParSeqObject::Par(&mut self.par)));
+        for (i, s) in self.seqs.iter_mut().enumerate() {
+            out.push(f(ParSeqObject::Seq((i, s))));
+        }
+        out
+    }
+
     fn check_length(&self) {
         assert!((self.par.len() & 15) == 0);
         assert!(self.seqs.iter().all(|s| (s.len() & 15) == 0));
