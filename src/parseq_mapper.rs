@@ -219,24 +219,29 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
-    #[inline]
-    pub fn par_ref(&'a self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::ParRef(&self.par)
+    pub fn get_ref(
+        &'a self,
+        sel: ParSeqSelection,
+    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        match sel {
+            ParSeqSelection::Par => ParSeqDataHolder::ParRef(&self.par),
+            ParSeqSelection::Seq(i) => ParSeqDataHolder::SeqRef(i, &self.seqs[i]),
+        }
     }
-    #[inline]
-    pub fn seq_ref(&'a self, index: usize) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::SeqRef(index, &self.seqs[index])
-    }
-    #[inline]
-    pub fn par_ref_mut(&'a mut self) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::ParRefMut(&mut self.par)
-    }
-    #[inline]
     pub fn seq_ref_mut(
         &'a mut self,
         index: usize,
     ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
         ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
+    }
+    pub fn get_ref_mut(
+        &'a mut self,
+        sel: ParSeqSelection,
+    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        match sel {
+            ParSeqSelection::Par => ParSeqDataHolder::ParRefMut(&mut self.par),
+            ParSeqSelection::Seq(i) => ParSeqDataHolder::SeqRefMut(i, &mut self.seqs[i]),
+        }
     }
 
     pub fn process<F, Out>(&self, mut f: F) -> Vec<Out>
@@ -387,7 +392,13 @@ where
                         .try_clone()
                         .unwrap()
                         .execute(&input.par, arg)
-                        .map(|output| f(&input.par_ref(), ParSeqObject::Par(&output), arg))
+                        .map(|output| {
+                            f(
+                                &input.get_ref(ParSeqSelection::Par),
+                                ParSeqObject::Par(&output),
+                                arg,
+                            )
+                        })
                         .map_err(|e| ParSeqMapperExecutorError::ParError(e))
                 } else {
                     let i = thread_idx - self.num_threads;
@@ -395,7 +406,13 @@ where
                         .lock()
                         .unwrap()
                         .execute(&input.seqs[i], arg)
-                        .map(|output| f(&input.seq_ref(i), ParSeqObject::Seq(&output), arg))
+                        .map(|output| {
+                            f(
+                                &input.get_ref(ParSeqSelection::Seq(i)),
+                                ParSeqObject::Seq(&output),
+                                arg,
+                            )
+                        })
                         .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
                 };
                 if let Ok(a) = thread_result {
@@ -670,12 +687,11 @@ where
             .collect::<Vec<_>>())
     }
 
-    pub fn par_word_len(&self) -> u32 {
-        self.par.word_len()
-    }
-
-    pub fn seq_word_len(&self, index: usize) -> u32 {
-        self.seqs[index].word_len()
+    pub fn word_len(&self, sel: ParSeqSelection) -> u32 {
+        match sel {
+            ParSeqSelection::Par => self.par.word_len(),
+            ParSeqSelection::Seq(i) => self.seqs[i].word_len(),
+        }
     }
 
     pub fn seq_builder_num(&self) -> usize {
