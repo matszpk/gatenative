@@ -169,12 +169,6 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
-    fn set_range(&mut self, range: Range<usize>) {
-        self.range = std::cmp::min(self.len, range.start)..std::cmp::min(self.len, range.end);
-        if self.range.start >= self.range.end {
-            self.range = 0..0;
-        }
-    }
     fn get(&'a self) -> OpenCLDataReader<'a> {
         OpenCLDataReader::new(self, &self.range)
     }
@@ -211,6 +205,15 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
         out
     }
     fn free(self) {}
+}
+
+impl RangedData for OpenCLDataHolder {
+    fn set_range(&mut self, range: Range<usize>) {
+        self.range = std::cmp::min(self.len, range.start)..std::cmp::min(self.len, range.end);
+        if self.range.start >= self.range.end {
+            self.range = 0..0;
+        }
+    }
 }
 
 pub struct OpenCLExecutor {

@@ -258,13 +258,6 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
     fn len(&self) -> usize {
         self.range.end - self.range.start
     }
-    fn set_range(&mut self, range: Range<usize>) {
-        self.range = std::cmp::min(self.buffer.len(), range.start)
-            ..std::cmp::min(self.buffer.len(), range.end);
-        if self.range.start >= self.range.end {
-            self.range = 0..0;
-        }
-    }
     fn get(&'a self) -> CPUDataReader<'a> {
         CPUDataReader {
             buffer: &self.buffer[self.range.clone()],
@@ -291,6 +284,16 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
         self.buffer[self.range.clone()].to_vec()
     }
     fn free(self) {}
+}
+
+impl RangedData for CPUDataHolder {
+    fn set_range(&mut self, range: Range<usize>) {
+        self.range = std::cmp::min(self.buffer.len(), range.start)
+            ..std::cmp::min(self.buffer.len(), range.end);
+        if self.range.start >= self.range.end {
+            self.range = 0..0;
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

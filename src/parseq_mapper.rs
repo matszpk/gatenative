@@ -128,16 +128,6 @@ where
         }
     }
 
-    fn set_range(&mut self, range: Range<usize>) {
-        match self {
-            Self::ParRefMut(par) => par.set_range(range.clone()),
-            Self::SeqRefMut(_, seq) => seq.set_range(range.clone()),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
     fn get(&'a self) -> ParSeqDataReader<PDR, SDR> {
         match self {
             Self::ParRef(par) => ParSeqDataReader::Par(par.get()),
@@ -256,6 +246,13 @@ where
         index: usize,
     ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
         ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
+    }
+
+    fn check_all_data_holder_length(&self) {
+        assert!((self.par.len() & 15) == 0);
+        assert!(self.seqs.iter().all(|s| (s.len() & 15) == 0));
+        let expected_len = self.par.len();
+        assert!(self.seqs.iter().all(|s| s.len() == expected_len));
     }
 }
 
@@ -425,7 +422,7 @@ where
 
     pub fn new_data(&mut self, len: usize) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
         assert!((len & 15) == 0);
-        ParSeqAllDataHolder {
+        let out = ParSeqAllDataHolder {
             par: self.par.new_data(len),
             seqs: self
                 .seqs
@@ -436,14 +433,16 @@ where
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
-        }
+        };
+        out.check_all_data_holder_length();
+        out
     }
 
     pub fn new_data_from_vec(
         &mut self,
         mut data: impl FnMut(ParSeqSelection) -> Vec<u32>,
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqAllDataHolder {
+        let out = ParSeqAllDataHolder {
             par: self.par.new_data_from_vec(data(ParSeqSelection::Par)),
             seqs: self
                 .seqs
@@ -459,14 +458,16 @@ where
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
-        }
+        };
+        out.check_all_data_holder_length();
+        out
     }
 
     pub fn new_data_from_slice<'b>(
         &mut self,
         mut data: impl FnMut(ParSeqSelection) -> &'b [u32],
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqAllDataHolder {
+        let out = ParSeqAllDataHolder {
             par: self.par.new_data_from_slice(data(ParSeqSelection::Par)),
             seqs: self
                 .seqs
@@ -482,7 +483,9 @@ where
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
-        }
+        };
+        out.check_all_data_holder_length();
+        out
     }
 }
 

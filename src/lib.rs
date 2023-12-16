@@ -184,12 +184,6 @@ pub trait DataWriter {
 
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn len(&self) -> usize;
-    // set range
-    fn set_range(&mut self, range: Range<usize>);
-    #[inline]
-    fn set_range_from(&mut self, range: RangeFrom<usize>) {
-        self.set_range(range.start..usize::MAX);
-    }
     fn get(&'a self) -> DR;
     fn get_mut(&'a mut self) -> DW;
     fn process<F, Out>(&self, f: F) -> Out
@@ -202,6 +196,15 @@ pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn release(self) -> Vec<u32>;
     // free
     fn free(self);
+}
+
+pub trait RangedData {
+    // set range
+    fn set_range(&mut self, range: Range<usize>);
+    #[inline]
+    fn set_range_from(&mut self, range: RangeFrom<usize>) {
+        self.set_range(range.start..usize::MAX);
+    }
 }
 
 pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
