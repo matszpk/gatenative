@@ -189,17 +189,7 @@ where
         }
     }
 
-    fn free(self) {
-        match self {
-            Self::ParRef(_) => {}
-            Self::SeqRef(_, _) => {}
-            Self::ParRefMut(_) => {}
-            Self::SeqRefMut(_, _) => {}
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
+    fn free(self) {}
 }
 
 pub struct ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
