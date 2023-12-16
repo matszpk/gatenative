@@ -248,11 +248,16 @@ where
         ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
     }
 
-    fn check_all_data_holder_length(&self) {
+    fn check_length(&self, input_len: usize) {
         assert!((self.par.len() & 15) == 0);
         assert!(self.seqs.iter().all(|s| (s.len() & 15) == 0));
         let expected_len = self.par.len();
         assert!(self.seqs.iter().all(|s| s.len() == expected_len));
+        let expected_chunks = (expected_len >> 4) / input_len;
+        assert!(self.seqs.iter().all(|s| {
+            let s_len = s.len();
+            (s_len >> 4) % input_len == 0 && (s_len >> 4) / input_len == expected_chunks
+        }));
     }
 }
 
@@ -434,7 +439,7 @@ where
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_all_data_holder_length();
+        out.check_length(self.real_input_len());
         out
     }
 
@@ -459,7 +464,7 @@ where
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_all_data_holder_length();
+        out.check_length(self.real_input_len());
         out
     }
 
@@ -484,7 +489,7 @@ where
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_all_data_holder_length();
+        out.check_length(self.real_input_len());
         out
     }
 }
