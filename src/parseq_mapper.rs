@@ -213,6 +213,7 @@ where
 {
     par: PD,
     seqs: Vec<SD>,
+    real_input_len: usize,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     sdr: PhantomData<&'a SDR>,
@@ -248,16 +249,37 @@ where
         ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
     }
 
-    fn check_length(&self, input_len: usize) {
+    fn check_length(&self) {
         assert!((self.par.len() & 15) == 0);
         assert!(self.seqs.iter().all(|s| (s.len() & 15) == 0));
         let expected_len = self.par.len();
         assert!(self.seqs.iter().all(|s| s.len() == expected_len));
-        let expected_chunks = (expected_len >> 4) / input_len;
+        let expected_chunks = (expected_len >> 4) / self.real_input_len;
+        assert_eq!((expected_len >> 4) % self.real_input_len, 0);
         assert!(self.seqs.iter().all(|s| {
             let s_len = s.len();
-            (s_len >> 4) % input_len == 0 && (s_len >> 4) / input_len == expected_chunks
+            (s_len >> 4) % self.real_input_len == 0
+                && (s_len >> 4) / self.real_input_len == expected_chunks
         }));
+    }
+}
+
+impl<'a, PDR, PDW, PD, SDR, SDW, SD> RangedData
+    for ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync + RangedData,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync + RangedData,
+{
+    fn set_range(&mut self, range: Range<usize>) {
+        self.par.set_range(range.clone());
+        for s in &mut self.seqs {
+            s.set_range(range.clone());
+        }
+        self.check_length();
     }
 }
 
@@ -434,12 +456,13 @@ where
                 .iter_mut()
                 .map(|s| s.lock().unwrap().new_data(len))
                 .collect::<Vec<_>>(),
+            real_input_len: self.real_input_len(),
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_length(self.real_input_len());
+        out.check_length();
         out
     }
 
@@ -459,12 +482,13 @@ where
                         .new_data_from_vec(data(ParSeqSelection::Seq(i)))
                 })
                 .collect::<Vec<_>>(),
+            real_input_len: self.real_input_len(),
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_length(self.real_input_len());
+        out.check_length();
         out
     }
 
@@ -484,12 +508,13 @@ where
                         .new_data_from_slice(data(ParSeqSelection::Seq(i)))
                 })
                 .collect::<Vec<_>>(),
+            real_input_len: self.real_input_len(),
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
             sdw: PhantomData,
         };
-        out.check_length(self.real_input_len());
+        out.check_length();
         out
     }
 }
