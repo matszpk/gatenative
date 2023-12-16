@@ -228,12 +228,6 @@ where
             ParSeqSelection::Seq(i) => ParSeqDataHolder::SeqRef(i, &self.seqs[i]),
         }
     }
-    pub fn seq_ref_mut(
-        &'a mut self,
-        index: usize,
-    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        ParSeqDataHolder::SeqRefMut(index, &mut self.seqs[index])
-    }
     pub fn get_ref_mut(
         &'a mut self,
         sel: ParSeqSelection,
