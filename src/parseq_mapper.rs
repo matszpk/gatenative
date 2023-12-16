@@ -441,15 +441,19 @@ where
 
     pub fn new_data_from_vec(
         &mut self,
-        data: Vec<u32>,
+        mut data: impl FnMut(ParSeqSelection) -> Vec<u32>,
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        assert!((data.len() & 15) == 0);
         ParSeqAllDataHolder {
-            par: self.par.new_data_from_slice(&data),
+            par: self.par.new_data_from_vec(data(ParSeqSelection::Par)),
             seqs: self
                 .seqs
                 .iter_mut()
-                .map(|s| s.lock().unwrap().new_data_from_slice(&data))
+                .enumerate()
+                .map(|(i, s)| {
+                    s.lock()
+                        .unwrap()
+                        .new_data_from_vec(data(ParSeqSelection::Seq(i)))
+                })
                 .collect::<Vec<_>>(),
             pdr: PhantomData,
             pdw: PhantomData,
@@ -458,17 +462,21 @@ where
         }
     }
 
-    pub fn new_data_from_slice(
+    pub fn new_data_from_slice<'b>(
         &mut self,
-        data: &[u32],
+        mut data: impl FnMut(ParSeqSelection) -> &'b [u32],
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        assert!((data.len() & 15) == 0);
         ParSeqAllDataHolder {
-            par: self.par.new_data_from_slice(data),
+            par: self.par.new_data_from_slice(data(ParSeqSelection::Par)),
             seqs: self
                 .seqs
                 .iter_mut()
-                .map(|s| s.lock().unwrap().new_data_from_slice(data))
+                .enumerate()
+                .map(|(i, s)| {
+                    s.lock()
+                        .unwrap()
+                        .new_data_from_slice(data(ParSeqSelection::Seq(i)))
+                })
                 .collect::<Vec<_>>(),
             pdr: PhantomData,
             pdw: PhantomData,
