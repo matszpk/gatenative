@@ -179,7 +179,7 @@ impl SharedLib {
             args.extend(extra_flags);
             args.extend([
                 "-shared",
-                "-FPIC",
+                "-fPIC",
                 "-o",
                 self.shared_library_path.to_str().unwrap(),
                 "-Wall",
