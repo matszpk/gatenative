@@ -16,8 +16,7 @@ use std::sync::Arc;
 
 pub struct OpenCLDataReader<'a> {
     holder: &'a OpenCLDataHolder,
-    mem: cl_mem,
-    len: usize,
+    mem: &'a [u32],
 }
 
 impl<'a> OpenCLDataReader<'a> {
@@ -45,8 +44,7 @@ impl<'a> OpenCLDataReader<'a> {
         };
         Self {
             holder,
-            mem,
-            len: range.end - range.start,
+            mem: unsafe { std::slice::from_raw_parts(mem.cast::<u32>(), range.end - range.start) },
         }
     }
 }
@@ -54,16 +52,17 @@ impl<'a> OpenCLDataReader<'a> {
 impl<'a> DataReader for OpenCLDataReader<'a> {
     #[inline]
     fn get(&self) -> &[u32] {
-        unsafe { std::slice::from_raw_parts(self.mem.cast::<u32>(), self.len) }
+        self.mem
     }
 }
 
 impl<'a> Drop for OpenCLDataReader<'a> {
     fn drop(&mut self) {
         unsafe {
+            let mem: cl_mem = self.mem.as_ptr().cast_mut().cast();
             self.holder
                 .cmd_queue
-                .enqueue_unmap_mem_object(self.holder.buffer.get(), self.mem, &[])
+                .enqueue_unmap_mem_object(self.holder.buffer.get(), mem, &[])
                 .unwrap();
             self.holder.cmd_queue.finish().unwrap();
         }
@@ -72,8 +71,7 @@ impl<'a> Drop for OpenCLDataReader<'a> {
 
 pub struct OpenCLDataWriter<'a> {
     holder: &'a OpenCLDataHolder,
-    mem: cl_mem,
-    len: usize,
+    mem: &'a mut [u32],
 }
 
 impl<'a> OpenCLDataWriter<'a> {
@@ -101,8 +99,9 @@ impl<'a> OpenCLDataWriter<'a> {
         };
         Self {
             holder,
-            mem,
-            len: range.end - range.start,
+            mem: unsafe {
+                std::slice::from_raw_parts_mut(mem.cast::<u32>(), range.end - range.start)
+            },
         }
     }
 }
@@ -110,16 +109,17 @@ impl<'a> OpenCLDataWriter<'a> {
 impl<'a> DataWriter for OpenCLDataWriter<'a> {
     #[inline]
     fn get_mut(&mut self) -> &mut [u32] {
-        unsafe { std::slice::from_raw_parts_mut(self.mem.cast::<u32>(), self.len) }
+        self.mem
     }
 }
 
 impl<'a> Drop for OpenCLDataWriter<'a> {
     fn drop(&mut self) {
         unsafe {
+            let mem: cl_mem = self.mem.as_mut_ptr().cast();
             self.holder
                 .cmd_queue
-                .enqueue_unmap_mem_object(self.holder.buffer.get(), self.mem, &[])
+                .enqueue_unmap_mem_object(self.holder.buffer.get(), mem, &[])
                 .unwrap();
             self.holder.cmd_queue.finish().unwrap();
         }
