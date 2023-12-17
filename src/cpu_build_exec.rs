@@ -171,7 +171,7 @@ impl SharedLib {
         }
     }
 
-    fn build(&self, source: &[u8]) -> Result<Library, BuildError> {
+    fn build(self, source: &[u8]) -> Result<Library, BuildError> {
         fs::write(&self.source_path, source)?;
         let extra_flags = get_build_config(self.cpu_ext).extra_flags;
         let args = {
@@ -203,6 +203,13 @@ impl SharedLib {
             eprintln!("File {:?} doesn't exist", self.shared_library_path);
         }
         Ok(lib)
+    }
+}
+
+impl Drop for SharedLib {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.source_path);
+        let _ = fs::remove_file(&self.shared_library_path);
     }
 }
 
