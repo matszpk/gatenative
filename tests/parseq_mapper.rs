@@ -7,7 +7,7 @@ use gatesim::*;
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 
 #[test]
-fn test_parseq_mapper_data_holder() {
+fn test_parseq_mapper_all_data_holder() {
     let par_builder = CPUBuilder::new(None);
     let seq_builders = get_all_devices(CL_DEVICE_TYPE_GPU)
         .unwrap()
