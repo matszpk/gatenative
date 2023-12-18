@@ -69,6 +69,11 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.par.len()
+    }
+
     pub fn process_single<F, Out>(&self, sel: ParSeqSelection, mut f: F) -> Out
     where
         F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,

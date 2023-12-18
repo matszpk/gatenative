@@ -27,7 +27,7 @@ fn test_parseq_mapper_data_holder() {
     let selections = std::iter::once(ParSeqSelection::Par)
         .chain((0..seq_num).map(|i| ParSeqSelection::Seq(i)))
         .collect::<Vec<_>>();
-    println!("selections: {:?}", selections);
+    assert_eq!(data.len(), 96);
 
     data.process_mut(|obj| match obj {
         ParSeqObject::Par(sel_data) => {
@@ -151,6 +151,7 @@ fn test_parseq_mapper_data_holder() {
 
     // set range
     data.set_range(32..64);
+    assert_eq!(data.len(), 32);
     data.process_mut(|obj| match obj {
         ParSeqObject::Par(sel_data) => {
             let mut wr = sel_data.get_mut();
@@ -166,6 +167,7 @@ fn test_parseq_mapper_data_holder() {
         }
     });
     data.set_range_from(0..);
+    assert_eq!(data.len(), 96);
     // check
     data.process(|obj| match obj {
         ParSeqObject::Par(sel_data) => {
@@ -196,6 +198,77 @@ fn test_parseq_mapper_data_holder() {
                 assert_eq!(
                     *x,
                     u32::try_from((i - diff) * factor + 1 + si).unwrap(),
+                    "{} {}",
+                    si,
+                    i
+                );
+            }
+        }
+    });
+
+    // new data from vec
+    let data = execs[0].new_data_from_vec(|sel| match sel {
+        ParSeqSelection::Par => (0..160u32)
+            .map(|x| 24 * x * x + 561 * x + 1223)
+            .collect::<Vec<_>>(),
+        ParSeqSelection::Seq(i) => (0..160u32)
+            .map(|x| 42 * (u32::try_from(i).unwrap() + 1) * x * x + 1561 * x + 7521)
+            .collect::<Vec<_>>(),
+    });
+    // check
+    assert_eq!(data.len(), 160);
+    data.process(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            let rd = sel_data.get();
+            for (i, v) in rd.get().iter().enumerate() {
+                let x = u32::try_from(i).unwrap();
+                assert_eq!(*v, 24 * x * x + 561 * x + 1223, "{} {}", 0, x);
+            }
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            let rd = sel_data.get();
+            for (i, v) in rd.get().iter().enumerate() {
+                let x = u32::try_from(i).unwrap();
+                assert_eq!(
+                    *v,
+                    42 * (u32::try_from(si).unwrap() + 1) * x * x + 1561 * x + 7521,
+                    "{} {}",
+                    si,
+                    i
+                );
+            }
+        }
+    });
+
+    // new data from slice
+    let gen_data = (0..selections.len())
+        .map(|i| {
+            (0..192u32)
+                .map(|x| 14 * (u32::try_from(i).unwrap() + 1) * x * x + 7643 * x + 55515)
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let data = execs[0].new_data_from_slice(|sel| match sel {
+        ParSeqSelection::Par => &gen_data[0][..],
+        ParSeqSelection::Seq(i) => &gen_data[i + 1][..],
+    });
+    // check
+    assert_eq!(data.len(), 192);
+    data.process(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            let rd = sel_data.get();
+            for (i, v) in rd.get().iter().enumerate() {
+                let x = u32::try_from(i).unwrap();
+                assert_eq!(*v, 14 * 1 * x * x + 7643 * x + 55515, "{} {}", 0, x);
+            }
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            let rd = sel_data.get();
+            for (i, v) in rd.get().iter().enumerate() {
+                let x = u32::try_from(i).unwrap();
+                assert_eq!(
+                    *v,
+                    14 * (u32::try_from(si).unwrap() + 2) * x * x + 7643 * x + 55515,
                     "{} {}",
                     si,
                     i
