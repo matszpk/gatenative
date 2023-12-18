@@ -4,6 +4,11 @@ use gatenative::mapper::*;
 use gatenative::*;
 use gatesim::*;
 
+use std::sync::{
+    atomic::{self, AtomicUsize},
+    Arc,
+};
+
 #[test]
 fn test_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
@@ -417,6 +422,8 @@ fn test_par_basic_mapper_builder_and_exec() {
                     ((u32::try_from(i).unwrap() >> j) & 1) << bit;
             }
         }
+
+        let call_count = Arc::new(AtomicUsize::new(0));
         let input = execs[0].new_data_from_vec(xcircuit_input.clone());
         assert!(
             execs[0]
@@ -424,6 +431,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                     &input,
                     true,
                     |_, result_out, arg_input| {
+                        call_count.fetch_add(1, atomic::Ordering::SeqCst);
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -456,13 +464,17 @@ fn test_par_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
+        assert_eq!(16, call_count.load(atomic::Ordering::SeqCst));
+
         // execute_direct testcase
+        let call_count = Arc::new(AtomicUsize::new(0));
         assert!(
             execs[0]
                 .execute_direct(
                     &input,
                     true,
                     |_, result_out, arg_input| {
+                        call_count.fetch_add(1, atomic::Ordering::SeqCst);
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -493,6 +505,8 @@ fn test_par_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
+        assert_eq!(16, call_count.load(atomic::Ordering::SeqCst));
+
         if word_len == 1 {
             // number of chunks
             let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
@@ -508,6 +522,8 @@ fn test_par_basic_mapper_builder_and_exec() {
                         ((u32::try_from(i).unwrap() >> j) & 1) << bit;
                 }
             }
+
+            let call_count = Arc::new(AtomicUsize::new(0));
             let input = execs[1].new_data_from_vec(xcircuit_input.clone());
             assert!(
                 execs[1]
@@ -515,6 +531,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                         &input,
                         true,
                         |_, result_out, arg_input| {
+                            call_count.fetch_add(1, atomic::Ordering::SeqCst);
                             let mut input = vec![false; 8];
                             let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                             // fill inputs by arg_inputs
@@ -547,6 +564,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                 "{}",
                 config_num
             );
+            assert_eq!(8, call_count.load(atomic::Ordering::SeqCst));
         }
     }
 }

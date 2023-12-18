@@ -7,6 +7,13 @@ use gatesim::*;
 
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 
+use std::sync::{
+    atomic::{self, AtomicUsize},
+    Arc,
+};
+use std::thread;
+use std::time::Duration;
+
 #[test]
 fn test_parseq_mapper_all_data_holder() {
     let par_builder = CPUBuilder::new(None);
@@ -388,11 +395,15 @@ fn test_parseq_mapper_builder_and_exec() {
         };
         &xcircuit_inputs[seli]
     });
+
+    let call_count = Arc::new(AtomicUsize::new(0));
     assert!(execs[0]
         .execute(
             &input,
             true,
             |sel, input, result_out, arg_input| {
+                call_count.fetch_add(1, atomic::Ordering::SeqCst);
+                thread::sleep(Duration::from_millis(100));
                 let seli = match sel {
                     ParSeqSelection::Par => 0,
                     ParSeqSelection::Seq(i) => i + 1,
@@ -458,5 +469,6 @@ fn test_parseq_mapper_builder_and_exec() {
             },
             |out1, out2| out1 && out2
         )
-        .unwrap(),);
+        .unwrap());
+    assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
 }
