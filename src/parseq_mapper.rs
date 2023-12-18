@@ -54,6 +54,7 @@ where
     par: PD,
     seqs: Vec<SD>,
     real_input_len: usize,
+    max_word_len: usize, // in 32-bit words
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     sdr: PhantomData<&'a SDR>,
@@ -119,16 +120,16 @@ where
     }
 
     fn check_length(&self) {
-        assert!((self.par.len() & 15) == 0);
-        assert!(self.seqs.iter().all(|s| (s.len() & 15) == 0));
+        assert!((self.par.len() % self.max_word_len) == 0);
+        assert!(self.seqs.iter().all(|s| (s.len() % self.max_word_len) == 0));
         let expected_len = self.par.len();
         assert!(self.seqs.iter().all(|s| s.len() == expected_len));
-        let expected_chunks = (expected_len >> 4) / self.real_input_len;
-        assert_eq!((expected_len >> 4) % self.real_input_len, 0);
+        let expected_word_num = expected_len / self.max_word_len;
+        let expected_chunks = (expected_word_num) / self.real_input_len;
+        assert_eq!((expected_word_num) % self.real_input_len, 0);
         assert!(self.seqs.iter().all(|s| {
-            let s_len = s.len();
-            (s_len >> 4) % self.real_input_len == 0
-                && (s_len >> 4) / self.real_input_len == expected_chunks
+            let s_len = s.len() / self.max_word_len;
+            s_len % self.real_input_len == 0 && s_len / self.real_input_len == expected_chunks
         }));
     }
 }
@@ -178,6 +179,7 @@ where
     arg_input_max: u32,
     thread_pool: rayon::ThreadPool,
     num_threads: usize,
+    max_word_len: usize, // in 32-bit words
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -334,6 +336,7 @@ where
                 .map(|s| s.lock().unwrap().new_data(len))
                 .collect::<Vec<_>>(),
             real_input_len: self.real_input_len(),
+            max_word_len: self.max_word_len,
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
@@ -360,6 +363,7 @@ where
                 })
                 .collect::<Vec<_>>(),
             real_input_len: self.real_input_len(),
+            max_word_len: self.max_word_len,
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
@@ -386,6 +390,7 @@ where
                 })
                 .collect::<Vec<_>>(),
             real_input_len: self.real_input_len(),
+            max_word_len: self.max_word_len,
             pdr: PhantomData,
             pdw: PhantomData,
             sdr: PhantomData,
@@ -493,6 +498,11 @@ where
         Vec<ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>>,
         ParSeqMapperBuilderError<PB::ErrorType, SB::ErrorType>,
     > {
+        let max_word_len = std::iter::once(&self.par)
+            .map(|b| b.word_len())
+            .chain(self.seqs.iter().map(|b| b.word_len()))
+            .max()
+            .unwrap_or_default();
         let par_execs = self.par.build()?;
         let mut seq_execs = HashMap::new();
         let seqs_len = self.seqs.len();
@@ -523,6 +533,7 @@ where
                     .build()
                     .unwrap(),
                 num_threads,
+                max_word_len: (max_word_len as usize) >> 5,
                 pdr: PhantomData,
                 pdw: PhantomData,
                 pd: PhantomData,
