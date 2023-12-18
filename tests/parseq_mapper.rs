@@ -369,7 +369,48 @@ fn test_parseq_mapper_builder_and_exec() {
             [(42, false)],
         )
         .unwrap();
+        let circuit2 = Circuit::new(
+            12,
+            [
+                Gate::new_xor(0, 1),     // 12
+                Gate::new_and(2, 5),     // 13
+                Gate::new_nor(12, 13),   // 14
+                Gate::new_and(3, 6),     // 15
+                Gate::new_and(7, 9),     // 16
+                Gate::new_nor(15, 16),   // 17
+                Gate::new_and(4, 8),     // 18
+                Gate::new_nimpl(11, 10), // 19
+                Gate::new_nor(18, 19),   // 20
+                Gate::new_nor(5, 8),     // 21
+                Gate::new_nimpl(9, 11),  // 22
+                Gate::new_nor(21, 22),   // 23
+                Gate::new_xor(2, 6),     // 24
+                Gate::new_and(8, 9),     // 25
+                Gate::new_nor(24, 25),   // 26
+                Gate::new_and(1, 4),     // 27
+                Gate::new_nimpl(7, 10),  // 28
+                Gate::new_nor(27, 28),   // 29
+                Gate::new_and(2, 6),     // 30
+                Gate::new_nimpl(7, 8),   // 31
+                Gate::new_nor(30, 31),   // 32
+                Gate::new_nor(1, 2),     // 33
+                Gate::new_and(4, 9),     // 34
+                Gate::new_nor(33, 34),   // 35
+                Gate::new_xor(14, 17),   // 36
+                Gate::new_xor(20, 23),   // 37
+                Gate::new_xor(26, 29),   // 38
+                Gate::new_xor(32, 35),   // 39
+                Gate::new_xor(36, 37),   // 40
+                Gate::new_xor(38, 39),   // 41
+                Gate::new_xor(40, 41),   // 42
+            ],
+            [(42, false)],
+        )
+        .unwrap();
+
         builder.add("xcircuit", circuit.clone(), &arg_input_indices[..]);
+        builder.add("xcircuit2", circuit2.clone(), &arg_input_indices[..]);
+
         let mut execs = builder.build().unwrap();
         let xcircuit_inputs = (0..selections.len())
             .map(|seli| {
@@ -449,7 +490,81 @@ fn test_parseq_mapper_builder_and_exec() {
                         let bit = rest & 31;
                         xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                     }
-                    println!("Called {} {:?}", arg_input, sel);
+                    // get result output and compare
+                    match sel {
+                        ParSeqSelection::Par => {
+                            let result_out = result_out.par().unwrap();
+                            let result_out = result_out.get();
+                            let result_out = result_out.get();
+                            xcircuit_out
+                                .into_iter()
+                                .enumerate()
+                                .all(|(i, exp)| result_out[i] == exp)
+                        }
+                        ParSeqSelection::Seq(_) => {
+                            let result_out = result_out.seq().unwrap();
+                            let result_out = result_out.get();
+                            let result_out = result_out.get();
+                            xcircuit_out
+                                .into_iter()
+                                .enumerate()
+                                .all(|(i, exp)| result_out[i] == exp)
+                        }
+                    }
+                },
+                |out1, out2| out1 && out2
+            )
+            .unwrap());
+        assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
+
+        let call_count = Arc::new(AtomicUsize::new(0));
+        assert!(execs[1]
+            .execute(
+                &input,
+                true,
+                |sel, input, result_out, arg_input| {
+                    call_count.fetch_add(1, atomic::Ordering::SeqCst);
+                    thread::sleep(Duration::from_millis(100));
+                    let seli = match sel {
+                        ParSeqSelection::Par => 0,
+                        ParSeqSelection::Seq(i) => i + 1,
+                    };
+                    if !input.process_single(sel, |d| match d {
+                        ParSeqObject::Par(d) => {
+                            let res_input = d.get();
+                            let res_input = res_input.get();
+                            res_input == &xcircuit_inputs[seli][..]
+                        }
+                        ParSeqObject::Seq((_, d)) => {
+                            let res_input = d.get();
+                            let res_input = res_input.get();
+                            res_input == &xcircuit_inputs[seli][..]
+                        }
+                    }) {
+                        return false;
+                    }
+                    let mut input = vec![false; 12];
+                    let word_len = (word_lens[seli] >> 5) as usize;
+                    // number of chunks
+                    let xcircuit_data_num = (((128 >> 5) + word_len - 1) / word_len) * word_len;
+
+                    let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                    // fill inputs by arg_inputs
+                    for (i, v) in arg_input_indices.iter().enumerate() {
+                        input[*v] = ((arg_input >> i) & 1) != 0;
+                    }
+                    // prepare expected output
+                    for rest in 0..128 {
+                        // fill input by rest of bits of input
+                        for (i, v) in rest_input_indices.iter().enumerate() {
+                            input[*v] = ((rest >> i) & 1) != 0;
+                        }
+                        let value = circuit2.eval(input.clone())[0];
+                        let idx = (rest >> 5) / word_len;
+                        let widx = (rest >> 5) % word_len;
+                        let bit = rest & 31;
+                        xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                    }
                     // get result output and compare
                     match sel {
                         ParSeqSelection::Par => {
@@ -514,7 +629,6 @@ fn test_parseq_mapper_builder_and_exec() {
                         let bit = rest & 31;
                         xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                     }
-                    println!("Called {} {:?}", arg_input, sel);
                     // get result output and compare
                     xcircuit_out
                         .into_iter()
