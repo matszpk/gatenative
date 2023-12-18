@@ -445,7 +445,7 @@ fn test_parseq_mapper_builder_and_exec() {
                     xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                 }
                 println!("Called {} {:?}", arg_input, sel);
-                // execute circuit
+                // get result output and compare
                 match sel {
                     ParSeqSelection::Par => {
                         let result_out = result_out.par().unwrap();
@@ -466,6 +466,55 @@ fn test_parseq_mapper_builder_and_exec() {
                             .all(|(i, exp)| result_out[i] == exp)
                     }
                 }
+            },
+            |out1, out2| out1 && out2
+        )
+        .unwrap());
+    assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
+
+    let call_count = Arc::new(AtomicUsize::new(0));
+    assert!(execs[0]
+        .execute_direct(
+            &input,
+            true,
+            |sel, input, result_out, arg_input| {
+                call_count.fetch_add(1, atomic::Ordering::SeqCst);
+                thread::sleep(Duration::from_millis(100));
+                let seli = match sel {
+                    ParSeqSelection::Par => 0,
+                    ParSeqSelection::Seq(i) => i + 1,
+                };
+                if input != &xcircuit_inputs[seli][..] {
+                    return false;
+                }
+                let mut input = vec![false; 12];
+                let word_len = (word_lens[seli] >> 5) as usize;
+                // number of chunks
+                let xcircuit_data_num = (((128 >> 5) + word_len - 1) / word_len) * word_len;
+
+                let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                // fill inputs by arg_inputs
+                for (i, v) in arg_input_indices.iter().enumerate() {
+                    input[*v] = ((arg_input >> i) & 1) != 0;
+                }
+                // prepare expected output
+                for rest in 0..128 {
+                    // fill input by rest of bits of input
+                    for (i, v) in rest_input_indices.iter().enumerate() {
+                        input[*v] = ((rest >> i) & 1) != 0;
+                    }
+                    let value = circuit.eval(input.clone())[0];
+                    let idx = (rest >> 5) / word_len;
+                    let widx = (rest >> 5) % word_len;
+                    let bit = rest & 31;
+                    xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                }
+                println!("Called {} {:?}", arg_input, sel);
+                // get result output and compare
+                xcircuit_out
+                    .into_iter()
+                    .enumerate()
+                    .all(|(i, exp)| result_out[i] == exp)
             },
             |out1, out2| out1 && out2
         )

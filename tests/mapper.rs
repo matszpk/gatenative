@@ -178,7 +178,7 @@ fn test_basic_mapper_builder_and_exec() {
                         let bit = rest & 31;
                         xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                     }
-                    // execute circuit
+                    // get result output and compare
                     let result_out = result_out.get();
                     let result_out = result_out.get();
                     out && xcircuit_out
@@ -212,7 +212,7 @@ fn test_basic_mapper_builder_and_exec() {
                         let bit = rest & 31;
                         xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                     }
-                    // execute circuit
+                    // get result output and compare
                     out && xcircuit_out
                         .into_iter()
                         .enumerate()
@@ -259,7 +259,7 @@ fn test_basic_mapper_builder_and_exec() {
                             let bit = rest & 31;
                             xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                         }
-                        // execute circuit
+                        // get result output and compare
                         let result_out = result_out.get();
                         let result_out = result_out.get();
                         out && xcircuit_out
@@ -450,7 +450,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                             let bit = rest & 31;
                             xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                         }
-                        // execute circuit
+                        // get result output and compare
                         let result_out = result_out.get();
                         let result_out = result_out.get();
                         xcircuit_out
@@ -493,7 +493,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                             let bit = rest & 31;
                             xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                         }
-                        // execute circuit
+                        // get result output and compare
                         xcircuit_out
                             .into_iter()
                             .enumerate()
@@ -550,7 +550,7 @@ fn test_par_basic_mapper_builder_and_exec() {
                                 let bit = rest & 31;
                                 xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
                             }
-                            // execute circuit
+                            // get result output and compare
                             let result_out = result_out.get();
                             let result_out = result_out.get();
                             xcircuit_out
