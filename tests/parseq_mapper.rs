@@ -82,7 +82,9 @@ fn test_parseq_mapper_data_holder() {
                 });
             }
         });
-        // check
+    }
+    // check
+    for sel in &selections {
         data.process_single(*sel, |obj| match obj {
             ParSeqObject::Par(sel_data) => {
                 sel_data.process(|data| {
