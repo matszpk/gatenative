@@ -42,156 +42,6 @@ pub enum ParSeqSelection {
     Seq(usize),
 }
 
-pub enum ParSeqDataReader<PDR, SDR>
-where
-    PDR: DataReader + Send + Sync,
-    SDR: DataReader + Send + Sync,
-{
-    Par(PDR),
-    Seq(SDR),
-}
-
-impl<PDR, SDR> DataReader for ParSeqDataReader<PDR, SDR>
-where
-    PDR: DataReader + Send + Sync,
-    SDR: DataReader + Send + Sync,
-{
-    fn get(&self) -> &[u32] {
-        match self {
-            ParSeqDataReader::Par(p) => p.get(),
-            ParSeqDataReader::Seq(s) => s.get(),
-        }
-    }
-}
-
-pub enum ParSeqDataWriter<PDW, SDW>
-where
-    PDW: DataWriter + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-{
-    Par(PDW),
-    Seq(SDW),
-}
-
-impl<PDW, SDW> DataWriter for ParSeqDataWriter<PDW, SDW>
-where
-    PDW: DataWriter + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-{
-    fn get_mut(&mut self) -> &mut [u32] {
-        match self {
-            ParSeqDataWriter::Par(p) => p.get_mut(),
-            ParSeqDataWriter::Seq(s) => s.get_mut(),
-        }
-    }
-}
-
-pub enum ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
-where
-    PDR: DataReader + Send + Sync,
-    PDW: DataWriter + Send + Sync,
-    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-    SDR: DataReader + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
-{
-    ParRef(&'a PD),
-    SeqRef(usize, &'a SD),
-    ParRefMut(&'a mut PD),
-    SeqRefMut(usize, &'a mut SD),
-    PDR(PhantomData<&'a PDR>),
-    PDW(PhantomData<&'a PDW>),
-    SDR(PhantomData<&'a SDR>),
-    SDW(PhantomData<&'a SDW>),
-}
-
-impl<'a, PDR, PDW, PD, SDR, SDW, SD>
-    DataHolder<'a, ParSeqDataReader<PDR, SDR>, ParSeqDataWriter<PDW, SDW>>
-    for ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
-where
-    PDR: DataReader + Send + Sync,
-    PDW: DataWriter + Send + Sync,
-    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-    SDR: DataReader + Send + Sync,
-    SDW: DataWriter + Send + Sync,
-    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
-{
-    fn len(&self) -> usize {
-        match self {
-            Self::ParRef(par) => par.len(),
-            Self::SeqRef(_, seq) => seq.len(),
-            Self::ParRefMut(par) => par.len(),
-            Self::SeqRefMut(_, seq) => seq.len(),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
-    fn get(&'a self) -> ParSeqDataReader<PDR, SDR> {
-        match self {
-            Self::ParRef(par) => ParSeqDataReader::Par(par.get()),
-            Self::SeqRef(_, seq) => ParSeqDataReader::Seq(seq.get()),
-            Self::ParRefMut(par) => ParSeqDataReader::Par(par.get()),
-            Self::SeqRefMut(_, seq) => ParSeqDataReader::Seq(seq.get()),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-    fn get_mut(&'a mut self) -> ParSeqDataWriter<PDW, SDW> {
-        match self {
-            Self::ParRefMut(par) => ParSeqDataWriter::Par(par.get_mut()),
-            Self::SeqRefMut(_, seq) => ParSeqDataWriter::Seq(seq.get_mut()),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
-    fn process<F, Out>(&self, f: F) -> Out
-    where
-        F: FnMut(&[u32]) -> Out,
-    {
-        match self {
-            Self::ParRef(par) => par.process(f),
-            Self::SeqRef(_, seq) => seq.process(f),
-            Self::ParRefMut(par) => par.process(f),
-            Self::SeqRefMut(_, seq) => seq.process(f),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
-    fn process_mut<F, Out>(&mut self, f: F) -> Out
-    where
-        F: FnMut(&mut [u32]) -> Out,
-    {
-        match self {
-            Self::ParRefMut(par) => par.process_mut(f),
-            Self::SeqRefMut(_, seq) => seq.process_mut(f),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
-    fn release(self) -> Vec<u32> {
-        match self {
-            Self::ParRef(par) => par.get().get().to_vec(),
-            Self::SeqRef(_, seq) => seq.get().get().to_vec(),
-            Self::ParRefMut(par) => par.get().get().to_vec(),
-            Self::SeqRefMut(_, seq) => seq.get().get().to_vec(),
-            _ => {
-                panic!("Unexpected kind");
-            }
-        }
-    }
-
-    fn free(self) {}
-}
-
 pub struct ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
 where
     PDR: DataReader + Send + Sync,
@@ -219,22 +69,23 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
-    pub fn get_ref(
-        &'a self,
-        sel: ParSeqSelection,
-    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+    pub fn process_single<F, Out>(&self, sel: ParSeqSelection, mut f: F) -> Out
+    where
+        F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
+    {
         match sel {
-            ParSeqSelection::Par => ParSeqDataHolder::ParRef(&self.par),
-            ParSeqSelection::Seq(i) => ParSeqDataHolder::SeqRef(i, &self.seqs[i]),
+            ParSeqSelection::Par => f(ParSeqObject::Par(&self.par)),
+            ParSeqSelection::Seq(i) => f(ParSeqObject::Seq((i, &self.seqs[i]))),
         }
     }
-    pub fn get_ref_mut(
-        &'a mut self,
-        sel: ParSeqSelection,
-    ) -> ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+
+    pub fn process_single_mut<F, Out>(&mut self, sel: ParSeqSelection, mut f: F) -> Out
+    where
+        F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,
+    {
         match sel {
-            ParSeqSelection::Par => ParSeqDataHolder::ParRefMut(&mut self.par),
-            ParSeqSelection::Seq(i) => ParSeqDataHolder::SeqRefMut(i, &mut self.seqs[i]),
+            ParSeqSelection::Par => f(ParSeqObject::Par(&mut self.par)),
+            ParSeqSelection::Seq(i) => f(ParSeqObject::Seq((i, &mut self.seqs[i]))),
         }
     }
 
@@ -362,7 +213,8 @@ where
     ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
         F: Fn(
-                &ParSeqDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
+                ParSeqSelection,
+                &ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
                 ParSeqObject<&PD, &SD>,
                 u32,
             ) -> Out
@@ -387,11 +239,7 @@ where
                         .unwrap()
                         .execute(&input.par, arg)
                         .map(|output| {
-                            f(
-                                &input.get_ref(ParSeqSelection::Par),
-                                ParSeqObject::Par(&output),
-                                arg,
-                            )
+                            f(ParSeqSelection::Par, input, ParSeqObject::Par(&output), arg)
                         })
                         .map_err(|e| ParSeqMapperExecutorError::ParError(e))
                 } else {
@@ -402,7 +250,8 @@ where
                         .execute(&input.seqs[i], arg)
                         .map(|output| {
                             f(
-                                &input.get_ref(ParSeqSelection::Seq(i)),
+                                ParSeqSelection::Seq(i),
+                                input,
                                 ParSeqObject::Seq(&output),
                                 arg,
                             )
@@ -448,24 +297,22 @@ where
         self.execute(
             input,
             init,
-            |input, output, arg_input| match input {
-                ParSeqDataHolder::ParRefMut(_) => {
+            |sel, input, output, arg_input| match sel {
+                ParSeqSelection::Par => {
                     let output = output.par().unwrap();
-                    input.process(|inputx| {
-                        output
-                            .process(|outputx| f(ParSeqSelection::Par, inputx, outputx, arg_input))
-                    })
-                }
-                ParSeqDataHolder::SeqRefMut(i, _) => {
-                    let output = output.seq().unwrap();
-                    input.process(|inputx| {
-                        output.process(|outputx| {
-                            f(ParSeqSelection::Seq(*i), inputx, outputx, arg_input)
+                    input.process_single(sel, |inputx| {
+                        inputx.par().unwrap().process(|inputx| {
+                            output.process(|outputx| f(sel, inputx, outputx, arg_input))
                         })
                     })
                 }
-                _ => {
-                    panic!("Unexpected");
+                ParSeqSelection::Seq(_) => {
+                    let output = output.seq().unwrap();
+                    input.process_single(sel, |inputx| {
+                        inputx.seq().unwrap().1.process(|inputx| {
+                            output.process(|outputx| f(sel, inputx, outputx, arg_input))
+                        })
+                    })
                 }
             },
             g,
