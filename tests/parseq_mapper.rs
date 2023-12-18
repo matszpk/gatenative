@@ -65,6 +65,48 @@ fn test_parseq_mapper_data_holder() {
         }
     });
 
+    for sel in &selections {
+        data.process_single_mut(*sel, |obj| match obj {
+            ParSeqObject::Par(sel_data) => {
+                sel_data.process_mut(|data| {
+                    for (i, x) in data.iter_mut().enumerate() {
+                        *x = u32::try_from(i * 1700 + 0).unwrap();
+                    }
+                });
+            }
+            ParSeqObject::Seq((si, sel_data)) => {
+                sel_data.process_mut(|data| {
+                    for (i, x) in data.iter_mut().enumerate() {
+                        *x = u32::try_from(i * 1700 + 1 + si).unwrap();
+                    }
+                });
+            }
+        });
+        // check
+        data.process_single(*sel, |obj| match obj {
+            ParSeqObject::Par(sel_data) => {
+                sel_data.process(|data| {
+                    for (i, x) in data.iter().enumerate() {
+                        assert_eq!(*x, u32::try_from(i * 1700 + 0).unwrap(), "{} {}", 0, i);
+                    }
+                });
+            }
+            ParSeqObject::Seq((si, sel_data)) => {
+                sel_data.process(|data| {
+                    for (i, x) in data.iter().enumerate() {
+                        assert_eq!(
+                            *x,
+                            u32::try_from(i * 1700 + 1 + si).unwrap(),
+                            "{} {}",
+                            si,
+                            i
+                        );
+                    }
+                });
+            }
+        });
+    }
+
     data.process_mut(|obj| match obj {
         ParSeqObject::Par(sel_data) => {
             sel_data.process_mut(|data| {
