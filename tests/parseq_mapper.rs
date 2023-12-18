@@ -35,6 +35,7 @@ fn test_parseq_mapper_data_holder() {
         .chain((0..seq_num).map(|i| ParSeqSelection::Seq(i)))
         .collect::<Vec<_>>();
     println!("selections: {:?}", selections);
+
     data.process_mut(|obj| match obj {
         ParSeqObject::Par(sel_data) => {
             let mut wr = sel_data.get_mut();
@@ -68,6 +69,46 @@ fn test_parseq_mapper_data_holder() {
                     i
                 );
             }
+        }
+    });
+
+    data.process_mut(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            sel_data.process_mut(|data| {
+                for (i, x) in data.iter_mut().enumerate() {
+                    *x = u32::try_from(i * 2300 + 0).unwrap();
+                }
+            });
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            sel_data.process_mut(|data| {
+                for (i, x) in data.iter_mut().enumerate() {
+                    *x = u32::try_from(i * 2300 + 1 + si).unwrap();
+                }
+            });
+        }
+    });
+    // check
+    data.process(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            sel_data.process(|data| {
+                for (i, x) in data.iter().enumerate() {
+                    assert_eq!(*x, u32::try_from(i * 2300 + 0).unwrap(), "{} {}", 0, i);
+                }
+            });
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            sel_data.process(|data| {
+                for (i, x) in data.iter().enumerate() {
+                    assert_eq!(
+                        *x,
+                        u32::try_from(i * 2300 + 1 + si).unwrap(),
+                        "{} {}",
+                        si,
+                        i
+                    );
+                }
+            });
         }
     });
 }
