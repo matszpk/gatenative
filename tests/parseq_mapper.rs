@@ -5,16 +5,9 @@ use gatenative::*;
 use gatesim::*;
 
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
-use opencl3::types::CL_BLOCKING;
 
 #[test]
 fn test_parseq_mapper_data_holder() {
-    let device = Device::new(
-        *get_all_devices(CL_DEVICE_TYPE_GPU)
-            .unwrap()
-            .get(0)
-            .expect("No device in platform"),
-    );
     let par_builder = CPUBuilder::new(None);
     let seq_builders = get_all_devices(CL_DEVICE_TYPE_GPU)
         .unwrap()
@@ -109,6 +102,61 @@ fn test_parseq_mapper_data_holder() {
                     );
                 }
             });
+        }
+    });
+
+    // set range
+    data.set_range(32..64);
+    data.process_mut(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            let mut wr = sel_data.get_mut();
+            for (i, x) in wr.get_mut().iter_mut().enumerate() {
+                *x = u32::try_from(i * 9200 + 0).unwrap();
+            }
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            let mut wr = sel_data.get_mut();
+            for (i, x) in wr.get_mut().iter_mut().enumerate() {
+                *x = u32::try_from(i * 9200 + 1 + si).unwrap();
+            }
+        }
+    });
+    data.set_range_from(0..);
+    // check
+    data.process(|obj| match obj {
+        ParSeqObject::Par(sel_data) => {
+            let rd = sel_data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                let (diff, factor) = if (32..64).contains(&i) {
+                    (32, 9200)
+                } else {
+                    (0, 2300)
+                };
+                assert_eq!(
+                    *x,
+                    u32::try_from((i - diff) * factor + 0).unwrap(),
+                    "{} {}",
+                    0,
+                    i
+                );
+            }
+        }
+        ParSeqObject::Seq((si, sel_data)) => {
+            let rd = sel_data.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                let (diff, factor) = if (32..64).contains(&i) {
+                    (32, 9200)
+                } else {
+                    (0, 2300)
+                };
+                assert_eq!(
+                    *x,
+                    u32::try_from((i - diff) * factor + 1 + si).unwrap(),
+                    "{} {}",
+                    si,
+                    i
+                );
+            }
         }
     });
 }
