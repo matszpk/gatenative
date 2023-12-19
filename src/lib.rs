@@ -8,6 +8,7 @@ use std::ops::{Range, RangeFrom};
 
 // TODO: Add special Builder that for arg_input execute differently optimized circuit
 // instead same - for 000xxxx - use circuit000, for 001xxxx use circuit001
+// TODO: Add ability to build once circuits for many these same builders.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
