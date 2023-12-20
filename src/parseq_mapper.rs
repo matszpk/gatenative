@@ -427,6 +427,7 @@ where
     par: PB,
     seqs: Vec<SB>,
     arg_input_lens: Vec<usize>,
+    seq_doubling: bool,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -453,7 +454,12 @@ where
     SE::ErrorType: Send,
     SB: Builder<'a, SDR, SDW, SD, SE>,
 {
-    pub fn new(par_builder: PB, seq_builders: impl IntoIterator<Item = SB>) -> Self {
+    // seq_doubling - double sequential executors to achieve better performance
+    pub fn new(
+        par_builder: PB,
+        seq_builders: impl IntoIterator<Item = SB>,
+        seq_doubling: bool,
+    ) -> Self {
         assert!(par_builder.is_empty());
         Self {
             par: par_builder,
@@ -465,6 +471,7 @@ where
                 })
                 .collect::<Vec<_>>(),
             arg_input_lens: vec![],
+            seq_doubling,
             pdr: PhantomData,
             pdw: PhantomData,
             pd: PhantomData,
@@ -519,17 +526,31 @@ where
             }
         }
         let num_threads = rayon::current_num_threads();
+        let seq_exec_len = if self.seq_doubling {
+            2 * seqs_len
+        } else {
+            seqs_len
+        };
         Ok(par_execs
             .into_iter()
             .enumerate()
             .map(|(i, par)| ParSeqMapperExecutor {
                 par,
                 seqs: (0..seqs_len)
-                    .map(|x| seq_execs.remove(&(x, i)).unwrap())
+                    .map(|x| {
+                        let exec = seq_execs.remove(&(x, i)).unwrap();
+                        if self.seq_doubling {
+                            let exec2 = { exec.lock().unwrap().try_clone().unwrap() };
+                            vec![exec, Mutex::new(exec2)]
+                        } else {
+                            vec![exec]
+                        }
+                    })
+                    .flatten()
                     .collect::<Vec<_>>(),
                 arg_input_max: u32::try_from((1u64 << self.arg_input_lens[i]) - 1u64).unwrap(),
                 thread_pool: rayon::ThreadPoolBuilder::new()
-                    .num_threads(num_threads + seqs_len)
+                    .num_threads(num_threads + seq_exec_len)
                     .build()
                     .unwrap(),
                 num_threads,
@@ -547,12 +568,22 @@ where
     pub fn word_len(&self, sel: ParSeqSelection) -> u32 {
         match sel {
             ParSeqSelection::Par => self.par.word_len(),
-            ParSeqSelection::Seq(i) => self.seqs[i].word_len(),
+            ParSeqSelection::Seq(i) => {
+                if self.seq_doubling {
+                    self.seqs[i >> 1].word_len()
+                } else {
+                    self.seqs[i].word_len()
+                }
+            }
         }
     }
 
     pub fn seq_builder_num(&self) -> usize {
-        self.seqs.len()
+        if self.seq_doubling {
+            self.seqs.len() << 1
+        } else {
+            self.seqs.len()
+        }
     }
 
     pub fn is_data_holder_global() -> bool {
