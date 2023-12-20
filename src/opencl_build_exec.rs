@@ -225,6 +225,7 @@ pub struct OpenCLExecutor {
     have_arg_inputs: bool,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
+    program: Arc<Program>,
     group_len: usize,
     kernel: Kernel,
     single_buffer: bool,
@@ -437,12 +438,32 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     where
         Self: Sized,
     {
-        None
+        let name = self.kernel.function_name().unwrap();
+        Some(Self {
+            input_len: self.input_len,
+            output_len: self.output_len,
+            real_input_len: self.real_input_len,
+            real_output_len: self.real_output_len,
+            words_per_real_word: self.words_per_real_word,
+            have_arg_inputs: self.have_arg_inputs,
+            context: self.context.clone(),
+            cmd_queue: self.cmd_queue.clone(),
+            group_len: self.group_len,
+            program: self.program.clone(),
+            kernel: Kernel::create(&self.program, &name).unwrap(),
+            single_buffer: self.single_buffer,
+        })
     }
 
     #[inline]
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
+    }
+}
+
+impl Clone for OpenCLExecutor {
+    fn clone(&self) -> Self {
+        self.try_clone().unwrap()
     }
 }
 
@@ -585,11 +606,11 @@ impl<'b, 'a>
         let device = self.context.devices()[0];
         #[allow(deprecated)]
         let cmd_queue = Arc::new(unsafe { CommandQueue::create(&self.context, device, 0)? });
-        let program = Program::create_and_build_from_source(
+        let program = Arc::new(Program::create_and_build_from_source(
             &self.context,
             &String::from_utf8(self.writer.out()).unwrap(),
             "",
-        )?;
+        )?);
         let device = Device::new(device);
         let group_len = usize::try_from(device.max_work_group_size()?).unwrap();
         self.entries
@@ -612,6 +633,7 @@ impl<'b, 'a>
                     have_arg_inputs: e.arg_input_len.is_some(),
                     context: self.context.clone(),
                     cmd_queue: cmd_queue.clone(),
+                    program: program.clone(),
                     group_len,
                     kernel: Kernel::create(&program, &e.sym_name)?,
                     single_buffer: e.single_buffer,
