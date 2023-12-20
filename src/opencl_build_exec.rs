@@ -439,6 +439,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         Self: Sized,
     {
         let name = self.kernel.function_name().unwrap();
+        let device = self.context.devices()[0];
         Some(Self {
             input_len: self.input_len,
             output_len: self.output_len,
@@ -447,7 +448,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             words_per_real_word: self.words_per_real_word,
             have_arg_inputs: self.have_arg_inputs,
             context: self.context.clone(),
-            cmd_queue: self.cmd_queue.clone(),
+            #[allow(deprecated)]
+            cmd_queue: Arc::new(unsafe { CommandQueue::create(&self.context, device, 0).unwrap() }),
             group_len: self.group_len,
             program: self.program.clone(),
             kernel: Kernel::create(&self.program, &name).unwrap(),
