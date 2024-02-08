@@ -517,16 +517,19 @@ struct CircuitEntry {
 #[derive(Clone, Debug)]
 pub struct OpenCLBuilderConfig {
     pub optimize_negs: bool,
+    pub group_len: Option<usize>,
 }
 
 const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
+    group_len: None,
 };
 
 pub struct OpenCLBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
+    group_len: usize,
     context: Arc<Context>,
 }
 
@@ -534,12 +537,14 @@ impl<'a> OpenCLBuilder<'a> {
     pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
         let mut writer = CLANG_WRITER_OPENCL_U32.writer();
         writer.prolog();
+        let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
         Self {
             entries: vec![],
             writer,
-            optimize_negs: config
-                .unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT)
-                .optimize_negs,
+            optimize_negs: config.optimize_negs,
+            group_len: config
+                .group_len
+                .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
             context: Arc::new(Context::from_device(device).unwrap()),
         }
     }
@@ -547,12 +552,15 @@ impl<'a> OpenCLBuilder<'a> {
     pub fn new_with_context(context: Arc<Context>, config: Option<OpenCLBuilderConfig>) -> Self {
         let mut writer = CLANG_WRITER_OPENCL_U32.writer();
         writer.prolog();
+        let device = Device::new(context.devices()[0]);
+        let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
         Self {
             entries: vec![],
             writer,
-            optimize_negs: config
-                .unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT)
-                .optimize_negs,
+            optimize_negs: config.optimize_negs,
+            group_len: config
+                .group_len
+                .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
             context,
         }
     }
@@ -613,8 +621,6 @@ impl<'b, 'a>
             &String::from_utf8(self.writer.out()).unwrap(),
             "",
         )?);
-        let device = Device::new(device);
-        let group_len = usize::try_from(device.max_work_group_size()?).unwrap();
         self.entries
             .iter()
             .map(|e| {
@@ -636,7 +642,7 @@ impl<'b, 'a>
                     context: self.context.clone(),
                     cmd_queue: cmd_queue.clone(),
                     program: program.clone(),
-                    group_len,
+                    group_len: self.group_len,
                     kernel: Kernel::create(&program, &e.sym_name)?,
                     single_buffer: e.single_buffer,
                 })
