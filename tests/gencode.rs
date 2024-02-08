@@ -197,13 +197,13 @@ fn test_generate_code() {
     vars v0..5
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = (v0 xor v1)
-    v4 = (v2 xor v3)
-    v2 = (v2 and v3)
+    v2 = (v0 xor v1)
+    v3 = I2
+    v4 = (v3 xor v2)
+    O0 = v4
+    v2 = (v3 and v2)
     v0 = (v0 impl v1)
     v0 = (v0 impl v2)
-    O0 = v4
     O1 = ~v0
 EndFunc
 "##
@@ -226,13 +226,13 @@ EndFunc
     vars v0..5
     v0 = I6
     v1 = I11
-    v2 = I44
-    v3 = (v0 xor v1)
-    v4 = (v2 xor v3)
-    v2 = (v2 and v3)
+    v2 = (v0 xor v1)
+    v3 = I44
+    v4 = (v3 xor v2)
+    O48 = v4
+    v2 = (v3 and v2)
     v0 = (v0 impl v1)
     v0 = (v0 impl v2)
-    O48 = v4
     O72 = ~v0
 EndFunc
 "##
@@ -256,13 +256,13 @@ EndFunc
     vars v0..5
     v0 = bit(arg, 0)
     v1 = I1
-    v2 = bit(arg, 1)
-    v3 = (v0 xor v1)
-    v4 = (v2 xor v3)
-    v2 = (v2 and v3)
+    v2 = (v0 xor v1)
+    v3 = bit(arg, 1)
+    v4 = (v3 xor v2)
+    O0 = v4
+    v2 = (v3 and v2)
     v0 = (v0 impl v1)
     v0 = (v0 impl v2)
-    O0 = v4
     O1 = ~v0
 EndFunc
 "##
@@ -285,18 +285,19 @@ EndFunc
     vars v0..5
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = (v0 xor v1)
-    v4 = (v2 xor v3)
-    v2 = (v2 and v3)
+    v2 = (v0 xor v1)
+    v3 = I2
+    v4 = (v3 xor v2)
+    O0 = v4
+    v2 = (v3 and v2)
     v0 = (v0 nimpl v1)
     v0 = (v2 or v0)
-    O0 = v4
     O1 = ~v0
 EndFunc
 "##
     );
 
+    // single_buffer
     cw_nimpl.out.clear();
     generate_code_ext(
         &mut cw_nimpl,
@@ -325,6 +326,62 @@ EndFunc
 EndFunc
 "##
     );
+    cw_impl.out.clear();
+    generate_code_ext(
+        &mut cw_impl,
+        "test1",
+        circuit.clone(),
+        false,
+        Some((&[0, 1, 2], 3)),
+        Some((&[0, 1], 3)),
+        None,
+        true,
+    );
+    assert_eq!(
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
+        r##"Func test1(3 2 sb)
+    vars v0..5
+    v0 = O0
+    v1 = O1
+    v2 = O2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    v2 = (v2 and v3)
+    v0 = (v0 impl v1)
+    v0 = (v0 impl v2)
+    O0 = v4
+    O1 = ~v0
+EndFunc
+"##
+    );
+    cw_basic.out.clear();
+    generate_code_ext(
+        &mut cw_basic,
+        "test1",
+        circuit.clone(),
+        false,
+        Some((&[0, 1, 2], 3)),
+        Some((&[0, 1], 3)),
+        None,
+        true,
+    );
+    assert_eq!(
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
+        r##"Func test1(3 2 sb)
+    vars v0..5
+    v0 = O0
+    v1 = O1
+    v2 = O2
+    v3 = (v0 xor v1)
+    v4 = (v2 xor v3)
+    v2 = (v2 and v3)
+    v0 = (v0 and ~v1)
+    v0 = ~(v2 or v0)
+    O0 = v4
+    O1 = v0
+EndFunc
+"##
+    );
 
     cw_basic.out.clear();
     generate_code(
@@ -342,13 +399,13 @@ EndFunc
     vars v0..5
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = (v0 xor v1)
-    v4 = (v2 xor v3)
-    v2 = (v2 and v3)
+    v2 = (v0 xor v1)
+    v3 = I2
+    v4 = (v3 xor v2)
+    O0 = v4
+    v2 = (v3 and v2)
     v0 = (v0 and ~v1)
     v0 = ~(v2 or v0)
-    O0 = v4
     O1 = v0
 EndFunc
 "##
@@ -397,28 +454,28 @@ EndFunc
     vars v0..9
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = I3
-    v4 = (v0 impl v1)
-    v4 = (v1 xor v4)
-    v4 = (v2 xor v4)
-    v5 = (v0 and v3)
-    v5 = (v3 and v5)
-    v5 = (v3 xor v5)
-    v6 = (v4 or v5)
-    v2 = (v2 xor v6)
-    v7 = (v4 impl v5)
+    v2 = (v0 impl v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 or v5)
+    v3 = (v3 xor v6)
+    v7 = (v2 impl v5)
     v8 = (v7 impl v0)
-    v4 = (v5 impl v4)
-    v5 = (v4 impl v1)
+    v2 = (v5 impl v2)
+    v5 = (v2 impl v1)
     v5 = (v8 xor v5)
-    v2 = (v2 impl v5)
+    v3 = (v3 impl v5)
+    O0 = v3
     v0 = (v0 impl v7)
-    v0 = (v0 impl v4)
+    v0 = (v0 impl v2)
     v1 = (v1 and v6)
-    v1 = (v3 impl v1)
+    v1 = (v4 impl v1)
     v0 = (v0 xor v1)
-    O0 = v2
     O1 = v0
 EndFunc
 "##
@@ -439,28 +496,28 @@ EndFunc
     vars v0..9
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = I3
-    v4 = (v0 nimpl v1)
-    v4 = (v1 xor v4)
-    v4 = (v2 xor v4)
-    v5 = (v0 and v3)
-    v5 = (v3 and v5)
-    v5 = (v3 xor v5)
-    v6 = (v4 nimpl v5)
-    v2 = (v2 xor v6)
-    v7 = (v4 or v5)
+    v2 = (v0 nimpl v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 nimpl v5)
+    v3 = (v3 xor v6)
+    v7 = (v2 or v5)
     v8 = (v7 nimpl v0)
-    v4 = (v4 and v5)
-    v5 = (v1 or v4)
+    v2 = (v2 and v5)
+    v5 = (v1 or v2)
     v5 = (v8 xor v5)
-    v2 = (v5 nimpl v2)
+    v3 = (v5 nimpl v3)
+    O0 = ~v3
     v0 = (v0 nimpl v7)
-    v0 = (v4 nimpl v0)
+    v0 = (v2 nimpl v0)
     v1 = (v1 nimpl v6)
-    v1 = (v3 nimpl v1)
+    v1 = (v4 nimpl v1)
     v0 = (v0 xor v1)
-    O0 = ~v2
     O1 = v0
 EndFunc
 "##
@@ -481,28 +538,28 @@ EndFunc
     vars v0..9
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = I3
-    v4 = (v0 and ~v1)
-    v4 = (v1 xor v4)
-    v4 = (v2 xor v4)
-    v5 = (v0 and v3)
-    v5 = (v3 and v5)
-    v5 = (v3 xor v5)
-    v6 = (v4 and ~v5)
-    v2 = (v2 xor v6)
-    v7 = ~(v4 or v5)
+    v2 = (v0 and ~v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 and ~v5)
+    v3 = (v3 xor v6)
+    v7 = ~(v2 or v5)
     v8 = ~(v0 or v7)
-    v4 = (v4 and v5)
-    v5 = ~(v1 or v4)
+    v2 = (v2 and v5)
+    v5 = ~(v1 or v2)
     v5 = (v8 xor v5)
-    v2 = ~(v2 or v5)
+    v3 = ~(v3 or v5)
+    O0 = ~v3
     v0 = (v0 and v7)
-    v0 = (v4 and ~v0)
+    v0 = (v2 and ~v0)
     v1 = (v1 and ~v6)
-    v1 = (v3 and ~v1)
+    v1 = (v4 and ~v1)
     v0 = (v0 xor v1)
-    O0 = ~v2
     O1 = v0
 EndFunc
 "##
@@ -523,28 +580,28 @@ EndFunc
     vars v0..9
     v0 = I0
     v1 = I1
-    v2 = I2
-    v3 = I3
-    v4 = (v0 and ~v1)
-    v4 = (v1 xor v4)
-    v4 = (v2 xor v4)
-    v5 = (v0 and v3)
-    v5 = (v3 and v5)
-    v5 = (v3 xor v5)
-    v6 = (v4 and ~v5)
-    v2 = (v2 xor v6)
-    v7 = ~(v4 or v5)
+    v2 = (v0 and ~v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 and ~v5)
+    v3 = (v3 xor v6)
+    v7 = ~(v2 or v5)
     v8 = (v0 or v7)
-    v4 = (v4 and v5)
-    v5 = (v1 or v4)
+    v2 = (v2 and v5)
+    v5 = (v1 or v2)
     v5 = (v8 xor v5)
-    v2 = (v2 or v5)
+    v3 = (v3 or v5)
+    O0 = v3
     v0 = (v0 and v7)
-    v0 = (v4 and ~v0)
+    v0 = (v2 and ~v0)
     v1 = (v6 or ~v1)
-    v1 = (v3 and v1)
+    v1 = (v4 and v1)
     v0 = (v0 xor v1)
-    O0 = v2
     O1 = v0
 EndFunc
 "##
@@ -577,8 +634,8 @@ EndFunc
     vars v0..3
     v0 = I0
     v1 = I1
-    v2 = I2
     v0 = (v0 and v1)
+    v2 = I2
     v2 = (v1 and v2)
     v0 = (v0 and ~v2)
     v0 = (v0 and ~v1)
@@ -602,8 +659,8 @@ EndFunc
     vars v0..3
     v0 = I0
     v1 = I1
-    v2 = I2
     v0 = (v0 and v1)
+    v2 = I2
     v2 = (v1 and v2)
     v0 = (v2 or ~v0)
     v0 = (v0 or v1)
@@ -642,22 +699,22 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
-    vars v0..6
+    vars v0..5
     v0 = I0
-    v1 = I1
-    v2 = I2
+    v1 = I2
+    v2 = (v0 and v1)
+    O0 = v2
+    v2 = I1
+    v1 = (v2 and v1)
     v3 = I3
-    v4 = (v0 and v2)
-    v2 = (v1 and v2)
     v0 = (v0 and v3)
-    v5 = (v2 xor v0)
-    v1 = (v1 and v3)
-    v0 = (v2 and v0)
-    v2 = (v1 xor v0)
+    v4 = (v1 xor v0)
+    O1 = ~v4
+    v2 = (v2 and v3)
     v0 = (v1 and v0)
-    O0 = v4
-    O1 = ~v5
-    O2 = v2
+    v1 = (v2 xor v0)
+    O2 = v1
+    v0 = (v2 and v0)
     O3 = ~v0
 EndFunc
 "##
@@ -675,22 +732,22 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
-    vars v0..6
+    vars v0..5
     v0 = I0
-    v1 = I1
-    v2 = I2
+    v1 = I2
+    v2 = (v0 and v1)
+    O0 = v2
+    v2 = I1
+    v1 = (v2 and v1)
     v3 = I3
-    v4 = (v0 and v2)
-    v2 = (v1 and v2)
     v0 = (v0 and v3)
-    v5 = (v2 xor v0)
-    v1 = (v1 and v3)
-    v0 = (v2 and v0)
-    v2 = (v1 xor v0)
+    v4 = (v1 xor v0)
+    O1 = ~v4
+    v2 = (v2 and v3)
     v0 = (v1 and v0)
-    O0 = v4
-    O1 = ~v5
-    O2 = v2
+    v1 = (v2 xor v0)
+    O2 = v1
+    v0 = (v2 and v0)
     O3 = ~v0
 EndFunc
 "##
@@ -710,15 +767,15 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
         r##"Func test1(4 4)
-    vars v0..4
+    vars v0..1
     v0 = I0
-    v1 = I1
-    v2 = I2
-    v3 = I3
     O0 = v0
-    O1 = ~v3
-    O2 = v2
-    O3 = ~v1
+    v0 = I3
+    O1 = ~v0
+    v0 = I2
+    O2 = v0
+    v0 = I1
+    O3 = ~v0
 EndFunc
 "##
     );
@@ -735,15 +792,15 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
-    vars v0..4
+    vars v0..1
     v0 = I0
-    v1 = I1
-    v2 = I2
-    v3 = I3
     O0 = v0
-    O1 = ~v3
-    O2 = v2
-    O3 = ~v1
+    v0 = I3
+    O1 = ~v0
+    v0 = I2
+    O2 = v0
+    v0 = I1
+    O3 = ~v0
 EndFunc
 "##
     );
@@ -760,15 +817,15 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(4 4)
-    vars v0..4
+    vars v0..1
     v0 = I0
-    v1 = I1
-    v2 = I2
-    v3 = I3
     O0 = v0
-    O1 = ~v3
-    O2 = v2
-    O3 = ~v1
+    v0 = I3
+    O1 = ~v0
+    v0 = I2
+    O2 = v0
+    v0 = I1
+    O3 = ~v0
 EndFunc
 "##
     );
