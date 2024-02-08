@@ -606,7 +606,235 @@ EndFunc
 EndFunc
 "##
     );
-    
+
+    let circuit = Circuit::new(
+        4,
+        [
+            Gate::new_nimpl(0, 1),   // 4
+            Gate::new_and(0, 3),     // 5
+            Gate::new_xor(1, 4),     // 6
+            Gate::new_and(3, 5),     // 7
+            Gate::new_xor(2, 6),     // 8
+            Gate::new_xor(3, 7),     // 9
+            Gate::new_nor(8, 9),     // 10
+            Gate::new_and(8, 9),     // 11
+            Gate::new_nimpl(8, 9),   // 12
+            Gate::new_nor(0, 10),    // 13
+            Gate::new_nor(1, 11),    // 14
+            Gate::new_xor(2, 12),    // 15
+            Gate::new_xor(13, 14),   // 16
+            Gate::new_and(0, 10),    // 17 tree4
+            Gate::new_nor(15, 16),   // 18 tree3
+            Gate::new_nimpl(1, 12),  // 19 tree4
+            Gate::new_nimpl(11, 17), // 20
+            Gate::new_nimpl(3, 19),  // 21
+            Gate::new_xor(20, 21),   // 22
+        ],
+        [
+            (18, true),
+            (18, false),
+            (22, true),
+            (22, false),
+            (0, false),
+            (1, false),
+            (1, true),
+            (0, true),
+        ],
+    )
+    .unwrap();
+    cw_impl.out.clear();
+    generate_code(
+        &mut cw_impl,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
+        r##"Func test1(4 8)
+    vars v0..9
+    v0 = I0
+    v1 = I1
+    v2 = (v0 impl v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 or v5)
+    v3 = (v3 xor v6)
+    v7 = (v2 impl v5)
+    v8 = (v7 impl v0)
+    v2 = (v5 impl v2)
+    v5 = (v2 impl v1)
+    v5 = (v8 xor v5)
+    v3 = (v3 impl v5)
+    O0 = v3
+    O1 = ~v3
+    v5 = (v0 impl v7)
+    v2 = (v5 impl v2)
+    v5 = (v1 and v6)
+    v4 = (v4 impl v5)
+    v2 = (v2 xor v4)
+    O2 = ~v2
+    O3 = v2
+    O4 = v0
+    O5 = v1
+    O6 = ~v1
+    O7 = ~v0
+EndFunc
+"##
+    );
+    cw_nimpl.out.clear();
+    generate_code(
+        &mut cw_nimpl,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_nimpl.out.clone()).unwrap(),
+        r##"Func test1(4 8)
+    vars v0..9
+    v0 = I0
+    v1 = I1
+    v2 = (v0 nimpl v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 nimpl v5)
+    v3 = (v3 xor v6)
+    v7 = (v2 or v5)
+    v8 = (v7 nimpl v0)
+    v2 = (v2 and v5)
+    v5 = (v1 or v2)
+    v5 = (v8 xor v5)
+    v3 = (v5 nimpl v3)
+    O0 = ~v3
+    O1 = v3
+    v5 = (v0 nimpl v7)
+    v2 = (v2 nimpl v5)
+    v5 = (v1 nimpl v6)
+    v4 = (v4 nimpl v5)
+    v2 = (v2 xor v4)
+    O2 = ~v2
+    O3 = v2
+    O4 = v0
+    O5 = v1
+    O6 = ~v1
+    O7 = ~v0
+EndFunc
+"##
+    );
+    cw_basic.out.clear();
+    generate_code(
+        &mut cw_basic,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
+        r##"Func test1(4 8)
+    vars v0..9
+    v0 = I0
+    v1 = I1
+    v2 = (v0 and ~v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 and ~v5)
+    v3 = (v3 xor v6)
+    v7 = ~(v2 or v5)
+    v8 = ~(v0 or v7)
+    v2 = (v2 and v5)
+    v5 = ~(v1 or v2)
+    v5 = (v8 xor v5)
+    v3 = ~(v3 or v5)
+    O0 = ~v3
+    O1 = v3
+    v5 = (v0 and v7)
+    v2 = (v2 and ~v5)
+    v5 = (v1 and ~v6)
+    v4 = (v4 and ~v5)
+    v2 = (v2 xor v4)
+    O2 = ~v2
+    O3 = v2
+    O4 = v0
+    O5 = v1
+    O6 = ~v1
+    O7 = ~v0
+EndFunc
+"##
+    );
+    cw_basic.out.clear();
+    generate_code(
+        &mut cw_basic,
+        "test1",
+        circuit.clone(),
+        true,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
+        r##"Func test1(4 8)
+    vars v0..9
+    v0 = I0
+    v1 = I1
+    v2 = (v0 and ~v1)
+    v2 = (v1 xor v2)
+    v3 = I2
+    v2 = (v3 xor v2)
+    v4 = I3
+    v5 = (v0 and v4)
+    v5 = (v4 and v5)
+    v5 = (v4 xor v5)
+    v6 = (v2 and ~v5)
+    v3 = (v3 xor v6)
+    v7 = ~(v2 or v5)
+    v8 = (v0 or v7)
+    v2 = (v2 and v5)
+    v5 = (v1 or v2)
+    v5 = (v8 xor v5)
+    v3 = (v3 or v5)
+    O0 = v3
+    O1 = ~v3
+    v5 = (v0 and v7)
+    v2 = (v2 and ~v5)
+    v5 = (v6 or ~v1)
+    v4 = (v4 and v5)
+    v2 = (v2 xor v4)
+    O2 = ~v2
+    O3 = v2
+    O4 = v0
+    O5 = v1
+    O6 = ~v1
+    O7 = ~v0
+EndFunc
+"##
+    );
+
     let circuit = Circuit::new(
         4,
         [
