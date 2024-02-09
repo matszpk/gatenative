@@ -9,10 +9,12 @@ use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 fn test_div_builder_and_exec_opencl() {
     let no_opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: false,
+        group_vec: false,
         group_len: None,
     };
     let opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: true,
+        group_vec: false,
         group_len: None,
     };
 

@@ -536,6 +536,8 @@ void gate_sys_func1(const uint32x4_t* input,
 "##,
         write_test_code(&CLANG_WRITER_ARM_NEON, false, false)
     );
+
+    // opencl
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned int n, 
     unsigned int input_shift, unsigned int output_shift,
@@ -842,5 +844,109 @@ void gate_sys_func1(uint32_t* output, unsigned int arg) {
 }
 "##,
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32, true, true)
+    );
+
+    // opencl group_vec
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned int n, 
+    unsigned int input_shift, unsigned int output_shift,
+    const global uint* input,
+    global uint* output) {
+    const uint idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const unsigned int ivn = llen * (3 * idx) + input_shift;
+    const unsigned int ovn = llen * (2 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = input[ivn + llen*0 + lidx];
+    v1 = input[ivn + llen*1 + lidx];
+    v0 = input[ivn + llen*2 + lidx];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + llen*1 + lidx] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + llen*0 + lidx] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
+    );
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned int n, 
+    unsigned int input_shift, unsigned int output_shift,
+    const global uint* input,
+    global uint* output, unsigned int arg) {
+    const uint idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const unsigned int ivn = llen * (1 * idx) + input_shift;
+    const unsigned int ovn = llen * (2 * idx) + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = ((arg & 1) != 0) ? one : zero;
+    v1 = input[ivn + llen*0 + lidx];
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + llen*1 + lidx] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + llen*0 + lidx] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, true)
+    );
+    // single buffer - opencl group_vec
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned int n, 
+    unsigned int output_shift,
+    global uint* output) {
+    const uint idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const unsigned int ivn = llen * (3 * idx) + output_shift;
+    const unsigned int ovn = llen * (3 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = output[ivn + llen*0 + lidx];
+    v1 = output[ivn + llen*1 + lidx];
+    v0 = output[ivn + llen*2 + lidx];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    output[ovn + llen*2 + lidx] = v3;
+    v3 = ~(v0 & v1);
+    output[ovn + llen*1 + lidx] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + llen*0 + lidx] = v4;
+}
+"##,
+        write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
     );
 }

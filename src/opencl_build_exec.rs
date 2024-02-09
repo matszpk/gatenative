@@ -229,6 +229,7 @@ pub struct OpenCLExecutor {
     group_len: usize,
     kernel: Kernel,
     single_buffer: bool,
+    group_vec: bool,
 }
 
 impl OpenCLExecutor {
@@ -283,6 +284,12 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_arg_input = cl_uint::from(arg_input);
         let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
@@ -332,6 +339,12 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_arg_input = cl_uint::from(arg_input);
         let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
@@ -378,6 +391,12 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_num = cl_uint::try_from(num).unwrap();
         let cl_arg_input = cl_uint::from(arg_input);
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
         unsafe {
             if self.have_arg_inputs {
                 ExecuteKernel::new(&self.kernel)
@@ -454,6 +473,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             program: self.program.clone(),
             kernel: Kernel::create(&self.program, &name).unwrap(),
             single_buffer: self.single_buffer,
+            group_vec: self.group_vec,
         })
     }
 
@@ -517,11 +537,13 @@ struct CircuitEntry {
 #[derive(Clone, Debug)]
 pub struct OpenCLBuilderConfig {
     pub optimize_negs: bool,
+    pub group_vec: bool,
     pub group_len: Option<usize>,
 }
 
 const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
+    group_vec: false,
     group_len: None,
 };
 
@@ -529,19 +551,25 @@ pub struct OpenCLBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
+    group_vec: bool,
     group_len: usize,
     context: Arc<Context>,
 }
 
 impl<'a> OpenCLBuilder<'a> {
     pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
-        let mut writer = CLANG_WRITER_OPENCL_U32.writer();
-        writer.prolog();
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
+        let mut writer = if config.group_vec {
+            CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+        } else {
+            CLANG_WRITER_OPENCL_U32.writer()
+        };
+        writer.prolog();
         Self {
             entries: vec![],
             writer,
             optimize_negs: config.optimize_negs,
+            group_vec: config.group_vec,
             group_len: config
                 .group_len
                 .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
@@ -550,14 +578,19 @@ impl<'a> OpenCLBuilder<'a> {
     }
 
     pub fn new_with_context(context: Arc<Context>, config: Option<OpenCLBuilderConfig>) -> Self {
-        let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+        let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
+        let mut writer = if config.group_vec {
+            CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+        } else {
+            CLANG_WRITER_OPENCL_U32.writer()
+        };
         writer.prolog();
         let device = Device::new(context.devices()[0]);
-        let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
         Self {
             entries: vec![],
             writer,
             optimize_negs: config.optimize_negs,
+            group_vec: config.group_vec,
             group_len: config
                 .group_len
                 .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
@@ -612,7 +645,7 @@ impl<'b, 'a>
 
     fn build(mut self) -> Result<Vec<OpenCLExecutor>, Self::ErrorType> {
         self.writer.epilog();
-        let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
+        let words_per_real_word = usize::try_from(self.word_len() >> 5).unwrap();
         let device = self.context.devices()[0];
         #[allow(deprecated)]
         let cmd_queue = Arc::new(unsafe { CommandQueue::create(&self.context, device, 0)? });
@@ -645,6 +678,7 @@ impl<'b, 'a>
                     group_len: self.group_len,
                     kernel: Kernel::create(&program, &e.sym_name)?,
                     single_buffer: e.single_buffer,
+                    group_vec: self.group_vec,
                 })
             })
             .collect::<Result<Vec<_>, _>>()
@@ -652,7 +686,12 @@ impl<'b, 'a>
 
     #[inline]
     fn word_len(&self) -> u32 {
-        self.writer.word_len()
+        if self.group_vec {
+            u32::try_from(usize::try_from(self.writer.word_len()).unwrap() * self.group_len)
+                .unwrap()
+        } else {
+            self.writer.word_len()
+        }
     }
 
     #[inline]

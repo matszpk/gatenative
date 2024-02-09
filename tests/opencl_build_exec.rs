@@ -42,10 +42,12 @@ fn gen_mul_add_input(word_len: usize) -> (Vec<u32>, Vec<u32>) {
 fn test_opencl_builder_and_exec() {
     let no_opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: false,
+        group_vec: false,
         group_len: None,
     };
     let opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: true,
+        group_vec: false,
         group_len: None,
     };
 
@@ -542,10 +544,12 @@ fn test_opencl_builder_and_exec() {
 fn test_opencl_data_holder() {
     let no_opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: false,
+        group_vec: false,
         group_len: None,
     };
     let opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: true,
+        group_vec: false,
         group_len: None,
     };
 
