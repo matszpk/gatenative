@@ -567,6 +567,27 @@ fn test_opencl_builder_and_exec_group_vec() {
     let circuit = mul_add_circuit();
     let mut builder = OpenCLBuilder::new(&device, Some(opt_neg_config));
     builder.add("mul_add", circuit, None, None, None);
+
+    // for single_buffer
+    let circuit = Circuit::new(
+        4,
+        [
+            Gate::new_and(0, 2),
+            Gate::new_and(1, 2),
+            Gate::new_and(0, 3),
+            Gate::new_and(1, 3),
+            // add a1*b0 + a0*b1
+            Gate::new_xor(5, 6),
+            Gate::new_and(5, 6),
+            // add c(a1*b0 + a0*b1) + a1*b1
+            Gate::new_xor(7, 9),
+            Gate::new_and(7, 9),
+        ],
+        [(4, false), (8, false), (10, false), (11, false)],
+    )
+    .unwrap();
+    builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+
     let mut execs = builder.build().unwrap();
     let mul_add_input = execs[0].new_data_from_vec(mul_add_input.clone());
     let out = execs[0].execute(&mul_add_input, 0).unwrap().release();
@@ -578,6 +599,43 @@ fn test_opencl_builder_and_exec_group_vec() {
     let out = out.release();
     for (i, v) in mul_add_output.iter().enumerate() {
         assert_eq!(*v, out[i], "{}", i);
+    }
+
+    // single buffer
+    let mul2x2_more_input_combs = {
+        let mut input = vec![];
+        let mut s = 0x34251u32;
+        for _ in 0..1024 * 24 {
+            input.push(s & 15);
+            s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
+            s = s.rotate_right(s & 15);
+        }
+        input
+    };
+    let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
+    for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+        let idx = (i >> 5) / word_len;
+        let half_idx = (i >> 5) % word_len;
+        let shift = i & 31;
+        more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
+        more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
+        more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
+        more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
+    }
+    let mut more_input_holder = execs[1].new_data_from_vec(more_input);
+    execs[1].execute_single(&mut more_input_holder, 0).unwrap();
+    let out = more_input_holder.release();
+    for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+        let idx = (i >> 5) / word_len;
+        let half_idx = (i >> 5) % word_len;
+        let shift = i & 31;
+        let a = v & 3;
+        let b = v >> 2;
+        let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
+            + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
+            + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
+            + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
+        assert_eq!((a * b) & 15, c, "{}", i);
     }
 }
 
