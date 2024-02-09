@@ -605,7 +605,7 @@ fn test_opencl_builder_and_exec_group_vec() {
     let mul2x2_more_input_combs = {
         let mut input = vec![];
         let mut s = 0x34251u32;
-        for _ in 0..1024 * 24 {
+        for _ in 0..word_len * 4 * 24 {
             input.push(s & 15);
             s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
             s = s.rotate_right(s & 15);
