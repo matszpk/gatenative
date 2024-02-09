@@ -573,6 +573,12 @@ fn test_opencl_builder_and_exec_group_vec() {
     for (i, v) in mul_add_output.iter().enumerate() {
         assert_eq!(*v, out[i], "{}", i);
     }
+    let mut out = execs[0].new_data(mul_add_input.len() / 3);
+    execs[0].execute_reuse(&mul_add_input, 0, &mut out).unwrap();
+    let out = out.release();
+    for (i, v) in mul_add_output.iter().enumerate() {
+        assert_eq!(*v, out[i], "{}", i);
+    }
 }
 
 #[test]
