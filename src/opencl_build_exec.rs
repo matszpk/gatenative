@@ -730,43 +730,30 @@ impl<'b, 'a>
 }
 
 const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
-// word_len_fac1 - power of two, word_len_fac2 - non power of two.
-kernel void xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fac2,
+kernel void xxx_gate_input_transform(uint n, uint word_len,
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const uint i = get_global_id(0);
     if (i >= n) return;
-    uint wix, ibi;
-    const uint wi0 = i & ((1 << word_len_fac1_pow) - 1);
-    const uint gidx = i >> word_len_fac1_pow;
+    uint ibi;
+    const uint word_w = word_len >> 5;
+    const uint gidx = i / word_len;
+    const uint widx = (i>>5) - gidx * word_w;
+    const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
-    const uint word_w = word_len_fac2 << word_len_fac1_pow;
     const uint output_group_word_num = output_elem_len * word_w;
-    //printf("ff:%u:%u:%u\n", i, wi0, gidx);
-    for (wix = 0; wix < (word_len_fac2 << 5); wix++) {
-        const uint sbit = wix & 31;
-        const int wi = wix >> 5;
-        const uint widx = wi0 + (wi<<word_len_fac1_pow);
-        const global uint* input_elem = input +
-            (sbit + ((widx + word_w*gidx) << 5))*input_elem_word_num;
-        global uint* output_group = output + widx + gidx*output_group_word_num;
-        // if (i == 1)
-        //     printf("ff1:%u:%u:%u:%u - %u\n", wix, sbit, wi, widx, input_elem - input);
-        for (ibi = 0; ibi < bit_mapping_len; ibi++) {
-            const uint inbit = bit_mapping[ibi];
-            const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-            //printf("ff:%u:%u:%u::%u:%u:%u - %u:%u\n", i, wi0, gidx, wix, sbit, wi,
-            //        &input_elem[inbit >> 5] - input,
-            //        &output_group[word_w*ibi] - output);
-            output_group[word_w*ibi] |= (inbit_val << sbit);
-        }
+    const global uint* input_elem = input + (i)*input_elem_word_num;
+    global uint* output_group = output + widx + gidx*output_group_word_num;
+    for (ibi = 0; ibi < bit_mapping_len; ibi++) {
+        const uint inbit = bit_mapping[ibi];
+        const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
+        atomic_or(output_group + word_w*ibi, (inbit_val << sbit));
     }
 }
 "##;
 
 pub struct OpenCLDataInputTransformer {
-    word_len_fac1_pow: u32,
-    word_len_fac2: u32,
+    word_len: u32,
     input_elem_len: usize,
     output_elem_len: usize,
     bit_mapping: Buffer<u32>,
@@ -796,8 +783,6 @@ impl OpenCLDataInputTransformer {
             INPUT_TRANSFORMER_SOURCE,
             "",
         )?);
-        let word_len_fac1_pow = (word_len >> 5).trailing_zeros();
-        let word_len_fac2 = word_len >> (word_len_fac1_pow + 5);
         let mut buffer = unsafe {
             Buffer::<u32>::create(
                 &context,
@@ -822,8 +807,7 @@ impl OpenCLDataInputTransformer {
             )?;
         }
         Ok(Self {
-            word_len_fac1_pow,
-            word_len_fac2,
+            word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
             output_elem_len,
             bit_mapping: buffer,
@@ -855,20 +839,18 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     ) -> Result<(), Self::ErrorType> {
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
-        let num = (elem_num / (self.word_len_fac2 as usize)) >> 5;
+        let num = elem_num;
         let cl_num = cl_uint::try_from(num).unwrap();
-        println!("ddebug: {} {} {} {}",
-                 elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
-        let cl_word_len_fac1_pow = cl_uint::try_from(self.word_len_fac1_pow).unwrap();
-        let cl_word_len_fac2 = cl_uint::try_from(self.word_len_fac2).unwrap();
+        // println!("ddebug: {} {} {} {}",
+        //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
+        let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
         let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
         unsafe {
             ExecuteKernel::new(&self.kernel)
                 .set_arg(&cl_num)
-                .set_arg(&cl_word_len_fac1_pow)
-                .set_arg(&cl_word_len_fac2)
+                .set_arg(&cl_word_len)
                 .set_arg(&cl_input_elem_len)
                 .set_arg(&cl_output_elem_len)
                 .set_arg(&cl_bit_mapping_len)
