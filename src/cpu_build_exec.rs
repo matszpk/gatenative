@@ -6,6 +6,8 @@ use libloading::{Library, Symbol};
 use static_init::dynamic;
 use thiserror::Error;
 
+use rayon::prelude::*;
+
 use std::convert::Infallible;
 use std::env::{self, temp_dir};
 use std::fmt::Debug;
@@ -658,6 +660,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
 pub struct CPUDataInputTransformer<'a> {
     word_len: u32,
     input_elem_len: usize,
+    output_elem_len: usize,
     bit_mapping: &'a [usize],
     parallel: bool,
 }
@@ -666,25 +669,31 @@ impl<'a> CPUDataInputTransformer<'a> {
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
+        output_elem_len: usize,
         bit_mapping: &'a [usize],
         parallel: bool,
     ) -> Self {
         assert_eq!((word_len & 31), 0);
         assert_eq!((input_elem_len & 31), 0);
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(output_elem_len >= bit_mapping.len());
         Self {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
+            output_elem_len,
             bit_mapping,
             parallel,
         }
     }
 
-    fn transform_int(&mut self, input: &[u32], output: &mut [u32]) {
+    fn transform_int(&self, input: &[u32], output: &mut [u32]) {
         let input_elem_word_num = self.input_elem_len >> 5;
-        let output_elem_len = self.bit_mapping.len();
         let elem_num = input.len() / input_elem_word_num;
-        let words_per_word = (self.word_len as usize) >> 1;
+        let words_per_word = (self.word_len as usize) >> 5;
+        // println!(
+        //     "TX: {} {} {}",
+        //     input_elem_word_num, elem_num, words_per_word
+        // );
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
@@ -692,7 +701,7 @@ impl<'a> CPUDataInputTransformer<'a> {
             let input_elem = &input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
             for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
                 let inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-                output[words_per_word * (gidx * output_elem_len + outbit) + widx] |=
+                output[words_per_word * (gidx * self.output_elem_len + outbit) + widx] |=
                     inbit_val << sbit;
             }
             sbit += 1;
@@ -719,10 +728,35 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
         output: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
         if self.parallel {
+            const CHUNK_LEN: usize = 128;
             let input_r = input.get();
             let input = input_r.get();
             let mut output_w = output.get_mut();
             let output = output_w.get_mut();
+
+            let word_len = self.word_len as usize;
+            let input_elem_word_num = self.input_elem_len >> 5;
+            let elem_num = input.len() / input_elem_word_num;
+            let output_elem_word_num = (self.output_elem_len * word_len) >> 5;
+            // println!("TX2: chunklen={} ", output_elem_word_num * CHUNK_LEN);
+            // println!("TX2: len={} ", output.len());
+            // println!(
+            //     "TX2: {} {} {}",
+            //     input_elem_word_num, elem_num, output_elem_word_num
+            // );
+            output[0..(elem_num * self.output_elem_len) >> 5]
+                .chunks_mut(output_elem_word_num * CHUNK_LEN)
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, x)| {
+                    let end = std::cmp::min((i + 1) * word_len * CHUNK_LEN, elem_num);
+                    // println!("RangeX: {} {}", word_len * i * CHUNK_LEN, end);
+                    self.transform_int(
+                        &input[input_elem_word_num * word_len * i * CHUNK_LEN
+                            ..input_elem_word_num * end],
+                        x,
+                    );
+                });
         } else {
             let input_r = input.get();
             let input = input_r.get();
@@ -737,7 +771,7 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
         self.input_elem_len
     }
     fn output_elem_len(&self) -> usize {
-        self.bit_mapping.len()
+        self.output_elem_len
     }
 }
 

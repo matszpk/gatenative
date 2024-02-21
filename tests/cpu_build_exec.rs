@@ -817,3 +817,67 @@ fn test_cpu_data_holder() {
         }
     }
 }
+
+#[test]
+fn test_cpu_input_data_transformer() {
+    for parallel in [false, true] {
+        let word_len = 160; // 1 32-bit word
+        let input_elem_len = 96;
+        let output_elem_len = 77;
+        let input_elem_word_num = input_elem_len * (word_len >> 5);
+        let output_elem_word_num = output_elem_len * (word_len >> 5);
+        let group_num = 17541;
+        let mut input = CPUDataHolder::new(vec![0u32; input_elem_word_num * group_num]);
+        let mut output = CPUDataHolder::new(vec![0u32; output_elem_word_num * group_num]);
+        let mut bit_mapping = (0..27)
+            .chain(32..32 + 22)
+            .chain(64..64 + 28)
+            .collect::<Vec<_>>();
+        {
+            let mut input = input.get_mut();
+            let mut input = input.get_mut();
+            for (i, v) in input.iter_mut().enumerate() {
+                *v = (100 + i + 51 * i * i) as u32;
+            }
+        }
+        let mut expected = vec![0u32; output.len()];
+        let wl = word_len >> 5;
+        {
+            let input = input.get();
+            let input = input.get();
+            for i in 0..32 * wl * group_num {
+                let input_slice = &input[i * 3..(i + 1) * 3];
+                let idx = (i >> 5) as usize;
+                let gidx = idx / wl;
+                let widx = idx % wl;
+                let idx = gidx * wl * output_elem_len + widx;
+                let sbit = i & 31;
+                //println!("X{}: {} {} {} {}", i, idx, gidx, widx, sbit);
+                for bit in 0..output_elem_len {
+                    let xbit = bit_mapping[bit];
+                    expected[idx + bit * wl] |=
+                        u32::from((input_slice[xbit >> 5] >> (xbit & 31)) & 1) << sbit;
+                }
+            }
+        }
+        let mut transformer = CPUDataInputTransformer::new(
+            u32::try_from(word_len).unwrap(),
+            input_elem_len,
+            output_elem_len,
+            &bit_mapping,
+            parallel,
+        );
+        use std::time::SystemTime;
+        let start = SystemTime::now();
+        transformer.transform(&input, &mut output).unwrap();
+        let elapsed = start.elapsed().unwrap();
+        println!("Time: {} s", elapsed.as_secs_f64());
+        {
+            let output = output.get();
+            let output = output.get();
+            for i in 0..output.len() {
+                assert_eq!(expected[i], output[i], "{}: {}", parallel, i);
+            }
+        }
+    }
+}
