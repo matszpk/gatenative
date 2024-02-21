@@ -847,6 +847,17 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
         let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
+        let output_len = output.len();
+        unsafe {
+            self.cmd_queue.enqueue_fill_buffer(
+                &mut output.buffer,
+                &[0u32],
+                0,
+                4 * output_len,
+                &[],
+            )?;
+        }
+        self.cmd_queue.finish().unwrap();
         unsafe {
             ExecuteKernel::new(&self.kernel)
                 .set_arg(&cl_num)

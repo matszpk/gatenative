@@ -693,6 +693,7 @@ impl<'a> CPUDataInputTransformer<'a> {
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
+        output.fill(0);
         for i in 0..elem_num {
             let input_elem = &input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
             for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
@@ -801,6 +802,7 @@ impl<'a> CPUDataOutputTransformer<'a> {
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
+        input.fill(0);
         for i in 0..elem_num {
             let input_elem = &mut input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
             for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
