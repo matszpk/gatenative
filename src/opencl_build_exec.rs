@@ -744,7 +744,7 @@ kernel xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fa
     const uint word_w = word_len >> 5;
     const uint output_group_word_num = output_elem_len * word_len;
     for (wix = 0; wix < (word_len_fac2 << 5); wix++) {
-        const uint sbit = wi & 31;
+        const uint sbit = wix & 31;
         const int wi = wix >> 5;
         const uint widx = wi0 + (wi<<word_len_fac1_pow);
         const global uint* input_elem = input +
