@@ -876,6 +876,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
                 )
                 .enqueue_nd_range(&self.cmd_queue)?;
         }
+        self.cmd_queue.finish()?;
         Ok(())
     }
 
