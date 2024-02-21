@@ -828,14 +828,15 @@ fn test_cpu_input_data_transformer() {
         let output_elem_word_num = output_elem_len * (word_len >> 5);
         let group_num = 17541;
         let mut input = CPUDataHolder::new(vec![0u32; input_elem_word_num * group_num]);
+        let mut input_2 = CPUDataHolder::new(vec![0u32; input_elem_word_num * group_num]);
         let mut output = CPUDataHolder::new(vec![0u32; output_elem_word_num * group_num]);
-        let mut bit_mapping = (0..27)
+        let bit_mapping = (0..27)
             .chain(32..32 + 22)
             .chain(64..64 + 28)
             .collect::<Vec<_>>();
         {
             let mut input = input.get_mut();
-            let mut input = input.get_mut();
+            let input = input.get_mut();
             for (i, v) in input.iter_mut().enumerate() {
                 *v = (100 + i + 51 * i * i) as u32;
             }
@@ -877,6 +878,35 @@ fn test_cpu_input_data_transformer() {
             let output = output.get();
             for i in 0..output.len() {
                 assert_eq!(expected[i], output[i], "{}: {}", parallel, i);
+            }
+        }
+
+        let mut transformer = CPUDataOutputTransformer::new(
+            u32::try_from(word_len).unwrap(),
+            input_elem_len,
+            output_elem_len,
+            &bit_mapping,
+            parallel,
+        );
+        let start = SystemTime::now();
+        transformer.transform(&output, &mut input_2).unwrap();
+        let elapsed = start.elapsed().unwrap();
+        println!("Time: {} s", elapsed.as_secs_f64());
+        {
+            let input = input.get();
+            let input = input.get();
+            let input_2 = input_2.get();
+            let input_2 = input_2.get();
+            for i in 0..input.len() {
+                let expected = match i % 3 {
+                    0 => input[i] & ((1 << 27) - 1),
+                    1 => input[i] & ((1 << 22) - 1),
+                    2 => input[i] & ((1 << 28) - 1),
+                    _ => {
+                        panic!("Unexpected!");
+                    }
+                };
+                assert_eq!(expected, input_2[i], "{}: {}", parallel, i);
             }
         }
     }

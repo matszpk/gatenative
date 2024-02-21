@@ -690,10 +690,6 @@ impl<'a> CPUDataInputTransformer<'a> {
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
         let words_per_word = (self.word_len as usize) >> 5;
-        // println!(
-        //     "TX: {} {} {}",
-        //     input_elem_word_num, elem_num, words_per_word
-        // );
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
@@ -737,15 +733,9 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
             let word_len = self.word_len as usize;
             let input_elem_word_num = self.input_elem_len >> 5;
             let elem_num = input.len() / input_elem_word_num;
-            let output_elem_word_num = (self.output_elem_len * word_len) >> 5;
-            // println!("TX2: chunklen={} ", output_elem_word_num * CHUNK_LEN);
-            // println!("TX2: len={} ", output.len());
-            // println!(
-            //     "TX2: {} {} {}",
-            //     input_elem_word_num, elem_num, output_elem_word_num
-            // );
+            let output_group_word_num = (self.output_elem_len * word_len) >> 5;
             output[0..(elem_num * self.output_elem_len) >> 5]
-                .chunks_mut(output_elem_word_num * CHUNK_LEN)
+                .chunks_mut(output_group_word_num * CHUNK_LEN)
                 .enumerate()
                 .par_bridge()
                 .for_each(|(i, x)| {
@@ -772,6 +762,111 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
     }
     fn output_elem_len(&self) -> usize {
         self.output_elem_len
+    }
+}
+
+pub struct CPUDataOutputTransformer<'a> {
+    word_len: u32,
+    input_elem_len: usize,
+    output_elem_len: usize,
+    bit_mapping: &'a [usize],
+    parallel: bool,
+}
+
+impl<'a> CPUDataOutputTransformer<'a> {
+    pub fn new(
+        word_len: u32,
+        input_elem_len: usize,
+        output_elem_len: usize,
+        bit_mapping: &'a [usize],
+        parallel: bool,
+    ) -> Self {
+        assert_eq!((word_len & 31), 0);
+        assert_eq!((input_elem_len & 31), 0);
+        assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(output_elem_len >= bit_mapping.len());
+        Self {
+            word_len,
+            input_elem_len: ((input_elem_len + 31) >> 5) << 5,
+            output_elem_len,
+            bit_mapping,
+            parallel,
+        }
+    }
+
+    fn transform_int(&self, output: &[u32], input: &mut [u32]) {
+        let input_elem_word_num = self.input_elem_len >> 5;
+        let elem_num = input.len() / input_elem_word_num;
+        let words_per_word = (self.word_len as usize) >> 5;
+        let mut gidx = 0;
+        let mut widx = 0;
+        let mut sbit = 0;
+        for i in 0..elem_num {
+            let input_elem = &mut input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
+            for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
+                let outbit_val = (output
+                    [words_per_word * (gidx * self.output_elem_len + outbit) + widx]
+                    >> sbit)
+                    & 1;
+                input_elem[inbit >> 5] |= outbit_val << (inbit & 31);
+            }
+            sbit += 1;
+            if sbit >= 32 {
+                sbit = 0;
+                widx += 1;
+                if widx >= words_per_word {
+                    widx = 0;
+                    gidx += 1;
+                }
+            }
+        }
+    }
+}
+
+impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder>
+    for CPUDataOutputTransformer<'b>
+{
+    type ErrorType = Infallible;
+
+    fn transform(
+        &mut self,
+        output: &CPUDataHolder,
+        input: &mut CPUDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        if self.parallel {
+            const CHUNK_LEN: usize = 128;
+            let mut input_w = input.get_mut();
+            let input = input_w.get_mut();
+            let output_r = output.get();
+            let output = output_r.get();
+
+            let word_len = self.word_len as usize;
+            let input_elem_word_num = self.input_elem_len >> 5;
+            let output_group_word_num = (self.output_elem_len * word_len) >> 5;
+            input
+                .chunks_mut(word_len * input_elem_word_num * CHUNK_LEN)
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, x)| {
+                    let end =
+                        std::cmp::min(output_group_word_num * (i + 1) * CHUNK_LEN, output.len());
+                    self.transform_int(&output[output_group_word_num * i * CHUNK_LEN..end], x);
+                });
+        } else {
+            let output_r = output.get();
+            let output = output_r.get();
+            let mut input_w = input.get_mut();
+            let input = input_w.get_mut();
+            self.transform_int(output, input);
+        }
+        Ok(())
+    }
+
+    fn input_elem_len(&self) -> usize {
+        self.output_elem_len
+    }
+    fn output_elem_len(&self) -> usize {
+        self.input_elem_len
     }
 }
 
