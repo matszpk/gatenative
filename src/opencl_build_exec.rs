@@ -735,8 +735,7 @@ kernel xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fa
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const uint i = get_global_id(0);
-    uint wi;
-    uint ibi;
+    uint wi, ibi;
     if (i >= n) return;
     const uint wi0 = i & ((1 << word_len_fac1_pow) - 1);
     const uint gidx = i >> word_len_fac1_pow;
