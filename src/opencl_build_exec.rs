@@ -740,23 +740,24 @@ kernel void xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_l
     const uint wi0 = i & ((1 << word_len_fac1_pow) - 1);
     const uint gidx = i >> word_len_fac1_pow;
     const uint input_elem_word_num = input_elem_len >> 5;
-    const uint word_len = word_len_fac2 << word_len_fac1_pow;
-    const uint word_w = word_len >> 5;
-    const uint output_group_word_num = output_elem_len * word_len;
+    const uint word_w = word_len_fac2 << word_len_fac1_pow;
+    const uint output_group_word_num = output_elem_len * word_w;
+    //printf("ff:%u:%u:%u\n", i, wi0, gidx);
     for (wix = 0; wix < (word_len_fac2 << 5); wix++) {
         const uint sbit = wix & 31;
         const int wi = wix >> 5;
         const uint widx = wi0 + (wi<<word_len_fac1_pow);
         const global uint* input_elem = input +
-            (sbit + ((widx + word_len*gidx) << 5))*input_elem_word_num;
+            (sbit + ((widx + word_w*gidx) << 5))*input_elem_word_num;
         global uint* output_group = output + widx + gidx*output_group_word_num;
-        //printf("ff:%u:%u:%u::%u:%u:%u\n", i, wi0, gidx, wix, sbit, wi);
+        // if (i == 1)
+        //     printf("ff1:%u:%u:%u:%u - %u\n", wix, sbit, wi, widx, input_elem - input);
         for (ibi = 0; ibi < bit_mapping_len; ibi++) {
             const uint inbit = bit_mapping[ibi];
             const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-            printf("ff:%u:%u:%u::%u:%u:%u - %u:%u\n", i, wi0, gidx, wix, sbit, wi,
-                    &input_elem[inbit >> 5] - input,
-                    &output_group[word_w*ibi] - output);
+            //printf("ff:%u:%u:%u::%u:%u:%u - %u:%u\n", i, wi0, gidx, wix, sbit, wi,
+            //        &input_elem[inbit >> 5] - input,
+            //        &output_group[word_w*ibi] - output);
             output_group[word_w*ibi] |= (inbit_val << sbit);
         }
     }
@@ -795,8 +796,8 @@ impl OpenCLDataInputTransformer {
             INPUT_TRANSFORMER_SOURCE,
             "",
         )?);
-        let word_len_fac1_pow = word_len.trailing_zeros();
-        let word_len_fac2 = word_len >> word_len_fac1_pow;
+        let word_len_fac1_pow = (word_len >> 5).trailing_zeros();
+        let word_len_fac2 = word_len >> (word_len_fac1_pow + 5);
         let mut buffer = unsafe {
             Buffer::<u32>::create(
                 &context,
@@ -856,6 +857,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         let elem_num = input.len() / input_elem_word_num;
         let num = (elem_num / (self.word_len_fac2 as usize)) >> 5;
         let cl_num = cl_uint::try_from(num).unwrap();
+        println!("ddebug: {} {} {} {}",
+                 elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
         let cl_word_len_fac1_pow = cl_uint::try_from(self.word_len_fac1_pow).unwrap();
         let cl_word_len_fac2 = cl_uint::try_from(self.word_len_fac2).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();

@@ -942,7 +942,7 @@ fn test_opencl_input_output_data_transformer() {
     let cmd_queue =
         unsafe { Arc::new(CommandQueue::create(&context, context.devices()[0], 0).unwrap()) };
 
-    let word_len = 160; // 1 32-bit word
+    let word_len = 32*6; // 1 32-bit word
     let input_elem_len = 96;
     let output_elem_len = 77;
     let input_elem_word_num = input_elem_len * (word_len >> 5);
