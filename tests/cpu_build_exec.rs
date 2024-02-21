@@ -819,7 +819,7 @@ fn test_cpu_data_holder() {
 }
 
 #[test]
-fn test_cpu_input_data_transformer() {
+fn test_cpu_input_output_data_transformer() {
     for parallel in [false, true] {
         let word_len = 160; // 1 32-bit word
         let input_elem_len = 96;

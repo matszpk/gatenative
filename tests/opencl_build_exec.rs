@@ -930,7 +930,7 @@ fn test_opencl_data_holder() {
 }
 
 #[test]
-fn test_opencl_input_data_transformer() {
+fn test_opencl_input_output_data_transformer() {
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
             .unwrap()
