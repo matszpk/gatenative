@@ -500,3 +500,19 @@ where
     // preferred input count for this builder
     fn preferred_input_count(&self) -> usize;
 }
+
+pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+{
+    type ErrorType;
+
+    fn transform(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
+
+    // input elem length in bits
+    fn input_elem_len(&self) -> usize;
+    // output elem length in bits
+    fn output_elem_len(&self) -> usize;
+}

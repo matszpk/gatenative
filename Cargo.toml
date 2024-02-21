@@ -9,6 +9,6 @@ static_init = "1.0"
 libloading = "0.8"
 int-enum = "0.5"
 opencl3 = "0.9"
-"rayon" = "1.0"
+rayon = "1.0"
 gatesim = { path="../gatesim", version="0.1.0" }
 gateutil = { path="../gateutil", version="0.1.0" }
