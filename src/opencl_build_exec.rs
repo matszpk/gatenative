@@ -728,3 +728,161 @@ impl<'b, 'a>
             .unwrap()
     }
 }
+
+const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
+// word_len_fac1 - power of two, word_len_fac2 - non power of two.
+kernel xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fac2,
+        uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
+        const global uint* bit_mapping, const global uint* input, global uint* output) {
+    const uint i = get_global_id(0);
+    uint wi;
+    uint ibi;
+    if (i >= n) return;
+    const uint wi0 = i & ((1 << word_len_fac1_pow) - 1);
+    const uint gidx = i >> word_len_fac1_pow;
+    const uint input_elem_word_num = input_elem_len >> 5;
+    const uint word_len = word_len_fac2 << word_len_fac1_pow;
+    const uint word_w = word_len >> 5;
+    const uint output_group_word_num = output_elem_len * word_len;
+    for (wix = 0; wix < (word_len_fac2 << 5); wix++) {
+        const uint sbit = wi & 31;
+        const int wi = wix >> 5;
+        const uint widx = wi0 + (wi<<word_len_fac1_pow);
+        const global uint* input_elem = input +
+            (sbit + ((widx + word_len*gidx) << 5))*input_elem_word_num;
+        global uint* output_group = output + widx + gidx*output_group_word_num;
+        for (ibi = 0; ibi < bit_mapping_len; ibi++) {
+            const uint inbit = bit_mapping[ibi];
+            const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
+            output_group[word_w*ibi] |= (inbit_val << sbit);
+        }
+    }
+}
+"##;
+
+pub struct OpenCLDataInputTransformer {
+    word_len_fac1_pow: u32,
+    word_len_fac2: u32,
+    input_elem_len: usize,
+    output_elem_len: usize,
+    bit_mapping: Buffer<u32>,
+    bit_mapping_len: usize,
+    context: Arc<Context>,
+    cmd_queue: Arc<CommandQueue>,
+    kernel: Kernel,
+    group_len: usize,
+}
+
+impl OpenCLDataInputTransformer {
+    pub fn new(
+        context: Arc<Context>,
+        cmd_queue: Arc<CommandQueue>,
+        word_len: u32,
+        input_elem_len: usize,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<Self, OpenCLBuildError> {
+        assert_eq!((word_len & 31), 0);
+        assert_eq!((input_elem_len & 31), 0);
+        assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(output_elem_len >= bit_mapping.len());
+        let device = Device::new(context.devices()[0]);
+        let program = Arc::new(Program::create_and_build_from_source(
+            &context,
+            INPUT_TRANSFORMER_SOURCE,
+            "",
+        )?);
+        let word_len_fac1_pow = word_len.trailing_zeros();
+        let word_len_fac2 = word_len >> word_len_fac1_pow;
+        let mut buffer = unsafe {
+            Buffer::<u32>::create(
+                &context,
+                CL_MEM_READ_WRITE,
+                bit_mapping.len(),
+                std::ptr::null_mut(),
+            )
+            .unwrap()
+        };
+        let bit_mapping_len = bit_mapping.len();
+        unsafe {
+            let mut bit_mapping = bit_mapping
+                .iter()
+                .map(|x| u32::try_from(*x).unwrap())
+                .collect::<Vec<_>>();
+            cmd_queue.enqueue_write_buffer(
+                &mut buffer,
+                CL_BLOCKING,
+                0,
+                &mut bit_mapping[..],
+                &[],
+            )?;
+        }
+        Ok(Self {
+            word_len_fac1_pow,
+            word_len_fac2,
+            input_elem_len: ((input_elem_len + 31) >> 5) << 5,
+            output_elem_len,
+            bit_mapping: buffer,
+            bit_mapping_len,
+            context,
+            cmd_queue,
+            group_len: usize::try_from(device.max_work_group_size().unwrap()).unwrap(),
+            kernel: Kernel::create(&program, "xxx_gate_input_transform").unwrap(),
+        })
+    }
+
+    pub unsafe fn context(&self) -> Arc<Context> {
+        self.context.clone()
+    }
+    pub unsafe fn command_queue(&self) -> Arc<CommandQueue> {
+        self.cmd_queue.clone()
+    }
+}
+
+impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder>
+    for OpenCLDataInputTransformer
+{
+    type ErrorType = OpenCLBuildError;
+
+    fn transform(
+        &mut self,
+        input: &OpenCLDataHolder,
+        output: &mut OpenCLDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        let input_elem_word_num = self.input_elem_len >> 5;
+        let elem_num = input.len() / input_elem_word_num;
+        let num = (elem_num / (self.word_len_fac2 as usize)) >> 5;
+        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_word_len_fac1_pow = cl_uint::try_from(self.word_len_fac1_pow).unwrap();
+        let cl_word_len_fac2 = cl_uint::try_from(self.word_len_fac2).unwrap();
+        let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
+        let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
+        let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
+        unsafe {
+            ExecuteKernel::new(&self.kernel)
+                .set_arg(&cl_num)
+                .set_arg(&cl_word_len_fac1_pow)
+                .set_arg(&cl_word_len_fac2)
+                .set_arg(&cl_input_elem_len)
+                .set_arg(&output.buffer)
+                .set_arg(&cl_output_elem_len)
+                .set_arg(&cl_bit_mapping_len)
+                .set_arg(&self.bit_mapping)
+                .set_arg(&input.buffer)
+                .set_arg(&output.buffer)
+                .set_local_work_size(self.group_len)
+                .set_global_work_size(
+                    ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                )
+                .enqueue_nd_range(&self.cmd_queue)?;
+        }
+        Ok(())
+    }
+
+    fn input_elem_len(&self) -> usize {
+        self.input_elem_len
+    }
+    fn output_elem_len(&self) -> usize {
+        self.output_elem_len
+    }
+}
