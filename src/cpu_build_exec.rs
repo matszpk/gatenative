@@ -693,13 +693,12 @@ impl<'a> CPUDataInputTransformer<'a> {
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
-        output.fill(0);
         for i in 0..elem_num {
             let input_elem = &input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
             for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
                 let inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-                output[words_per_word * (gidx * self.output_elem_len + outbit) + widx] |=
-                    inbit_val << sbit;
+                let oi = words_per_word * (gidx * self.output_elem_len + outbit) + widx;
+                output[oi] = (output[oi] & !(1 << sbit)) | (inbit_val << sbit);
             }
             sbit += 1;
             if sbit >= 32 {
@@ -802,7 +801,6 @@ impl<'a> CPUDataOutputTransformer<'a> {
         let mut gidx = 0;
         let mut widx = 0;
         let mut sbit = 0;
-        input.fill(0);
         for i in 0..elem_num {
             let input_elem = &mut input[i * input_elem_word_num..(i + 1) * input_elem_word_num];
             for (outbit, inbit) in self.bit_mapping.iter().enumerate() {
@@ -810,7 +808,9 @@ impl<'a> CPUDataOutputTransformer<'a> {
                     [words_per_word * (gidx * self.output_elem_len + outbit) + widx]
                     >> sbit)
                     & 1;
-                input_elem[inbit >> 5] |= outbit_val << (inbit & 31);
+                let iv = inbit >> 5;
+                let ibit = inbit & 31;
+                input_elem[iv] = (input_elem[iv] & !(1 << ibit)) | (outbit_val << ibit);
             }
             sbit += 1;
             if sbit >= 32 {
