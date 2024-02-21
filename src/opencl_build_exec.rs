@@ -842,7 +842,7 @@ impl OpenCLDataInputTransformer {
 impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder>
     for OpenCLDataInputTransformer
 {
-    type ErrorType = OpenCLBuildError;
+    type ErrorType = ClError;
 
     fn transform(
         &mut self,
