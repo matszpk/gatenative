@@ -134,7 +134,7 @@ pub struct OpenCLDataHolder {
 }
 
 impl OpenCLDataHolder {
-    fn new(
+    pub fn new(
         len: usize,
         context: &Context,
         cmd_queue: Arc<CommandQueue>,
@@ -731,7 +731,7 @@ impl<'b, 'a>
 
 const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
 // word_len_fac1 - power of two, word_len_fac2 - non power of two.
-kernel xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fac2,
+kernel void xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_len_fac2,
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const uint i = get_global_id(0);
@@ -863,7 +863,6 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
                 .set_arg(&cl_word_len_fac1_pow)
                 .set_arg(&cl_word_len_fac2)
                 .set_arg(&cl_input_elem_len)
-                .set_arg(&output.buffer)
                 .set_arg(&cl_output_elem_len)
                 .set_arg(&cl_bit_mapping_len)
                 .set_arg(&self.bit_mapping)
