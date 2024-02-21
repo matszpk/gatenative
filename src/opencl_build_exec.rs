@@ -735,8 +735,8 @@ kernel void xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_l
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const uint i = get_global_id(0);
-    uint wix, ibi;
     if (i >= n) return;
+    uint wix, ibi;
     const uint wi0 = i & ((1 << word_len_fac1_pow) - 1);
     const uint gidx = i >> word_len_fac1_pow;
     const uint input_elem_word_num = input_elem_len >> 5;
@@ -750,9 +750,13 @@ kernel void xxx_gate_input_transform(uint n, uint word_len_fac1_pow, uint word_l
         const global uint* input_elem = input +
             (sbit + ((widx + word_len*gidx) << 5))*input_elem_word_num;
         global uint* output_group = output + widx + gidx*output_group_word_num;
+        //printf("ff:%u:%u:%u::%u:%u:%u\n", i, wi0, gidx, wix, sbit, wi);
         for (ibi = 0; ibi < bit_mapping_len; ibi++) {
             const uint inbit = bit_mapping[ibi];
             const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
+            printf("ff:%u:%u:%u::%u:%u:%u - %u:%u\n", i, wi0, gidx, wix, sbit, wi,
+                    &input_elem[inbit >> 5] - input,
+                    &output_group[word_w*ibi] - output);
             output_group[word_w*ibi] |= (inbit_val << sbit);
         }
     }
