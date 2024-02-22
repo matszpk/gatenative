@@ -553,7 +553,7 @@ where
 // 2. register_circuit - n-bit - MAX if no registration
 // 3. dump_circuit - n-bit - if not MAX - then circuit under given id will be placed in
 //    circuit_data
-// 4. if registration: circuit_data - various length
+// 4. if registration: circuit_data_address - n-bit
 //
 
 pub trait MachineBuilder {
