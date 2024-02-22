@@ -581,3 +581,14 @@ pub trait MachineBuilder {
     fn max_machine_len() -> u32;
     fn circuit_info_word_len() -> u32;
 }
+
+pub trait MachineMemoryHandler<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
+    fn read_mems(
+        old_state: &D,
+        new_state: &mut D,
+        private_mems: &D,
+        group_mems: &D,
+        global_mem: &D,
+    );
+    fn write_mems(old_state: &D, private_mems: &mut D, group_mems: &mut D, global_mem: &mut D);
+}
