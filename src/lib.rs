@@ -562,7 +562,7 @@ pub struct MachineConfig {
     pub private_address_len: u32,
     pub group_address_len: u32,
     pub global_address_len: u32,
-    pub cell_len: u32,
+    pub cell_len_bits: u32,
     pub fast_group_len: u32,
     pub group_len: u32,
     pub machine_len: u32,
@@ -570,25 +570,25 @@ pub struct MachineConfig {
 }
 
 pub trait MachineBuilder {
-    fn word_len() -> u32;
-    fn address_len() -> u32;
-    fn private_address_len() -> u32;
-    fn group_address_len() -> u32;
-    fn global_address_len() -> u32;
-    fn cell_len() -> u32;
-    fn max_fast_group_len() -> u32;
-    fn max_group_len() -> u32;
-    fn max_machine_len() -> u32;
-    fn circuit_info_word_len() -> u32;
+    fn config(&self) -> &MachineConfig;
 }
 
 pub trait MachineMemoryHandler<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     fn read_mems(
+        mem_cell_start: usize,
+        mem_address_start: usize,
         old_states: &D,
         new_states: &mut D,
         private_mems: &D,
         group_mems: &D,
         global_mem: &D,
     );
-    fn write_mems(old_states: &D, private_mems: &mut D, group_mems: &mut D, global_mem: &mut D);
+    fn write_mems(
+        mem_cell_start: usize,
+        mem_address_start: usize,
+        old_states: &D,
+        private_mems: &mut D,
+        group_mems: &mut D,
+        global_mem: &mut D,
+    );
 }
