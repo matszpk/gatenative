@@ -575,6 +575,7 @@ pub trait MachineBuilder {
 
 pub trait MachineMemoryHandler<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     fn read_mems(
+        state_len: usize,
         mem_cell_start: usize,
         mem_address_start: usize,
         old_states: &D,
@@ -584,6 +585,7 @@ pub trait MachineMemoryHandler<'a, DR: DataReader, DW: DataWriter, D: DataHolder
         global_mem: &D,
     );
     fn write_mems(
+        state_len: usize,
         mem_cell_start: usize,
         mem_address_start: usize,
         old_states: &D,
