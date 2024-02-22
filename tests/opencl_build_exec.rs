@@ -942,7 +942,7 @@ fn test_opencl_input_output_data_transformer() {
     let cmd_queue =
         unsafe { Arc::new(CommandQueue::create(&context, context.devices()[0], 0).unwrap()) };
 
-    for word_len_fac in [5, 6] {
+    for word_len_fac in [4, 5, 6] {
         let word_len = 32 * word_len_fac; // 1 32-bit word
         let input_elem_len = 96;
         let output_elem_len = 77;
@@ -950,6 +950,12 @@ fn test_opencl_input_output_data_transformer() {
         let output_elem_word_num = output_elem_len * (word_len >> 5);
         let group_num = 37541;
         let mut input = OpenCLDataHolder::new(
+            input_elem_word_num * group_num,
+            context.deref(),
+            cmd_queue.clone(),
+            CL_MEM_READ_WRITE,
+        );
+        let mut input_2 = OpenCLDataHolder::new(
             input_elem_word_num * group_num,
             context.deref(),
             cmd_queue.clone(),
@@ -1015,33 +1021,35 @@ fn test_opencl_input_output_data_transformer() {
             }
         }
 
-        // let mut transformer = OpenCLDataOutputTransformer::new(
-        //     u32::try_from(word_len).unwrap(),
-        //     input_elem_len,
-        //     output_elem_len,
-        //     &bit_mapping,
-        //     parallel,
-        // );
-        // let start = SystemTime::now();
-        // transformer.transform(&output, &mut input_2).unwrap();
-        // let elapsed = start.elapsed().unwrap();
-        // println!("Time: {} s", elapsed.as_secs_f64());
-        // {
-        //     let input = input.get();
-        //     let input = input.get();
-        //     let input_2 = input_2.get();
-        //     let input_2 = input_2.get();
-        //     for i in 0..input.len() {
-        //         let expected = match i % 3 {
-        //             0 => input[i] & ((1 << 27) - 1),
-        //             1 => input[i] & ((1 << 22) - 1),
-        //             2 => input[i] & ((1 << 28) - 1),
-        //             _ => {
-        //                 panic!("Unexpected!");
-        //             }
-        //         };
-        //         assert_eq!(expected, input_2[i], "{}", i);
-        //     }
-        // }
+        let mut transformer = OpenCLDataOutputTransformer::new(
+            context.clone(),
+            cmd_queue.clone(),
+            u32::try_from(word_len).unwrap(),
+            input_elem_len,
+            output_elem_len,
+            &bit_mapping,
+        )
+        .unwrap();
+        let start = SystemTime::now();
+        transformer.transform(&output, &mut input_2).unwrap();
+        let elapsed = start.elapsed().unwrap();
+        println!("Time: {} s", elapsed.as_secs_f64());
+        {
+            let input = input.get();
+            let input = input.get();
+            let input_2 = input_2.get();
+            let input_2 = input_2.get();
+            for i in 0..input.len() {
+                let expected = match i % 3 {
+                    0 => input[i] & ((1 << 27) - 1),
+                    1 => input[i] & ((1 << 22) - 1),
+                    2 => input[i] & ((1 << 28) - 1),
+                    _ => {
+                        panic!("Unexpected!");
+                    }
+                };
+                assert_eq!(expected, input_2[i], "{}", i);
+            }
+        }
     }
 }

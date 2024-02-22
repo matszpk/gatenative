@@ -742,7 +742,7 @@ kernel void xxx_gate_input_transform(uint n, uint word_len,
     const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
     const uint output_group_word_num = output_elem_len * word_w;
-    const global uint* input_elem = input + (i)*input_elem_word_num;
+    const global uint* input_elem = input + i*input_elem_word_num;
     global uint* output_group = output + widx + gidx*output_group_word_num;
     for (ibi = 0; ibi < bit_mapping_len; ibi++) {
         const uint inbit = bit_mapping[ibi];
@@ -883,5 +883,162 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     }
     fn output_elem_len(&self) -> usize {
         self.output_elem_len
+    }
+}
+
+const OUTPUT_TRANSFORMER_SOURCE: &'static str = r##"
+kernel void xxx_gate_output_transform(uint n, uint word_len,
+        uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
+        const global uint* bit_mapping, const global uint* output, global uint* input) {
+    const uint i = get_global_id(0);
+    if (i >= n) return;
+    uint ibi;
+    const uint word_w = word_len >> 5;
+    const uint gidx = i / word_len;
+    const uint widx = (i>>5) - gidx * word_w;
+    const uint sbit = i & 31;
+    const uint input_elem_word_num = input_elem_len >> 5;
+    const uint output_group_word_num = output_elem_len * word_w;
+    global uint* input_elem = input + i*input_elem_word_num;
+    const global uint* output_group = output + widx + gidx*output_group_word_num;
+    for (ibi = 0; ibi < bit_mapping_len; ibi++) {
+        const uint outbit_val = (output_group[word_w*ibi] >> sbit) & 1;
+        const uint inbit = bit_mapping[ibi];
+        input_elem[inbit >> 5] |= outbit_val << (inbit & 31);
+    }
+}
+"##;
+
+pub struct OpenCLDataOutputTransformer {
+    word_len: u32,
+    input_elem_len: usize,
+    output_elem_len: usize,
+    bit_mapping: Buffer<u32>,
+    bit_mapping_len: usize,
+    context: Arc<Context>,
+    cmd_queue: Arc<CommandQueue>,
+    kernel: Kernel,
+    group_len: usize,
+}
+
+impl OpenCLDataOutputTransformer {
+    pub fn new(
+        context: Arc<Context>,
+        cmd_queue: Arc<CommandQueue>,
+        word_len: u32,
+        input_elem_len: usize,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<Self, OpenCLBuildError> {
+        assert_eq!((word_len & 31), 0);
+        assert_eq!((input_elem_len & 31), 0);
+        assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(output_elem_len >= bit_mapping.len());
+        let device = Device::new(context.devices()[0]);
+        let program = Arc::new(Program::create_and_build_from_source(
+            &context,
+            OUTPUT_TRANSFORMER_SOURCE,
+            "",
+        )?);
+        let mut buffer = unsafe {
+            Buffer::<u32>::create(
+                &context,
+                CL_MEM_READ_WRITE,
+                bit_mapping.len(),
+                std::ptr::null_mut(),
+            )
+            .unwrap()
+        };
+        let bit_mapping_len = bit_mapping.len();
+        unsafe {
+            let mut bit_mapping = bit_mapping
+                .iter()
+                .map(|x| u32::try_from(*x).unwrap())
+                .collect::<Vec<_>>();
+            cmd_queue.enqueue_write_buffer(
+                &mut buffer,
+                CL_BLOCKING,
+                0,
+                &mut bit_mapping[..],
+                &[],
+            )?;
+        }
+        Ok(Self {
+            word_len,
+            input_elem_len: ((input_elem_len + 31) >> 5) << 5,
+            output_elem_len,
+            bit_mapping: buffer,
+            bit_mapping_len,
+            context,
+            cmd_queue,
+            group_len: usize::try_from(device.max_work_group_size().unwrap()).unwrap(),
+            kernel: Kernel::create(&program, "xxx_gate_output_transform").unwrap(),
+        })
+    }
+
+    pub unsafe fn context(&self) -> Arc<Context> {
+        self.context.clone()
+    }
+    pub unsafe fn command_queue(&self) -> Arc<CommandQueue> {
+        self.cmd_queue.clone()
+    }
+}
+
+impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder>
+    for OpenCLDataOutputTransformer
+{
+    type ErrorType = ClError;
+
+    fn transform(
+        &mut self,
+        output: &OpenCLDataHolder,
+        input: &mut OpenCLDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        let input_elem_word_num = self.input_elem_len >> 5;
+        let elem_num = input.len() / input_elem_word_num;
+        let num = elem_num;
+        let cl_num = cl_uint::try_from(num).unwrap();
+        // println!("ddebug: {} {} {} {}",
+        //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
+        let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
+        let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
+        let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
+        let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
+        let input_len = input.len();
+        unsafe {
+            self.cmd_queue.enqueue_fill_buffer(
+                &mut input.buffer,
+                &[0u32],
+                0,
+                4 * input_len,
+                &[],
+            )?;
+        }
+        self.cmd_queue.finish().unwrap();
+        unsafe {
+            ExecuteKernel::new(&self.kernel)
+                .set_arg(&cl_num)
+                .set_arg(&cl_word_len)
+                .set_arg(&cl_input_elem_len)
+                .set_arg(&cl_output_elem_len)
+                .set_arg(&cl_bit_mapping_len)
+                .set_arg(&self.bit_mapping)
+                .set_arg(&output.buffer)
+                .set_arg(&input.buffer)
+                .set_local_work_size(self.group_len)
+                .set_global_work_size(
+                    ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                )
+                .enqueue_nd_range(&self.cmd_queue)?;
+        }
+        self.cmd_queue.finish()?;
+        Ok(())
+    }
+
+    fn input_elem_len(&self) -> usize {
+        self.output_elem_len
+    }
+    fn output_elem_len(&self) -> usize {
+        self.input_elem_len
     }
 }
