@@ -837,6 +837,14 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         input: &OpenCLDataHolder,
         output: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        assert_eq!(
+            input.len() % (((self.word_len as usize) * self.input_elem_len) >> 5),
+            0
+        );
+        assert_eq!(
+            output.len() % (((self.word_len as usize) * self.output_elem_len) >> 5),
+            0
+        );
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
         let num = elem_num;
@@ -998,6 +1006,14 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         output: &OpenCLDataHolder,
         input: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        assert_eq!(
+            input.len() % (((self.word_len as usize) * self.input_elem_len) >> 5),
+            0
+        );
+        assert_eq!(
+            output.len() % (((self.word_len as usize) * self.output_elem_len) >> 5),
+            0
+        );
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
         let num = elem_num;

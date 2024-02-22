@@ -723,6 +723,14 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
         input: &CPUDataHolder,
         output: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        assert_eq!(
+            input.len() % (((self.word_len as usize) * self.input_elem_len) >> 5),
+            0
+        );
+        assert_eq!(
+            output.len() % (((self.word_len as usize) * self.output_elem_len) >> 5),
+            0
+        );
         if self.parallel {
             const CHUNK_LEN: usize = 128;
             let input_r = input.get();
@@ -835,6 +843,14 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
         output: &CPUDataHolder,
         input: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        assert_eq!(
+            input.len() % (((self.word_len as usize) * self.input_elem_len) >> 5),
+            0
+        );
+        assert_eq!(
+            output.len() % (((self.word_len as usize) * self.output_elem_len) >> 5),
+            0
+        );
         if self.parallel {
             const CHUNK_LEN: usize = 128;
             let mut input_w = input.get_mut();
