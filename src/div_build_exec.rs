@@ -197,6 +197,40 @@ where
     }
 }
 
+impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
+    for DivExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D> + DataTransforms<'a, DR, DW, D, IDT, ODT>,
+    IDT: DataTransformer<'a, DR, DW, D>,
+    ODT: DataTransformer<'a, DR, DW, D>,
+{
+    type ErrorType = <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType;
+
+    fn input_tx(
+        &self,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<IDT, Self::ErrorType> {
+        self.executors
+            .first()
+            .unwrap()
+            .input_tx(input_elem_len, bit_mapping)
+    }
+    fn output_tx(
+        &self,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<ODT, Self::ErrorType> {
+        self.executors
+            .last()
+            .unwrap()
+            .output_tx(output_elem_len, bit_mapping)
+    }
+}
+
 struct CircuitInfo {
     subcircuit_num: usize,
     buffer_len: usize,
