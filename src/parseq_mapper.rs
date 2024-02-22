@@ -401,23 +401,128 @@ where
     }
 }
 
-// impl<'a, PDR, PDW, PD, PE, PIDT, PODT, SDR, SDW, SD, SE, SIDT, SODT>
-//     ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
-// where
-//     PDR: DataReader + Send + Sync,
-//     PDW: DataWriter + Send + Sync,
-//     PD: DataHolder<'a, PDR, PDW> + Send + Sync,
-//     PE: Executor<'a, PDR, PDW, PD> + DataTransforms<'a, PDR, PDW, PD, PIDT, PODT> + Send + Sync,
-//     PIDT: DataTransformer<'a, PDR, PDW, PD>,
-//     PODT: DataTransformer<'a, PDR, PDW, PD>,
-//     SDR: DataReader + Send + Sync,
-//     SDW: DataWriter + Send + Sync,
-//     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
-//     SE: Executor<'a, SDR, SDW, SD> + DataTransforms<'a, SDR, SDW, SD, SIDT, SODT> + Send,
-//     SIDT: DataTransformer<'a, SDR, SDW, SD>,
-//     SODT: DataTransformer<'a, SDR, SDW, SD>,
-// {
-// }
+#[derive(Error, Debug)]
+pub enum ParSeqMapperTransformsError<PE, SE> {
+    #[error("ParError {0}")]
+    ParError(#[from] PE),
+    #[error("SeqError for {0} {1}")]
+    SeqError(usize, SE),
+}
+
+pub struct ParSeqMapperTransforms<
+    'b,
+    'a,
+    PDR,
+    PDW,
+    PD,
+    PE,
+    PIDT,
+    PODT,
+    SDR,
+    SDW,
+    SD,
+    SE,
+    SIDT,
+    SODT,
+> where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + DataTransforms<'a, PDR, PDW, PD, PIDT, PODT> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    PIDT: DataTransformer<'a, PDR, PDW, PD>,
+    PODT: DataTransformer<'a, PDR, PDW, PD>,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+    SE: Executor<'a, SDR, SDW, SD> + DataTransforms<'a, SDR, SDW, SD, SIDT, SODT> + Send,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
+    SIDT: DataTransformer<'a, SDR, SDW, SD>,
+    SODT: DataTransformer<'a, SDR, SDW, SD>,
+{
+    executor: &'b ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
+    pidt: PhantomData<&'a PIDT>,
+    podt: PhantomData<&'a PODT>,
+    sidt: PhantomData<&'a SIDT>,
+    sodt: PhantomData<&'a SODT>,
+}
+
+impl<'b, 'a, PDR, PDW, PD, PE, PIDT, PODT, SDR, SDW, SD, SE, SIDT, SODT>
+    ParSeqMapperTransforms<'b, 'a, PDR, PDW, PD, PE, PIDT, PODT, SDR, SDW, SD, SE, SIDT, SODT>
+where
+    PDR: DataReader + Send + Sync,
+    PDW: DataWriter + Send + Sync,
+    PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+    PE: Executor<'a, PDR, PDW, PD> + DataTransforms<'a, PDR, PDW, PD, PIDT, PODT> + Send + Sync,
+    <PE as Executor<'a, PDR, PDW, PD>>::ErrorType: Send,
+    PIDT: DataTransformer<'a, PDR, PDW, PD>,
+    PODT: DataTransformer<'a, PDR, PDW, PD>,
+    SDR: DataReader + Send + Sync,
+    SDW: DataWriter + Send + Sync,
+    SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+    SE: Executor<'a, SDR, SDW, SD> + DataTransforms<'a, SDR, SDW, SD, SIDT, SODT> + Send,
+    <SE as Executor<'a, SDR, SDW, SD>>::ErrorType: Send,
+    SIDT: DataTransformer<'a, SDR, SDW, SD>,
+    SODT: DataTransformer<'a, SDR, SDW, SD>,
+{
+    pub fn par_seqwith_input_transforms<F, Out>(
+        &self,
+        mut f: F,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<
+        (),
+        ParSeqMapperTransformsError<
+            <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
+            <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
+        >,
+    >
+    where
+        F: FnMut(ParSeqObject<PIDT, (usize, SIDT)>),
+    {
+        f(ParSeqObject::Par(
+            self.executor.par.input_tx(input_elem_len, bit_mapping)?,
+        ));
+        for (i, s) in self.executor.seqs.iter().enumerate() {
+            let sitx = {
+                let s = s.lock().unwrap();
+                s.input_tx(input_elem_len, bit_mapping)
+                    .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
+            };
+            f(ParSeqObject::Seq((i, sitx)));
+        }
+        Ok(())
+    }
+
+    pub fn with_output_transforms<F, Out>(
+        &self,
+        mut f: F,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<
+        (),
+        ParSeqMapperTransformsError<
+            <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
+            <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
+        >,
+    >
+    where
+        F: FnMut(ParSeqObject<PODT, (usize, SODT)>),
+    {
+        f(ParSeqObject::Par(
+            self.executor.par.output_tx(output_elem_len, bit_mapping)?,
+        ));
+        for (i, s) in self.executor.seqs.iter().enumerate() {
+            let sotx = {
+                let s = s.lock().unwrap();
+                s.output_tx(output_elem_len, bit_mapping)
+                    .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
+            };
+            f(ParSeqObject::Seq((i, sotx)));
+        }
+        Ok(())
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum ParSeqMapperBuilderError<PE, SE> {
