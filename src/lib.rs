@@ -556,6 +556,19 @@ where
 // 4. if registration: circuit_data_address - n-bit
 //
 
+pub struct MachineConfig {
+    pub word_len: u32,
+    pub address_len: u32,
+    pub private_address_len: u32,
+    pub group_address_len: u32,
+    pub global_address_len: u32,
+    pub cell_len: u32,
+    pub max_fast_group_len: u32,
+    pub max_group_len: u32,
+    pub max_machine_len: u32,
+    pub circuit_info_word_len: u32,
+}
+
 pub trait MachineBuilder {
     fn word_len() -> u32;
     fn address_len() -> u32;
@@ -564,7 +577,7 @@ pub trait MachineBuilder {
     fn global_address_len() -> u32;
     fn cell_len() -> u32;
     fn max_fast_group_len() -> u32;
-    fn circuit_info_word_len() -> u32;
     fn max_group_len() -> u32;
     fn max_machine_len() -> u32;
+    fn circuit_info_word_len() -> u32;
 }
