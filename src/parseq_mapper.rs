@@ -401,6 +401,24 @@ where
     }
 }
 
+// impl<'a, PDR, PDW, PD, PE, PIDT, PODT, SDR, SDW, SD, SE, SIDT, SODT>
+//     ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
+// where
+//     PDR: DataReader + Send + Sync,
+//     PDW: DataWriter + Send + Sync,
+//     PD: DataHolder<'a, PDR, PDW> + Send + Sync,
+//     PE: Executor<'a, PDR, PDW, PD> + DataTransforms<'a, PDR, PDW, PD, PIDT, PODT> + Send + Sync,
+//     PIDT: DataTransformer<'a, PDR, PDW, PD>,
+//     PODT: DataTransformer<'a, PDR, PDW, PD>,
+//     SDR: DataReader + Send + Sync,
+//     SDW: DataWriter + Send + Sync,
+//     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
+//     SE: Executor<'a, SDR, SDW, SD> + DataTransforms<'a, SDR, SDW, SD, SIDT, SODT> + Send,
+//     SIDT: DataTransformer<'a, SDR, SDW, SD>,
+//     SODT: DataTransformer<'a, SDR, SDW, SD>,
+// {
+// }
+
 #[derive(Error, Debug)]
 pub enum ParSeqMapperBuilderError<PE, SE> {
     #[error("ParError {0}")]

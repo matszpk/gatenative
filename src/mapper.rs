@@ -295,6 +295,36 @@ where
     }
 }
 
+impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
+    for ParBasicMapperExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + DataTransforms<'a, DR, DW, D, IDT, ODT> + Send + Sync,
+    IDT: DataTransformer<'a, DR, DW, D>,
+    ODT: DataTransformer<'a, DR, DW, D>,
+    <E as Executor<'a, DR, DW, D>>::ErrorType: Send,
+    <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType: Send,
+{
+    type ErrorType = <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType;
+
+    fn input_tx(
+        &self,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<IDT, Self::ErrorType> {
+        self.executor.input_tx(input_elem_len, bit_mapping)
+    }
+    fn output_tx(
+        &self,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<ODT, Self::ErrorType> {
+        self.executor.output_tx(output_elem_len, bit_mapping)
+    }
+}
+
 pub struct ParBasicMapperBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader + Send + Sync,
