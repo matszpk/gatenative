@@ -555,6 +555,8 @@ where
 //    circuit_data
 // 4. if registration: circuit_data_address - n-bit
 //
+// Accepted cell lengths: 1, 2, 4, 8, 16, 32, 64, 128, 256.
+//
 
 pub struct MachineConfig {
     pub word_len: u32,
