@@ -730,7 +730,7 @@ impl<'b, 'a>
 }
 
 const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
-kernel void xxx_gate_input_transform(uint n, uint word_len,
+kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start, uint word_len,
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const uint i = get_global_id(0);
@@ -742,8 +742,8 @@ kernel void xxx_gate_input_transform(uint n, uint word_len,
     const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
     const uint output_group_word_num = output_elem_len * word_w;
-    const global uint* input_elem = input + i*input_elem_word_num;
-    global uint* output_group = output + widx + gidx*output_group_word_num;
+    const global uint* input_elem = input + i*input_elem_word_num + input_start;
+    global uint* output_group = output + widx + gidx*output_group_word_num + output_start;
     for (ibi = 0; ibi < bit_mapping_len; ibi++) {
         const uint inbit = bit_mapping[ibi];
         const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
@@ -843,6 +843,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         let cl_num = cl_uint::try_from(num).unwrap();
         // println!("ddebug: {} {} {} {}",
         //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
+        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
@@ -861,6 +863,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         unsafe {
             ExecuteKernel::new(&self.kernel)
                 .set_arg(&cl_num)
+                .set_arg(&cl_input_start)
+                .set_arg(&cl_output_start)
                 .set_arg(&cl_word_len)
                 .set_arg(&cl_input_elem_len)
                 .set_arg(&cl_output_elem_len)
@@ -887,7 +891,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
 }
 
 const OUTPUT_TRANSFORMER_SOURCE: &'static str = r##"
-kernel void xxx_gate_output_transform(uint n, uint word_len,
+kernel void xxx_gate_output_transform(uint n, uint output_start, uint input_start, uint word_len,
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* output, global uint* input) {
     const uint i = get_global_id(0);
@@ -899,8 +903,8 @@ kernel void xxx_gate_output_transform(uint n, uint word_len,
     const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
     const uint output_group_word_num = output_elem_len * word_w;
-    global uint* input_elem = input + i*input_elem_word_num;
-    const global uint* output_group = output + widx + gidx*output_group_word_num;
+    global uint* input_elem = input + i*input_elem_word_num + input_start;
+    const global uint* output_group = output + widx + gidx*output_group_word_num + output_start;
     for (ibi = 0; ibi < bit_mapping_len; ibi++) {
         const uint outbit_val = (output_group[word_w*ibi] >> sbit) & 1;
         const uint inbit = bit_mapping[ibi];
@@ -1001,6 +1005,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         // println!("ddebug: {} {} {} {}",
         //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
         let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
+        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
         let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
@@ -1018,6 +1024,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         unsafe {
             ExecuteKernel::new(&self.kernel)
                 .set_arg(&cl_num)
+                .set_arg(&cl_output_start)
+                .set_arg(&cl_input_start)
                 .set_arg(&cl_word_len)
                 .set_arg(&cl_input_elem_len)
                 .set_arg(&cl_output_elem_len)
