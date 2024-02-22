@@ -500,6 +500,46 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     }
 }
 
+impl<'a>
+    DataTransforms<
+        'a,
+        CPUDataReader<'a>,
+        CPUDataWriter<'a>,
+        CPUDataHolder,
+        CPUDataInputTransformer,
+        CPUDataOutputTransformer,
+    > for CPUExecutor
+{
+    type ErrorType = Infallible;
+
+    fn input_tx(
+        &self,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<CPUDataInputTransformer, Self::ErrorType> {
+        Ok(CPUDataInputTransformer::new(
+            u32::try_from(self.words_per_real_word << 5).unwrap(),
+            input_elem_len,
+            self.real_input_len,
+            bit_mapping,
+            true,
+        ))
+    }
+    fn output_tx(
+        &self,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<CPUDataOutputTransformer, Self::ErrorType> {
+        Ok(CPUDataOutputTransformer::new(
+            u32::try_from(self.words_per_real_word << 5).unwrap(),
+            output_elem_len,
+            self.real_output_len,
+            bit_mapping,
+            true,
+        ))
+    }
+}
+
 struct CircuitEntry {
     sym_name: String,
     input_len: usize,
@@ -657,20 +697,20 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
     }
 }
 
-pub struct CPUDataInputTransformer<'a> {
+pub struct CPUDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
     output_elem_len: usize,
-    bit_mapping: &'a [usize],
+    bit_mapping: Vec<usize>,
     parallel: bool,
 }
 
-impl<'a> CPUDataInputTransformer<'a> {
+impl CPUDataInputTransformer {
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
-        bit_mapping: &'a [usize],
+        bit_mapping: &[usize],
         parallel: bool,
     ) -> Self {
         assert_eq!((word_len & 31), 0);
@@ -681,7 +721,7 @@ impl<'a> CPUDataInputTransformer<'a> {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
             output_elem_len,
-            bit_mapping,
+            bit_mapping: bit_mapping.to_vec(),
             parallel,
         }
     }
@@ -713,8 +753,8 @@ impl<'a> CPUDataInputTransformer<'a> {
     }
 }
 
-impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder>
-    for CPUDataInputTransformer<'b>
+impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder>
+    for CPUDataInputTransformer
 {
     type ErrorType = Infallible;
 
@@ -773,20 +813,20 @@ impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHo
     }
 }
 
-pub struct CPUDataOutputTransformer<'a> {
+pub struct CPUDataOutputTransformer {
     word_len: u32,
     input_elem_len: usize,
     output_elem_len: usize,
-    bit_mapping: &'a [usize],
+    bit_mapping: Vec<usize>,
     parallel: bool,
 }
 
-impl<'a> CPUDataOutputTransformer<'a> {
+impl CPUDataOutputTransformer {
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
-        bit_mapping: &'a [usize],
+        bit_mapping: &[usize],
         parallel: bool,
     ) -> Self {
         assert_eq!((word_len & 31), 0);
@@ -797,7 +837,7 @@ impl<'a> CPUDataOutputTransformer<'a> {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
             output_elem_len,
-            bit_mapping,
+            bit_mapping: bit_mapping.to_vec(),
             parallel,
         }
     }
@@ -833,8 +873,8 @@ impl<'a> CPUDataOutputTransformer<'a> {
     }
 }
 
-impl<'b, 'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder>
-    for CPUDataOutputTransformer<'b>
+impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder>
+    for CPUDataOutputTransformer
 {
     type ErrorType = Infallible;
 

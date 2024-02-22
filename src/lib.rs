@@ -501,12 +501,7 @@ where
     fn preferred_input_count(&self) -> usize;
 }
 
-pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>>
-where
-    DR: DataReader + Send + Sync,
-    DW: DataWriter + Send + Sync,
-    D: DataHolder<'a, DR, DW> + Send + Sync,
-{
+pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     type ErrorType;
 
     fn transform(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
@@ -515,4 +510,26 @@ where
     fn input_elem_len(&self) -> usize;
     // output elem length in bits
     fn output_elem_len(&self) -> usize;
+}
+
+pub trait DataTransforms<'a, DR, DW, D, IDT, ODT>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    IDT: DataTransformer<'a, DR, DW, D>,
+    ODT: DataTransformer<'a, DR, DW, D>,
+{
+    type ErrorType;
+
+    fn input_tx(
+        &self,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<IDT, Self::ErrorType>;
+    fn output_tx(
+        &self,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<ODT, Self::ErrorType>;
 }

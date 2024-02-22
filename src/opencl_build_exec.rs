@@ -489,6 +489,48 @@ impl Clone for OpenCLExecutor {
     }
 }
 
+impl<'a>
+    DataTransforms<
+        'a,
+        OpenCLDataReader<'a>,
+        OpenCLDataWriter<'a>,
+        OpenCLDataHolder,
+        OpenCLDataInputTransformer,
+        OpenCLDataOutputTransformer,
+    > for OpenCLExecutor
+{
+    type ErrorType = OpenCLBuildError;
+
+    fn input_tx(
+        &self,
+        input_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<OpenCLDataInputTransformer, Self::ErrorType> {
+        OpenCLDataInputTransformer::new(
+            self.context.clone(),
+            self.cmd_queue.clone(),
+            u32::try_from(self.words_per_real_word << 5).unwrap(),
+            input_elem_len,
+            self.real_input_len,
+            bit_mapping,
+        )
+    }
+    fn output_tx(
+        &self,
+        output_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> Result<OpenCLDataOutputTransformer, Self::ErrorType> {
+        OpenCLDataOutputTransformer::new(
+            self.context.clone(),
+            self.cmd_queue.clone(),
+            u32::try_from(self.words_per_real_word << 5).unwrap(),
+            output_elem_len,
+            self.real_output_len,
+            bit_mapping,
+        )
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum OpenCLBuildError {
     OpenCLError(i32),
