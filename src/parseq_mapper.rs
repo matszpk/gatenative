@@ -465,7 +465,17 @@ where
     SIDT: DataTransformer<'a, SDR, SDW, SD>,
     SODT: DataTransformer<'a, SDR, SDW, SD>,
 {
-    pub fn par_seqwith_input_transforms<F, Out>(
+    pub fn new(e: &'b ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>) -> Self {
+        Self {
+            executor: e,
+            pidt: PhantomData,
+            podt: PhantomData,
+            sidt: PhantomData,
+            sodt: PhantomData,
+        }
+    }
+
+    pub fn with_input_transforms<F>(
         &self,
         mut f: F,
         input_elem_len: usize,
@@ -494,7 +504,7 @@ where
         Ok(())
     }
 
-    pub fn with_output_transforms<F, Out>(
+    pub fn with_output_transforms<F>(
         &self,
         mut f: F,
         output_elem_len: usize,
