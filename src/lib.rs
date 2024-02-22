@@ -19,11 +19,13 @@ pub enum VNegs {
 
 pub mod clang_writer;
 pub mod cpu_build_exec;
+pub mod cpu_machine;
 pub mod div_build_exec;
 mod divide;
 pub mod gencode;
 pub mod mapper;
 pub mod opencl_build_exec;
+pub mod opencl_machine;
 pub mod parseq_mapper;
 mod utils;
 mod vbinopcircuit;
@@ -532,4 +534,37 @@ where
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<ODT, Self::ErrorType>;
+}
+
+//
+// Dynamic Circuit Machine traits
+//
+// Model execution:
+// Execution unit as circuit. Circuit treat as sequential circuit:
+// input: [state,mem_cell]
+// output: [state,mem_cell,memrw,mem_address,mem_type,unsat,stop]
+// Memory types:
+// * private - (optional) smallest,
+// * group - greater private
+// * global - for all machine
+// Dynamic execution: circuit type can choosen by using information in global memory:
+// circuit_info (first bytes of global memory):
+// 1. current_circuit - n-bit
+// 2. register_circuit - n-bit - MAX if no registration
+// 3. dump_circuit - n-bit - if not MAX - then circuit under given id will be placed in
+//    circuit_data
+// 4. if registration: circuit_data - various length
+//
+
+pub trait MachineBuilder {
+    fn word_len() -> u32;
+    fn address_len() -> u32;
+    fn private_address_len() -> u32;
+    fn group_address_len() -> u32;
+    fn global_address_len() -> u32;
+    fn cell_len() -> u32;
+    fn max_fast_group_len() -> u32;
+    fn circuit_info_word_len() -> u32;
+    fn max_group_len() -> u32;
+    fn max_machine_len() -> u32;
 }
