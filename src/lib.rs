@@ -584,11 +584,11 @@ pub trait MachineBuilder {
 
 pub trait MachineMemoryHandler<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     fn read_mems(
-        old_state: &D,
-        new_state: &mut D,
+        old_states: &D,
+        new_states: &mut D,
         private_mems: &D,
         group_mems: &D,
         global_mem: &D,
     );
-    fn write_mems(old_state: &D, private_mems: &mut D, group_mems: &mut D, global_mem: &mut D);
+    fn write_mems(old_states: &D, private_mems: &mut D, group_mems: &mut D, global_mem: &mut D);
 }
