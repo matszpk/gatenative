@@ -794,6 +794,7 @@ kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start
 }
 "##;
 
+/// convert input data into circuit input form.
 pub struct OpenCLDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -807,6 +808,7 @@ pub struct OpenCLDataInputTransformer {
 }
 
 impl OpenCLDataInputTransformer {
+    /// An bit_mapping - index is bit of output's element, value is bit of input's element.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
@@ -963,6 +965,7 @@ kernel void xxx_gate_output_transform(uint n, uint output_start, uint input_star
 }
 "##;
 
+/// convert output data from circuit input form into output form.
 pub struct OpenCLDataOutputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -978,8 +981,8 @@ pub struct OpenCLDataOutputTransformer {
 impl OpenCLDataOutputTransformer {
     /// An output_elem_len - number of bits of really single input element.
     /// An input_elem_len - number of bits of really single output element.
-    /// An bit_mapping - bit mapping from (index) value of really input element bit
-    /// to really output element bit.
+    /// An bit_mapping - index is bit of really input's element,
+    //  value is bit of reallyoutput's element.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,

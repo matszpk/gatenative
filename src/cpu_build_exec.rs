@@ -697,6 +697,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
     }
 }
 
+/// convert input data into circuit input form.
 pub struct CPUDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -706,6 +707,7 @@ pub struct CPUDataInputTransformer {
 }
 
 impl CPUDataInputTransformer {
+    /// An bit_mapping - index is bit of output's element, value is bit of input's element.
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
@@ -821,11 +823,12 @@ pub struct CPUDataOutputTransformer {
     parallel: bool,
 }
 
+/// convert output data from circuit input form into output form.
 impl CPUDataOutputTransformer {
     /// An output_elem_len - number of bits of really single input element.
     /// An input_elem_len - number of bits of really single output element.
-    /// An bit_mapping - bit mapping from (index) value of really input element bit
-    /// to really output element bit.
+    /// An bit_mapping - index is bit of really input's element,
+    //  value is bit of reallyoutput's element.
     pub fn new(
         word_len: u32,
         output_elem_len: usize,
