@@ -532,8 +532,8 @@ impl<'a>
     ) -> Result<CPUDataOutputTransformer, Self::ErrorType> {
         Ok(CPUDataOutputTransformer::new(
             u32::try_from(self.words_per_real_word << 5).unwrap(),
-            output_elem_len,
             self.real_output_len,
+            output_elem_len,
             bit_mapping,
             true,
         ))
@@ -824,8 +824,8 @@ pub struct CPUDataOutputTransformer {
 impl CPUDataOutputTransformer {
     pub fn new(
         word_len: u32,
-        input_elem_len: usize,
         output_elem_len: usize,
+        input_elem_len: usize,
         bit_mapping: &[usize],
         parallel: bool,
     ) -> Self {

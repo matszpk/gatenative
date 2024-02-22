@@ -883,8 +883,8 @@ fn test_cpu_input_output_data_transformer() {
 
         let mut transformer = CPUDataOutputTransformer::new(
             u32::try_from(word_len).unwrap(),
-            input_elem_len,
             output_elem_len,
+            input_elem_len,
             &bit_mapping,
             parallel,
         );

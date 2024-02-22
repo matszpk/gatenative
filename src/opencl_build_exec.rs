@@ -524,8 +524,8 @@ impl<'a>
             self.context.clone(),
             self.cmd_queue.clone(),
             u32::try_from(self.words_per_real_word << 5).unwrap(),
-            output_elem_len,
             self.real_output_len,
+            output_elem_len,
             bit_mapping,
         )
     }
@@ -980,8 +980,8 @@ impl OpenCLDataOutputTransformer {
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
         word_len: u32,
-        input_elem_len: usize,
         output_elem_len: usize,
+        input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<Self, OpenCLBuildError> {
         assert_eq!((word_len & 31), 0);
