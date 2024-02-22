@@ -976,6 +976,10 @@ pub struct OpenCLDataOutputTransformer {
 }
 
 impl OpenCLDataOutputTransformer {
+    /// An output_elem_len - number of bits of really single input element.
+    /// An input_elem_len - number of bits of really single output element.
+    /// An bit_mapping - bit mapping from (index) value of really input element bit
+    /// to really output element bit.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
@@ -1043,6 +1047,8 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
 {
     type ErrorType = ClError;
 
+    /// changed names of arguments:
+    /// output - really input data, input - really output data
     fn transform(
         &mut self,
         output: &OpenCLDataHolder,

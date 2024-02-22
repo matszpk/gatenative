@@ -822,6 +822,10 @@ pub struct CPUDataOutputTransformer {
 }
 
 impl CPUDataOutputTransformer {
+    /// An output_elem_len - number of bits of really single input element.
+    /// An input_elem_len - number of bits of really single output element.
+    /// An bit_mapping - bit mapping from (index) value of really input element bit
+    /// to really output element bit.
     pub fn new(
         word_len: u32,
         output_elem_len: usize,
@@ -878,6 +882,8 @@ impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder
 {
     type ErrorType = Infallible;
 
+    /// changed names of arguments:
+    /// output - really input data, input - really output data
     fn transform(
         &mut self,
         output: &CPUDataHolder,
