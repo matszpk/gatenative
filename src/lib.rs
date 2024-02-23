@@ -511,6 +511,14 @@ pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, 
     fn transform_reuse(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
 
     fn output_data_len(&self, len: usize) -> usize {
+        assert_eq!(
+            usize::try_from(
+                (u128::try_from(len).unwrap() * u128::try_from(self.output_elem_len()).unwrap())
+                    % u128::try_from(self.input_elem_len()).unwrap(),
+            )
+            .unwrap(),
+            0
+        );
         usize::try_from(
             (u128::try_from(len).unwrap() * u128::try_from(self.output_elem_len()).unwrap())
                 / u128::try_from(self.input_elem_len()).unwrap(),
