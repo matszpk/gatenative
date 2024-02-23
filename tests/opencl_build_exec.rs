@@ -1010,7 +1010,7 @@ fn test_opencl_input_output_data_transformer() {
         .unwrap();
         use std::time::SystemTime;
         let start = SystemTime::now();
-        transformer.transform(&input, &mut output).unwrap();
+        transformer.transform_reuse(&input, &mut output).unwrap();
         let elapsed = start.elapsed().unwrap();
         println!("Time: {} s", elapsed.as_secs_f64());
         {
@@ -1031,7 +1031,7 @@ fn test_opencl_input_output_data_transformer() {
         )
         .unwrap();
         let start = SystemTime::now();
-        transformer.transform(&output, &mut input_2).unwrap();
+        transformer.transform_reuse(&output, &mut input_2).unwrap();
         let elapsed = start.elapsed().unwrap();
         println!("Time: {} s", elapsed.as_secs_f64());
         {
@@ -1084,11 +1084,29 @@ fn test_opencl_data_transforms() {
         .unwrap();
     let mut input_circ =
         execs[0].new_data((input.len() * it.output_elem_len()) / it.input_elem_len());
-    it.transform(&input, &mut input_circ).unwrap();
+    it.transform_reuse(&input, &mut input_circ).unwrap();
     let output_circ = execs[0].execute(&input_circ, 0).unwrap();
     let mut output =
         execs[0].new_data((output_circ.len() * ot.output_elem_len()) / ot.input_elem_len());
-    ot.transform(&output_circ, &mut output).unwrap();
+    ot.transform_reuse(&output_circ, &mut output).unwrap();
+    {
+        let input = input.get();
+        let input = input.get();
+        let output = output.get();
+        let output = output.get();
+        for (i, v) in output.iter().enumerate() {
+            assert_eq!(
+                (input[2 * i] ^ input[2 * i + 1]) & ((1 << 20) - 1),
+                *v,
+                "{}",
+                i
+            );
+        }
+    }
+    // use helpers
+    let input_circ = it.transform(&input).unwrap();
+    let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+    let output = ot.transform(&output_circ).unwrap();
     {
         let input = input.get();
         let input = input.get();

@@ -760,7 +760,13 @@ impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder
 {
     type ErrorType = Infallible;
 
-    fn transform(
+    fn transform(&mut self, input: &CPUDataHolder) -> Result<CPUDataHolder, Self::ErrorType> {
+        let mut output = CPUDataHolder::new(vec![0; self.output_data_len(input.len())]);
+        self.transform_reuse(input, &mut output)?;
+        Ok(output)
+    }
+
+    fn transform_reuse(
         &mut self,
         input: &CPUDataHolder,
         output: &mut CPUDataHolder,
@@ -885,9 +891,15 @@ impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder
 {
     type ErrorType = Infallible;
 
+    fn transform(&mut self, input: &CPUDataHolder) -> Result<CPUDataHolder, Self::ErrorType> {
+        let mut output = CPUDataHolder::new(vec![0; self.output_data_len(input.len())]);
+        self.transform_reuse(input, &mut output)?;
+        Ok(output)
+    }
+
     /// changed names of arguments:
     /// output - really input data, input - really output data
-    fn transform(
+    fn transform_reuse(
         &mut self,
         output: &CPUDataHolder,
         input: &mut CPUDataHolder,

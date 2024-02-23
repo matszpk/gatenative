@@ -909,7 +909,18 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
 {
     type ErrorType = ClError;
 
-    fn transform(
+    fn transform(&mut self, input: &OpenCLDataHolder) -> Result<OpenCLDataHolder, Self::ErrorType> {
+        let mut output = OpenCLDataHolder::new(
+            self.output_data_len(input.len()),
+            &self.context,
+            self.cmd_queue.clone(),
+            CL_MEM_READ_WRITE,
+        );
+        self.transform_reuse(input, &mut output)?;
+        Ok(output)
+    }
+
+    fn transform_reuse(
         &mut self,
         input: &OpenCLDataHolder,
         output: &mut OpenCLDataHolder,
@@ -1097,9 +1108,20 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
 {
     type ErrorType = ClError;
 
+    fn transform(&mut self, input: &OpenCLDataHolder) -> Result<OpenCLDataHolder, Self::ErrorType> {
+        let mut output = OpenCLDataHolder::new(
+            self.output_data_len(input.len()),
+            &self.context,
+            self.cmd_queue.clone(),
+            CL_MEM_READ_WRITE,
+        );
+        self.transform_reuse(input, &mut output)?;
+        Ok(output)
+    }
+
     /// changed names of arguments:
     /// output - really input data, input - really output data
-    fn transform(
+    fn transform_reuse(
         &mut self,
         output: &OpenCLDataHolder,
         input: &mut OpenCLDataHolder,
