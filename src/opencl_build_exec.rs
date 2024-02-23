@@ -2,6 +2,7 @@ use crate::clang_writer::*;
 use crate::gencode::generate_code_ext;
 use crate::utils::get_timestamp;
 use crate::*;
+use static_init::dynamic;
 
 use opencl3::command_queue::CommandQueue;
 use opencl3::context::Context;
@@ -794,6 +795,27 @@ kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start
 }
 "##;
 
+#[dynamic]
+static mut INPUT_TX_PROGRAMS: Vec<Arc<Program>> = Vec::new();
+
+fn get_input_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBuildError> {
+    let mut tx_programs = INPUT_TX_PROGRAMS.write();
+    if let Some(p) = tx_programs
+        .iter()
+        .find(|p| p.get_context().unwrap() == context.get())
+    {
+        Ok(p.clone())
+    } else {
+        let p = Arc::new(Program::create_and_build_from_source(
+            &context,
+            INPUT_TRANSFORMER_SOURCE,
+            "",
+        )?);
+        tx_programs.push(p.clone());
+        Ok(p)
+    }
+}
+
 /// convert input data into circuit input form.
 pub struct OpenCLDataInputTransformer {
     word_len: u32,
@@ -822,11 +844,7 @@ impl OpenCLDataInputTransformer {
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
         let device = Device::new(context.devices()[0]);
-        let program = Arc::new(Program::create_and_build_from_source(
-            &context,
-            INPUT_TRANSFORMER_SOURCE,
-            "",
-        )?);
+        let program = get_input_tx_program(context.clone())?;
         let mut buffer = unsafe {
             Buffer::<u32>::create(
                 &context,
@@ -965,6 +983,27 @@ kernel void xxx_gate_output_transform(uint n, uint output_start, uint input_star
 }
 "##;
 
+#[dynamic]
+static mut OUTPUT_TX_PROGRAMS: Vec<Arc<Program>> = Vec::new();
+
+fn get_output_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBuildError> {
+    let mut tx_programs = OUTPUT_TX_PROGRAMS.write();
+    if let Some(p) = tx_programs
+        .iter()
+        .find(|p| p.get_context().unwrap() == context.get())
+    {
+        Ok(p.clone())
+    } else {
+        let p = Arc::new(Program::create_and_build_from_source(
+            &context,
+            OUTPUT_TRANSFORMER_SOURCE,
+            "",
+        )?);
+        tx_programs.push(p.clone());
+        Ok(p)
+    }
+}
+
 /// convert output data from circuit input form into output form.
 pub struct OpenCLDataOutputTransformer {
     word_len: u32,
@@ -996,11 +1035,7 @@ impl OpenCLDataOutputTransformer {
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
         let device = Device::new(context.devices()[0]);
-        let program = Arc::new(Program::create_and_build_from_source(
-            &context,
-            OUTPUT_TRANSFORMER_SOURCE,
-            "",
-        )?);
+        let program = get_output_tx_program(context.clone())?;
         let mut buffer = unsafe {
             Buffer::<u32>::create(
                 &context,
