@@ -382,7 +382,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             ""
         };
         let arg_input = if !self.arg_input_map.is_empty() {
-            ", unsigned int arg"
+            ", unsigned int arg, unsigned int arg2"
         } else {
             ""
         };
@@ -538,13 +538,23 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
 
     fn gen_load(&mut self, reg: usize, input: usize) {
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
-            writeln!(
-                self.writer.out,
-                "    v{} = ((arg & {}) != 0) ? one : zero;",
-                reg,
-                1 << arg_bit
-            )
-            .unwrap();
+            if *arg_bit < 32 {
+                writeln!(
+                    self.writer.out,
+                    "    v{} = ((arg & {}) != 0) ? one : zero;",
+                    reg,
+                    1 << arg_bit
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    self.writer.out,
+                    "    v{} = ((arg2 & {}) != 0) ? one : zero;",
+                    reg,
+                    1 << (*arg_bit - 32)
+                )
+                .unwrap();
+            }
         } else {
             let arg_name = if self.single_buffer {
                 "output"

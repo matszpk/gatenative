@@ -214,7 +214,7 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg) {
+    uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -242,7 +242,7 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg) {
+    uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -270,7 +270,7 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg) {
+    uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -350,7 +350,7 @@ void gate_sys_func1(const uint64_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 void gate_sys_func1(const uint64_t* input,
-    uint64_t* output, unsigned int arg) {
+    uint64_t* output, unsigned int arg, unsigned int arg2) {
     const uint64_t zero = 0ULL;
     const uint64_t one = 0xffffffffffffffffULL;
     uint64_t v0;
@@ -604,7 +604,7 @@ void gate_sys_func1(const uint32x4_t* input,
         r##"kernel void gate_sys_func1(unsigned int n, 
     unsigned int input_shift, unsigned int output_shift,
     const global uint* input,
-    global uint* output, unsigned int arg) {
+    global uint* output, unsigned int arg, unsigned int arg2) {
     const uint idx = get_global_id(0);
     const unsigned int ivn = 1 * idx + input_shift;
     const unsigned int ovn = 2 * idx + output_shift;
@@ -637,7 +637,7 @@ void gate_sys_func1(const uint32x4_t* input,
         r##"kernel void gate_sys_func1(unsigned int n, 
     unsigned int input_shift, unsigned int output_shift,
     const global uint* input,
-    global uint* output, unsigned int arg) {
+    global uint* output, unsigned int arg, unsigned int arg2) {
     const uint idx = get_global_id(0);
     const unsigned int ivn = 68 * idx + input_shift;
     const unsigned int ovn = 88 * idx + output_shift;
@@ -722,7 +722,7 @@ void gate_sys_func1(uint32_t* output) {
     );
     assert_eq!(
         r##"#include <stdint.h>
-void gate_sys_func1(uint32_t* output, unsigned int arg) {
+void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -815,7 +815,7 @@ void gate_sys_func1(uint32_t* output, unsigned int arg) {
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned int n, 
     unsigned int output_shift,
-    global uint* output, unsigned int arg) {
+    global uint* output, unsigned int arg, unsigned int arg2) {
     const uint idx = get_global_id(0);
     const unsigned int ivn = 99 * idx + output_shift;
     const unsigned int ovn = 99 * idx + output_shift;
@@ -884,7 +884,7 @@ void gate_sys_func1(uint32_t* output, unsigned int arg) {
         r##"kernel void gate_sys_func1(unsigned int n, 
     unsigned int input_shift, unsigned int output_shift,
     const global uint* input,
-    global uint* output, unsigned int arg) {
+    global uint* output, unsigned int arg, unsigned int arg2) {
     const uint idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);

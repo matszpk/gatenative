@@ -223,7 +223,7 @@ where
                 ParSeqSelection,
                 &ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
                 ParSeqObject<&PD, &SD>,
-                u32,
+                u64,
             ) -> Out
             + Send
             + Sync,
@@ -239,14 +239,18 @@ where
                 if arg_u64 > u64::from(self.arg_input_max) {
                     break;
                 }
-                let arg = u32::try_from(arg_u64).unwrap();
                 let result = if thread_idx < self.num_threads {
                     self.par
                         .try_clone()
                         .unwrap()
-                        .execute(&input.par, arg)
+                        .execute(&input.par, arg_u64)
                         .map(|output| {
-                            f(ParSeqSelection::Par, input, ParSeqObject::Par(&output), arg)
+                            f(
+                                ParSeqSelection::Par,
+                                input,
+                                ParSeqObject::Par(&output),
+                                arg_u64,
+                            )
                         })
                         .map_err(|e| ParSeqMapperExecutorError::ParError(e))
                 } else {
@@ -254,13 +258,13 @@ where
                     self.seqs[i]
                         .lock()
                         .unwrap()
-                        .execute(&input.seqs[i], arg)
+                        .execute(&input.seqs[i], arg_u64)
                         .map(|output| {
                             f(
                                 ParSeqSelection::Seq(i),
                                 input,
                                 ParSeqObject::Seq(&output),
-                                arg,
+                                arg_u64,
                             )
                         })
                         .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
@@ -297,7 +301,7 @@ where
         g: G,
     ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
-        F: Fn(ParSeqSelection, &[u32], &[u32], u32) -> Out + Send + Sync,
+        F: Fn(ParSeqSelection, &[u32], &[u32], u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {

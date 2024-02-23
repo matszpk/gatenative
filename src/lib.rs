@@ -134,7 +134,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         assert!(!single_buffer || real_input_len == real_output_len);
         assert!(check_placements(input_placement, output_placement));
         if let Some(arg_inputs) = arg_inputs {
-            assert!(arg_inputs.len() <= 32);
+            assert!(arg_inputs.len() <= 64);
             assert!(arg_inputs.iter().all(|x| *x < input_len));
         }
 
@@ -222,8 +222,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Get real output length (number of entries in area of output placements)
     fn real_output_len(&self) -> usize;
 
-    unsafe fn execute_internal(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType>;
-    fn execute(&mut self, input: &D, arg_input: u32) -> Result<D, Self::ErrorType> {
+    unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType>;
+    fn execute(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType> {
         assert!(!self.is_single_buffer());
         unsafe { self.execute_internal(input, arg_input) }
     }
@@ -231,13 +231,13 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     unsafe fn execute_reuse_internal(
         &mut self,
         input: &D,
-        arg_input: u32,
+        arg_input: u64,
         output: &mut D,
     ) -> Result<(), Self::ErrorType>;
     fn execute_reuse(
         &mut self,
         input: &D,
-        arg_input: u32,
+        arg_input: u64,
         output: &mut D,
     ) -> Result<(), Self::ErrorType> {
         assert!(!self.is_single_buffer());
@@ -247,9 +247,9 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut D,
-        arg_input: u32,
+        arg_input: u64,
     ) -> Result<(), Self::ErrorType>;
-    fn execute_single(&mut self, output: &mut D, arg_input: u32) -> Result<(), Self::ErrorType> {
+    fn execute_single(&mut self, output: &mut D, arg_input: u64) -> Result<(), Self::ErrorType> {
         assert!(self.is_single_buffer());
         unsafe { self.execute_single_internal(output, arg_input) }
     }
@@ -380,7 +380,7 @@ where
     // function: F - main reduce function: F(input data, output data, arg_input)
     fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(Out, &D, &D, u32) -> Out;
+        F: FnMut(Out, &D, &D, u64) -> Out;
 
     // function: F - main reduce function: F(input data, output data, arg_input)
     fn execute_direct<'b, Out: Clone, F>(
@@ -390,7 +390,7 @@ where
         mut f: F,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(Out, &[u32], &[u32], u32) -> Out,
+        F: FnMut(Out, &[u32], &[u32], u64) -> Out,
     {
         self.execute(input, init, |out, input, output, arg_input| {
             input.process(|inputx| {
@@ -481,7 +481,7 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(&D, &D, u32) -> Out + Send + Sync,
+        F: Fn(&D, &D, u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync;
 
@@ -495,7 +495,7 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(&[u32], &[u32], u32) -> Out + Send + Sync,
+        F: Fn(&[u32], &[u32], u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {

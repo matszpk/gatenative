@@ -268,7 +268,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     unsafe fn execute_internal(
         &mut self,
         input: &OpenCLDataHolder,
-        arg_input: u32,
+        arg_input: u64,
     ) -> Result<OpenCLDataHolder, Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
@@ -284,7 +284,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             CL_MEM_READ_WRITE,
         );
         let cl_num = cl_uint::try_from(num).unwrap();
-        let cl_arg_input = cl_uint::from(arg_input);
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
         let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
@@ -302,6 +303,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
                     .set_local_work_size(self.group_len)
                     .set_global_work_size(
                         ((num + self.group_len - 1) / self.group_len) * self.group_len,
@@ -328,7 +330,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     unsafe fn execute_reuse_internal(
         &mut self,
         input: &OpenCLDataHolder,
-        arg_input: u32,
+        arg_input: u64,
         output: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
@@ -339,7 +341,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             (output.range.end - output.range.start) / real_output_words
         };
         let cl_num = cl_uint::try_from(num).unwrap();
-        let cl_arg_input = cl_uint::from(arg_input);
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
         let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
@@ -357,6 +360,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
                     .set_local_work_size(self.group_len)
                     .set_global_work_size(
                         ((num + self.group_len - 1) / self.group_len) * self.group_len,
@@ -383,7 +387,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut OpenCLDataHolder,
-        arg_input: u32,
+        arg_input: u64,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
@@ -392,7 +396,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             0
         };
         let cl_num = cl_uint::try_from(num).unwrap();
-        let cl_arg_input = cl_uint::from(arg_input);
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
         let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
         let num = if self.group_vec {
@@ -407,6 +412,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_output_start)
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
                     .set_local_work_size(self.group_len)
                     .set_global_work_size(
                         ((num + self.group_len - 1) / self.group_len) * self.group_len,

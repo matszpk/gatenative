@@ -15,7 +15,7 @@ where
     E: Executor<'a, DR, DW, D>,
 {
     executor: E,
-    arg_input_max: u32,
+    arg_input_max: u64,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -45,7 +45,7 @@ where
 
     fn execute<Out, F>(&mut self, input: &D, init: Out, mut f: F) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(Out, &D, &D, u32) -> Out,
+        F: FnMut(Out, &D, &D, u64) -> Out,
     {
         let input_len = self.real_input_len();
         // calculate chunk count
@@ -178,7 +178,7 @@ where
                 .zip(self.arg_input_lens)
                 .map(|(e, arg_len)| BasicMapperExecutor {
                     executor: e,
-                    arg_input_max: u32::try_from((1u64 << arg_len) - 1u64).unwrap(),
+                    arg_input_max: u64::try_from((1u128 << arg_len) - 1u128).unwrap(),
                     d: PhantomData,
                     dr: PhantomData,
                     dw: PhantomData,
@@ -217,7 +217,7 @@ where
     E::ErrorType: Send,
 {
     executor: E,
-    arg_input_max: u32,
+    arg_input_max: u64,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -254,7 +254,7 @@ where
         g: G,
     ) -> Result<Out, Self::ErrorType>
     where
-        F: Fn(&D, &D, u32) -> Out + Send + Sync,
+        F: Fn(&D, &D, u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
         Out: Clone + Send + Sync,
     {
@@ -406,7 +406,7 @@ where
                 .zip(self.arg_input_lens)
                 .map(|(e, arg_len)| ParBasicMapperExecutor {
                     executor: e,
-                    arg_input_max: u32::try_from((1u64 << arg_len) - 1u64).unwrap(),
+                    arg_input_max: u64::try_from((1u128 << arg_len) - 1u128).unwrap(),
                     d: PhantomData,
                     dr: PhantomData,
                     dw: PhantomData,

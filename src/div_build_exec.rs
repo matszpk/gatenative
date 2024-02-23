@@ -64,7 +64,7 @@ where
         self.executors.last().unwrap().real_output_len()
     }
 
-    unsafe fn execute_internal(&mut self, input: &D, arg_input: u32) -> Result<D, E::ErrorType> {
+    unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, E::ErrorType> {
         let exec_len = self.executors.len();
         if exec_len != 1 {
             let input_len = input.len();
@@ -94,7 +94,7 @@ where
     unsafe fn execute_reuse_internal(
         &mut self,
         input: &D,
-        arg_input: u32,
+        arg_input: u64,
         output: &mut D,
     ) -> Result<(), E::ErrorType> {
         let exec_len = self.executors.len();
@@ -127,7 +127,7 @@ where
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut D,
-        arg_input: u32,
+        arg_input: u64,
     ) -> Result<(), E::ErrorType> {
         let exec_len = self.executors.len();
         if exec_len != 1 {
