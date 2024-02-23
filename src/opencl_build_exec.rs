@@ -13,6 +13,8 @@ use opencl3::memory::{Buffer, ClMem, CL_MAP_READ, CL_MAP_WRITE, CL_MEM_READ_WRIT
 use opencl3::program::Program;
 use opencl3::types::{cl_mem, cl_mem_flags, cl_uint, CL_BLOCKING};
 
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
 pub struct OpenCLDataReader<'a> {
@@ -772,6 +774,22 @@ impl<'b, 'a>
     }
 }
 
+struct HashableContext(Arc<Context>);
+
+impl Eq for HashableContext {}
+
+impl PartialEq for HashableContext {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.get() == other.0.get()
+    }
+}
+
+impl Hash for HashableContext {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.get().hash(state);
+    }
+}
+
 const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
 kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start, uint word_len,
         uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
@@ -796,14 +814,11 @@ kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start
 "##;
 
 #[dynamic]
-static mut INPUT_TX_PROGRAMS: Vec<Arc<Program>> = Vec::new();
+static mut INPUT_TX_PROGRAMS: HashMap<HashableContext, Arc<Program>> = HashMap::new();
 
 fn get_input_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBuildError> {
     let mut tx_programs = INPUT_TX_PROGRAMS.write();
-    if let Some(p) = tx_programs
-        .iter()
-        .find(|p| p.get_context().unwrap() == context.get())
-    {
+    if let Some(p) = tx_programs.get(&HashableContext(context.clone())) {
         Ok(p.clone())
     } else {
         let p = Arc::new(Program::create_and_build_from_source(
@@ -811,7 +826,7 @@ fn get_input_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBui
             INPUT_TRANSFORMER_SOURCE,
             "",
         )?);
-        tx_programs.push(p.clone());
+        tx_programs.insert(HashableContext(context.clone()), p.clone());
         Ok(p)
     }
 }
@@ -984,14 +999,11 @@ kernel void xxx_gate_output_transform(uint n, uint output_start, uint input_star
 "##;
 
 #[dynamic]
-static mut OUTPUT_TX_PROGRAMS: Vec<Arc<Program>> = Vec::new();
+static mut OUTPUT_TX_PROGRAMS: HashMap<HashableContext, Arc<Program>> = HashMap::new();
 
 fn get_output_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBuildError> {
     let mut tx_programs = OUTPUT_TX_PROGRAMS.write();
-    if let Some(p) = tx_programs
-        .iter()
-        .find(|p| p.get_context().unwrap() == context.get())
-    {
+    if let Some(p) = tx_programs.get(&HashableContext(context.clone())) {
         Ok(p.clone())
     } else {
         let p = Arc::new(Program::create_and_build_from_source(
@@ -999,7 +1011,7 @@ fn get_output_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBu
             OUTPUT_TRANSFORMER_SOURCE,
             "",
         )?);
-        tx_programs.push(p.clone());
+        tx_programs.insert(HashableContext(context.clone()), p.clone());
         Ok(p)
     }
 }
