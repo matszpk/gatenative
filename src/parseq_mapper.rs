@@ -402,17 +402,16 @@ where
 
     pub fn new_data_input_elems(
         &mut self,
-        len: usize,
+        elem_num: usize,
     ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
-        assert!((len & 15) == 0);
         let out = ParSeqAllDataHolder {
-            par: self.par.new_data(self.par.input_data_len(len)),
+            par: self.par.new_data(self.par.input_data_len(elem_num)),
             seqs: self
                 .seqs
                 .iter_mut()
                 .map(|s| {
                     let mut s = s.lock().unwrap();
-                    let len = s.input_data_len(len);
+                    let len = s.input_data_len(elem_num);
                     s.new_data(len)
                 })
                 .collect::<Vec<_>>(),
