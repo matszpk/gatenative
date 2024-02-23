@@ -911,3 +911,48 @@ fn test_cpu_input_output_data_transformer() {
         }
     }
 }
+
+#[test]
+fn test_cpu_data_transforms() {
+    let mut builder = CPUBuilder::new(None);
+    let circuit = Circuit::new(
+        40,
+        (0..20).map(|i| Gate::new_xor(i, 20 + i)),
+        (0..20).map(|i| (40 + i, false)),
+    )
+    .unwrap();
+    builder.add("xor", circuit.clone(), None, None, None);
+    let mut execs = builder.build().unwrap();
+    let input = execs[0].new_data_from_vec(
+        (0..1024u32 * 128u32)
+            .map(|i| 124 * i + 21 * i * i + 1342)
+            .collect::<Vec<_>>(),
+    );
+    let mut it = execs[0]
+        .input_tx(64, &(0..20).chain(32..32 + 20).collect::<Vec<_>>())
+        .unwrap();
+    let mut ot = execs[0]
+        .output_tx(32, &(0..20).collect::<Vec<_>>())
+        .unwrap();
+    let mut input_circ =
+        execs[0].new_data((input.len() * it.output_elem_len()) / it.input_elem_len());
+    it.transform(&input, &mut input_circ).unwrap();
+    let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+    let mut output =
+        execs[0].new_data((output_circ.len() * ot.output_elem_len()) / ot.input_elem_len());
+    ot.transform(&output_circ, &mut output).unwrap();
+    {
+        let input = input.get();
+        let input = input.get();
+        let output = output.get();
+        let output = output.get();
+        for (i, v) in output.iter().enumerate() {
+            assert_eq!(
+                (input[2 * i] ^ input[2 * i + 1]) & ((1 << 20) - 1),
+                *v,
+                "{}",
+                i
+            );
+        }
+    }
+}
