@@ -399,6 +399,33 @@ where
         out.check_length();
         out
     }
+
+    pub fn new_data_input_elems(
+        &mut self,
+        len: usize,
+    ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        assert!((len & 15) == 0);
+        let out = ParSeqAllDataHolder {
+            par: self.par.new_data(self.par.input_data_len(len)),
+            seqs: self
+                .seqs
+                .iter_mut()
+                .map(|s| {
+                    let mut s = s.lock().unwrap();
+                    let len = s.input_data_len(len);
+                    s.new_data(len)
+                })
+                .collect::<Vec<_>>(),
+            real_input_len: self.real_input_len(),
+            max_word_len: self.max_word_len,
+            pdr: PhantomData,
+            pdw: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
+        };
+        out.check_length();
+        out
+    }
 }
 
 #[derive(Error, Debug)]
