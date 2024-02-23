@@ -265,6 +265,27 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         Self: Sized;
     // returns true if executor with single_buffer
     fn is_single_buffer(&self) -> bool;
+
+    fn word_len(&self) -> u32;
+
+    // in 32-bit words
+    fn input_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.real_input_len()) >> 5
+    }
+
+    // in 32-bit words
+    fn output_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.real_output_len()) >> 5
+    }
+
+    fn new_data_input_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.input_data_len(elem_num))
+    }
+    fn new_data_output_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.output_data_len(elem_num))
+    }
 }
 
 pub trait Builder<'a, DR, DW, D, E>
@@ -383,6 +404,27 @@ where
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
     /// Create new data from slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
+
+    fn word_len(&self) -> u32;
+
+    // in 32-bit words
+    fn input_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.real_input_len()) >> 5
+    }
+
+    // in 32-bit words
+    fn output_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.output_len()) >> 5
+    }
+
+    fn new_data_input_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.input_data_len(elem_num))
+    }
+    fn new_data_output_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.output_data_len(elem_num))
+    }
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -472,6 +514,27 @@ where
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
     /// Create new data from slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
+
+    fn word_len(&self) -> u32;
+
+    // in 32-bit words
+    fn input_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.real_input_len()) >> 5
+    }
+
+    // in 32-bit words
+    fn output_data_len(&self, elem_num: usize) -> usize {
+        assert_eq!(elem_num % (self.word_len() as usize), 0);
+        (elem_num * self.output_len()) >> 5
+    }
+
+    fn new_data_input_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.input_data_len(elem_num))
+    }
+    fn new_data_output_elems(&mut self, elem_num: usize) -> D {
+        self.new_data(self.output_data_len(elem_num))
+    }
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

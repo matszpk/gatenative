@@ -75,6 +75,10 @@ where
     fn new_data_from_slice(&mut self, data: &[u32]) -> D {
         self.executor.new_data_from_slice(data)
     }
+
+    fn word_len(&self) -> u32 {
+        self.executor.word_len()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
@@ -292,6 +296,10 @@ where
 
     fn new_data_from_slice(&mut self, data: &[u32]) -> D {
         self.executor.new_data_from_slice(data)
+    }
+
+    fn word_len(&self) -> u32 {
+        self.executor.word_len()
     }
 }
 

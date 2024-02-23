@@ -195,6 +195,11 @@ where
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
     }
+
+    #[inline]
+    fn word_len(&self) -> u32 {
+        self.executors[0].word_len()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>

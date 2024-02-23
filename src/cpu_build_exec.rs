@@ -498,6 +498,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn is_single_buffer(&self) -> bool {
         self.single_buffer
     }
+
+    #[inline]
+    fn word_len(&self) -> u32 {
+        u32::try_from(self.words_per_real_word << 5).unwrap()
+    }
 }
 
 impl<'a>
