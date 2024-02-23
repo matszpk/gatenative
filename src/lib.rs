@@ -10,7 +10,6 @@ use std::ops::{Range, RangeFrom};
 // instead same - for 000xxxx - use circuit000, for 001xxxx use circuit001
 // TODO: Add ability to build once circuits for many these same builders.
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
-// TODO: use use better variable usage even in single_buffer mode.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
