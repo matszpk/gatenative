@@ -335,6 +335,7 @@ where
             input_placement,
             output_placement,
             arg_inputs,
+            None,
             false,
         );
     }
@@ -346,6 +347,7 @@ where
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
         arg_inputs: Option<&[usize]>,
+        elem_inputs: Option<&[usize]>,
         single_buffer: bool,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,

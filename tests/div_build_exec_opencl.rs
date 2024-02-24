@@ -58,7 +58,7 @@ fn test_div_builder_and_exec_opencl() {
                 Some(output_ps.clone()),
                 None,
             );
-            builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+            builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
             let mut execs = builder.build().unwrap();
 
             const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [

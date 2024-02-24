@@ -57,7 +57,7 @@ fn test_div_builder_and_exec_cpu() {
                 Some(output_ps.clone()),
                 None,
             );
-            builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+            builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
             let mut execs = builder.build().unwrap();
 
             const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
@@ -323,7 +323,7 @@ fn test_div_executor_cpu_clone() {
     )
     .unwrap();
     builder.add("mul2x2", circuit.clone(), None, None, None);
-    builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+    builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
     let execs = builder.build().unwrap();
     {
         let exec0 = execs[0].try_clone().unwrap();

@@ -587,6 +587,7 @@ struct CircuitEntry {
     input_placement: Option<(Vec<usize>, usize)>,
     output_placement: Option<(Vec<usize>, usize)>,
     arg_input_len: Option<usize>,
+    elem_input_len: Option<usize>,
     single_buffer: bool,
 }
 
@@ -668,6 +669,7 @@ impl<'b, 'a>
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
         arg_inputs: Option<&[usize]>,
+        elem_inputs: Option<&[usize]>,
         single_buffer: bool,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -685,6 +687,7 @@ impl<'b, 'a>
             input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
             output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
             arg_input_len: arg_inputs.map(|x| x.len()),
+            elem_input_len: elem_inputs.map(|x| x.len()),
             single_buffer,
         });
         generate_code_ext(
@@ -695,7 +698,7 @@ impl<'b, 'a>
             input_placement,
             output_placement,
             arg_inputs,
-            None,
+            elem_inputs,
             single_buffer,
         );
     }
@@ -717,11 +720,9 @@ impl<'b, 'a>
                 Ok(OpenCLExecutor {
                     input_len: e.input_len,
                     output_len: e.output_len,
-                    real_input_len: e
-                        .input_placement
-                        .as_ref()
-                        .map(|x| x.1)
-                        .unwrap_or(e.input_len - e.arg_input_len.unwrap_or(0)),
+                    real_input_len: e.input_placement.as_ref().map(|x| x.1).unwrap_or(
+                        e.input_len - e.arg_input_len.unwrap_or(0) - e.elem_input_len.unwrap_or(0),
+                    ),
                     real_output_len: e
                         .output_placement
                         .as_ref()

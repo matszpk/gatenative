@@ -298,6 +298,7 @@ where
         input_placement: Option<(&[usize], usize)>,
         output_placement: Option<(&[usize], usize)>,
         arg_inputs: Option<&[usize]>,
+        elem_inputs: Option<&[usize]>,
         single_buffer: bool,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -341,6 +342,7 @@ where
                         .map(|p| (p.ps.as_slice(), p.real_len))
                 },
                 if i == 0 { arg_inputs } else { None },
+                if i == 0 { elem_inputs } else { None },
                 if i + 1 == subcircuit_num {
                     // if only one subcircuit then apply single_buffer
                     single_buffer && subcircuit_num == 1

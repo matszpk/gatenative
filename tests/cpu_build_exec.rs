@@ -122,7 +122,7 @@ fn test_cpu_builder_and_exec() {
             Some(output_ps.clone()),
             None,
         );
-        builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, true);
+        builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
         let mut execs = builder.build().unwrap();
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
             0b1010101010101010,
@@ -578,7 +578,7 @@ fn test_cpu_data_holder() {
             Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
         builder.add("mul2x2", circuit.clone(), None, None, None);
         let circuit = Circuit::new(4, [], [(0, true), (1, true), (2, true), (3, true)]).unwrap();
-        builder.add_ext("mul2x2sb", circuit, None, None, None, true);
+        builder.add_ext("mul2x2sb", circuit, None, None, None, None, true);
         let circuit = Circuit::new(
             8,
             [
@@ -603,6 +603,7 @@ fn test_cpu_data_holder() {
             None,
             None,
             Some(&[4, 5, 6, 7]),
+            None,
             true,
         );
         let mut execs = builder.build().unwrap();
