@@ -351,7 +351,8 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
         "*((const __m256*)one_value)",
     ),
     elem_index: ElemIndexConfig {
-        low_bits_init: r##"static const unsigned int elem_index_low_tbl[8*8] = {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[8*8]
+ __attribute__((aligned(32))) = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
@@ -417,7 +418,8 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
         "*((const __m512i*)one_value)",
     ),
     elem_index: ElemIndexConfig {
-        low_bits_init: r##"static const unsigned int elem_index_low_tbl[9*16] = {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[9*16]
+ __attribute__((aligned(64))) = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
@@ -697,7 +699,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         };
         let elem_input =
             if !self.elem_input_map.is_empty() && self.writer.config.elem_index.func_arg_high {
-                "task_id"
+                ", unsigned int task_id"
             } else {
                 ""
             };
