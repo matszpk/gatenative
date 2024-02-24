@@ -1,5 +1,7 @@
+use crate::gencode::generate_code_ext;
 use gatenative::clang_writer::*;
 use gatenative::*;
+use gatesim::*;
 
 fn write_test_code(
     cw_config: &CLangWriterConfig,
@@ -948,5 +950,284 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
 }
 "##,
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
+    );
+}
+
+#[test]
+fn test_clang_writer_arginput_64bit() {
+    let circuit = Circuit::new(
+        120,
+        (0..60).map(|i| Gate::new_xor(i, 60 + i)),
+        (0..60).map(|i| (120 + i, false)),
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_ext(
+        &mut writer,
+        "xor",
+        circuit,
+        false,
+        None,
+        None,
+        Some(&(120 - 64..120).collect::<Vec<_>>()),
+        false,
+    );
+    let out = String::from_utf8(writer.out()).unwrap();
+    assert_eq!(
+        &out,
+        r##"kernel void gate_sys_xor(unsigned int n, 
+    unsigned int input_shift, unsigned int output_shift,
+    const global uint* input,
+    global uint* output, unsigned int arg, unsigned int arg2) {
+    const uint idx = get_global_id(0);
+    const unsigned int ivn = 56 * idx + input_shift;
+    const unsigned int ovn = 60 * idx + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    uint v0;
+    uint v1;
+    if (idx >= n) return;
+    v0 = input[ivn + 0];
+    v1 = ((arg & 16) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 0] = v0;
+    v0 = input[ivn + 1];
+    v1 = ((arg & 32) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 1] = v0;
+    v0 = input[ivn + 2];
+    v1 = ((arg & 64) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 2] = v0;
+    v0 = input[ivn + 3];
+    v1 = ((arg & 128) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 3] = v0;
+    v0 = input[ivn + 4];
+    v1 = ((arg & 256) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 4] = v0;
+    v0 = input[ivn + 5];
+    v1 = ((arg & 512) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 5] = v0;
+    v0 = input[ivn + 6];
+    v1 = ((arg & 1024) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 6] = v0;
+    v0 = input[ivn + 7];
+    v1 = ((arg & 2048) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 7] = v0;
+    v0 = input[ivn + 8];
+    v1 = ((arg & 4096) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 8] = v0;
+    v0 = input[ivn + 9];
+    v1 = ((arg & 8192) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 9] = v0;
+    v0 = input[ivn + 10];
+    v1 = ((arg & 16384) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 10] = v0;
+    v0 = input[ivn + 11];
+    v1 = ((arg & 32768) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 11] = v0;
+    v0 = input[ivn + 12];
+    v1 = ((arg & 65536) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 12] = v0;
+    v0 = input[ivn + 13];
+    v1 = ((arg & 131072) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 13] = v0;
+    v0 = input[ivn + 14];
+    v1 = ((arg & 262144) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 14] = v0;
+    v0 = input[ivn + 15];
+    v1 = ((arg & 524288) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 15] = v0;
+    v0 = input[ivn + 16];
+    v1 = ((arg & 1048576) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 16] = v0;
+    v0 = input[ivn + 17];
+    v1 = ((arg & 2097152) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 17] = v0;
+    v0 = input[ivn + 18];
+    v1 = ((arg & 4194304) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 18] = v0;
+    v0 = input[ivn + 19];
+    v1 = ((arg & 8388608) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 19] = v0;
+    v0 = input[ivn + 20];
+    v1 = ((arg & 16777216) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 20] = v0;
+    v0 = input[ivn + 21];
+    v1 = ((arg & 33554432) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 21] = v0;
+    v0 = input[ivn + 22];
+    v1 = ((arg & 67108864) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 22] = v0;
+    v0 = input[ivn + 23];
+    v1 = ((arg & 134217728) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 23] = v0;
+    v0 = input[ivn + 24];
+    v1 = ((arg & 268435456) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 24] = v0;
+    v0 = input[ivn + 25];
+    v1 = ((arg & 536870912) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 25] = v0;
+    v0 = input[ivn + 26];
+    v1 = ((arg & 1073741824) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 26] = v0;
+    v0 = input[ivn + 27];
+    v1 = ((arg & 2147483648) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 27] = v0;
+    v0 = input[ivn + 28];
+    v1 = ((arg2 & 1) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 28] = v0;
+    v0 = input[ivn + 29];
+    v1 = ((arg2 & 2) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 29] = v0;
+    v0 = input[ivn + 30];
+    v1 = ((arg2 & 4) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 30] = v0;
+    v0 = input[ivn + 31];
+    v1 = ((arg2 & 8) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 31] = v0;
+    v0 = input[ivn + 32];
+    v1 = ((arg2 & 16) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 32] = v0;
+    v0 = input[ivn + 33];
+    v1 = ((arg2 & 32) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 33] = v0;
+    v0 = input[ivn + 34];
+    v1 = ((arg2 & 64) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 34] = v0;
+    v0 = input[ivn + 35];
+    v1 = ((arg2 & 128) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 35] = v0;
+    v0 = input[ivn + 36];
+    v1 = ((arg2 & 256) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 36] = v0;
+    v0 = input[ivn + 37];
+    v1 = ((arg2 & 512) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 37] = v0;
+    v0 = input[ivn + 38];
+    v1 = ((arg2 & 1024) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 38] = v0;
+    v0 = input[ivn + 39];
+    v1 = ((arg2 & 2048) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 39] = v0;
+    v0 = input[ivn + 40];
+    v1 = ((arg2 & 4096) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 40] = v0;
+    v0 = input[ivn + 41];
+    v1 = ((arg2 & 8192) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 41] = v0;
+    v0 = input[ivn + 42];
+    v1 = ((arg2 & 16384) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 42] = v0;
+    v0 = input[ivn + 43];
+    v1 = ((arg2 & 32768) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 43] = v0;
+    v0 = input[ivn + 44];
+    v1 = ((arg2 & 65536) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 44] = v0;
+    v0 = input[ivn + 45];
+    v1 = ((arg2 & 131072) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 45] = v0;
+    v0 = input[ivn + 46];
+    v1 = ((arg2 & 262144) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 46] = v0;
+    v0 = input[ivn + 47];
+    v1 = ((arg2 & 524288) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 47] = v0;
+    v0 = input[ivn + 48];
+    v1 = ((arg2 & 1048576) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 48] = v0;
+    v0 = input[ivn + 49];
+    v1 = ((arg2 & 2097152) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 49] = v0;
+    v0 = input[ivn + 50];
+    v1 = ((arg2 & 4194304) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 50] = v0;
+    v0 = input[ivn + 51];
+    v1 = ((arg2 & 8388608) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 51] = v0;
+    v0 = input[ivn + 52];
+    v1 = ((arg2 & 16777216) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 52] = v0;
+    v0 = input[ivn + 53];
+    v1 = ((arg2 & 33554432) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 53] = v0;
+    v0 = input[ivn + 54];
+    v1 = ((arg2 & 67108864) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 54] = v0;
+    v0 = input[ivn + 55];
+    v1 = ((arg2 & 134217728) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 55] = v0;
+    v0 = ((arg & 1) != 0) ? one : zero;
+    v1 = ((arg2 & 268435456) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 56] = v0;
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v1 = ((arg2 & 536870912) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 57] = v0;
+    v0 = ((arg & 4) != 0) ? one : zero;
+    v1 = ((arg2 & 1073741824) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 58] = v0;
+    v0 = ((arg & 8) != 0) ? one : zero;
+    v1 = ((arg2 & 2147483648) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 59] = v0;
+}
+"##
     );
 }

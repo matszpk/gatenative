@@ -543,7 +543,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     self.writer.out,
                     "    v{} = ((arg & {}) != 0) ? one : zero;",
                     reg,
-                    1 << arg_bit
+                    1u32 << arg_bit
                 )
                 .unwrap();
             } else {
@@ -551,7 +551,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     self.writer.out,
                     "    v{} = ((arg2 & {}) != 0) ? one : zero;",
                     reg,
-                    1 << (*arg_bit - 32)
+                    1u32 << (*arg_bit - 32)
                 )
                 .unwrap();
             }
