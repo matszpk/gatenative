@@ -948,7 +948,7 @@ fn test_opencl_input_output_data_transformer() {
         let output_elem_len = 77;
         let input_elem_word_num = input_elem_len * (word_len >> 5);
         let output_elem_word_num = output_elem_len * (word_len >> 5);
-        let group_num = 37541;
+        let group_num = 17541;
         let mut input = OpenCLDataHolder::new(
             input_elem_word_num * group_num,
             context.deref(),

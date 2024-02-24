@@ -826,7 +826,7 @@ fn test_cpu_input_output_data_transformer() {
         let output_elem_len = 77;
         let input_elem_word_num = input_elem_len * (word_len >> 5);
         let output_elem_word_num = output_elem_len * (word_len >> 5);
-        let group_num = 37541;
+        let group_num = 17541;
         let mut input = CPUDataHolder::new(vec![0u32; input_elem_word_num * group_num]);
         let mut input_2 = CPUDataHolder::new(vec![0u32; input_elem_word_num * group_num]);
         let mut output = CPUDataHolder::new(vec![0u32; output_elem_word_num * group_num]);
