@@ -11,6 +11,8 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add ability to build once circuits for many these same builders.
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
 // TODO: Add elem_index input bits (value are index of element).
+// TODO: elem_inputs - add ability to set elem_index for all circuit inputs
+// TODO: add elem_inputs to mappers (including ParSeqMapper).
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
