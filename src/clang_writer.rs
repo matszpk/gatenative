@@ -7,7 +7,7 @@ use std::io::Write;
 pub struct ElemIndexConfig<'a> {
     low_bits_init: &'a str,
     low_bits_defs: [&'a str; 16],
-    func_arg_high: Option<&'a str>,
+    func_arg_high: bool,
     high_bits: &'a str,
 }
 
@@ -71,7 +71,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -115,7 +115,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -159,7 +159,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -203,7 +203,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -256,7 +256,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -295,7 +295,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
     0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
     0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
-    0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff
 };"##,
         low_bits_defs: [
             "*((const __m128*)elem_index_low_tbl)",
@@ -315,7 +315,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -359,7 +359,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
     0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };"##,
         low_bits_defs: [
             "*((const __m256*)elem_index_low_tbl)",
@@ -379,7 +379,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: Some("_mm256_loadu_ps((const float*)&{})"),
@@ -435,7 +435,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };"##,
         low_bits_defs: [
             "*((const __m512i*)elem_index_low_tbl)",
@@ -455,7 +455,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: Some("_mm512_loadu_epi64(&{})"),
@@ -499,7 +499,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: Some("task_id"),
+        func_arg_high: true,
         high_bits: "task_id",
     },
     load_op: None,
@@ -543,7 +543,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-        func_arg_high: None,
+        func_arg_high: false,
         high_bits: "idx",
     },
     load_op: None,
@@ -590,7 +590,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
             "",
             "",
         ],
-        func_arg_high: None,
+        func_arg_high: false,
         high_bits: "idx",
     },
     load_op: None,
@@ -695,6 +695,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
+        let elem_input =
+            if !self.elem_input_map.is_empty() && self.writer.config.elem_index.func_arg_high {
+                "task_id"
+            } else {
+                ""
+            };
         let in_out_args = if self.single_buffer {
             format!(
                 "{0}{1}{2}* output",
@@ -721,7 +727,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}(unsigned int n, {}{}{}) {{
+                r##"{}{}void gate_sys_{}(unsigned int n, {}{}{}{}) {{
     {}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
@@ -733,6 +739,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 shift_args,
                 in_out_args,
                 arg_input,
+                elem_input,
                 init_index
             )
             .unwrap();
@@ -795,7 +802,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}({}{}{}) {{"##,
+                r##"{}{}void gate_sys_{}({}{}{}{}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -805,7 +812,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 self.name,
                 shift_args,
                 in_out_args,
-                arg_input
+                arg_input,
+                elem_input
             )
             .unwrap();
         }
@@ -826,6 +834,18 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 self.writer.config.type_name, one_value
             )
             .unwrap();
+        }
+        if !self.elem_input_map.is_empty() {
+            for i in 0..self.writer.elem_low_bits {
+                writeln!(
+                    self.writer.out,
+                    "    const {} elem_low_bit{} = {};",
+                    self.writer.config.type_name,
+                    i,
+                    self.writer.config.elem_index.low_bits_defs[i as usize]
+                )
+                .unwrap();
+            }
         }
     }
     fn func_end(&mut self) {
@@ -861,6 +881,19 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     "    v{} = ((arg2 & {}) != 0) ? one : zero;",
                     reg,
                     1u32 << (*arg_bit - 32)
+                )
+                .unwrap();
+            }
+        } else if let Some(elem_bit) = self.elem_input_map.get(&input) {
+            if *elem_bit < (self.writer.elem_low_bits as usize) {
+                writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
+            } else {
+                writeln!(
+                    self.writer.out,
+                    "    v{} = (({} & {}) != 0) ? one : zero;",
+                    reg,
+                    self.writer.config.elem_index.high_bits,
+                    1u32 << (*elem_bit - (self.writer.elem_low_bits as usize))
                 )
                 .unwrap();
             }
@@ -1001,6 +1034,11 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         }
         if !self.config.one_value.0.is_empty() {
             self.out.extend(self.config.one_value.0.as_bytes());
+            self.out.push(b'\n');
+        }
+        if !self.config.elem_index.low_bits_init.is_empty() {
+            self.out
+                .extend(self.config.elem_index.low_bits_init.as_bytes());
             self.out.push(b'\n');
         }
     }
