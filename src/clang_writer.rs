@@ -4,6 +4,14 @@ use std::collections::HashMap;
 use std::io::Write;
 
 #[derive(Clone, Debug)]
+pub struct ElemIndexConfig<'a> {
+    low_bits_init: &'a str,
+    low_bits_defs: [&'a str; 16],
+    func_arg_high: Option<&'a str>,
+    high_bits: &'a str,
+}
+
+#[derive(Clone, Debug)]
 pub struct CLangWriterConfig<'a> {
     func_modifier: Option<&'a str>,
     init_index: Option<&'a str>, // to initialize index in OpenCL kernel
@@ -21,7 +29,7 @@ pub struct CLangWriterConfig<'a> {
     not_op: Option<&'a str>,
     zero_value: (&'a str, &'a str), // for arg_input
     one_value: (&'a str, &'a str),  // for emulate NOT and arg_input
-    elem_index_low: (&'a str, [&'a str; 16]),
+    elem_index: ElemIndexConfig<'a>,
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
 }
@@ -43,9 +51,9 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     not_op: Some("~{}"),
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaa",
             "0xcccccccc",
             "0xf0f0f0f0",
@@ -63,7 +71,9 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -85,9 +95,9 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     not_op: Some("~{}"),
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaaaaaaaaaaULL",
             "0xccccccccccccccccULL",
             "0xf0f0f0f0f0f0f0f0ULL",
@@ -105,7 +115,9 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -127,9 +139,9 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     not_op: Some("~{}"),
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaaaaaaaaaaULL",
             "0xccccccccccccccccULL",
             "0xf0f0f0f0f0f0f0f0ULL",
@@ -147,7 +159,9 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -169,9 +183,9 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     not_op: Some("~{}"),
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaaaaaaaaaaULL",
             "0xccccccccccccccccULL",
             "0xf0f0f0f0f0f0f0f0ULL",
@@ -189,7 +203,9 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -217,12 +233,12 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
         r##"static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };"##,
         "*((const __m64*)one_value)",
     ),
-    elem_index_low: (
-        r##"static const unsigned int elem_index_low_tbl[6*2] = {
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[6*2] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xcccccccc, 0xcccccccc, 0xf0f0f0f0, 0xf0f0f0f0,
     0xff00ff00, 0xff00ff00, 0xffff0000, 0xffff0000, 0x00000000, 0xffffffff
 };"##,
-        [
+        low_bits_defs: [
             "*((const __m64*)elem_index_low_tbl)",
             "*((const __m64*)(elem_index_low_tbl + 2))",
             "*((const __m64*)(elem_index_low_tbl + 4))",
@@ -240,7 +256,9 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -269,8 +287,8 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((const __m128*)one_value)",
     ),
-    elem_index_low: (
-        r##"static const unsigned int elem_index_low_tbl[7*4] = {
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
@@ -279,7 +297,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
 };"##,
-        [
+        low_bits_defs: [
             "*((const __m128*)elem_index_low_tbl)",
             "*((const __m128*)(elem_index_low_tbl + 4))",
             "*((const __m128*)(elem_index_low_tbl + 8))",
@@ -297,7 +315,9 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -330,8 +350,8 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
 };"##,
         "*((const __m256*)one_value)",
     ),
-    elem_index_low: (
-        r##"static const unsigned int elem_index_low_tbl[8*8] = {
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[8*8] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
@@ -341,7 +361,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 };"##,
-        [
+        low_bits_defs: [
             "*((const __m256*)elem_index_low_tbl)",
             "*((const __m256*)(elem_index_low_tbl + 8))",
             "*((const __m256*)(elem_index_low_tbl + 16))",
@@ -359,7 +379,9 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: Some("_mm256_loadu_ps((const float*)&{})"),
     store_op: Some("_mm256_storeu_ps((float*)&{}, {})"),
 };
@@ -394,8 +416,8 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
 };"##,
         "*((const __m512i*)one_value)",
     ),
-    elem_index_low: (
-        r##"static const unsigned int elem_index_low_tbl[9*16] = {
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[9*16] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
@@ -415,7 +437,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 };"##,
-        [
+        low_bits_defs: [
             "*((const __m512i*)elem_index_low_tbl)",
             "*((const __m512i*)(elem_index_low_tbl + 16))",
             "*((const __m512i*)(elem_index_low_tbl + 32))",
@@ -433,7 +455,9 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: Some("_mm512_loadu_epi64(&{})"),
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
 };
@@ -455,9 +479,9 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     not_op: Some("vmvnq_u32({})"),
     zero_value: ("", "{ 0, 0, 0, 0 }"),
     one_value: ("", "{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "{ 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa }",
             "{ 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc }",
             "{ 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0 }",
@@ -475,7 +499,9 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: Some("task_id"),
+        high_bits: "task_id",
+    },
     load_op: None,
     store_op: None,
 };
@@ -497,9 +523,9 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     not_op: Some("~{}"),
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaa",
             "0xcccccccc",
             "0xf0f0f0f0",
@@ -517,7 +543,9 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
             "",
         ],
-    ),
+        func_arg_high: None,
+        high_bits: "idx",
+    },
     load_op: None,
     store_op: None,
 };
@@ -542,9 +570,9 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     not_op: Some("~{}"),
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
-    elem_index_low: (
-        "",
-        [
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
             "0xaaaaaaaa",
             "0xcccccccc",
             "0xf0f0f0f0",
@@ -562,7 +590,9 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
             "",
             "",
         ],
-    ),
+        func_arg_high: None,
+        high_bits: "idx",
+    },
     load_op: None,
     store_op: None,
 };
@@ -576,11 +606,13 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_placement: Option<(&'c [usize], usize)>,
     input_map: HashMap<usize, usize>,
     arg_input_map: HashMap<usize, usize>,
+    elem_input_map: HashMap<usize, usize>,
     single_buffer: bool,
 }
 
 pub struct CLangWriter<'a> {
     config: &'a CLangWriterConfig<'a>,
+    elem_low_bits: u32,
     out: Vec<u8>,
 }
 
@@ -589,6 +621,12 @@ impl<'a> CLangWriterConfig<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
         CLangWriter {
             config: self,
+            elem_low_bits: self
+                .elem_index
+                .low_bits_defs
+                .iter()
+                .position(|x| *x == "")
+                .unwrap_or(16) as u32,
             out: vec![],
         }
     }
@@ -977,23 +1015,33 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
+        elem_inputs: Option<&'c [usize]>,
         single_buffer: bool,
     ) -> CLangFuncWriter<'a, 'c> {
-        let (input_map, arg_input_map) = if let Some(arg_inputs) = arg_inputs {
-            let arg_input_map =
-                HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)));
+        let (input_map, arg_input_map, elem_input_map) = {
+            let arg_input_map = if let Some(arg_inputs) = arg_inputs {
+                HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+            } else {
+                HashMap::new()
+            };
+            let elem_input_map = if let Some(elem_inputs) = elem_inputs {
+                HashMap::from_iter(elem_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+            } else {
+                HashMap::new()
+            };
             let mut input_map = HashMap::new();
-            let mut count = 0;
-            for i in 0..input_len {
-                if !arg_input_map.contains_key(&i) {
-                    input_map.insert(i, count);
-                    count += 1;
+            if !arg_input_map.is_empty() || !elem_input_map.is_empty() {
+                let mut count = 0;
+                for i in 0..input_len {
+                    if !arg_input_map.contains_key(&i) && !elem_input_map.contains_key(&i) {
+                        input_map.insert(i, count);
+                        count += 1;
+                    }
                 }
             }
-            (input_map, arg_input_map)
-        } else {
-            (HashMap::new(), HashMap::new())
+            (input_map, arg_input_map, elem_input_map)
         };
+
         CLangFuncWriter::<'a, 'c> {
             writer: self,
             name,
@@ -1003,6 +1051,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_placement,
             input_map,
             arg_input_map,
+            elem_input_map,
             single_buffer,
         }
     }

@@ -129,6 +129,7 @@ fn write_test_code_single_buffer(
             None
         },
         if arg_input { Some(&[0, 2]) } else { None },
+        None,
         true,
     );
     fw.func_start();
@@ -970,6 +971,7 @@ fn test_clang_writer_arginput_64bit() {
         None,
         None,
         Some(&(120 - 64..120).collect::<Vec<_>>()),
+        None,
         false,
     );
     let out = String::from_utf8(writer.out()).unwrap();

@@ -566,6 +566,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     input_placement: Option<(&'a [usize], usize)>,
     output_placement: Option<(&'a [usize], usize)>,
     arg_inputs: Option<&'a [usize]>,
+    elem_inputs: Option<&'a [usize]>,
     single_buffer: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -597,6 +598,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         input_placement,
         output_placement,
         arg_inputs,
+        elem_inputs,
         single_buffer,
     );
     func_writer.func_start();
@@ -671,6 +673,7 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         input_placement,
         output_placement,
         arg_inputs,
+        None,
         false,
     );
 }

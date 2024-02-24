@@ -640,6 +640,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             input_placement,
             output_placement,
             arg_inputs,
+            None,
             single_buffer,
         );
     }

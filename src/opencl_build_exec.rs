@@ -695,6 +695,7 @@ impl<'b, 'a>
             input_placement,
             output_placement,
             arg_inputs,
+            None,
             single_buffer,
         );
     }

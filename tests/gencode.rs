@@ -124,6 +124,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         input_placement: Option<(&'c [usize], usize)>,
         output_placement: Option<(&'c [usize], usize)>,
         arg_inputs: Option<&'c [usize]>,
+        _elem_inputs: Option<&'c [usize]>,
         single_buffer: bool,
     ) -> TestFuncWriter<'c> {
         TestFuncWriter::<'c> {
@@ -307,6 +308,7 @@ EndFunc
         Some((&[0, 1, 2], 3)),
         Some((&[0, 1], 3)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -335,6 +337,7 @@ EndFunc
         Some((&[0, 1, 2], 3)),
         Some((&[0, 1], 3)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -362,6 +365,7 @@ EndFunc
         false,
         Some((&[0, 1, 2], 3)),
         Some((&[0, 1], 3)),
+        None,
         None,
         true,
     );
@@ -870,6 +874,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -915,6 +920,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -957,6 +963,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1317,6 +1324,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1347,6 +1355,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1374,6 +1383,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1408,6 +1418,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         false,
     );
     assert_eq!(
@@ -1435,6 +1446,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1470,6 +1482,7 @@ EndFunc
         Some((&[1, 2, 3, 0], 4)),
         Some((&[3, 2, 0, 1], 4)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1499,6 +1512,7 @@ EndFunc
         false,
         Some((&[1, 2, 3, 0], 4)),
         Some((&[3, 2, 0, 1], 4)),
+        None,
         None,
         true,
     );
@@ -1531,6 +1545,7 @@ EndFunc
         Some((&[1, 2, 0, 3], 4)),
         Some((&[3, 2, 0, 1], 4)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1560,6 +1575,7 @@ EndFunc
         false,
         Some((&[1, 2, 0, 3], 4)),
         Some((&[3, 2, 0, 1], 4)),
+        None,
         None,
         true,
     );
@@ -1592,6 +1608,7 @@ EndFunc
         None,
         Some((&[3, 2, 0, 1], 4)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1621,6 +1638,7 @@ EndFunc
         false,
         None,
         Some((&[3, 2, 0, 1], 4)),
+        None,
         None,
         true,
     );
@@ -1653,6 +1671,7 @@ EndFunc
         Some((&[1, 2, 0, 3], 4)),
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1681,6 +1700,7 @@ EndFunc
         circuit.clone(),
         false,
         Some((&[1, 2, 0, 3], 4)),
+        None,
         None,
         None,
         true,
@@ -1725,6 +1745,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1752,6 +1773,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1786,6 +1808,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         false,
     );
     assert_eq!(
@@ -1813,6 +1836,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1862,6 +1886,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -1893,6 +1918,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -1931,6 +1957,7 @@ EndFunc
         None,
         None,
         None,
+        None,
         false,
     );
     assert_eq!(
@@ -1962,6 +1989,7 @@ EndFunc
         "test1",
         circuit.clone(),
         false,
+        None,
         None,
         None,
         None,
@@ -2000,6 +2028,7 @@ EndFunc
         Some((&[1, 2, 3, 0], 4)),
         Some((&[3, 2, 0, 1], 4)),
         None,
+        None,
         true,
     );
     assert_eq!(
@@ -2033,6 +2062,7 @@ EndFunc
         false,
         Some((&[1, 2, 3, 0], 4)),
         Some((&[3, 2, 0, 1], 4)),
+        None,
         None,
         true,
     );

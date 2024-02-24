@@ -107,6 +107,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
         arg_inputs: Option<&'a [usize]>,
+        elem_inputs: Option<&'a [usize]>,
         single_buffer: bool,
     ) -> FW;
 
@@ -118,6 +119,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_placement: Option<(&'a [usize], usize)>,
         output_placement: Option<(&'a [usize], usize)>,
         arg_inputs: Option<&'a [usize]>,
+        elem_inputs: Option<&'a [usize]>,
         single_buffer: bool,
     ) -> FW {
         // for checking requirements for single_buffer
@@ -138,6 +140,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             assert!(arg_inputs.len() <= 64);
             assert!(arg_inputs.iter().all(|x| *x < input_len));
         }
+        if let Some(elem_inputs) = elem_inputs {
+            assert!(elem_inputs.iter().all(|x| *x < input_len));
+        }
 
         unsafe {
             self.func_writer_internal(
@@ -147,6 +152,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
                 input_placement,
                 output_placement,
                 arg_inputs,
+                elem_inputs,
                 single_buffer,
             )
         }
@@ -168,6 +174,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             input_placement,
             output_placement,
             arg_inputs,
+            None,
             false,
         )
     }
