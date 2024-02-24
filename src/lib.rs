@@ -143,6 +143,15 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         if let Some(elem_inputs) = elem_inputs {
             assert!(elem_inputs.iter().all(|x| *x < input_len));
         }
+        // check whether arg_input and elem_input have common inputs
+        if let Some(arg_inputs) = arg_inputs {
+            if let Some(elem_inputs) = elem_inputs {
+                use std::collections::HashSet;
+                let arg_input_set = HashSet::<usize>::from_iter(arg_inputs.iter().copied());
+                let elem_input_set = HashSet::from_iter(elem_inputs.iter().copied());
+                assert_eq!(arg_input_set.intersection(&elem_input_set).count(), 0);
+            }
+        }
 
         unsafe {
             self.func_writer_internal(
