@@ -512,7 +512,8 @@ fn test_parseq_mapper_builder_and_exec() {
                         }
                     }
                 },
-                |out1, out2| out1 && out2
+                |out1, out2| out1 && out2,
+                |_| false
             )
             .unwrap());
         assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
@@ -587,7 +588,8 @@ fn test_parseq_mapper_builder_and_exec() {
                         }
                     }
                 },
-                |out1, out2| out1 && out2
+                |out1, out2| out1 && out2,
+                |_| false
             )
             .unwrap());
         assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
@@ -635,7 +637,8 @@ fn test_parseq_mapper_builder_and_exec() {
                         .enumerate()
                         .all(|(i, exp)| result_out[i] == exp)
                 },
-                |out1, out2| out1 && out2
+                |out1, out2| out1 && out2,
+                |_| false
             )
             .unwrap());
         assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));

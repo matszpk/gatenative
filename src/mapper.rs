@@ -280,7 +280,8 @@ where
             .map(|arg| {
                 if !do_stop.load(atomic::Ordering::SeqCst) {
                     // just execute executor
-                    let r = self.executor
+                    let r = self
+                        .executor
                         .try_clone()
                         .unwrap()
                         .execute(input, arg)

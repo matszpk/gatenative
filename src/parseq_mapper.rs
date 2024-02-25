@@ -8,7 +8,7 @@ use std::hash::Hash;
 
 use std::marker::PhantomData;
 use std::sync::{
-    atomic::{self, AtomicU64},
+    atomic::{self, AtomicBool, AtomicU64},
     Arc, Mutex,
 };
 
@@ -211,12 +211,13 @@ where
     pub fn output_len(&self) -> usize {
         self.par.output_len()
     }
-    pub fn execute<Out, F, G>(
+    pub fn execute<Out, F, G, Stop>(
         &mut self,
         input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
         init: Out,
         f: F,
         g: G,
+        stop: Stop,
     ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
         F: Fn(
@@ -228,13 +229,18 @@ where
             + Send
             + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
+        Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
         let arg_count = Arc::new(AtomicU64::new(0));
+        let do_stop = Arc::new(AtomicBool::new(false));
         let results = self.thread_pool.broadcast(|ctx| {
             let mut thread_result = Ok(init.clone());
             loop {
                 let thread_idx = ctx.index();
+                if do_stop.load(atomic::Ordering::SeqCst) {
+                    break;
+                }
                 let arg_u64 = arg_count.fetch_add(1, atomic::Ordering::SeqCst);
                 if arg_u64 > u64::from(self.arg_input_max) {
                     break;
@@ -270,6 +276,7 @@ where
                         .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
                 };
                 if let Ok(a) = thread_result {
+                    do_stop.fetch_or(stop(&a), atomic::Ordering::SeqCst);
                     thread_result = match result {
                         Ok(result) => Ok(g(a.clone(), result)),
                         Err(e) => Err(e),
@@ -293,16 +300,18 @@ where
         })
     }
 
-    pub fn execute_direct<Out: Clone, F, G>(
+    pub fn execute_direct<Out: Clone, F, G, Stop>(
         &mut self,
         input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
         init: Out,
         f: F,
         g: G,
+        stop: Stop,
     ) -> Result<Out, ParSeqMapperExecutorError<PE::ErrorType, SE::ErrorType>>
     where
         F: Fn(ParSeqSelection, &[u32], &[u32], u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
+        Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
         self.execute(
@@ -327,6 +336,7 @@ where
                 }
             },
             g,
+            stop,
         )
     }
 
