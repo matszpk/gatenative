@@ -66,7 +66,17 @@ fn get_input_orig_index_map(
 ) -> HashMap<usize, usize> {
     if single_buffer {
         if let Some((input_p, _)) = input_placement {
-            HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
+            if let Some(input_map) = input_map {
+                HashMap::from_iter((0..input_len).filter_map(|i| {
+                    if let Some(index) = input_map.get(&i) {
+                        Some((input_p[*index], i))
+                    } else {
+                        None
+                    }
+                }))
+            } else {
+                HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
+            }
         } else {
             HashMap::from_iter((0..input_len).filter_map(|i| {
                 if let Some(input_map) = input_map {
