@@ -62,21 +62,23 @@ fn get_input_orig_index_map(
     input_len: usize,
     input_placement: Option<(&[usize], usize)>,
     single_buffer: bool,
-    input_map: &HashMap<usize, usize>,
+    input_map: Option<&HashMap<usize, usize>>,
 ) -> HashMap<usize, usize> {
     if single_buffer {
         if let Some((input_p, _)) = input_placement {
             HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
         } else {
-            HashMap::from_iter((0..input_len).map(|i| {
-                (
-                    if !input_map.is_empty() {
-                        *input_map.get(&i).unwrap_or(&input_len)
+            HashMap::from_iter((0..input_len).filter_map(|i| {
+                if let Some(input_map) = input_map {
+                    if let Some(index) = input_map.get(&i) {
+                        Some((*index, i))
                     } else {
-                        i
-                    },
-                    i,
-                )
+                        // if not found then ignore, becuase is arg_inputs or elem_inputs
+                        None
+                    }
+                } else {
+                    Some((i, i))
+                }
             }))
         }
     } else {
@@ -90,7 +92,7 @@ fn gen_var_allocs<T>(
     output_placement: Option<(&[usize], usize)>,
     var_usage: &mut [T],
     single_buffer: bool,
-    input_map: &HashMap<usize, usize>,
+    input_map: Option<&HashMap<usize, usize>>,
 ) -> (Vec<T>, usize)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -247,7 +249,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     swap_args: &[bool],
     var_allocs: &[T],
     single_buffer: bool,
-    input_map: &HashMap<usize, usize>,
+    input_map: Option<&HashMap<usize, usize>>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -413,7 +415,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     swap_args: &[bool],
     var_allocs: &[T],
     single_buffer: bool,
-    input_map: &HashMap<usize, usize>,
+    input_map: Option<&HashMap<usize, usize>>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -615,8 +617,11 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
                     count += 1;
                 }
             }
+            Some(input_map)
+        } else {
+            // no input map - because no arg_inputs or elem_inputs
+            None
         }
-        input_map
     };
 
     let (var_allocs, var_num) = gen_var_allocs(
@@ -625,7 +630,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         output_placement,
         &mut gen_var_usage(&circuit),
         single_buffer,
-        &input_map,
+        input_map.as_ref(),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -660,7 +665,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             &swap_args,
             &var_allocs,
             single_buffer,
-            &input_map,
+            input_map.as_ref(),
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -683,7 +688,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             &swap_args,
             &var_allocs,
             single_buffer,
-            &input_map,
+            input_map.as_ref(),
         );
     }
 
@@ -740,13 +745,13 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None)
         );
 
         let circuit = Circuit::new(
@@ -770,13 +775,13 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None)
         );
 
         // read/write conflict
@@ -795,13 +800,13 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 1, 0, 2, 2, 0, 0], 3),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None)
         );
         // with placement
         let mut var_usage = gen_var_usage(&circuit);
@@ -814,7 +819,7 @@ mod tests {
                 Some((&[3, 2, 0, 1], 4)),
                 &mut var_usage,
                 true,
-                &HashMap::new()
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -827,7 +832,7 @@ mod tests {
                 Some((&[3, 2, 0, 1], 4)),
                 &mut var_usage,
                 true,
-                &HashMap::new()
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -840,7 +845,7 @@ mod tests {
                 Some((&[3, 2, 0, 1], 4)),
                 &mut var_usage,
                 true,
-                &HashMap::new()
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -853,7 +858,7 @@ mod tests {
                 None,
                 &mut var_usage,
                 true,
-                &HashMap::new()
+                None
             )
         );
 
@@ -872,13 +877,13 @@ mod tests {
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 4, 0, 1, 2, 2, 0, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None)
         );
 
         let circuit = Circuit::new(
@@ -900,13 +905,13 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![4, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 5),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, &HashMap::new())
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None)
         );
         // testcase with placements
         let mut var_usage = gen_var_usage(&circuit);
@@ -919,7 +924,7 @@ mod tests {
                 Some((&[3, 2, 0, 1], 4)),
                 &mut var_usage,
                 true,
-                &HashMap::new(),
+                None,
             )
         );
     }
