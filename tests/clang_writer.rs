@@ -2295,6 +2295,198 @@ fn test_clang_writer_elem_index() {
 "##
     );
 
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_ext(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        Some(&(17..28).collect::<Vec<_>>()),
+        Some(&(1..14).collect::<Vec<_>>()),
+        false,
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned int n, 
+    unsigned int input_shift, unsigned int output_shift,
+    const global uint* input,
+    global uint* output, unsigned int arg, unsigned int arg2) {
+    const uint idx = get_global_id(0);
+    const unsigned int ivn = 6 * idx + input_shift;
+    const unsigned int ovn = 15 * idx + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    const uint elem_low_bit0 = 0xaaaaaaaa;
+    const uint elem_low_bit1 = 0xcccccccc;
+    const uint elem_low_bit2 = 0xf0f0f0f0;
+    const uint elem_low_bit3 = 0xff00ff00;
+    const uint elem_low_bit4 = 0xffff0000;
+    uint v0;
+    uint v1;
+    if (idx >= n) return;
+    v0 = input[ivn + 0];
+    v1 = input[ivn + 2];
+    v0 = (v0 ^ v1);
+    output[ovn + 0] = v0;
+    v0 = elem_low_bit0;
+    v1 = input[ivn + 3];
+    v0 = (v0 ^ v1);
+    output[ovn + 1] = v0;
+    v0 = elem_low_bit1;
+    v1 = ((arg & 1) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 2] = v0;
+    v0 = elem_low_bit2;
+    v1 = ((arg & 2) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 3] = v0;
+    v0 = elem_low_bit3;
+    v1 = ((arg & 4) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 4] = v0;
+    v0 = elem_low_bit4;
+    v1 = ((arg & 8) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 5] = v0;
+    v0 = ((idx & 1) != 0) ? one : zero;
+    v1 = ((arg & 16) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 6] = v0;
+    v0 = ((idx & 2) != 0) ? one : zero;
+    v1 = ((arg & 32) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 7] = v0;
+    v0 = ((idx & 4) != 0) ? one : zero;
+    v1 = ((arg & 64) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 8] = v0;
+    v0 = ((idx & 8) != 0) ? one : zero;
+    v1 = ((arg & 128) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 9] = v0;
+    v0 = ((idx & 16) != 0) ? one : zero;
+    v1 = ((arg & 256) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 10] = v0;
+    v0 = ((idx & 32) != 0) ? one : zero;
+    v1 = ((arg & 512) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 11] = v0;
+    v0 = ((idx & 64) != 0) ? one : zero;
+    v1 = ((arg & 1024) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + 12] = v0;
+    v0 = ((idx & 128) != 0) ? one : zero;
+    v1 = input[ivn + 4];
+    v0 = (v0 ^ v1);
+    output[ovn + 13] = v0;
+    v0 = input[ivn + 1];
+    v1 = input[ivn + 5];
+    v0 = (v0 ^ v1);
+    output[ovn + 14] = v0;
+}
+"##
+    );
+
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    generate_code_ext(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        Some(&(17..28).collect::<Vec<_>>()),
+        Some(&(1..14).collect::<Vec<_>>()),
+        false,
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned int n, 
+    unsigned int input_shift, unsigned int output_shift,
+    const global uint* input,
+    global uint* output, unsigned int arg, unsigned int arg2) {
+    const uint idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const unsigned int ivn = llen * (6 * idx) + input_shift;
+    const unsigned int ovn = llen * (15 * idx) + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    const uint elem_low_bit0 = 0xaaaaaaaa;
+    const uint elem_low_bit1 = 0xcccccccc;
+    const uint elem_low_bit2 = 0xf0f0f0f0;
+    const uint elem_low_bit3 = 0xff00ff00;
+    const uint elem_low_bit4 = 0xffff0000;
+    uint v0;
+    uint v1;
+    if (idx >= n) return;
+    v0 = input[ivn + llen*0 + lidx];
+    v1 = input[ivn + llen*2 + lidx];
+    v0 = (v0 ^ v1);
+    output[ovn + llen*0 + lidx] = v0;
+    v0 = elem_low_bit0;
+    v1 = input[ivn + llen*3 + lidx];
+    v0 = (v0 ^ v1);
+    output[ovn + llen*1 + lidx] = v0;
+    v0 = elem_low_bit1;
+    v1 = ((arg & 1) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*2 + lidx] = v0;
+    v0 = elem_low_bit2;
+    v1 = ((arg & 2) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*3 + lidx] = v0;
+    v0 = elem_low_bit3;
+    v1 = ((arg & 4) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*4 + lidx] = v0;
+    v0 = elem_low_bit4;
+    v1 = ((arg & 8) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*5 + lidx] = v0;
+    v0 = ((idx & 1) != 0) ? one : zero;
+    v1 = ((arg & 16) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*6 + lidx] = v0;
+    v0 = ((idx & 2) != 0) ? one : zero;
+    v1 = ((arg & 32) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*7 + lidx] = v0;
+    v0 = ((idx & 4) != 0) ? one : zero;
+    v1 = ((arg & 64) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*8 + lidx] = v0;
+    v0 = ((idx & 8) != 0) ? one : zero;
+    v1 = ((arg & 128) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*9 + lidx] = v0;
+    v0 = ((idx & 16) != 0) ? one : zero;
+    v1 = ((arg & 256) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*10 + lidx] = v0;
+    v0 = ((idx & 32) != 0) ? one : zero;
+    v1 = ((arg & 512) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*11 + lidx] = v0;
+    v0 = ((idx & 64) != 0) ? one : zero;
+    v1 = ((arg & 1024) != 0) ? one : zero;
+    v0 = (v0 ^ v1);
+    output[ovn + llen*12 + lidx] = v0;
+    v0 = ((idx & 128) != 0) ? one : zero;
+    v1 = input[ivn + llen*4 + lidx];
+    v0 = (v0 ^ v1);
+    output[ovn + llen*13 + lidx] = v0;
+    v0 = input[ivn + llen*1 + lidx];
+    v1 = input[ivn + llen*5 + lidx];
+    v0 = (v0 ^ v1);
+    output[ovn + llen*14 + lidx] = v0;
+}
+"##
+    );
+
     // with arg_input and input_placement
     let mut writer = CLANG_WRITER_U32.writer();
     generate_code_ext(
