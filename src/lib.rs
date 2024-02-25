@@ -14,6 +14,7 @@ use std::ops::{Range, RangeFrom};
 // TODO: elem_inputs - add ability to set elem_index for all circuit inputs
 // TODO: add elem_inputs to mappers (including ParSeqMapper).
 // TODO: Add output aggregator to execution.
+// TODO: Add ability to stop mapper execution if result is satisfiable.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
