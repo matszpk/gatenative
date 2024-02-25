@@ -226,6 +226,7 @@ pub struct OpenCLExecutor {
     real_output_len: usize,
     words_per_real_word: usize,
     have_arg_inputs: bool,
+    elem_input_num: usize,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
     program: Arc<Program>,
@@ -274,6 +275,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             0
         };
@@ -337,6 +340,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             (output.range.end - output.range.start) / real_output_words
         };
@@ -392,6 +397,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
             (output.range.end - output.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             0
         };
@@ -483,6 +490,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             kernel: Kernel::create(&self.program, &name).unwrap(),
             single_buffer: self.single_buffer,
             group_vec: self.group_vec,
+            elem_input_num: self.elem_input_num,
         })
     }
 
@@ -730,6 +738,7 @@ impl<'b, 'a>
                         .unwrap_or(e.output_len),
                     words_per_real_word,
                     have_arg_inputs: e.arg_input_len.is_some(),
+                    elem_input_num: e.elem_input_len.unwrap_or(0),
                     context: self.context.clone(),
                     cmd_queue: cmd_queue.clone(),
                     program: program.clone(),

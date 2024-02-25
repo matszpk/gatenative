@@ -289,8 +289,12 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
-        assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.real_input_len()) >> 5
+        if self.real_input_len() != 0 {
+            assert_eq!(elem_num % (self.word_len() as usize), 0);
+            (elem_num * self.real_input_len()) >> 5
+        } else {
+            1
+        }
     }
 
     // in 32-bit words

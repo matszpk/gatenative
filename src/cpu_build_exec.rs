@@ -323,7 +323,7 @@ pub struct CPUExecutor {
     real_output_len: usize,
     words_per_real_word: usize,
     have_arg_inputs: bool,
-    have_elem_inputs: bool,
+    elem_input_num: usize,
     library: Arc<Library>,
     sym_name: String,
     single_buffer: bool,
@@ -359,11 +359,13 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if real_input_words != 0 {
             input.len() / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             0
         };
         let mut output = vec![0; num * real_output_words];
-        if self.have_elem_inputs {
+        if self.elem_input_num != 0 {
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
@@ -438,13 +440,15 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let output_len = output.get().get().len();
         let num = if real_input_words != 0 {
             input.len() / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             output_len / real_output_words
         };
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        if self.have_elem_inputs {
+        if self.elem_input_num != 0 {
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
@@ -512,13 +516,15 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let output_len = output.get().get().len();
         let num = if real_input_words != 0 {
             output_len / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
         } else {
             0
         };
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        if self.have_elem_inputs {
+        if self.elem_input_num != 0 {
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
@@ -757,7 +763,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                         .unwrap_or(e.output_len),
                     words_per_real_word,
                     have_arg_inputs: e.arg_input_len.is_some(),
-                    have_elem_inputs: e.elem_input_len.is_some(),
+                    elem_input_num: e.elem_input_len.unwrap_or(0),
                     library: lib,
                     sym_name: e.sym_name.clone(),
                     single_buffer: e.single_buffer,
