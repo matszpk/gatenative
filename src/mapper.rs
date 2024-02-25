@@ -274,6 +274,7 @@ where
         Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
+        // TODO: do better stop
         let do_stop = Arc::new(AtomicBool::new(false));
         (0..=self.arg_input_max)
             .into_par_iter()
