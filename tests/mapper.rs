@@ -159,33 +159,38 @@ fn test_basic_mapper_builder_and_exec() {
         let input = execs[0].new_data_from_vec(xcircuit_input.clone());
         assert!(
             execs[0]
-                .execute(&input, true, |out, _, result_out, arg_input| {
-                    let mut input = vec![false; 12];
-                    let mut xcircuit_out = vec![0u32; xcircuit_data_num];
-                    // fill inputs by arg_inputs
-                    for (i, v) in arg_input_indices.iter().enumerate() {
-                        input[*v] = ((arg_input >> i) & 1) != 0;
-                    }
-                    // prepare expected output
-                    for rest in 0..256 {
-                        // fill input by rest of bits of input
-                        for (i, v) in rest_input_indices.iter().enumerate() {
-                            input[*v] = ((rest >> i) & 1) != 0;
+                .execute(
+                    &input,
+                    true,
+                    |out, _, result_out, arg_input| {
+                        let mut input = vec![false; 12];
+                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                        // fill inputs by arg_inputs
+                        for (i, v) in arg_input_indices.iter().enumerate() {
+                            input[*v] = ((arg_input >> i) & 1) != 0;
                         }
-                        let value = circuit.eval(input.clone())[0];
-                        let idx = (rest >> 5) / word_len;
-                        let widx = (rest >> 5) % word_len;
-                        let bit = rest & 31;
-                        xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
-                    }
-                    // get result output and compare
-                    let result_out = result_out.get();
-                    let result_out = result_out.get();
-                    out && xcircuit_out
-                        .into_iter()
-                        .enumerate()
-                        .all(|(i, exp)| result_out[i] == exp)
-                })
+                        // prepare expected output
+                        for rest in 0..256 {
+                            // fill input by rest of bits of input
+                            for (i, v) in rest_input_indices.iter().enumerate() {
+                                input[*v] = ((rest >> i) & 1) != 0;
+                            }
+                            let value = circuit.eval(input.clone())[0];
+                            let idx = (rest >> 5) / word_len;
+                            let widx = (rest >> 5) % word_len;
+                            let bit = rest & 31;
+                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                        }
+                        // get result output and compare
+                        let result_out = result_out.get();
+                        let result_out = result_out.get();
+                        out && xcircuit_out
+                            .into_iter()
+                            .enumerate()
+                            .all(|(i, exp)| result_out[i] == exp)
+                    },
+                    |_| false
+                )
                 .unwrap(),
             "{}",
             config_num
@@ -193,31 +198,36 @@ fn test_basic_mapper_builder_and_exec() {
         // execute_direct testcase
         assert!(
             execs[0]
-                .execute_direct(&input, true, |out, _, result_out, arg_input| {
-                    let mut input = vec![false; 12];
-                    let mut xcircuit_out = vec![0u32; xcircuit_data_num];
-                    // fill inputs by arg_inputs
-                    for (i, v) in arg_input_indices.iter().enumerate() {
-                        input[*v] = ((arg_input >> i) & 1) != 0;
-                    }
-                    // prepare expected output
-                    for rest in 0..256 {
-                        // fill input by rest of bits of input
-                        for (i, v) in rest_input_indices.iter().enumerate() {
-                            input[*v] = ((rest >> i) & 1) != 0;
+                .execute_direct(
+                    &input,
+                    true,
+                    |out, _, result_out, arg_input| {
+                        let mut input = vec![false; 12];
+                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                        // fill inputs by arg_inputs
+                        for (i, v) in arg_input_indices.iter().enumerate() {
+                            input[*v] = ((arg_input >> i) & 1) != 0;
                         }
-                        let value = circuit.eval(input.clone())[0];
-                        let idx = (rest >> 5) / word_len;
-                        let widx = (rest >> 5) % word_len;
-                        let bit = rest & 31;
-                        xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
-                    }
-                    // get result output and compare
-                    out && xcircuit_out
-                        .into_iter()
-                        .enumerate()
-                        .all(|(i, exp)| result_out[i] == exp)
-                })
+                        // prepare expected output
+                        for rest in 0..256 {
+                            // fill input by rest of bits of input
+                            for (i, v) in rest_input_indices.iter().enumerate() {
+                                input[*v] = ((rest >> i) & 1) != 0;
+                            }
+                            let value = circuit.eval(input.clone())[0];
+                            let idx = (rest >> 5) / word_len;
+                            let widx = (rest >> 5) % word_len;
+                            let bit = rest & 31;
+                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                        }
+                        // get result output and compare
+                        out && xcircuit_out
+                            .into_iter()
+                            .enumerate()
+                            .all(|(i, exp)| result_out[i] == exp)
+                    },
+                    |_| false
+                )
                 .unwrap(),
             "{}",
             config_num
@@ -240,33 +250,38 @@ fn test_basic_mapper_builder_and_exec() {
             let input = execs[1].new_data_from_vec(xcircuit_input.clone());
             assert!(
                 execs[1]
-                    .execute(&input, true, |out, _, result_out, arg_input| {
-                        let mut input = vec![false; 8];
-                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
-                        // fill inputs by arg_inputs
-                        for (i, v) in arg_input_indices_2.iter().enumerate() {
-                            input[*v] = ((arg_input >> i) & 1) != 0;
-                        }
-                        // prepare expected output
-                        for rest in 0..32 {
-                            // fill input by rest of bits of input
-                            for (i, v) in rest_input_indices_2.iter().enumerate() {
-                                input[*v] = ((rest >> i) & 1) != 0;
+                    .execute(
+                        &input,
+                        true,
+                        |out, _, result_out, arg_input| {
+                            let mut input = vec![false; 8];
+                            let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                            // fill inputs by arg_inputs
+                            for (i, v) in arg_input_indices_2.iter().enumerate() {
+                                input[*v] = ((arg_input >> i) & 1) != 0;
                             }
-                            let value = circuit2.eval(input.clone())[0];
-                            let idx = (rest >> 5) / word_len;
-                            let widx = (rest >> 5) % word_len;
-                            let bit = rest & 31;
-                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
-                        }
-                        // get result output and compare
-                        let result_out = result_out.get();
-                        let result_out = result_out.get();
-                        out && xcircuit_out
-                            .into_iter()
-                            .enumerate()
-                            .all(|(i, exp)| result_out[i] == exp)
-                    })
+                            // prepare expected output
+                            for rest in 0..32 {
+                                // fill input by rest of bits of input
+                                for (i, v) in rest_input_indices_2.iter().enumerate() {
+                                    input[*v] = ((rest >> i) & 1) != 0;
+                                }
+                                let value = circuit2.eval(input.clone())[0];
+                                let idx = (rest >> 5) / word_len;
+                                let widx = (rest >> 5) % word_len;
+                                let bit = rest & 31;
+                                xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                            }
+                            // get result output and compare
+                            let result_out = result_out.get();
+                            let result_out = result_out.get();
+                            out && xcircuit_out
+                                .into_iter()
+                                .enumerate()
+                                .all(|(i, exp)| result_out[i] == exp)
+                        },
+                        |_| false
+                    )
                     .unwrap(),
                 "{}",
                 config_num
@@ -458,7 +473,8 @@ fn test_par_basic_mapper_builder_and_exec() {
                             .enumerate()
                             .all(|(i, exp)| result_out[i] == exp)
                     },
-                    |out1, out2| out1 && out2
+                    |out1, out2| out1 && out2,
+                    |_| false,
                 )
                 .unwrap(),
             "{}",
@@ -499,7 +515,8 @@ fn test_par_basic_mapper_builder_and_exec() {
                             .enumerate()
                             .all(|(i, exp)| result_out[i] == exp)
                     },
-                    |out1, out2| out1 && out2
+                    |out1, out2| out1 && out2,
+                    |_| false,
                 )
                 .unwrap(),
             "{}",
@@ -558,7 +575,8 @@ fn test_par_basic_mapper_builder_and_exec() {
                                 .enumerate()
                                 .all(|(i, exp)| result_out[i] == exp)
                         },
-                        |out1, out2| out1 && out2
+                        |out1, out2| out1 && out2,
+                        |_| false,
                     )
                     .unwrap(),
                 "{}",

@@ -14,7 +14,6 @@ use std::ops::{Range, RangeFrom};
 // TODO: elem_inputs - add ability to set elem_index for all circuit inputs
 // TODO: add elem_inputs to mappers (including ParSeqMapper).
 // TODO: Add output aggregator to execution.
-// TODO: Add ability to stop mapper execution if result is satisfiable.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
@@ -407,25 +406,39 @@ where
     /// Get circuit output length (number of outputs)
     fn output_len(&self) -> usize;
     // function: F - main reduce function: F(input data, output data, arg_input)
-    fn execute<Out, F>(&mut self, input: &D, init: Out, f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F, Stop>(
+        &mut self,
+        input: &D,
+        init: Out,
+        f: F,
+        stop: Stop,
+    ) -> Result<Out, Self::ErrorType>
     where
-        F: FnMut(Out, &D, &D, u64) -> Out;
+        F: FnMut(Out, &D, &D, u64) -> Out,
+        Stop: FnMut(&Out) -> bool;
 
     // function: F - main reduce function: F(input data, output data, arg_input)
-    fn execute_direct<'b, Out: Clone, F>(
+    fn execute_direct<'b, Out: Clone, F, Stop>(
         &mut self,
         input: &'b D,
         init: Out,
         mut f: F,
+        stop: Stop,
     ) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &[u32], &[u32], u64) -> Out,
+        Stop: FnMut(&Out) -> bool,
     {
-        self.execute(input, init, |out, input, output, arg_input| {
-            input.process(|inputx| {
-                output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
-            })
-        })
+        self.execute(
+            input,
+            init,
+            |out, input, output, arg_input| {
+                input.process(|inputx| {
+                    output.process(|outputx| f(out.clone(), inputx, outputx, arg_input))
+                })
+            },
+            stop,
+        )
     }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
@@ -502,30 +515,34 @@ where
     fn output_len(&self) -> usize;
     /// execute. F - main reduce function: F(input data, output data, arg_input)
     /// G - main join function
-    fn execute<Out, F, G>(
+    fn execute<Out, F, G, Stop>(
         &mut self,
         input: &D,
         init: Out,
         f: F,
         g: G,
+        stop: Stop,
     ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(&D, &D, u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
+        Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync;
 
     /// execute. F - main reduce function: F(input data, output data, arg_input)
     /// G - main join function
-    fn execute_direct<'b, Out: Clone, F, G>(
+    fn execute_direct<'b, Out: Clone, F, G, Stop>(
         &mut self,
         input: &D,
         init: Out,
         f: F,
         g: G,
+        stop: Stop,
     ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(&[u32], &[u32], u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
+        Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
         self.execute(
@@ -535,6 +552,7 @@ where
                 input.process(|inputx| output.process(|outputx| f(inputx, outputx, arg_input)))
             },
             g,
+            stop,
         )
     }
     /// Create new data - length is number of 32-bit words

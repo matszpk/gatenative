@@ -4,6 +4,10 @@ use rayon::prelude::*;
 
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::sync::{
+    atomic::{self, AtomicBool},
+    Arc,
+};
 
 use std::marker::PhantomData;
 
@@ -43,9 +47,16 @@ where
         self.executor.output_len()
     }
 
-    fn execute<Out, F>(&mut self, input: &D, init: Out, mut f: F) -> Result<Out, Self::ErrorType>
+    fn execute<Out, F, Stop>(
+        &mut self,
+        input: &D,
+        init: Out,
+        mut f: F,
+        mut stop: Stop,
+    ) -> Result<Out, Self::ErrorType>
     where
         F: FnMut(Out, &D, &D, u64) -> Out,
+        Stop: FnMut(&Out) -> bool,
     {
         let input_len = self.real_input_len();
         // calculate chunk count
@@ -60,6 +71,9 @@ where
         for arg in 0..=self.arg_input_max {
             self.executor.execute_reuse(input, arg, &mut output)?;
             out = f(out, input, &output, arg);
+            if stop(&out) {
+                break;
+            }
         }
         Ok(out)
     }
@@ -246,27 +260,34 @@ where
         self.executor.output_len()
     }
 
-    fn execute<Out, F, G>(
+    fn execute<Out, F, G, Stop>(
         &mut self,
         input: &D,
         init: Out,
         f: F,
         g: G,
+        stop: Stop,
     ) -> Result<Out, Self::ErrorType>
     where
         F: Fn(&D, &D, u64) -> Out + Send + Sync,
         G: Fn(Out, Out) -> Out + Send + Sync,
+        Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
+        let do_stop = Arc::new(AtomicBool::new(false));
         (0..=self.arg_input_max)
             .into_par_iter()
             .map(|arg| {
-                // just execute executor
-                self.executor
-                    .try_clone()
-                    .unwrap()
-                    .execute(input, arg)
-                    .map(|output| f(input, &output, arg))
+                if !do_stop.load(atomic::Ordering::SeqCst) {
+                    // just execute executor
+                    self.executor
+                        .try_clone()
+                        .unwrap()
+                        .execute(input, arg)
+                        .map(|output| f(input, &output, arg))
+                } else {
+                    Ok(init.clone())
+                }
             })
             .reduce(
                 || Ok(init.clone()),
@@ -274,8 +295,10 @@ where
                     // check whether is ok otherwise return error
                     if let Ok(av) = a {
                         if let Ok(bv) = b {
+                            let r = g(av, bv);
+                            do_stop.fetch_or(stop(&r), atomic::Ordering::SeqCst);
                             // join results
-                            Ok(g(av, bv))
+                            Ok(r)
                         } else {
                             b
                         }
