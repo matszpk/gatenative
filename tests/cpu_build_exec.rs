@@ -639,6 +639,19 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+        let output_circ_len = output_circ.len();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        let mut output_circ = execs[0].new_data(output_circ_len);
+        execs[0]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
         for (i, v) in output.into_iter().enumerate() {
@@ -651,9 +664,21 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
         let input = execs[1].new_data(1);
         let output_circ = execs[1].execute(&input, 0).unwrap();
+        let output_circ_len = output_circ.len();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
         assert!(output.len() != 0);
+        for (ix, v) in output.into_iter().enumerate() {
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, ix);
+        }
+
+        let mut output_circ = execs[1].new_data(output_circ_len);
+        execs[1]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
         for (ix, v) in output.into_iter().enumerate() {
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
             assert_eq!(out, v, "{}: {}", config_num, ix);
