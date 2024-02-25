@@ -548,9 +548,33 @@ fn test_opencl_builder_and_exec() {
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }
+    }
+}
 
+#[test]
+fn test_opencl_builder_and_exec_with_elem_input() {
+    let no_opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: false,
+        group_vec: false,
+        group_len: None,
+    };
+    let opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: true,
+        group_vec: false,
+        group_len: None,
+    };
+
+    let device = Device::new(
+        *get_all_devices(CL_DEVICE_TYPE_GPU)
+            .unwrap()
+            .get(0)
+            .expect("No device in platform"),
+    );
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
         // with elem_index
-        let circuit = translate_inputs_rev(circuit, MUL_ADD_INPUT_MAP);
+        let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         builder.add_ext(
             "mul_add_elem",
