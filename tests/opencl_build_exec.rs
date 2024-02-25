@@ -552,6 +552,59 @@ fn test_opencl_builder_and_exec() {
 }
 
 #[test]
+fn test_opencl_builder_and_exec_with_arg_input() {
+    let no_opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: false,
+        group_vec: false,
+        group_len: None,
+    };
+    let opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: true,
+        group_vec: false,
+        group_len: None,
+    };
+
+    let device = Device::new(
+        *get_all_devices(CL_DEVICE_TYPE_GPU)
+            .unwrap()
+            .get(0)
+            .expect("No device in platform"),
+    );
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
+        // with arg_input
+        let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
+        let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
+        builder.add_ext(
+            "mul_add_sb",
+            circuit.clone(),
+            None,
+            Some((&(0..8).collect::<Vec<_>>(), 20)),
+            Some(&(20..24).collect::<Vec<_>>()),
+            None,
+            true,
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input =
+                execs[0].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
+            let mut input_circ = it.transform(&input).unwrap();
+            execs[0].execute_single(&mut input_circ, arg_input).unwrap();
+            let output = ot.transform(&input_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {}", config_num, i);
+            }
+        }
+    }
+}
+
+#[test]
 fn test_opencl_builder_and_exec_with_elem_input() {
     let no_opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: false,

@@ -567,6 +567,82 @@ fn test_cpu_builder_and_exec() {
 }
 
 #[test]
+fn test_cpu_builder_and_exec_with_arg_input() {
+    use CPUExtension::*;
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+    };
+
+    let mut configs = vec![
+        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
+        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
+        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
+    ];
+    #[cfg(target_pointer_width = "32")]
+    {
+        configs.push((NoExtension, &CLANG_WRITER_U32, None));
+    }
+    #[cfg(target_pointer_width = "64")]
+    configs.push((NoExtension, &CLANG_WRITER_U64, None));
+
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE
+        || *CPU_EXTENSION == IntelMMX
+    {
+        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
+        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
+        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 {
+        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
+    }
+    if *CPU_EXTENSION == ARMNEON {
+        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
+    }
+
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        // with arg_input
+        let circuit = translate_inputs_rev(get_mul_add_circuit(), MUL_ADD_INPUT_MAP);
+        let mut builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        builder.add_ext(
+            "mul_add_sb",
+            circuit.clone(),
+            None,
+            Some((&(0..8).collect::<Vec<_>>(), 20)),
+            Some(&(20..24).collect::<Vec<_>>()),
+            None,
+            true,
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input =
+                execs[0].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
+            let mut input_circ = it.transform(&input).unwrap();
+            execs[0].execute_single(&mut input_circ, arg_input).unwrap();
+            let output = ot.transform(&input_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {}", config_num, i);
+            }
+        }
+    }
+}
+
+#[test]
 fn test_cpu_builder_and_exec_with_elem_input() {
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
