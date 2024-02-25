@@ -1304,6 +1304,8 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
     uint32_t* output, unsigned int task_id) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
     const uint32_t elem_low_bit1 = 0xcccccccc;
     const uint32_t elem_low_bit2 = 0xf0f0f0f0;
@@ -1391,6 +1393,8 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint64_t* input,
     uint64_t* output, unsigned int task_id) {
+    const uint64_t zero = 0ULL;
+    const uint64_t one = 0xffffffffffffffffULL;
     const uint64_t elem_low_bit0 = 0xaaaaaaaaaaaaaaaaULL;
     const uint64_t elem_low_bit1 = 0xccccccccccccccccULL;
     const uint64_t elem_low_bit2 = 0xf0f0f0f0f0f0f0f0ULL;
@@ -1479,6 +1483,7 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m64* input,
     __m64* output, unsigned int task_id) {
+    const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
     const __m64 elem_low_bit1 = *((const __m64*)(elem_index_low_tbl + 2));
@@ -1568,6 +1573,7 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
     __m128* output, unsigned int task_id) {
+    const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
     const __m128 elem_low_bit0 = *((const __m128*)elem_index_low_tbl);
     const __m128 elem_low_bit1 = *((const __m128*)(elem_index_low_tbl + 4));
@@ -1658,6 +1664,7 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m256* input,
     __m256* output, unsigned int task_id) {
+    const __m256 zero = *((const __m256*)zero_value);
     const __m256 one = *((const __m256*)one_value);
     const __m256 elem_low_bit0 = *((const __m256*)elem_index_low_tbl);
     const __m256 elem_low_bit1 = *((const __m256*)(elem_index_low_tbl + 8));
@@ -1748,6 +1755,7 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m512i* input,
     __m512i* output, unsigned int task_id) {
+    const __m512i zero = *((const __m512i*)zero_value);
     const __m512i one = *((const __m512i*)one_value);
     const __m512i elem_low_bit0 = *((const __m512i*)elem_index_low_tbl);
     const __m512i elem_low_bit1 = *((const __m512i*)(elem_index_low_tbl + 16));
@@ -1840,6 +1848,8 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32x4_t* input,
     uint32x4_t* output, unsigned int task_id) {
+    const uint32x4_t zero = { 0, 0, 0, 0 };
+    const uint32x4_t one = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
     const uint32x4_t elem_low_bit0 = { 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
     const uint32x4_t elem_low_bit1 = { 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc };
     const uint32x4_t elem_low_bit2 = { 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0 };
@@ -1934,6 +1944,8 @@ fn test_clang_writer_elem_index() {
     const uint idx = get_global_id(0);
     const unsigned int ivn = 30 * idx + input_shift;
     const unsigned int ovn = 15 * idx + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
     const uint elem_low_bit1 = 0xcccccccc;
     const uint elem_low_bit2 = 0xf0f0f0f0;
@@ -2029,6 +2041,8 @@ fn test_clang_writer_elem_index() {
     const uint llen = get_local_size(0);
     const unsigned int ivn = llen * (30 * idx) + input_shift;
     const unsigned int ovn = llen * (15 * idx) + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
     const uint elem_low_bit1 = 0xcccccccc;
     const uint elem_low_bit2 = 0xf0f0f0f0;
@@ -2118,6 +2132,8 @@ fn test_clang_writer_elem_index() {
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
     uint32_t* output, unsigned int task_id) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
     const uint32_t elem_low_bit1 = 0xcccccccc;
     const uint32_t elem_low_bit2 = 0xf0f0f0f0;

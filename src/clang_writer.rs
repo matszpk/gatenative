@@ -820,7 +820,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             .unwrap();
         }
         let zero_value = self.writer.config.zero_value.1;
-        if !self.arg_input_map.is_empty() {
+        if !self.arg_input_map.is_empty() || !self.elem_input_map.is_empty() {
             writeln!(
                 self.writer.out,
                 "    const {} zero = {};",
@@ -829,7 +829,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             .unwrap();
         }
         let one_value = self.writer.config.one_value.1;
-        if self.writer.config.not_op.is_none() || !self.arg_input_map.is_empty() {
+        if self.writer.config.not_op.is_none()
+            || !self.arg_input_map.is_empty()
+            || !self.elem_input_map.is_empty()
+        {
             writeln!(
                 self.writer.out,
                 "    const {} one = {};",

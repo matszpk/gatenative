@@ -2,13 +2,14 @@ use gatenative::clang_writer::*;
 use gatenative::cpu_build_exec::*;
 use gatenative::*;
 use gatesim::*;
+use gateutil::*;
 
 use std::collections::HashMap;
 
+const MUL_ADD_INPUT_MAP: [usize; 24] = [
+    0, 4, 7, 10, 13, 16, 19, 22, 1, 3, 6, 9, 12, 15, 18, 21, 2, 5, 8, 11, 14, 17, 20, 23,
+];
 fn gen_mul_add_input(word_len: usize) -> (CPUDataHolder, Vec<u32>) {
-    let input_map = [
-        0, 4, 7, 10, 13, 16, 19, 22, 1, 3, 6, 9, 12, 15, 18, 21, 2, 5, 8, 11, 14, 17, 20, 23,
-    ];
     let mut input = vec![0u32; ((1 << 24) >> 5) * 24];
     let mut exp_output = vec![0u32; ((1 << 24) >> 5) * 8];
     for a in 0u32..256 {
@@ -20,13 +21,13 @@ fn gen_mul_add_input(word_len: usize) -> (CPUDataHolder, Vec<u32>) {
                 let shift = i & 31;
                 let exp = (a.overflowing_mul(b).0).overflowing_add(c).0;
                 for bit in 0..8 {
-                    let ix = input_map[bit];
+                    let ix = MUL_ADD_INPUT_MAP[bit];
                     input[idx * 24 * word_len + ix * word_len + half_idx] |=
                         ((a >> bit) & 1) << shift;
-                    let ix = input_map[bit + 8];
+                    let ix = MUL_ADD_INPUT_MAP[bit + 8];
                     input[idx * 24 * word_len + ix * word_len + half_idx] |=
                         ((b >> bit) & 1) << shift;
-                    let ix = input_map[bit + 16];
+                    let ix = MUL_ADD_INPUT_MAP[bit + 16];
                     input[idx * 24 * word_len + ix * word_len + half_idx] |=
                         ((c >> bit) & 1) << shift;
                     exp_output[idx * 8 * word_len + bit * word_len + half_idx] |=
@@ -539,9 +540,12 @@ fn test_cpu_builder_and_exec() {
             ],
         )
         .unwrap();
-        let mut builder =
-            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
-        builder.add("mul_add", circuit, None, None, None);
+        let mut builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            cpu_ext,
+            writer_config,
+            builder_config.clone(),
+        );
+        builder.add("mul_add", circuit.clone(), None, None, None);
         let mut execs = builder.build().unwrap();
         let exec = &mut execs[0];
         let (mul_add_input, mul_add_output) = mul_add_data_map.get(&word_len).unwrap();
@@ -554,6 +558,33 @@ fn test_cpu_builder_and_exec() {
         let out = output.release();
         for (i, v) in mul_add_output.iter().enumerate() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
+        }
+
+        let circuit = translate_inputs_rev(circuit, MUL_ADD_INPUT_MAP);
+        let mut builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        builder.add_ext(
+            "mul_add_elem",
+            circuit,
+            None,
+            None,
+            None,
+            Some(&(0..12).collect::<Vec<_>>()),
+            false,
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0].input_tx(32, &(8..24).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff0000;
+            let out = u32::try_from((ix & 0xff) * (ix >> 8) + (ix >> 16)).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
         }
     }
 }
