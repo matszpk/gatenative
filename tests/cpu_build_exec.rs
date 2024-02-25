@@ -641,6 +641,15 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             Some(&(0..12).collect::<Vec<_>>()),
             true,
         );
+        builder.add_ext(
+            "mul_add_elem_arginput",
+            circuit.clone(),
+            None,
+            None,
+            Some(&(20..24).collect::<Vec<_>>()),
+            Some(&(0..12).collect::<Vec<_>>()),
+            false,
+        );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
         let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
@@ -706,6 +715,36 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
             assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        // with elem_input and arg_input
+        let mut it = execs[3].input_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[3].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input = execs[3]
+                .new_data_from_vec((0..1 << 20).map(|i| (i >> 12) ^ 0xff).collect::<Vec<_>>());
+            let input_circ = it.transform(&input).unwrap();
+            let output_circ = execs[3].execute(&input_circ, arg_input).unwrap();
+            let output_circ_len = output_circ.len();
+            let output = ot.transform(&output_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {} {}", config_num, arg_input, i);
+            }
+
+            let mut output_circ = execs[3].new_data(output_circ_len);
+            execs[3]
+                .execute_reuse(&input_circ, arg_input, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {} {}", config_num, arg_input, i);
+            }
         }
     }
 }
