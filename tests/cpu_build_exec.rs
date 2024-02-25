@@ -560,6 +560,7 @@ fn test_cpu_builder_and_exec() {
             assert_eq!(*v, out[i], "{}: {}", config_num, i);
         }
 
+        // with elem_index
         let circuit = translate_inputs_rev(circuit, MUL_ADD_INPUT_MAP);
         let mut builder =
             CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
@@ -573,7 +574,7 @@ fn test_cpu_builder_and_exec() {
             false,
         );
         let mut execs = builder.build().unwrap();
-        let mut it = execs[0].input_tx(32, &(8..24).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
         let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
         let input =
             execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
@@ -582,8 +583,8 @@ fn test_cpu_builder_and_exec() {
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
         for (i, v) in output.into_iter().enumerate() {
-            let ix = i ^ 0xfff0000;
-            let out = u32::try_from((ix & 0xff) * (ix >> 8) + (ix >> 16)).unwrap();
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
             assert_eq!(out, v, "{}: {}", config_num, i);
         }
     }
@@ -925,10 +926,8 @@ fn test_cpu_input_output_data_transformer() {
         let elapsed = start.elapsed().unwrap();
         println!("Time: {} s", elapsed.as_secs_f64());
         {
-            let input = input.get();
-            let input = input.get();
-            let input_2 = input_2.get();
-            let input_2 = input_2.get();
+            let input = input.release();
+            let input_2 = input_2.release();
             for i in 0..input.len() {
                 let expected = match i % 3 {
                     0 => input[i] & ((1 << 27) - 1),
@@ -992,10 +991,8 @@ fn test_cpu_data_transforms() {
     let output_circ = execs[0].execute(&input_circ, 0).unwrap();
     let output = ot.transform(&output_circ).unwrap();
     {
-        let input = input.get();
-        let input = input.get();
-        let output = output.get();
-        let output = output.get();
+        let input = input.release();
+        let output = output.release();
         for (i, v) in output.iter().enumerate() {
             assert_eq!(
                 (input[2 * i] ^ input[2 * i + 1]) & ((1 << 20) - 1),

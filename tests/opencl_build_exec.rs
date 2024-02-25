@@ -1049,10 +1049,8 @@ fn test_opencl_input_output_data_transformer() {
             let elapsed = start.elapsed().unwrap();
             println!("Time: {} s", elapsed.as_secs_f64());
             {
-                let input = input.get();
-                let input = input.get();
-                let input_2 = input_2.get();
-                let input_2 = input_2.get();
+                let input = input.release();
+                let input_2 = input_2.release();
                 for i in 0..input.len() {
                     let expected = match i % 3 {
                         0 => input[i] & ((1 << 27) - 1),
@@ -1127,10 +1125,8 @@ fn test_opencl_data_transforms() {
     let output_circ = execs[0].execute(&input_circ, 0).unwrap();
     let output = ot.transform(&output_circ).unwrap();
     {
-        let input = input.get();
-        let input = input.get();
-        let output = output.get();
-        let output = output.get();
+        let input = input.release();
+        let output = output.release();
         for (i, v) in output.iter().enumerate() {
             assert_eq!(
                 (input[2 * i] ^ input[2 * i + 1]) & ((1 << 20) - 1),
