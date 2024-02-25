@@ -1942,7 +1942,7 @@ fn test_clang_writer_elem_index() {
     const global uint* input,
     global uint* output) {
     const uint idx = get_global_id(0);
-    const unsigned int ivn = 30 * idx + input_shift;
+    const unsigned int ivn = 17 * idx + input_shift;
     const unsigned int ovn = 15 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
@@ -2039,7 +2039,7 @@ fn test_clang_writer_elem_index() {
     const uint idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (30 * idx) + input_shift;
+    const unsigned int ivn = llen * (17 * idx) + input_shift;
     const unsigned int ovn = llen * (15 * idx) + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;

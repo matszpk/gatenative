@@ -766,11 +766,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         "    const unsigned int ovn = llen * ({} * idx){};\n"
                     ),
                     self.input_placement.map(|(_, len)| len).unwrap_or(
-                        if self.arg_input_map.is_empty() {
-                            self.input_len
-                        } else {
-                            self.input_len - self.arg_input_map.len()
-                        }
+                        self.input_len - self.arg_input_map.len() - self.elem_input_map.len()
                     ),
                     input_shift_part,
                     self.output_placement
@@ -787,11 +783,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         "    const unsigned int ovn = {} * idx{};\n"
                     ),
                     self.input_placement.map(|(_, len)| len).unwrap_or(
-                        if self.arg_input_map.is_empty() {
-                            self.input_len
-                        } else {
-                            self.input_len - self.arg_input_map.len()
-                        }
+                        self.input_len - self.arg_input_map.len() - self.elem_input_map.len()
                     ),
                     input_shift_part,
                     self.output_placement
