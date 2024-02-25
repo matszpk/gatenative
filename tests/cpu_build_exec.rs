@@ -623,6 +623,15 @@ fn test_cpu_builder_and_exec_with_arg_input() {
             None,
             true,
         );
+        builder.add_ext(
+            "mul_add_sb_ip",
+            circuit.clone(),
+            Some((&(0..20).map(|i| (19 - i) + 4).collect::<Vec<_>>(), 24)),
+            Some((&(0..8).collect::<Vec<_>>(), 24)),
+            Some(&(20..24).collect::<Vec<_>>()),
+            None,
+            true,
+        );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
         let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
@@ -631,6 +640,29 @@ fn test_cpu_builder_and_exec_with_arg_input() {
                 execs[0].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
             let mut input_circ = it.transform(&input).unwrap();
             execs[0].execute_single(&mut input_circ, arg_input).unwrap();
+            let output = ot.transform(&input_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {}", config_num, i);
+            }
+        }
+
+        let mut it = execs[1]
+            .input_tx(
+                32,
+                &(0..24)
+                    .map(|i| if i >= 4 { 23 - i } else { 0 })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input =
+                execs[1].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
+            let mut input_circ = it.transform(&input).unwrap();
+            execs[1].execute_single(&mut input_circ, arg_input).unwrap();
             let output = ot.transform(&input_circ).unwrap();
             let output = output.release();
             for (i, v) in output.into_iter().enumerate() {
