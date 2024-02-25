@@ -280,11 +280,13 @@ where
             .map(|arg| {
                 if !do_stop.load(atomic::Ordering::SeqCst) {
                     // just execute executor
-                    self.executor
+                    let r = self.executor
                         .try_clone()
                         .unwrap()
                         .execute(input, arg)
-                        .map(|output| f(input, &output, arg))
+                        .map(|output| f(input, &output, arg))?;
+                    do_stop.fetch_or(stop(&r), atomic::Ordering::SeqCst);
+                    Ok(r)
                 } else {
                     Ok(init.clone())
                 }
@@ -295,10 +297,8 @@ where
                     // check whether is ok otherwise return error
                     if let Ok(av) = a {
                         if let Ok(bv) = b {
-                            let r = g(av, bv);
-                            do_stop.fetch_or(stop(&r), atomic::Ordering::SeqCst);
                             // join results
-                            Ok(r)
+                            Ok(g(av, bv))
                         } else {
                             b
                         }
