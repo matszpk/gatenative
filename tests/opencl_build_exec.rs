@@ -578,11 +578,20 @@ fn test_opencl_builder_and_exec_with_elem_input() {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         builder.add_ext(
             "mul_add_elem",
-            circuit,
+            circuit.clone(),
             None,
             None,
             None,
             Some(&(0..12).collect::<Vec<_>>()),
+            false,
+        );
+        builder.add_ext(
+            "mul_add_elem_full",
+            circuit,
+            None,
+            None,
+            None,
+            Some(&(0..24).collect::<Vec<_>>()),
             false,
         );
         let mut execs = builder.build().unwrap();
@@ -598,6 +607,18 @@ fn test_opencl_builder_and_exec_with_elem_input() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
             assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        // with elem full
+        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input = execs[1].new_data(1);
+        let output_circ = execs[1].execute(&input, 0).unwrap();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        assert!(output.len() != 0);
+        for (ix, v) in output.into_iter().enumerate() {
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, ix);
         }
     }
 }
