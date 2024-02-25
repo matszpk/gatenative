@@ -587,12 +587,21 @@ fn test_opencl_builder_and_exec_with_elem_input() {
         );
         builder.add_ext(
             "mul_add_elem_full",
-            circuit,
+            circuit.clone(),
             None,
             None,
             None,
             Some(&(0..24).collect::<Vec<_>>()),
             false,
+        );
+        builder.add_ext(
+            "mul_add_elem_sb",
+            circuit.clone(),
+            None,
+            Some((&(0..8).collect::<Vec<_>>(), 12)),
+            None,
+            Some(&(0..12).collect::<Vec<_>>()),
+            true,
         );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
@@ -644,6 +653,21 @@ fn test_opencl_builder_and_exec_with_elem_input() {
         for (ix, v) in output.into_iter().enumerate() {
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
             assert_eq!(out, v, "{}: {}", config_num, ix);
+        }
+
+        // with single buffer
+        let mut it = execs[2].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[2].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[2].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
+        let mut input_circ = it.transform(&input).unwrap();
+        execs[2].execute_single(&mut input_circ, 0).unwrap();
+        let output = ot.transform(&input_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
         }
     }
 }
