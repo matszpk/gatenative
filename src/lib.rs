@@ -13,6 +13,7 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add elem_index input bits (value are index of element).
 // TODO: elem_inputs - add ability to set elem_index for all circuit inputs
 // TODO: add elem_inputs to mappers (including ParSeqMapper).
+// TODO: Add output aggregator to execution.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
