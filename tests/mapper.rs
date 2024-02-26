@@ -157,12 +157,14 @@ fn test_basic_mapper_builder_and_exec() {
             }
         }
         let input = execs[0].new_data_from_vec(xcircuit_input.clone());
+        let mut exec_count = 0;
         assert!(
             execs[0]
                 .execute(
                     &input,
                     true,
                     |out, _, result_out, arg_input| {
+                        exec_count += 1;
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -195,13 +197,16 @@ fn test_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
+        assert_eq!(exec_count, 16);
         // execute_direct testcase
+        let mut exec_count = 0;
         assert!(
             execs[0]
                 .execute_direct(
                     &input,
                     true,
                     |out, _, result_out, arg_input| {
+                        exec_count += 1;
                         let mut input = vec![false; 12];
                         let mut xcircuit_out = vec![0u32; xcircuit_data_num];
                         // fill inputs by arg_inputs
@@ -232,6 +237,7 @@ fn test_basic_mapper_builder_and_exec() {
             "{}",
             config_num
         );
+        assert_eq!(exec_count, 16);
         if word_len == 1 {
             // number of chunks
             let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;
@@ -287,6 +293,21 @@ fn test_basic_mapper_builder_and_exec() {
                 config_num
             );
         }
+        // testing stop
+        let input = execs[0].new_data_from_vec(xcircuit_input.clone());
+        let mut exec_count = 0;
+        execs[0]
+            .execute(
+                &input,
+                0,
+                |_, _, _, arg_input| {
+                    exec_count += 1;
+                    arg_input
+                },
+                |x| *x >= 9,
+            )
+            .unwrap();
+        assert_eq!(exec_count, 10);
     }
 }
 
@@ -584,5 +605,26 @@ fn test_par_basic_mapper_builder_and_exec() {
             );
             assert_eq!(8, call_count.load(atomic::Ordering::SeqCst));
         }
+
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        let call_count = Arc::new(AtomicUsize::new(0));
+        pool.install(|| {
+            execs[0]
+                .execute(
+                    &input,
+                    0,
+                    |_, _, arg_input| {
+                        call_count.fetch_add(1, atomic::Ordering::SeqCst);
+                        arg_input
+                    },
+                    |out1, out2| std::cmp::max(out1, out2),
+                    |x| *x >= 9,
+                )
+                .unwrap();
+        });
+        assert!(call_count.load(atomic::Ordering::SeqCst) < 12);
     }
 }
