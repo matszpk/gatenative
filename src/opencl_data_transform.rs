@@ -9,7 +9,7 @@ use opencl3::error_codes::ClError;
 use opencl3::kernel::{ExecuteKernel, Kernel};
 use opencl3::memory::{Buffer, CL_MEM_READ_WRITE};
 use opencl3::program::Program;
-use opencl3::types::{cl_uint, CL_BLOCKING};
+use opencl3::types::{cl_uint, cl_ulong, CL_BLOCKING};
 
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
@@ -32,14 +32,14 @@ impl Hash for HashableContext {
 }
 
 const INPUT_TRANSFORMER_SOURCE: &'static str = r##"
-kernel void xxx_gate_input_transform(uint n, uint input_start, uint output_start, uint word_len,
-        uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
+kernel void xxx_gate_input_transform(ulong n, ulong input_start, ulong output_start,
+        uint word_len, uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
-    const uint i = get_global_id(0);
+    const size_t i = get_global_id(0);
     if (i >= n) return;
     uint ibi;
     const uint word_w = word_len >> 5;
-    const uint gidx = i / word_len;
+    const size_t gidx = i / word_len;
     const uint widx = (i>>5) - gidx * word_w;
     const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
@@ -177,11 +177,11 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
         let num = elem_num;
-        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_num = cl_ulong::try_from(num).unwrap();
         // println!("ddebug: {} {} {} {}",
         //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
-        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
-        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
@@ -228,14 +228,14 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
 }
 
 const OUTPUT_TRANSFORMER_SOURCE: &'static str = r##"
-kernel void xxx_gate_output_transform(uint n, uint output_start, uint input_start, uint word_len,
-        uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
+kernel void xxx_gate_output_transform(ulong n, ulong output_start, ulong input_start,
+        uint word_len, uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* output, global uint* input) {
-    const uint i = get_global_id(0);
+    const size_t i = get_global_id(0);
     if (i >= n) return;
     uint ibi;
     const uint word_w = word_len >> 5;
-    const uint gidx = i / word_len;
+    const size_t gidx = i / word_len;
     const uint widx = (i>>5) - gidx * word_w;
     const uint sbit = i & 31;
     const uint input_elem_word_num = input_elem_len >> 5;
@@ -378,12 +378,12 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
         let input_elem_word_num = self.input_elem_len >> 5;
         let elem_num = input.len() / input_elem_word_num;
         let num = elem_num;
-        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_num = cl_ulong::try_from(num).unwrap();
         // println!("ddebug: {} {} {} {}",
         //          elem_num, num, self.word_len_fac1_pow, self.word_len_fac2);
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
         let cl_word_len = cl_uint::try_from(self.word_len).unwrap();
-        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
-        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
         let cl_input_elem_len = cl_uint::try_from(self.input_elem_len).unwrap();
         let cl_output_elem_len = cl_uint::try_from(self.output_elem_len).unwrap();
         let cl_bit_mapping_len = cl_uint::try_from(self.bit_mapping_len).unwrap();
