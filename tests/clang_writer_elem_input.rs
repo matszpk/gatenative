@@ -27,7 +27,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, size_t task_id) {
+    uint32_t* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -61,35 +61,35 @@ fn test_clang_writer_elem_input() {
     v1 = input[7];
     v0 = (v0 ^ v1);
     output[5] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[8];
     v0 = (v0 ^ v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[9];
     v0 = (v0 ^ v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[10];
     v0 = (v0 ^ v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[11];
     v0 = (v0 ^ v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[12];
     v0 = (v0 ^ v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[13];
     v0 = (v0 ^ v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = input[14];
     v0 = (v0 ^ v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)128ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)128ULL)) != 0) ? one : zero;
     v1 = input[15];
     v0 = (v0 ^ v1);
     output[13] = v0;
@@ -116,7 +116,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint64_t* input,
-    uint64_t* output, size_t task_id) {
+    uint64_t* output, size_t idx) {
     const uint64_t zero = 0ULL;
     const uint64_t one = 0xffffffffffffffffULL;
     const uint64_t elem_low_bit0 = 0xaaaaaaaaaaaaaaaaULL;
@@ -155,31 +155,31 @@ fn test_clang_writer_elem_input() {
     v1 = input[8];
     v0 = (v0 ^ v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[9];
     v0 = (v0 ^ v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[10];
     v0 = (v0 ^ v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[11];
     v0 = (v0 ^ v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[12];
     v0 = (v0 ^ v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[13];
     v0 = (v0 ^ v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[14];
     v0 = (v0 ^ v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = input[15];
     v0 = (v0 ^ v1);
     output[13] = v0;
@@ -206,7 +206,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m64* input,
-    __m64* output, size_t task_id) {
+    __m64* output, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
@@ -245,31 +245,31 @@ fn test_clang_writer_elem_input() {
     v1 = input[8];
     v0 = _m_pxor(v0, v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[9];
     v0 = _m_pxor(v0, v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[10];
     v0 = _m_pxor(v0, v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[11];
     v0 = _m_pxor(v0, v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[12];
     v0 = _m_pxor(v0, v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[13];
     v0 = _m_pxor(v0, v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[14];
     v0 = _m_pxor(v0, v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = input[15];
     v0 = _m_pxor(v0, v1);
     output[13] = v0;
@@ -296,7 +296,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, size_t task_id) {
+    __m128* output, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
     const __m128 elem_low_bit0 = *((const __m128*)elem_index_low_tbl);
@@ -340,27 +340,27 @@ fn test_clang_writer_elem_input() {
     v1 = input[9];
     v0 = _mm_xor_ps(v0, v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[10];
     v0 = _mm_xor_ps(v0, v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[11];
     v0 = _mm_xor_ps(v0, v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[12];
     v0 = _mm_xor_ps(v0, v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[13];
     v0 = _mm_xor_ps(v0, v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[14];
     v0 = _mm_xor_ps(v0, v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[15];
     v0 = _mm_xor_ps(v0, v1);
     output[13] = v0;
@@ -387,7 +387,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m256* input,
-    __m256* output, size_t task_id) {
+    __m256* output, size_t idx) {
     const __m256 zero = *((const __m256*)zero_value);
     const __m256 one = *((const __m256*)one_value);
     const __m256 elem_low_bit0 = *((const __m256*)elem_index_low_tbl);
@@ -436,23 +436,23 @@ fn test_clang_writer_elem_input() {
     v1 = _mm256_loadu_ps((const float*)&input[10]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[8], v0);
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = _mm256_loadu_ps((const float*)&input[11]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[9], v0);
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = _mm256_loadu_ps((const float*)&input[12]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[10], v0);
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = _mm256_loadu_ps((const float*)&input[13]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[11], v0);
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = _mm256_loadu_ps((const float*)&input[14]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[12], v0);
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = _mm256_loadu_ps((const float*)&input[15]);
     v0 = _mm256_xor_ps(v0, v1);
     _mm256_storeu_ps((float*)&output[13], v0);
@@ -478,7 +478,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m512i* input,
-    __m512i* output, size_t task_id) {
+    __m512i* output, size_t idx) {
     const __m512i zero = *((const __m512i*)zero_value);
     const __m512i one = *((const __m512i*)one_value);
     const __m512i elem_low_bit0 = *((const __m512i*)elem_index_low_tbl);
@@ -532,19 +532,19 @@ fn test_clang_writer_elem_input() {
     v1 = _mm512_loadu_epi64(&input[11]);
     v0 = _mm512_xor_epi64(v0, v1);
     _mm512_storeu_epi64(&output[9], v0);
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = _mm512_loadu_epi64(&input[12]);
     v0 = _mm512_xor_epi64(v0, v1);
     _mm512_storeu_epi64(&output[10], v0);
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = _mm512_loadu_epi64(&input[13]);
     v0 = _mm512_xor_epi64(v0, v1);
     _mm512_storeu_epi64(&output[11], v0);
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = _mm512_loadu_epi64(&input[14]);
     v0 = _mm512_xor_epi64(v0, v1);
     _mm512_storeu_epi64(&output[12], v0);
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = _mm512_loadu_epi64(&input[15]);
     v0 = _mm512_xor_epi64(v0, v1);
     _mm512_storeu_epi64(&output[13], v0);
@@ -571,7 +571,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32x4_t* input,
-    uint32x4_t* output, size_t task_id) {
+    uint32x4_t* output, size_t idx) {
     const uint32x4_t zero = { 0, 0, 0, 0 };
     const uint32x4_t one = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
     const uint32x4_t elem_low_bit0 = { 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
@@ -615,27 +615,27 @@ fn test_clang_writer_elem_input() {
     v1 = input[9];
     v0 = veorq_u32(v0, v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[10];
     v0 = veorq_u32(v0, v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[11];
     v0 = veorq_u32(v0, v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[12];
     v0 = veorq_u32(v0, v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[13];
     v0 = veorq_u32(v0, v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[14];
     v0 = veorq_u32(v0, v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[15];
     v0 = veorq_u32(v0, v1);
     output[13] = v0;
@@ -855,7 +855,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, size_t task_id) {
+    uint32_t* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -889,35 +889,35 @@ fn test_clang_writer_elem_input() {
     v1 = input[23];
     v0 = (v0 ^ v1);
     output[5] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = input[26];
     v0 = (v0 ^ v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = input[29];
     v0 = (v0 ^ v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = input[32];
     v0 = (v0 ^ v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = input[35];
     v0 = (v0 ^ v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = input[38];
     v0 = (v0 ^ v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = input[41];
     v0 = (v0 ^ v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = input[44];
     v0 = (v0 ^ v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)128ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)128ULL)) != 0) ? one : zero;
     v1 = input[47];
     v0 = (v0 ^ v1);
     output[13] = v0;
@@ -945,7 +945,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2, size_t task_id) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -979,35 +979,35 @@ fn test_clang_writer_elem_input() {
     v1 = ((arg & 8) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[5] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = ((arg & 16) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = ((arg & 32) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = ((arg & 64) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = ((arg & 128) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = ((arg & 256) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = ((arg & 512) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = ((arg & 1024) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)128ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)128ULL)) != 0) ? one : zero;
     v1 = input[4];
     v0 = (v0 ^ v1);
     output[13] = v0;
@@ -1230,7 +1230,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2, size_t task_id) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1264,35 +1264,35 @@ fn test_clang_writer_elem_input() {
     v1 = ((arg & 8) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[5] = v0;
-    v0 = ((task_id & ((size_t)1ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)1ULL)) != 0) ? one : zero;
     v1 = ((arg & 16) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[6] = v0;
-    v0 = ((task_id & ((size_t)2ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)2ULL)) != 0) ? one : zero;
     v1 = ((arg & 32) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[7] = v0;
-    v0 = ((task_id & ((size_t)4ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)4ULL)) != 0) ? one : zero;
     v1 = ((arg & 64) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[8] = v0;
-    v0 = ((task_id & ((size_t)8ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)8ULL)) != 0) ? one : zero;
     v1 = ((arg & 128) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[9] = v0;
-    v0 = ((task_id & ((size_t)16ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)16ULL)) != 0) ? one : zero;
     v1 = ((arg & 256) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[10] = v0;
-    v0 = ((task_id & ((size_t)32ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)32ULL)) != 0) ? one : zero;
     v1 = ((arg & 512) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[11] = v0;
-    v0 = ((task_id & ((size_t)64ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)64ULL)) != 0) ? one : zero;
     v1 = ((arg & 1024) != 0) ? one : zero;
     v0 = (v0 ^ v1);
     output[12] = v0;
-    v0 = ((task_id & ((size_t)128ULL)) != 0) ? one : zero;
+    v0 = ((idx & ((size_t)128ULL)) != 0) ? one : zero;
     v1 = input[53];
     v0 = (v0 ^ v1);
     output[13] = v0;

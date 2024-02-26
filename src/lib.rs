@@ -35,8 +35,6 @@ mod utils;
 mod vbinopcircuit;
 mod vcircuit;
 
-
-
 #[derive(Clone, Copy)]
 pub struct CodeConfig<'a> {
     pub init: &'a str,
@@ -48,7 +46,7 @@ pub struct CodeConfig<'a> {
     pub populate: &'a str,
     // to aggregate single output bits
     pub aggr_outputs: Option<&'a [&'a str]>,
-    pub loop_aggregate: &'a str,    // output aggregation inside loop
+    pub loop_aggregate: &'a str, // output aggregation inside loop
     pub aggregate: &'a str,
 }
 

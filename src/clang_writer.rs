@@ -8,7 +8,6 @@ pub struct ElemIndexConfig<'a> {
     low_bits_init: &'a str,
     low_bits_defs: [&'a str; 16],
     func_arg_high: bool,
-    high_bits: &'a str,
 }
 
 #[derive(Clone, Debug)]
@@ -74,7 +73,6 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -119,7 +117,6 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -164,7 +161,6 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -209,7 +205,6 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -263,7 +258,6 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -323,7 +317,6 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -389,7 +382,6 @@ __attribute__((aligned(32))) = {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: Some("_mm256_loadu_ps((const float*)&{})"),
     store_op: Some("_mm256_storeu_ps((float*)&{}, {})"),
@@ -467,7 +459,6 @@ __attribute__((aligned(64))) = {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: Some("_mm512_loadu_epi64(&{})"),
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
@@ -512,7 +503,6 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: true,
-        high_bits: "task_id",
     },
     load_op: None,
     store_op: None,
@@ -557,7 +547,6 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
         func_arg_high: false,
-        high_bits: "idx",
     },
     load_op: None,
     store_op: None,
@@ -605,7 +594,6 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
             "",
         ],
         func_arg_high: false,
-        high_bits: "idx",
     },
     load_op: None,
     store_op: None,
@@ -711,7 +699,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         };
         let elem_input =
             if !self.elem_input_map.is_empty() && self.writer.config.elem_index.func_arg_high {
-                ", size_t task_id"
+                ", size_t idx"
             } else {
                 ""
             };
@@ -899,9 +887,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             } else {
                 writeln!(
                     self.writer.out,
-                    "    v{} = (({} & ((size_t){}ULL)) != 0) ? one : zero;",
+                    "    v{} = ((idx & ((size_t){}ULL)) != 0) ? one : zero;",
                     reg,
-                    self.writer.config.elem_index.high_bits,
                     1u64 << (*elem_bit - (self.writer.elem_low_bits as usize))
                 )
                 .unwrap();
