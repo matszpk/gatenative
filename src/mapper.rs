@@ -299,7 +299,6 @@ where
         Out: Clone + Send + Sync,
     {
         let do_stop = Arc::new(AtomicBool::new(false));
-
         StoppableIterator::new(0..=self.arg_input_max, do_stop.clone())
             .par_bridge()
             .map(|arg| {
