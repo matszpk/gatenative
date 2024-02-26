@@ -12,8 +12,6 @@ use crate::*;
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 
-// TODO: add testcase to test single_buffer with arg_inputs and/or elem_inputs
-
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
