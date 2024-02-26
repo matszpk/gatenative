@@ -24,12 +24,14 @@ pub enum VNegs {
 
 pub mod clang_writer;
 pub mod cpu_build_exec;
+pub mod cpu_data_transform;
 pub mod cpu_machine;
 pub mod div_build_exec;
 mod divide;
 pub mod gencode;
 pub mod mapper;
 pub mod opencl_build_exec;
+pub mod opencl_data_transform;
 pub mod opencl_machine;
 pub mod parseq_mapper;
 mod utils;
