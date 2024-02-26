@@ -2777,4 +2777,105 @@ fn test_clang_writer_extra() {
 }
 "##
     );
+
+    // with arg_inputs and single_buffer
+    let circuit = Circuit::new(
+        6,
+        [
+            Gate::new_and(2, 3),
+            Gate::new_xor(2, 3),
+            Gate::new_nor(0, 3),
+            Gate::new_and(6, 7),
+            Gate::new_nimpl(6, 8),
+            Gate::new_xor(7, 9),
+            Gate::new_xor(10, 11),
+            Gate::new_nimpl(11, 1),
+        ],
+        [(4, false), (5, true), (12, false), (13, true)],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_ext(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        None,
+        Some((&[3, 2, 0, 1], 4)),
+        Some(&[0, 2]),
+        None,
+        true,
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v1 = output[1];
+    v2 = (v0 & v1);
+    v3 = ((arg & 1) != 0) ? one : zero;
+    v3 = ~(v3 | v1);
+    v3 = (v2 & ~v3);
+    v0 = (v0 ^ v1);
+    v1 = (v2 & v0);
+    v0 = (v0 ^ v1);
+    v1 = (v3 ^ v0);
+    v2 = output[0];
+    output[0] = v1;
+    v0 = (v0 & ~v2);
+    output[1] = ~v0;
+    v0 = output[2];
+    output[3] = v0;
+    v0 = output[3];
+    output[2] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_ext(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        None,
+        Some((&[3, 2, 0, 1], 4)),
+        Some(&[0, 2]),
+        None,
+        true,
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(__m64* output, unsigned int arg, unsigned int arg2) {
+    const __m64 zero = *((const __m64*)zero_value);
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    v0 = ((arg & 2) != 0) ? one : zero;
+    v1 = output[1];
+    v2 = _m_pand(v0, v1);
+    v3 = ((arg & 1) != 0) ? one : zero;
+    v3 = _m_por(v3, v1);
+    v3 = _m_pand(v2, v3);
+    v0 = _m_pxor(v0, v1);
+    v1 = _m_pand(v2, v0);
+    v0 = _m_pxor(v0, v1);
+    v1 = _m_pxor(v3, v0);
+    v2 = output[0];
+    output[0] = v1;
+    v0 = _m_pandn(v2, v0);
+    output[1] = _m_pxor(v0, one);
+    v0 = output[2];
+    output[3] = v0;
+    v0 = output[3];
+    output[2] = _m_pxor(v0, one);
+}
+"##
+    );
 }

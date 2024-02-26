@@ -951,5 +951,34 @@ mod tests {
                 Some(&HashMap::from_iter([(1, 0), (3, 1)])),
             )
         );
+        let circuit = Circuit::new(
+            6,
+            [
+                Gate::new_and(2, 3),
+                Gate::new_xor(2, 3),
+                Gate::new_nor(0, 3),
+                Gate::new_and(6, 7),
+                Gate::new_nimpl(6, 8),
+                Gate::new_xor(7, 9),
+                Gate::new_xor(10, 11),
+                Gate::new_nimpl(11, 1),
+            ],
+            [(4, false), (5, true), (12, false), (13, true)],
+        )
+        .unwrap();
+        // testcase with input_map (some input are used as arg_input)
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 2, 0, 1, 0, 0, 2, 0, 3, 1, 3, 0, 1, 0], 4),
+            gen_var_allocs(
+                &circuit,
+                None,
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
+            )
+        );
     }
 }
