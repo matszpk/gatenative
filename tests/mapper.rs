@@ -142,6 +142,13 @@ fn test_basic_mapper_builder_and_exec() {
         builder.add("xcircuit", circuit.clone(), &arg_input_indices[..]);
         builder.add("xcircuit2", circuit2.clone(), &arg_input_indices_2[..]);
         let mut execs = builder.build().unwrap();
+
+        // check input and output len
+        assert_eq!(execs[0].input_data_len(16 * 1024), 4096);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 512);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 2560);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 512);
+
         // number of chunks
         let xcircuit_data_num = (((256 >> 5) + word_len - 1) / word_len) * word_len;
         let rest_num = rest_input_indices.len();
@@ -444,6 +451,13 @@ fn test_par_basic_mapper_builder_and_exec() {
         builder.add("xcircuit", circuit.clone(), &arg_input_indices[..]);
         builder.add("xcircuit2", circuit2.clone(), &arg_input_indices_2[..]);
         let mut execs = builder.build().unwrap();
+
+        // check input and output len
+        assert_eq!(execs[0].input_data_len(16 * 1024), 4096);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 512);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 2560);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 512);
+
         // number of chunks
         let xcircuit_data_num = (((256 >> 5) + word_len - 1) / word_len) * word_len;
         let rest_num = rest_input_indices.len();

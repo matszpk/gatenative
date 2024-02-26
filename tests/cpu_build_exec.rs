@@ -314,6 +314,14 @@ fn test_cpu_builder_and_exec() {
         );
         builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
         let mut execs = builder.build().unwrap();
+
+        // input and output len
+        assert_eq!(execs[0].input_data_len(16 * 1024), 2048);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 2048);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 4096);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 3584);
+        //
+
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
             0b1010101010101010,
             0b1100110011001100,
@@ -768,6 +776,13 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             true,
         );
         let mut execs = builder.build().unwrap();
+
+        // input and output len
+        assert_eq!(execs[0].input_data_len(16 * 1024), 6144);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 4096);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 1);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 4096);
+
         let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
         let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
         let input =
