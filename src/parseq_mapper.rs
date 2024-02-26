@@ -649,6 +649,42 @@ where
         }
     }
 
+    pub fn add_ext<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        arg_inputs: &[usize],
+        elem_inputs: Option<&[usize]>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.arg_input_lens.push(arg_inputs.len());
+        self.par.add_ext(
+            name,
+            circuit.clone(),
+            None,
+            None,
+            Some(arg_inputs),
+            elem_inputs,
+            false,
+        );
+        for s in &mut self.seqs {
+            s.add_ext(
+                name,
+                circuit.clone(),
+                None,
+                None,
+                Some(arg_inputs),
+                elem_inputs,
+                false,
+            );
+        }
+    }
+
     pub fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -657,12 +693,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.arg_input_lens.push(arg_inputs.len());
-        self.par
-            .add(name, circuit.clone(), None, None, Some(arg_inputs));
-        for s in &mut self.seqs {
-            s.add(name, circuit.clone(), None, None, Some(arg_inputs));
-        }
+        self.add_ext(name, circuit, arg_inputs, None);
     }
 
     pub fn build(

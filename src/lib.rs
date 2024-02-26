@@ -480,13 +480,29 @@ where
 {
     type ErrorType;
 
+    fn add_ext<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        arg_inputs: &[usize],
+        elem_inputs: Option<&[usize]>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug;
+
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
-        <usize as TryFrom<T>>::Error: Debug;
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.add_ext(name, circuit, arg_inputs, None);
+    }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 
@@ -595,13 +611,29 @@ where
 {
     type ErrorType;
 
+    fn add_ext<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        arg_inputs: &[usize],
+        elem_inputs: Option<&[usize]>,
+    ) where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug;
+
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
-        <usize as TryFrom<T>>::Error: Debug;
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        self.add_ext(name, circuit, arg_inputs, None);
+    }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 

@@ -171,8 +171,13 @@ where
 {
     type ErrorType = B::ErrorType;
 
-    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
-    where
+    fn add_ext<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        arg_inputs: &[usize],
+        elem_inputs: Option<&[usize]>,
+    ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
@@ -181,8 +186,15 @@ where
     {
         assert!(arg_inputs.len() <= 32);
         self.arg_input_lens.push(arg_inputs.len());
-        self.builder
-            .add(name, circuit, None, None, Some(arg_inputs));
+        self.builder.add_ext(
+            name,
+            circuit,
+            None,
+            None,
+            Some(arg_inputs),
+            elem_inputs,
+            false,
+        );
     }
 
     fn build(self) -> Result<Vec<BasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {
@@ -429,8 +441,13 @@ where
 {
     type ErrorType = B::ErrorType;
 
-    fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
-    where
+    fn add_ext<T>(
+        &mut self,
+        name: &str,
+        circuit: Circuit<T>,
+        arg_inputs: &[usize],
+        elem_inputs: Option<&[usize]>,
+    ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
@@ -439,8 +456,15 @@ where
     {
         assert!(arg_inputs.len() <= 32);
         self.arg_input_lens.push(arg_inputs.len());
-        self.builder
-            .add(name, circuit, None, None, Some(arg_inputs));
+        self.builder.add_ext(
+            name,
+            circuit,
+            None,
+            None,
+            Some(arg_inputs),
+            elem_inputs,
+            false,
+        );
     }
 
     fn build(self) -> Result<Vec<ParBasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {
