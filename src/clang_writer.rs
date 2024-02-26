@@ -899,10 +899,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             } else {
                 writeln!(
                     self.writer.out,
-                    "    v{} = (({} & {}) != 0) ? one : zero;",
+                    "    v{} = (({} & ((size_t){}ULL)) != 0) ? one : zero;",
                     reg,
                     self.writer.config.elem_index.high_bits,
-                    1u32 << (*elem_bit - (self.writer.elem_low_bits as usize))
+                    1u64 << (*elem_bit - (self.writer.elem_low_bits as usize))
                 )
                 .unwrap();
             }
