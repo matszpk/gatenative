@@ -35,6 +35,23 @@ mod utils;
 mod vbinopcircuit;
 mod vcircuit;
 
+
+
+#[derive(Clone, Copy)]
+pub struct CodeConfig<'a> {
+    pub init: &'a str,
+    pub iter_num: usize,
+    pub loop_cond: &'a str,
+    // to populate single input bits
+    pub pop_inputs: Option<&'a [&'a str]>,
+    pub loop_populate: &'a str, // input population inside loop
+    pub populate: &'a str,
+    // to aggregate single output bits
+    pub aggr_outputs: Option<&'a [&'a str]>,
+    pub loop_aggregate: &'a str,    // output aggregation inside loop
+    pub aggregate: &'a str,
+}
+
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
 pub enum InstrOp {
