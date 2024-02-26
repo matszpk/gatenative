@@ -937,5 +937,19 @@ mod tests {
                 None,
             )
         );
+        // testcase with placements and with input_map (some input are used as arg_input)
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 2, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4),
+            gen_var_allocs(
+                &circuit,
+                Some((&[1, 0], 4)),
+                Some((&[3, 2, 1, 0], 4)),
+                &mut var_usage,
+                true,
+                Some(&HashMap::from_iter([(1, 0), (3, 1)])),
+            )
+        );
     }
 }
