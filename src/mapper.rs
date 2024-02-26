@@ -221,6 +221,30 @@ where
     }
 }
 
+// iterator helper
+
+struct StoppableIterator<I: Iterator> {
+    inner: I,
+    do_stop: Arc<AtomicBool>,
+}
+
+impl<I: Iterator> StoppableIterator<I> {
+    fn new(inner: I, do_stop: Arc<AtomicBool>) -> Self {
+        Self { inner, do_stop }
+    }
+}
+
+impl<I: Iterator> Iterator for StoppableIterator<I> {
+    type Item = I::Item;
+    fn next(&mut self) -> Option<Self::Item> {
+        if !self.do_stop.load(atomic::Ordering::SeqCst) {
+            self.inner.next()
+        } else {
+            None
+        }
+    }
+}
+
 // parallel
 pub struct ParBasicMapperExecutor<'a, DR, DW, D, E>
 where
@@ -274,24 +298,20 @@ where
         Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync,
     {
-        // TODO: do better stop
         let do_stop = Arc::new(AtomicBool::new(false));
-        (0..=self.arg_input_max)
-            .into_par_iter()
+
+        StoppableIterator::new(0..=self.arg_input_max, do_stop.clone())
+            .par_bridge()
             .map(|arg| {
-                if !do_stop.load(atomic::Ordering::SeqCst) {
-                    // just execute executor
-                    let r = self
-                        .executor
-                        .try_clone()
-                        .unwrap()
-                        .execute(input, arg)
-                        .map(|output| f(input, &output, arg))?;
-                    do_stop.fetch_or(stop(&r), atomic::Ordering::SeqCst);
-                    Ok(r)
-                } else {
-                    Ok(init.clone())
-                }
+                // just execute executor
+                let r = self
+                    .executor
+                    .try_clone()
+                    .unwrap()
+                    .execute(input, arg)
+                    .map(|output| f(input, &output, arg))?;
+                do_stop.fetch_or(stop(&r), atomic::Ordering::SeqCst);
+                Ok(r)
             })
             .reduce(
                 || Ok(init.clone()),
