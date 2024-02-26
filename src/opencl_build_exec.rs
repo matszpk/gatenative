@@ -11,7 +11,7 @@ use opencl3::error_codes::ClError;
 use opencl3::kernel::{ExecuteKernel, Kernel};
 use opencl3::memory::{Buffer, ClMem, CL_MAP_READ, CL_MAP_WRITE, CL_MEM_READ_WRITE};
 use opencl3::program::Program;
-use opencl3::types::{cl_mem, cl_mem_flags, cl_uint, CL_BLOCKING};
+use opencl3::types::{cl_mem, cl_mem_flags, cl_uint, cl_ulong, CL_BLOCKING};
 
 use std::hash::Hash;
 use std::sync::Arc;
@@ -285,11 +285,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );
-        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
-        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
-        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
         let num = if self.group_vec {
             num * self.group_len
@@ -344,11 +344,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         } else {
             (output.range.end - output.range.start) / real_output_words
         };
-        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
-        let cl_input_start = cl_uint::try_from(input.range.start).unwrap();
-        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
         let num = if self.group_vec {
             num * self.group_len
@@ -401,10 +401,10 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         } else {
             0
         };
-        let cl_num = cl_uint::try_from(num).unwrap();
+        let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
-        let cl_output_start = cl_uint::try_from(output.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
         let num = if self.group_vec {
             num * self.group_len

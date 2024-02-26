@@ -164,6 +164,7 @@ fn test_clang_writer() {
     {
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -190,6 +191,7 @@ void gate_sys_func1(const uint32_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -216,6 +218,7 @@ void gate_sys_func1(const uint32_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -244,6 +247,7 @@ void gate_sys_func1(const uint32_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -272,6 +276,7 @@ void gate_sys_func1(const uint32_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -300,6 +305,7 @@ void gate_sys_func1(const uint32_t* input,
     {
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output) {
     uint64_t v0;
@@ -326,6 +332,7 @@ void gate_sys_func1(const uint64_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output) {
     uint64_t v0;
@@ -352,6 +359,7 @@ void gate_sys_func1(const uint64_t* input,
         );
         assert_eq!(
             r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, unsigned int arg, unsigned int arg2) {
     const uint64_t zero = 0ULL;
@@ -381,6 +389,7 @@ void gate_sys_func1(const uint64_t* input,
     }
     assert_eq!(
         r##"#include <mmintrin.h>
+#include <stddef.h>
 static const unsigned int zero_value[2] = { 0, 0 };
 static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
 static const unsigned int elem_index_low_tbl[6*2] = {
@@ -415,6 +424,7 @@ void gate_sys_func1(const __m64* input,
     );
     assert_eq!(
         r##"#include <xmmintrin.h>
+#include <stddef.h>
 static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
 static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
@@ -455,6 +465,7 @@ void gate_sys_func1(const __m128* input,
     );
     assert_eq!(
         r##"#include <immintrin.h>
+#include <stddef.h>
 static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
     0, 0, 0, 0, 0, 0, 0, 0
 };
@@ -501,6 +512,7 @@ void gate_sys_func1(const __m256* input,
     );
     assert_eq!(
         r##"#include <immintrin.h>
+#include <stddef.h>
 static const unsigned int zero_value[16] __attribute__((aligned(64))) = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
@@ -559,6 +571,7 @@ void gate_sys_func1(const __m512i* input,
     );
     assert_eq!(
         r##"#include <arm_neon.h>
+#include <stddef.h>
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output) {
     uint32x4_t v0;
@@ -587,13 +600,13 @@ void gate_sys_func1(const uint32x4_t* input,
 
     // opencl
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 3 * idx + input_shift;
-    const unsigned int ovn = 2 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + input_shift;
+    const size_t ovn = 2 * idx + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -618,13 +631,13 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 68 * idx + input_shift;
-    const unsigned int ovn = 88 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 68 * idx + input_shift;
+    const size_t ovn = 88 * idx + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -649,13 +662,13 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code(&CLANG_WRITER_OPENCL_U32, true, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 1 * idx + input_shift;
-    const unsigned int ovn = 2 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 1 * idx + input_shift;
+    const size_t ovn = 2 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     uint v0;
@@ -682,13 +695,13 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code(&CLANG_WRITER_OPENCL_U32, false, true)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 68 * idx + input_shift;
-    const unsigned int ovn = 88 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 68 * idx + input_shift;
+    const size_t ovn = 88 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     uint v0;
@@ -718,6 +731,7 @@ void gate_sys_func1(const uint32x4_t* input,
     // single buffer
     assert_eq!(
         r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(uint32_t* output) {
     uint32_t v0;
     uint32_t v1;
@@ -744,6 +758,7 @@ void gate_sys_func1(uint32_t* output) {
     );
     assert_eq!(
         r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(uint32_t* output) {
     uint32_t v0;
     uint32_t v1;
@@ -770,6 +785,7 @@ void gate_sys_func1(uint32_t* output) {
     );
     assert_eq!(
         r##"#include <stdint.h>
+#include <stddef.h>
 void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -799,12 +815,12 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
 
     // single buffer - opencl
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long output_shift,
     global uint* output) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 3 * idx + output_shift;
-    const unsigned int ovn = 3 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + output_shift;
+    const size_t ovn = 3 * idx + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -830,12 +846,12 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long output_shift,
     global uint* output) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 99 * idx + output_shift;
-    const unsigned int ovn = 99 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 99 * idx + output_shift;
+    const size_t ovn = 99 * idx + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -861,12 +877,12 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32, true, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long output_shift,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 99 * idx + output_shift;
-    const unsigned int ovn = 99 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 99 * idx + output_shift;
+    const size_t ovn = 99 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     uint v0;
@@ -896,15 +912,15 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
 
     // opencl group_vec
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
-    const uint idx = get_group_id(0);
+    const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (3 * idx) + input_shift;
-    const unsigned int ovn = llen * (2 * idx) + output_shift;
+    const size_t ivn = llen * (3 * idx) + input_shift;
+    const size_t ovn = llen * (2 * idx) + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -929,15 +945,15 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_group_id(0);
+    const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (1 * idx) + input_shift;
-    const unsigned int ovn = llen * (2 * idx) + output_shift;
+    const size_t ivn = llen * (1 * idx) + input_shift;
+    const size_t ovn = llen * (2 * idx) + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     uint v0;
@@ -965,14 +981,14 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
     );
     // single buffer - opencl group_vec
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned int n, 
-    unsigned int output_shift,
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long output_shift,
     global uint* output) {
-    const uint idx = get_group_id(0);
+    const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (3 * idx) + output_shift;
-    const unsigned int ovn = llen * (3 * idx) + output_shift;
+    const size_t ivn = llen * (3 * idx) + output_shift;
+    const size_t ovn = llen * (3 * idx) + output_shift;
     uint v0;
     uint v1;
     uint v2;
@@ -1022,13 +1038,13 @@ fn test_clang_writer_arginput_64bit() {
     let out = String::from_utf8(writer.out()).unwrap();
     assert_eq!(
         &out,
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 56 * idx + input_shift;
-    const unsigned int ovn = 60 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 56 * idx + input_shift;
+    const size_t ovn = 60 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     uint v0;

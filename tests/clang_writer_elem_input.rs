@@ -27,7 +27,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int task_id) {
+    uint32_t* output, size_t task_id) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -116,7 +116,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint64_t* input,
-    uint64_t* output, unsigned int task_id) {
+    uint64_t* output, size_t task_id) {
     const uint64_t zero = 0ULL;
     const uint64_t one = 0xffffffffffffffffULL;
     const uint64_t elem_low_bit0 = 0xaaaaaaaaaaaaaaaaULL;
@@ -206,7 +206,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m64* input,
-    __m64* output, unsigned int task_id) {
+    __m64* output, size_t task_id) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
@@ -296,7 +296,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, unsigned int task_id) {
+    __m128* output, size_t task_id) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
     const __m128 elem_low_bit0 = *((const __m128*)elem_index_low_tbl);
@@ -387,7 +387,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m256* input,
-    __m256* output, unsigned int task_id) {
+    __m256* output, size_t task_id) {
     const __m256 zero = *((const __m256*)zero_value);
     const __m256 one = *((const __m256*)one_value);
     const __m256 elem_low_bit0 = *((const __m256*)elem_index_low_tbl);
@@ -478,7 +478,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m512i* input,
-    __m512i* output, unsigned int task_id) {
+    __m512i* output, size_t task_id) {
     const __m512i zero = *((const __m512i*)zero_value);
     const __m512i one = *((const __m512i*)one_value);
     const __m512i elem_low_bit0 = *((const __m512i*)elem_index_low_tbl);
@@ -571,7 +571,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32x4_t* input,
-    uint32x4_t* output, unsigned int task_id) {
+    uint32x4_t* output, size_t task_id) {
     const uint32x4_t zero = { 0, 0, 0, 0 };
     const uint32x4_t one = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
     const uint32x4_t elem_low_bit0 = { 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa };
@@ -661,13 +661,13 @@ fn test_clang_writer_elem_input() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 17 * idx + input_shift;
-    const unsigned int ovn = 15 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 17 * idx + input_shift;
+    const size_t ovn = 15 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
@@ -756,15 +756,15 @@ fn test_clang_writer_elem_input() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
-    const uint idx = get_group_id(0);
+    const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (17 * idx) + input_shift;
-    const unsigned int ovn = llen * (15 * idx) + output_shift;
+    const size_t ivn = llen * (17 * idx) + input_shift;
+    const size_t ovn = llen * (15 * idx) + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
@@ -855,7 +855,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int task_id) {
+    uint32_t* output, size_t task_id) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -945,7 +945,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2, unsigned int task_id) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t task_id) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1033,13 +1033,13 @@ fn test_clang_writer_elem_input() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 6 * idx + input_shift;
-    const unsigned int ovn = 15 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 6 * idx + input_shift;
+    const size_t ovn = 15 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
@@ -1128,15 +1128,15 @@ fn test_clang_writer_elem_input() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_group_id(0);
+    const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
-    const unsigned int ivn = llen * (6 * idx) + input_shift;
-    const unsigned int ovn = llen * (15 * idx) + output_shift;
+    const size_t ivn = llen * (6 * idx) + input_shift;
+    const size_t ovn = llen * (15 * idx) + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
@@ -1230,7 +1230,7 @@ fn test_clang_writer_elem_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2, unsigned int task_id) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t task_id) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1321,13 +1321,13 @@ fn test_clang_writer_elem_input() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned int n, 
-    unsigned int input_shift, unsigned int output_shift,
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
-    const uint idx = get_global_id(0);
-    const unsigned int ivn = 100 * idx + input_shift;
-    const unsigned int ovn = 15 * idx + output_shift;
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 100 * idx + input_shift;
+    const size_t ovn = 15 * idx + output_shift;
     const uint zero = 0;
     const uint one = 0xffffffff;
     const uint elem_low_bit0 = 0xaaaaaaaa;
