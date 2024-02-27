@@ -184,7 +184,6 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        assert!(arg_inputs.len() <= 32);
         self.arg_input_lens.push(arg_inputs.len());
         self.builder.add_ext(
             name,
