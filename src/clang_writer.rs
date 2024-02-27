@@ -843,6 +843,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 )
                 .unwrap();
             }
+            self.writer
+                .out
+                .extend(b"    const unsigned int idxl = idx & 0xffffffff;\n");
+            self.writer
+                .out
+                .extend(b"    const unsigned int idxh = idx >> 32;\n");
         }
     }
     fn func_end(&mut self) {
@@ -885,13 +891,24 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             if *elem_bit < (self.writer.elem_low_bits as usize) {
                 writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
             } else {
-                writeln!(
-                    self.writer.out,
-                    "    v{} = ((idx & ((size_t){}ULL)) != 0) ? one : zero;",
-                    reg,
-                    1u64 << (*elem_bit - (self.writer.elem_low_bits as usize))
-                )
-                .unwrap();
+                let ebit = *elem_bit - (self.writer.elem_low_bits as usize);
+                if ebit < 32 {
+                    writeln!(
+                        self.writer.out,
+                        "    v{} = ((idxl & {}) != 0) ? one : zero;",
+                        reg,
+                        1u32 << ebit
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(
+                        self.writer.out,
+                        "    v{} = ((idxh & {}) != 0) ? one : zero;",
+                        reg,
+                        1u32 << (ebit - 32)
+                    )
+                    .unwrap();
+                }
             }
         } else {
             let arg_name = if self.single_buffer {
