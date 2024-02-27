@@ -1072,6 +1072,10 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         elem_inputs: Option<&'c [usize]>,
         single_buffer: bool,
     ) -> CLangFuncWriter<'a, 'c> {
+        if let Some(elem_inputs) = elem_inputs {
+            assert!(elem_inputs.len() <= 64 + (self.elem_low_bits as usize));
+        }
+
         let (input_map, arg_input_map, elem_input_map) = {
             let arg_input_map = if let Some(arg_inputs) = arg_inputs {
                 HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
