@@ -687,6 +687,8 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     arg_inputs: Option<&'a [usize]>,
     elem_inputs: Option<&'a [usize]>,
     single_buffer: bool,
+    init_code: Option<&'a str>,
+    aggr_output_code: Option<&'a str>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -751,8 +753,8 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         arg_inputs,
         elem_inputs,
         single_buffer,
-        None,
-        None,
+        init_code,
+        aggr_output_code,
         output_vars
             .as_ref()
             .map(|ov| ov.iter().map(|(x, _)| *x).collect()),
@@ -835,6 +837,8 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         arg_inputs,
         None,
         false,
+        None,
+        None,
     );
 }
 

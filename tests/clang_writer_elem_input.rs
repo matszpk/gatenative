@@ -23,6 +23,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -114,6 +116,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -206,6 +210,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -298,6 +304,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -391,6 +399,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -484,6 +494,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -579,6 +591,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -672,6 +686,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -769,6 +785,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -869,6 +887,8 @@ fn test_clang_writer_elem_input() {
         None,
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -961,6 +981,8 @@ fn test_clang_writer_elem_input() {
         Some(&(17..28).collect::<Vec<_>>()),
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1052,6 +1074,8 @@ fn test_clang_writer_elem_input() {
         Some(&(17..28).collect::<Vec<_>>()),
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1149,6 +1173,8 @@ fn test_clang_writer_elem_input() {
         Some(&(17..28).collect::<Vec<_>>()),
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1252,6 +1278,8 @@ fn test_clang_writer_elem_input() {
         Some(&(17..28).collect::<Vec<_>>()),
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1346,6 +1374,8 @@ fn test_clang_writer_elem_input() {
         Some(&(17..28).collect::<Vec<_>>()),
         Some(&(1..14).collect::<Vec<_>>()),
         false,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),

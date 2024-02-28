@@ -316,6 +316,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -345,6 +347,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -374,6 +378,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -882,6 +888,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -928,6 +936,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -974,6 +984,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1332,6 +1344,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1363,6 +1377,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -1394,6 +1410,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1426,6 +1444,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1457,6 +1477,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1490,6 +1512,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1521,6 +1545,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1553,6 +1579,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1584,6 +1612,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1616,6 +1646,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1647,6 +1679,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1679,6 +1713,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1710,6 +1746,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1753,6 +1791,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1784,6 +1824,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1816,6 +1858,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1847,6 +1891,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1894,6 +1940,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1929,6 +1977,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1965,6 +2015,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -2000,6 +2052,8 @@ EndFunc
         None,
         None,
         false,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -2036,6 +2090,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -2071,6 +2127,8 @@ EndFunc
         None,
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),

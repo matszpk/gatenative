@@ -738,6 +738,8 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             arg_inputs,
             elem_inputs,
             single_buffer,
+            init_code,
+            aggr_output_code,
         );
     }
 

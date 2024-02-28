@@ -709,6 +709,8 @@ impl<'b, 'a>
             arg_inputs,
             elem_inputs,
             single_buffer,
+            init_code,
+            aggr_output_code,
         );
     }
 

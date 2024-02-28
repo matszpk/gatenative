@@ -1262,6 +1262,8 @@ fn test_clang_writer_arginput_64bit() {
         Some(&(120 - 64..120).collect::<Vec<_>>()),
         None,
         false,
+        None,
+        None,
     );
     let out = String::from_utf8(writer.out()).unwrap();
     assert_eq!(
@@ -1552,6 +1554,8 @@ fn test_clang_writer_extra() {
         Some(&[0, 2]),
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1592,6 +1596,8 @@ fn test_clang_writer_extra() {
         Some(&[0, 2]),
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1649,6 +1655,8 @@ fn test_clang_writer_extra() {
         Some(&[0, 2]),
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1691,6 +1699,8 @@ fn test_clang_writer_extra() {
         Some(&[0, 2]),
         None,
         true,
+        None,
+        None,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
