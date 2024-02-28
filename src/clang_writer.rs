@@ -20,6 +20,7 @@ pub struct CLangWriterConfig<'a> {
     include_name_2: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
+    type_arg_addr_name: &'a str,
     arg_modifier: Option<&'a str>,
     and_op: &'a str,
     or_op: &'a str,
@@ -43,6 +44,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "uint32_t",
     type_bit_len: 32,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -87,6 +89,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -131,6 +134,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     include_name_2: Some("stddef.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -175,6 +179,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     include_name_2: Some("stddef.h"),
     type_name: "uint64_t",
     type_bit_len: 64,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -219,6 +224,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "__m64",
     type_bit_len: 64,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "_m_pand({}, {})",
     or_op: "_m_por({}, {})",
@@ -272,6 +278,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "__m128",
     type_bit_len: 128,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "_mm_and_ps({}, {})",
     or_op: "_mm_or_ps({}, {})",
@@ -331,6 +338,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "__m256",
     type_bit_len: 256,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "_mm256_and_ps({}, {})",
     or_op: "_mm256_or_ps({}, {})",
@@ -396,6 +404,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "__m512i",
     type_bit_len: 512,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "_mm512_and_epi64({}, {})",
     or_op: "_mm512_or_epi64({}, {})",
@@ -473,6 +482,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: Some("stddef.h"),
     type_name: "uint32x4_t",
     type_bit_len: 128,
+    type_arg_addr_name: "size_t",
     arg_modifier: None,
     and_op: "vandq_u32({}, {})",
     or_op: "vorrq_u32({}, {})",
@@ -517,6 +527,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     include_name_2: None,
     type_name: "uint",
     type_bit_len: 32,
+    type_arg_addr_name: "ulong",
     arg_modifier: Some("global"),
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -564,6 +575,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     include_name_2: None,
     type_name: "uint",
     type_bit_len: 32,
+    type_arg_addr_name: "ulong",
     arg_modifier: Some("global"),
     and_op: "({} & {})",
     or_op: "({} | {})",
@@ -706,6 +718,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             } else {
                 ""
             };
+        let output_len_arg = if self.aggr_output_code.is_some() {
+            format!(", {} output_len", self.writer.config.type_arg_addr_name)
+        } else {
+            "".to_string()
+        };
         let in_out_args = if self.single_buffer {
             format!(
                 "{0}{1}{2}* output",
@@ -732,7 +749,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}(unsigned long n, {}{}{}{}) {{
+                r##"{}{}void gate_sys_{}(unsigned long n, {}{}{}{}{}) {{
     {}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
@@ -745,6 +762,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 in_out_args,
                 arg_input,
                 elem_input,
+                output_len_arg,
                 init_index
             )
             .unwrap();
@@ -799,7 +817,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}({}{}{}{}) {{"##,
+                r##"{}{}void gate_sys_{}({}{}{}{}{}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -810,7 +828,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 shift_args,
                 in_out_args,
                 arg_input,
-                elem_input
+                elem_input,
+                output_len_arg
             )
             .unwrap();
         }
