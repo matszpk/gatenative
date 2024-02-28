@@ -148,6 +148,9 @@ where
 
     let mut input_already_read = vec![false; input_len];
 
+    // list of outputs awaits allocation for second value
+    let mut outputs_awaits_alloc = HashMap::new();
+
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             continue;
@@ -229,11 +232,32 @@ where
                     }
                     // use output at this point
                     if let Some(output_vars) = output_vars.as_mut() {
+                        let mut use_normal = false;
+                        let mut use_neg = false;
+                        let circ_outputs = circuit.outputs();
+                        let out_var =
+                            usize::try_from(alloc_vars[usize::try_from(tnode).unwrap()].unwrap())
+                                .unwrap();
+                        // check whether both normal and neg
                         for oi in outlist {
-                            output_vars[*oi] = usize::try_from(
-                                alloc_vars[usize::try_from(tnode).unwrap()].unwrap(),
-                            )
-                            .unwrap();
+                            if circ_outputs[*oi].1 {
+                                use_neg = true;
+                            } else {
+                                use_normal = true;
+                            }
+                        }
+                        // allocate neg_var (for negated out_var)
+                        for oi in outlist {
+                            if use_neg && use_normal {
+                                // it will be allocated later after releasing other variables
+                                outputs_awaits_alloc.insert(*oi, out_var);
+                                if !circ_outputs[*oi].1 {
+                                    // if not negated then use first variable
+                                    output_vars[*oi] = out_var;
+                                }
+                            } else {
+                                output_vars[*oi] = out_var;
+                            }
                         }
                     } else {
                         single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
@@ -250,6 +274,25 @@ where
             single_var_alloc(&mut var_alloc, &mut alloc_vars, *o);
             if !keep_output_vars {
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
+            }
+        }
+    }
+
+    if !outputs_awaits_alloc.is_empty() {
+        // allocate now pending outputs
+        let mut second_var_for_outputs = HashMap::new();
+        for (_, out_var) in &outputs_awaits_alloc {
+            second_var_for_outputs.insert(out_var, None);
+        }
+        for (_, v) in &mut second_var_for_outputs {
+            *v = Some(usize::try_from(var_alloc.alloc()).unwrap());
+        }
+        let circ_outputs = circuit.outputs();
+        if let Some(output_vars) = output_vars.as_mut() {
+            for (oi, out_var) in outputs_awaits_alloc.iter() {
+                if circ_outputs[*oi].1 {
+                    output_vars[*oi] = second_var_for_outputs.get(&out_var).unwrap().unwrap();
+                }
             }
         }
     }
@@ -797,6 +840,45 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, Some(vec![4, 0])),
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+        );
+
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true), (4, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, Some(vec![4, 0, 1])),
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+        );
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true), (4, true), (7, false)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 2], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, Some(vec![4, 2, 1, 0])),
             gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
         );
 
