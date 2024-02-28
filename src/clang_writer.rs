@@ -610,6 +610,9 @@ pub struct CLangFuncWriter<'a, 'c> {
     arg_input_map: HashMap<usize, usize>,
     elem_input_map: HashMap<usize, usize>,
     single_buffer: bool,
+    init_code: Option<&'c str>,
+    aggr_output_code: Option<&'c str>,
+    output_vars: Option<Vec<usize>>,
 }
 
 pub struct CLangWriter<'a> {
@@ -850,8 +853,25 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 .out
                 .extend(b"    const unsigned int idxh = idx >> 32;\n");
         }
+
+        if let Some(init_code) = self.init_code {
+            self.writer.out.extend(init_code.as_bytes());
+        }
     }
     fn func_end(&mut self) {
+        if let Some(aggr_output_code) = self.aggr_output_code {
+            if let Some(output_vars) = self.output_vars.as_ref() {
+                for (i, v) in output_vars.iter().enumerate() {
+                    writeln!(self.writer.out, "#define o{} (v{})", i, *v).unwrap();
+                }
+            }
+            self.writer.out.extend(aggr_output_code.as_bytes());
+            if let Some(output_vars) = self.output_vars.as_ref() {
+                for i in 0..output_vars.len() {
+                    writeln!(self.writer.out, "#undef o{}", i).unwrap();
+                }
+            }
+        }
         self.writer.out.extend(b"}\n");
     }
     fn alloc_vars(&mut self, var_num: usize) {
@@ -1121,6 +1141,9 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             arg_input_map,
             elem_input_map,
             single_buffer,
+            init_code,
+            aggr_output_code,
+            output_vars,
         }
     }
 
