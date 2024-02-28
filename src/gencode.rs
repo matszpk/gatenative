@@ -437,6 +437,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 );
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
+                    let mut use_neg = false;
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
@@ -454,12 +455,13 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                         }
                         // if output then store
                         if let Some(output_vars) = output_vars {
-                            if *on && output_vars[*oi].1.is_none() {
+                            if !use_neg && *on && output_vars[*oi].1.is_none() {
                                 // only if negation neeeded and is first occurred sign.
                                 // negate output
                                 let v =
                                     usize::try_from(var_allocs[input_len + node_index]).unwrap();
                                 writer.gen_not(v, v);
+                                use_neg = true;
                             }
                         } else {
                             writer.gen_store(
@@ -482,16 +484,17 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
                 used_inputs[ou] = true;
             }
-            if let Some(output_vars) = output_vars {
-                if let Some(orig_var) = output_vars[oi].1 {
-                    writer.gen_not(output_vars[oi].0, orig_var);
-                }
-            } else {
+            if output_vars.is_none() {
                 writer.gen_store(
                     *on,
                     oi,
                     usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
                 );
+            }
+        }
+        if let Some(output_vars) = output_vars {
+            if let Some(orig_var) = output_vars[oi].1 {
+                writer.gen_not(output_vars[oi].0, orig_var);
             }
         }
     }
@@ -617,6 +620,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 );
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
+                    let mut use_neg = false;
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
@@ -634,12 +638,13 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                         }
                         // if output then store
                         if let Some(output_vars) = output_vars {
-                            if *on && output_vars[*oi].1.is_none() {
+                            if !use_neg && *on && output_vars[*oi].1.is_none() {
                                 // only if negation neeeded and is first occurred sign.
                                 // negate output
                                 let v =
                                     usize::try_from(var_allocs[input_len + node_index]).unwrap();
                                 writer.gen_not(v, v);
+                                use_neg = true;
                             }
                         } else {
                             writer.gen_store(
@@ -662,16 +667,17 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
                 used_inputs[ou] = true;
             }
-            if let Some(output_vars) = output_vars {
-                if let Some(orig_var) = output_vars[oi].1 {
-                    writer.gen_not(output_vars[oi].0, orig_var);
-                }
-            } else {
+            if output_vars.is_none() {
                 writer.gen_store(
                     *on,
                     oi,
                     usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
                 );
+            }
+        }
+        if let Some(output_vars) = output_vars {
+            if let Some(orig_var) = output_vars[oi].1 {
+                writer.gen_not(output_vars[oi].0, orig_var);
             }
         }
     }
