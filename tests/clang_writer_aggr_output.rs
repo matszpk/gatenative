@@ -38,7 +38,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, size_t output_len) {
+    uint32_t* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -83,7 +83,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, size_t output_len) {
+    __m128* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -141,7 +141,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, size_t output_len) {
+    uint32_t* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -189,7 +189,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, size_t output_len) {
+    __m128* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -257,7 +257,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output, size_t output_len) {
+    uint32_t* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -312,7 +312,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, size_t output_len) {
+    __m128* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -388,7 +388,7 @@ fn test_clang_writer_aggregate_output() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output, size_t output_len) {
+    __m128* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
