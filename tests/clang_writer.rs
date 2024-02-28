@@ -131,6 +131,9 @@ fn write_test_code_single_buffer(
         if arg_input { Some(&[0, 2]) } else { None },
         None,
         true,
+        None,
+        None,
+        None,
     );
     fw.func_start();
     fw.alloc_vars(5);

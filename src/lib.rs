@@ -126,6 +126,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         arg_inputs: Option<&'a [usize]>,
         elem_inputs: Option<&'a [usize]>,
         single_buffer: bool,
+        init_code: Option<&'a str>,
+        aggr_output_code: Option<&'a str>,
+        output_vars: Option<Vec<usize>>,
     ) -> FW;
 
     fn func_writer_ext(
@@ -138,6 +141,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         arg_inputs: Option<&'a [usize]>,
         elem_inputs: Option<&'a [usize]>,
         single_buffer: bool,
+        init_code: Option<&'a str>,
+        aggr_output_code: Option<&'a str>,
+        output_vars: Option<Vec<usize>>,
     ) -> FW {
         // for checking requirements for single_buffer
         let real_input_len = if let Some((_, len)) = input_placement {
@@ -182,6 +188,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
                 arg_inputs,
                 elem_inputs,
                 single_buffer,
+                init_code,
+                aggr_output_code,
+                output_vars,
             )
         }
     }
@@ -204,6 +213,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             arg_inputs,
             None,
             false,
+            None,
+            None,
+            None,
         )
     }
 

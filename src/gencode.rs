@@ -675,6 +675,9 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         arg_inputs,
         elem_inputs,
         single_buffer,
+        None,
+        None,
+        output_vars,
     );
     func_writer.func_start();
     func_writer.alloc_vars(var_num);

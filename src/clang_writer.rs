@@ -1071,6 +1071,9 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         arg_inputs: Option<&'c [usize]>,
         elem_inputs: Option<&'c [usize]>,
         single_buffer: bool,
+        init_code: Option<&'c str>,
+        aggr_output_code: Option<&'c str>,
+        output_vars: Option<Vec<usize>>,
     ) -> CLangFuncWriter<'a, 'c> {
         if let Some(elem_inputs) = elem_inputs {
             assert!(elem_inputs.len() <= 64 + (self.elem_low_bits as usize));
