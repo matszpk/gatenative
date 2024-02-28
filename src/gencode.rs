@@ -740,7 +740,7 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         &mut gen_var_usage(&circuit),
         single_buffer,
         input_map.as_ref(),
-        false,
+        aggr_output_code.is_some(),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
