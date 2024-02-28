@@ -927,6 +927,44 @@ mod tests {
             gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
         );
 
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [
+                (4, false),
+                (7, true),
+                (4, true),
+                (7, false),
+                (7, true),
+                (4, false),
+            ],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(vec![
+                    (4, None),
+                    (0, None),
+                    (2, Some(4)),
+                    (1, Some(0)),
+                    (0, None),
+                    (4, None)
+                ])
+            ),
+            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+        );
+
         let circuit = Circuit::new(
             4,
             [
