@@ -74,6 +74,9 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
         )
         .unwrap();
     }
+    fn gen_not(&mut self, dst_arg: usize, arg: usize) {
+        writeln!(self.writer.out, "    v{} = ~v{}", dst_arg, arg).unwrap();
+    }
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
         let output = self
             .output_placement

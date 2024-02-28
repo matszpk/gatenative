@@ -981,6 +981,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         self.writer.out.extend(b";\n");
     }
 
+    fn gen_not(&mut self, dst_arg: usize, arg: usize) {
+        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
+        let arg = format!("v{}", arg);
+        CLangWriter::write_neg(&self.writer.config, &mut self.writer.out, arg.as_bytes());
+        self.writer.out.extend(b";\n");
+    }
+
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
         let output = self
             .output_placement

@@ -77,6 +77,8 @@ pub trait FuncWriter {
     fn gen_load(&mut self, reg: usize, input: usize);
     /// Generates operation.
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
+    /// Generates NOT operation.
+    fn gen_not(&mut self, dst_arg: usize, arg: usize);
     /// Generates Store instruction into output.
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
 }

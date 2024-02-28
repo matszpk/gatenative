@@ -162,6 +162,60 @@ fn write_test_code_single_buffer(
     String::from_utf8(cw.out()).unwrap()
 }
 
+fn write_test_code_with_not(
+    cw_config: &CLangWriterConfig,
+    inout_placement: bool,
+    arg_input: bool,
+) -> String {
+    let mut cw = cw_config.writer();
+    let supported_ops = cw.supported_ops();
+    cw.prolog();
+    let mut fw = cw.func_writer(
+        "func1",
+        3,
+        2,
+        if inout_placement {
+            if arg_input {
+                Some((&[11], 68))
+            } else {
+                Some((&[6, 11, 44], 68))
+            }
+        } else {
+            None
+        },
+        if inout_placement {
+            Some((&[48, 72], 88))
+        } else {
+            None
+        },
+        if arg_input { Some(&[0, 2]) } else { None },
+    );
+    fw.func_start();
+    fw.alloc_vars(5);
+    fw.gen_load(2, 0);
+    fw.gen_load(1, 1);
+    fw.gen_load(0, 2);
+    fw.gen_op(InstrOp::And, VNegs::NoNegs, 2, 0, 1);
+    fw.gen_op(InstrOp::Or, VNegs::NoNegs, 1, 2, 1);
+    fw.gen_op(InstrOp::Xor, VNegs::NoNegs, 3, 0, 1);
+    fw.gen_op(InstrOp::And, VNegs::NegOutput, 3, 0, 1);
+    if (supported_ops & (1u64 << INSTR_OP_VALUE_IMPL)) != 0 {
+        fw.gen_op(InstrOp::Impl, VNegs::NoNegs, 3, 2, 1);
+    }
+    fw.gen_store(true, 1, 3);
+    fw.gen_op(InstrOp::Or, VNegs::NegOutput, 2, 2, 3);
+    fw.gen_op(InstrOp::Xor, VNegs::NegOutput, 4, 1, 3);
+    fw.gen_op(InstrOp::And, VNegs::NegInput1, 4, 4, 1);
+    fw.gen_not(4, 1);
+    if (supported_ops & (1u64 << INSTR_OP_VALUE_NIMPL)) != 0 {
+        fw.gen_op(InstrOp::Nimpl, VNegs::NoNegs, 4, 2, 4);
+    }
+    fw.gen_store(false, 0, 4);
+    fw.func_end();
+    cw.epilog();
+    String::from_utf8(cw.out()).unwrap()
+}
+
 #[test]
 fn test_clang_writer() {
     {
@@ -192,6 +246,36 @@ void gate_sys_func1(const uint32_t* input,
 "##,
             write_test_code(&CLANG_WRITER_U32, false, false)
         );
+
+        // with not
+        assert_eq!(
+            r##"#include <stdint.h>
+#include <stddef.h>
+void gate_sys_func1(const uint32_t* input,
+    uint32_t* output) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = ~v1;
+    output[0] = v4;
+}
+"##,
+            write_test_code_with_not(&CLANG_WRITER_U32, false, false)
+        );
+
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
@@ -425,6 +509,44 @@ void gate_sys_func1(const __m64* input,
 "##,
         write_test_code(&CLANG_WRITER_INTEL_MMX, false, false)
     );
+
+    // with not
+    assert_eq!(
+        r##"#include <mmintrin.h>
+#include <stddef.h>
+static const unsigned int zero_value[2] = { 0, 0 };
+static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
+static const unsigned int elem_index_low_tbl[6*2] = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xcccccccc, 0xcccccccc, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xffff0000, 0xffff0000, 0x00000000, 0xffffffff
+};
+void gate_sys_func1(const __m64* input,
+    __m64* output) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _m_pand(v0, v1);
+    v1 = _m_por(v2, v1);
+    v3 = _m_pxor(v0, v1);
+    v3 = _m_pxor(_m_pand(v0, v1), one);
+    output[1] = _m_pxor(v3, one);
+    v2 = _m_pxor(_m_por(v2, v3), one);
+    v4 = _m_pxor(_m_pxor(v1, v3), one);
+    v4 = _m_pand(v4, _m_pxor(v1, one));
+    v4 = _m_pxor(v1, one);
+    v4 = _m_pandn(v4, v2);
+    output[0] = v4;
+}
+"##,
+        write_test_code_with_not(&CLANG_WRITER_INTEL_MMX, false, false)
+    );
+
     assert_eq!(
         r##"#include <xmmintrin.h>
 #include <stddef.h>
@@ -465,6 +587,48 @@ void gate_sys_func1(const __m128* input,
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE, false, false)
+    );
+    // with not
+    assert_eq!(
+        r##"#include <xmmintrin.h>
+#include <stddef.h>
+static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
+static const unsigned int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
+static const unsigned int elem_index_low_tbl[7*4] = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff
+};
+void gate_sys_func1(const __m128* input,
+    __m128* output) {
+    const __m128 one = *((const __m128*)one_value);
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _mm_and_ps(v0, v1);
+    v1 = _mm_or_ps(v2, v1);
+    v3 = _mm_xor_ps(v0, v1);
+    v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
+    output[1] = _mm_xor_ps(v3, one);
+    v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
+    v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
+    v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
+    v4 = _mm_xor_ps(v1, one);
+    v4 = _mm_andnot_ps(v4, v2);
+    output[0] = v4;
+}
+"##,
+        write_test_code_with_not(&CLANG_WRITER_INTEL_SSE, false, false)
     );
     assert_eq!(
         r##"#include <immintrin.h>
@@ -600,6 +764,35 @@ void gate_sys_func1(const uint32x4_t* input,
 "##,
         write_test_code(&CLANG_WRITER_ARM_NEON, false, false)
     );
+    // with not
+    assert_eq!(
+        r##"#include <arm_neon.h>
+#include <stddef.h>
+void gate_sys_func1(const uint32x4_t* input,
+    uint32x4_t* output) {
+    uint32x4_t v0;
+    uint32x4_t v1;
+    uint32x4_t v2;
+    uint32x4_t v3;
+    uint32x4_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = vandq_u32(v0, v1);
+    v1 = vorrq_u32(v2, v1);
+    v3 = veorq_u32(v0, v1);
+    v3 = vmvnq_u32(vandq_u32(v0, v1));
+    v3 = vornq_u32(v1, v2);
+    output[1] = vmvnq_u32(v3);
+    v2 = vmvnq_u32(vorrq_u32(v2, v3));
+    v4 = vmvnq_u32(veorq_u32(v1, v3));
+    v4 = vandq_u32(v4, vmvnq_u32(v1));
+    v4 = vmvnq_u32(v1);
+    output[0] = v4;
+}
+"##,
+        write_test_code_with_not(&CLANG_WRITER_ARM_NEON, false, false)
+    );
 
     // opencl
     assert_eq!(
@@ -632,6 +825,38 @@ void gate_sys_func1(const uint32x4_t* input,
 }
 "##,
         write_test_code(&CLANG_WRITER_OPENCL_U32, false, false)
+    );
+    // with not
+    assert_eq!(
+        r##"kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + input_shift;
+    const size_t ovn = 2 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v0 = input[ivn + 2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    output[ovn + 1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = ~v1;
+    output[ovn + 0] = v4;
+}
+"##,
+        write_test_code_with_not(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
         r##"kernel void gate_sys_func1(unsigned long n, 
