@@ -177,6 +177,8 @@ where
         circuit: Circuit<T>,
         arg_inputs: &[usize],
         elem_inputs: Option<&[usize]>,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -193,6 +195,8 @@ where
             Some(arg_inputs),
             elem_inputs,
             false,
+            init_code,
+            aggr_output_code,
         );
     }
 
@@ -446,6 +450,8 @@ where
         circuit: Circuit<T>,
         arg_inputs: &[usize],
         elem_inputs: Option<&[usize]>,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -463,6 +469,8 @@ where
             Some(arg_inputs),
             elem_inputs,
             false,
+            init_code,
+            aggr_output_code,
         );
     }
 

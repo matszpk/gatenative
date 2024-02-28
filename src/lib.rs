@@ -372,6 +372,8 @@ where
             arg_inputs,
             None,
             false,
+            None,
+            None,
         );
     }
 
@@ -384,6 +386,8 @@ where
         arg_inputs: Option<&[usize]>,
         elem_inputs: Option<&[usize]>,
         single_buffer: bool,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -510,6 +514,8 @@ where
         circuit: Circuit<T>,
         arg_inputs: &[usize],
         elem_inputs: Option<&[usize]>,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -525,7 +531,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(name, circuit, arg_inputs, None);
+        self.add_ext(name, circuit, arg_inputs, None, None, None);
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
@@ -641,6 +647,8 @@ where
         circuit: Circuit<T>,
         arg_inputs: &[usize],
         elem_inputs: Option<&[usize]>,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -656,7 +664,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(name, circuit, arg_inputs, None);
+        self.add_ext(name, circuit, arg_inputs, None, None, None);
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;

@@ -312,7 +312,17 @@ fn test_cpu_builder_and_exec() {
             Some(output_ps.clone()),
             None,
         );
-        builder.add_ext("mul2x2sb", circuit.clone(), None, None, None, None, true);
+        builder.add_ext(
+            "mul2x2sb",
+            circuit.clone(),
+            None,
+            None,
+            None,
+            None,
+            true,
+            None,
+            None,
+        );
         let mut execs = builder.build().unwrap();
 
         // input and output len
@@ -630,6 +640,8 @@ fn test_cpu_builder_and_exec_with_arg_input() {
             Some(&(20..24).collect::<Vec<_>>()),
             None,
             true,
+            None,
+            None,
         );
         builder.add_ext(
             "mul_add_sb_ip",
@@ -639,6 +651,8 @@ fn test_cpu_builder_and_exec_with_arg_input() {
             Some(&(20..24).collect::<Vec<_>>()),
             None,
             true,
+            None,
+            None,
         );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
@@ -738,6 +752,8 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             None,
             Some(&(0..12).collect::<Vec<_>>()),
             false,
+            None,
+            None,
         );
         builder.add_ext(
             "mul_add_elem_full",
@@ -747,6 +763,8 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             None,
             Some(&(0..24).collect::<Vec<_>>()),
             false,
+            None,
+            None,
         );
         builder.add_ext(
             "mul_add_elem_sb",
@@ -756,6 +774,8 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             None,
             Some(&(0..12).collect::<Vec<_>>()),
             true,
+            None,
+            None,
         );
         builder.add_ext(
             "mul_add_elem_arginput",
@@ -765,6 +785,8 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             Some(&(20..24).collect::<Vec<_>>()),
             Some(&(0..12).collect::<Vec<_>>()),
             false,
+            None,
+            None,
         );
         builder.add_ext(
             "mul_add_elem_sb_ip",
@@ -774,6 +796,8 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             None,
             Some(&(0..12).collect::<Vec<_>>()),
             true,
+            None,
+            None,
         );
         let mut execs = builder.build().unwrap();
 
@@ -923,7 +947,9 @@ fn test_cpu_data_holder() {
             Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
         builder.add("mul2x2", circuit.clone(), None, None, None);
         let circuit = Circuit::new(4, [], [(0, true), (1, true), (2, true), (3, true)]).unwrap();
-        builder.add_ext("mul2x2sb", circuit, None, None, None, None, true);
+        builder.add_ext(
+            "mul2x2sb", circuit, None, None, None, None, true, None, None,
+        );
         let circuit = Circuit::new(
             8,
             [
@@ -950,6 +976,8 @@ fn test_cpu_data_holder() {
             Some(&[4, 5, 6, 7]),
             None,
             true,
+            None,
+            None,
         );
         let mut execs = builder.build().unwrap();
         let mut data = execs[0].new_data(10);

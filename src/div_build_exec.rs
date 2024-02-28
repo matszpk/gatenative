@@ -300,6 +300,8 @@ where
         arg_inputs: Option<&[usize]>,
         elem_inputs: Option<&[usize]>,
         single_buffer: bool,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -349,6 +351,20 @@ where
                 } else {
                     // for subcircuits after first and before last
                     i != 0
+                },
+                if i + 1 == subcircuit_num {
+                    // if only one subcircuit then apply single_buffer
+                    init_code
+                } else {
+                    // for subcircuits after first and before last
+                    None
+                },
+                if i + 1 == subcircuit_num {
+                    // if only one subcircuit then apply single_buffer
+                    aggr_output_code
+                } else {
+                    // for subcircuits after first and before last
+                    None
                 },
             );
         }

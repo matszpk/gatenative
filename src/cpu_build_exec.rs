@@ -707,6 +707,8 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         arg_inputs: Option<&[usize]>,
         elem_inputs: Option<&[usize]>,
         single_buffer: bool,
+        init_code: Option<&str>,
+        aggr_output_code: Option<&str>,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
