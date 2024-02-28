@@ -3,7 +3,7 @@ use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -149,7 +149,7 @@ where
     let mut input_already_read = vec![false; input_len];
 
     // list of outputs awaits allocation for second value
-    let mut outputs_awaits_alloc = HashMap::new();
+    let mut outputs_awaits_alloc = BTreeMap::new();
 
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -247,12 +247,13 @@ where
                             }
                         }
                         // allocate neg_var (for negated out_var)
+                        let first_neg = circ_outputs[*outlist.first().unwrap()].1;
                         for oi in outlist {
                             if use_neg && use_normal {
                                 // it will be allocated later after releasing other variables
-                                outputs_awaits_alloc.insert(*oi, out_var);
-                                if !circ_outputs[*oi].1 {
-                                    // if not negated then use first variable
+                                outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
+                                if circ_outputs[*oi].1 == first_neg {
+                                    // if first sign occurence
                                     output_vars[*oi] = out_var;
                                 }
                             } else {
@@ -280,8 +281,8 @@ where
 
     if !outputs_awaits_alloc.is_empty() {
         // allocate now pending outputs
-        let mut second_var_for_outputs = HashMap::new();
-        for (_, out_var) in &outputs_awaits_alloc {
+        let mut second_var_for_outputs = BTreeMap::new();
+        for (_, (out_var, _)) in &outputs_awaits_alloc {
             second_var_for_outputs.insert(out_var, None);
         }
         for (_, v) in &mut second_var_for_outputs {
@@ -289,9 +290,9 @@ where
         }
         let circ_outputs = circuit.outputs();
         if let Some(output_vars) = output_vars.as_mut() {
-            for (oi, out_var) in outputs_awaits_alloc.iter() {
-                if circ_outputs[*oi].1 {
-                    output_vars[*oi] = second_var_for_outputs.get(&out_var).unwrap().unwrap();
+            for (oi, (out_var, second_neg)) in outputs_awaits_alloc.iter() {
+                if circ_outputs[*oi].1 == *second_neg {
+                    output_vars[*oi] = second_var_for_outputs.get(out_var).unwrap().unwrap();
                 }
             }
         }
@@ -878,7 +879,7 @@ mod tests {
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 2], var_usage);
         assert_eq!(
-            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, Some(vec![4, 2, 1, 0])),
+            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, Some(vec![4, 0, 2, 1])),
             gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
         );
 
