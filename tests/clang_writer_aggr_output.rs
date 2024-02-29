@@ -374,4 +374,112 @@ fn test_clang_writer_aggregate_output() {
 }
 "##
     );
+
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + input_shift;
+    const size_t ovn = 6 * idx + output_shift;
+    unsigned int xxx = 1111;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v0 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v2 = (v0 ^ v1);
+    v3 = input[ivn + 2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    v2 = ~v4;
+    v1 = ~v0;
+#define o0 (v4)
+#define o1 (v0)
+#define o2 (v2)
+#define o3 (v1)
+#define o4 (v0)
+#define o5 (v4)
+    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
+
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (3 * idx) + input_shift;
+    const size_t ovn = llen * (6 * idx) + output_shift;
+    unsigned int xxx = 1111;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v0 = input[ivn + llen*0 + lidx];
+    v1 = input[ivn + llen*1 + lidx];
+    v2 = (v0 ^ v1);
+    v3 = input[ivn + llen*2 + lidx];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    v2 = ~v4;
+    v1 = ~v0;
+#define o0 (v4)
+#define o1 (v0)
+#define o2 (v2)
+#define o3 (v1)
+#define o4 (v0)
+#define o5 (v4)
+    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
 }
