@@ -94,8 +94,6 @@ fn get_input_orig_index_map(
     }
 }
 
-// TODO: handle negations in output variables if keep_output_vars is enabled.
-
 fn gen_var_allocs<T>(
     circuit: &Circuit<T>,
     input_placement: Option<(&[usize], usize)>,
