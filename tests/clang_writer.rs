@@ -220,6 +220,8 @@ fn test_clang_writer() {
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -249,6 +251,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -277,6 +281,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output) {
     uint32_t v0;
@@ -304,6 +310,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -333,6 +341,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -362,6 +372,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
@@ -391,6 +403,8 @@ void gate_sys_func1(const uint32_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (64)
+#define TYPE_NAME uint64_t
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output) {
     uint64_t v0;
@@ -418,6 +432,8 @@ void gate_sys_func1(const uint64_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (64)
+#define TYPE_NAME uint64_t
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output) {
     uint64_t v0;
@@ -445,6 +461,8 @@ void gate_sys_func1(const uint64_t* input,
         assert_eq!(
             r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (64)
+#define TYPE_NAME uint64_t
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, unsigned int arg, unsigned int arg2) {
     const uint64_t zero = 0ULL;
@@ -481,6 +499,8 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xcccccccc, 0xcccccccc, 0xf0f0f0f0, 0xf0f0f0f0,
     0xff00ff00, 0xff00ff00, 0xffff0000, 0xffff0000, 0x00000000, 0xffffffff
 };
+#define TYPE_LEN (64)
+#define TYPE_NAME __m64
 void gate_sys_func1(const __m64* input,
     __m64* output) {
     const __m64 one = *((const __m64*)one_value);
@@ -518,6 +538,8 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xcccccccc, 0xcccccccc, 0xf0f0f0f0, 0xf0f0f0f0,
     0xff00ff00, 0xff00ff00, 0xffff0000, 0xffff0000, 0x00000000, 0xffffffff
 };
+#define TYPE_LEN (64)
+#define TYPE_NAME __m64
 void gate_sys_func1(const __m64* input,
     __m64* output) {
     const __m64 one = *((const __m64*)one_value);
@@ -560,6 +582,8 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff
 };
+#define TYPE_LEN (128)
+#define TYPE_NAME __m128
 void gate_sys_func1(const __m128* input,
     __m128* output) {
     const __m128 one = *((const __m128*)one_value);
@@ -602,6 +626,8 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff
 };
+#define TYPE_LEN (128)
+#define TYPE_NAME __m128
 void gate_sys_func1(const __m128* input,
     __m128* output) {
     const __m128 one = *((const __m128*)one_value);
@@ -649,6 +675,8 @@ __attribute__((aligned(32))) = {
     0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
+#define TYPE_LEN (256)
+#define TYPE_NAME __m256
 void gate_sys_func1(const __m256* input,
     __m256* output) {
     const __m256 one = *((const __m256*)one_value);
@@ -708,6 +736,8 @@ __attribute__((aligned(64))) = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 };
+#define TYPE_LEN (512)
+#define TYPE_NAME __m512i
 void gate_sys_func1(const __m512i* input,
     __m512i* output) {
     const __m512i one = *((const __m512i*)one_value);
@@ -737,6 +767,8 @@ void gate_sys_func1(const __m512i* input,
     assert_eq!(
         r##"#include <arm_neon.h>
 #include <stddef.h>
+#define TYPE_LEN (128)
+#define TYPE_NAME uint32x4_t
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output) {
     uint32x4_t v0;
@@ -766,6 +798,8 @@ void gate_sys_func1(const uint32x4_t* input,
     assert_eq!(
         r##"#include <arm_neon.h>
 #include <stddef.h>
+#define TYPE_LEN (128)
+#define TYPE_NAME uint32x4_t
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output) {
     uint32x4_t v0;
@@ -794,7 +828,9 @@ void gate_sys_func1(const uint32x4_t* input,
 
     // opencl
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
@@ -826,7 +862,9 @@ void gate_sys_func1(const uint32x4_t* input,
     );
     // with not
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
@@ -857,7 +895,9 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code_with_not(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
@@ -888,7 +928,9 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code(&CLANG_WRITER_OPENCL_U32, true, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
@@ -921,7 +963,9 @@ void gate_sys_func1(const uint32x4_t* input,
         write_test_code(&CLANG_WRITER_OPENCL_U32, false, true)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
@@ -958,6 +1002,8 @@ void gate_sys_func1(const uint32x4_t* input,
     assert_eq!(
         r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(uint32_t* output) {
     uint32_t v0;
     uint32_t v1;
@@ -985,6 +1031,8 @@ void gate_sys_func1(uint32_t* output) {
     assert_eq!(
         r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(uint32_t* output) {
     uint32_t v0;
     uint32_t v1;
@@ -1012,6 +1060,8 @@ void gate_sys_func1(uint32_t* output) {
     assert_eq!(
         r##"#include <stdint.h>
 #include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
 void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -1041,7 +1091,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
 
     // single buffer - opencl
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
     const size_t idx = get_global_id(0);
@@ -1072,7 +1124,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
     const size_t idx = get_global_id(0);
@@ -1103,7 +1157,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code_single_buffer(&CLANG_WRITER_OPENCL_U32, true, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output, unsigned int arg, unsigned int arg2) {
     const size_t idx = get_global_id(0);
@@ -1138,7 +1194,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
 
     // opencl group_vec
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output) {
@@ -1171,7 +1229,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
         write_test_code(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
     );
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global uint* output, unsigned int arg, unsigned int arg2) {
@@ -1207,7 +1267,9 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
     );
     // single buffer - opencl group_vec
     assert_eq!(
-        r##"kernel void gate_sys_func1(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
     const size_t idx = get_group_id(0);

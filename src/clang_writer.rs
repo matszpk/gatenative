@@ -1084,6 +1084,12 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                 .extend(self.config.elem_index.low_bits_init.as_bytes());
             self.out.push(b'\n');
         }
+        write!(
+            self.out,
+            "#define TYPE_LEN ({})\n#define TYPE_NAME {}\n",
+            self.config.type_bit_len, self.config.type_name
+        )
+        .unwrap();
     }
 
     fn epilog(&mut self) {}
