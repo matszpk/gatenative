@@ -624,6 +624,7 @@ fn test_cpu_div_builder_and_exec_with_arg_input() {
             execs[0].execute_single(&mut input_circ, arg_input).unwrap();
             let output = ot.transform(&input_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -647,6 +648,7 @@ fn test_cpu_div_builder_and_exec_with_arg_input() {
             execs[1].execute_single(&mut input_circ, arg_input).unwrap();
             let output = ot.transform(&input_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -755,12 +757,11 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         let input =
             execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
-        println!("Point1");
         let output_circ = execs[0].execute(&input_circ, 0).unwrap();
-        println!("Point2");
         let output_circ_len = output_circ.len();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         for (i, v) in output.into_iter().enumerate() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -768,13 +769,12 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         }
 
         let mut output_circ = execs[0].new_data(output_circ_len);
-        println!("Point3");
         execs[0]
             .execute_reuse(&input_circ, 0, &mut output_circ)
             .unwrap();
-        println!("Point4");
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         for (i, v) in output.into_iter().enumerate() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -784,12 +784,11 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         // with elem full
         let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
         let input = execs[1].new_data(1);
-        println!("Point5");
         let output_circ = execs[1].execute(&input, 0).unwrap();
-        println!("Point6");
         let output_circ_len = output_circ.len();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         assert!(output.len() != 0);
         for (ix, v) in output.into_iter().enumerate() {
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -797,11 +796,9 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         }
 
         let mut output_circ = execs[1].new_data(output_circ_len);
-        println!("Point7");
         execs[1]
             .execute_reuse(&input_circ, 0, &mut output_circ)
             .unwrap();
-        println!("Point8");
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
         for (ix, v) in output.into_iter().enumerate() {
@@ -818,6 +815,7 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         execs[2].execute_single(&mut input_circ, 0).unwrap();
         let output = ot.transform(&input_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         for (i, v) in output.into_iter().enumerate() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -835,6 +833,7 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
             let output_circ_len = output_circ.len();
             let output = ot.transform(&output_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -847,6 +846,7 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
                 .unwrap();
             let output = ot.transform(&output_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();

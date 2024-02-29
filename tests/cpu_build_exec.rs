@@ -656,6 +656,7 @@ fn test_cpu_builder_and_exec_with_arg_input() {
             execs[0].execute_single(&mut input_circ, arg_input).unwrap();
             let output = ot.transform(&input_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -679,6 +680,7 @@ fn test_cpu_builder_and_exec_with_arg_input() {
             execs[1].execute_single(&mut input_circ, arg_input).unwrap();
             let output = ot.transform(&input_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -790,6 +792,7 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         let output_circ_len = output_circ.len();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         for (i, v) in output.into_iter().enumerate() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -815,6 +818,7 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         let output_circ_len = output_circ.len();
         let output = ot.transform(&output_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         assert!(output.len() != 0);
         for (ix, v) in output.into_iter().enumerate() {
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -841,6 +845,7 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         execs[2].execute_single(&mut input_circ, 0).unwrap();
         let output = ot.transform(&input_circ).unwrap();
         let output = output.release();
+        assert_eq!(output.len(), 1 << 24);
         for (i, v) in output.into_iter().enumerate() {
             let ix = i ^ 0xfff000;
             let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
@@ -858,6 +863,7 @@ fn test_cpu_builder_and_exec_with_elem_input() {
             let output_circ_len = output_circ.len();
             let output = ot.transform(&output_circ).unwrap();
             let output = output.release();
+            assert_eq!(output.len(), 1 << 20);
             for (i, v) in output.into_iter().enumerate() {
                 let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
                 let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
