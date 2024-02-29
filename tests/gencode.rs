@@ -306,18 +306,15 @@ EndFunc
 
     // single_buffer
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[0, 1, 2], 3)),
-        Some((&[0, 1], 3)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[0, 1, 2], 3)))
+            .output_placement(Some((&[0, 1], 3)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -337,18 +334,15 @@ EndFunc
 "##
     );
     cw_impl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_impl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[0, 1, 2], 3)),
-        Some((&[0, 1], 3)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[0, 1, 2], 3)))
+            .output_placement(Some((&[0, 1], 3)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -368,18 +362,15 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        Some((&[0, 1, 2], 3)),
-        Some((&[0, 1], 3)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[0, 1, 2], 3)))
+            .output_placement(Some((&[0, 1], 3)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -878,18 +869,12 @@ EndFunc
     )
     .unwrap();
     cw_impl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_impl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -926,18 +911,12 @@ EndFunc
 "##
     );
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -974,18 +953,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1334,18 +1307,12 @@ EndFunc
     )
     .unwrap();
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1367,18 +1334,12 @@ EndFunc
 "##
     );
     cw_impl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_impl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_impl.out.clone()).unwrap(),
@@ -1400,18 +1361,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1434,18 +1389,12 @@ EndFunc
     );
     // no single buffer
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1467,18 +1416,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1502,18 +1445,15 @@ EndFunc
     // additional tests with placements
     // both input and output placements
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 3, 0], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1535,18 +1475,15 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 3, 0], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1569,18 +1506,15 @@ EndFunc
     );
     // both input and output placements
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 0, 3], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 0, 3], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1602,18 +1536,15 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 0, 3], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 0, 3], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1636,18 +1567,14 @@ EndFunc
     );
     // output placements
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1669,18 +1596,14 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1703,18 +1626,14 @@ EndFunc
     );
     // input placements
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 0, 3], 4)),
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 0, 3], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1736,18 +1655,14 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 0, 3], 4)),
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 0, 3], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1781,18 +1696,12 @@ EndFunc
     )
     .unwrap();
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1814,18 +1723,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1848,18 +1751,12 @@ EndFunc
     );
     // no single buffer
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1881,18 +1778,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -1930,18 +1821,12 @@ EndFunc
     )
     .unwrap();
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -1967,18 +1852,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -2005,18 +1884,12 @@ EndFunc
     );
     // no single buffer
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -2042,18 +1915,12 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new(),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),
@@ -2080,18 +1947,15 @@ EndFunc
     );
     // with placements
     cw_nimpl.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_nimpl,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 3, 0], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
@@ -2117,18 +1981,15 @@ EndFunc
 "##
     );
     cw_basic.out.clear();
-    generate_code_ext(
+    generate_code_with_config(
         &mut cw_basic,
         "test1",
         circuit.clone(),
         false,
-        Some((&[1, 2, 3, 0], 4)),
-        Some((&[3, 2, 0, 1], 4)),
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .single_buffer(true),
     );
     assert_eq!(
         String::from_utf8(cw_basic.out.clone()).unwrap(),

@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_ext;
+use crate::gencode::generate_code_with_config;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -13,18 +13,12 @@ fn test_clang_writer_elem_input() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -106,18 +100,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_U64.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -200,18 +188,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -294,18 +276,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -389,18 +365,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_AVX.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -484,18 +454,12 @@ fn test_clang_writer_elem_input() {
 "##
     );
     let mut writer = CLANG_WRITER_INTEL_AVX512.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -581,18 +545,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_ARM_NEON.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -676,18 +634,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -775,18 +727,12 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -877,18 +823,17 @@ fn test_clang_writer_elem_input() {
 
     // with input_placement
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        Some((&(0..30 - 13).map(|i| 2 + 3 * i).collect::<Vec<_>>(), 100)),
-        None,
-        None,
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((
+                &(0..30 - 13).map(|i| 2 + 3 * i).collect::<Vec<_>>(),
+                100,
+            )))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -971,18 +916,14 @@ fn test_clang_writer_elem_input() {
 
     // with arg_input
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        Some(&(17..28).collect::<Vec<_>>()),
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .arg_inputs(Some(&(17..28).collect::<Vec<_>>()))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1064,18 +1005,14 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        Some(&(17..28).collect::<Vec<_>>()),
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .arg_inputs(Some(&(17..28).collect::<Vec<_>>()))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1163,18 +1100,14 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        Some(&(17..28).collect::<Vec<_>>()),
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .arg_inputs(Some(&(17..28).collect::<Vec<_>>()))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1265,21 +1198,18 @@ fn test_clang_writer_elem_input() {
 
     // with arg_input and input_placement
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        Some((
-            &(0..30 - 13 - 11).map(|i| 9 + 11 * i).collect::<Vec<_>>(),
-            100,
-        )),
-        None,
-        Some(&(17..28).collect::<Vec<_>>()),
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((
+                &(0..30 - 13 - 11).map(|i| 9 + 11 * i).collect::<Vec<_>>(),
+                100,
+            )))
+            .arg_inputs(Some(&(17..28).collect::<Vec<_>>()))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1361,21 +1291,18 @@ fn test_clang_writer_elem_input() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        Some((
-            &(0..30 - 13 - 11).map(|i| 9 + 11 * i).collect::<Vec<_>>(),
-            100,
-        )),
-        None,
-        Some(&(17..28).collect::<Vec<_>>()),
-        Some(&(1..14).collect::<Vec<_>>()),
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((
+                &(0..30 - 13 - 11).map(|i| 9 + 11 * i).collect::<Vec<_>>(),
+                100,
+            )))
+            .arg_inputs(Some(&(17..28).collect::<Vec<_>>()))
+            .elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),

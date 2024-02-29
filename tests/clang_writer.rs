@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_ext;
+use crate::gencode::generate_code_with_config;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -1252,18 +1252,12 @@ fn test_clang_writer_arginput_64bit() {
     )
     .unwrap();
     let mut writer = CLANG_WRITER_OPENCL_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit,
         false,
-        None,
-        None,
-        Some(&(120 - 64..120).collect::<Vec<_>>()),
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new().arg_inputs(Some(&(120 - 64..120).collect::<Vec<_>>())),
     );
     let out = String::from_utf8(writer.out()).unwrap();
     assert_eq!(
@@ -1544,18 +1538,16 @@ fn test_clang_writer_extra() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        Some((&[1, 0], 4)),
-        Some((&[3, 2, 1, 0], 4)),
-        Some(&[0, 2]),
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 0], 4)))
+            .output_placement(Some((&[3, 2, 1, 0], 4)))
+            .arg_inputs(Some(&[0, 2]))
+            .single_buffer(true),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1586,18 +1578,16 @@ fn test_clang_writer_extra() {
 "##
     );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        Some((&[1, 0], 4)),
-        Some((&[3, 2, 1, 0], 4)),
-        Some(&[0, 2]),
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 0], 4)))
+            .output_placement(Some((&[3, 2, 1, 0], 4)))
+            .arg_inputs(Some(&[0, 2]))
+            .single_buffer(true),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1645,18 +1635,15 @@ fn test_clang_writer_extra() {
     )
     .unwrap();
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        Some((&[3, 2, 0, 1], 4)),
-        Some(&[0, 2]),
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .arg_inputs(Some(&[0, 2]))
+            .single_buffer(true),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -1689,18 +1676,15 @@ fn test_clang_writer_extra() {
 "##
     );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        Some((&[3, 2, 0, 1], 4)),
-        Some(&[0, 2]),
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new()
+            .output_placement(Some((&[3, 2, 0, 1], 4)))
+            .arg_inputs(Some(&[0, 2]))
+            .single_buffer(true),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),

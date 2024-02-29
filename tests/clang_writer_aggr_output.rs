@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_ext;
+use crate::gencode::generate_code_with_config;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -19,21 +19,14 @@ fn test_clang_writer_aggregate_output() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -64,21 +57,14 @@ fn test_clang_writer_aggregate_output() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -122,21 +108,14 @@ fn test_clang_writer_aggregate_output() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1 ^ o2;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -170,21 +149,14 @@ fn test_clang_writer_aggregate_output() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1 ^ o2;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -238,21 +210,14 @@ fn test_clang_writer_aggregate_output() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -293,21 +258,14 @@ fn test_clang_writer_aggregate_output() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -369,21 +327,14 @@ fn test_clang_writer_aggregate_output() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
-    generate_code_ext(
+    generate_code_with_config(
         &mut writer,
         "xor",
         circuit.clone(),
         false,
-        None,
-        None,
-        None,
-        None,
-        false,
-        Some("    unsigned int xxx = 1111;\n"),
-        Some(
-            r##"    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
-"##,
-        ),
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),

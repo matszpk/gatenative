@@ -1,5 +1,5 @@
 use crate::clang_writer::*;
-use crate::gencode::generate_code_ext;
+use crate::gencode::generate_code_with_config;
 use crate::opencl_data_transform::*;
 use crate::utils::get_timestamp;
 use crate::*;
@@ -699,18 +699,19 @@ impl<'b, 'a>
             elem_input_len: elem_inputs.map(|x| x.len()),
             single_buffer,
         });
-        generate_code_ext(
+        generate_code_with_config(
             &mut self.writer,
             &name,
             circuit,
             self.optimize_negs,
-            input_placement,
-            output_placement,
-            arg_inputs,
-            elem_inputs,
-            single_buffer,
-            init_code,
-            aggr_output_code,
+            CodeConfig::new()
+                .input_placement(input_placement)
+                .output_placement(output_placement)
+                .arg_inputs(arg_inputs)
+                .elem_inputs(elem_inputs)
+                .single_buffer(single_buffer)
+                .init_code(init_code)
+                .aggr_output_code(aggr_output_code),
         );
     }
 

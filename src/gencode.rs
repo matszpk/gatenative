@@ -683,18 +683,12 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     }
 }
 
-pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,
     circuit: Circuit<T>,
     optimize_negs: bool,
-    input_placement: Option<(&'a [usize], usize)>,
-    output_placement: Option<(&'a [usize], usize)>,
-    arg_inputs: Option<&'a [usize]>,
-    elem_inputs: Option<&'a [usize]>,
-    single_buffer: bool,
-    init_code: Option<&'a str>,
-    aggr_output_code: Option<&'a str>,
+    code_config: CodeConfig<'a>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -713,12 +707,12 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     // generate input_map
     let input_map = {
         let input_len = usize::try_from(circuit.input_len()).unwrap();
-        let arg_input_map = if let Some(arg_inputs) = arg_inputs {
+        let arg_input_map = if let Some(arg_inputs) = code_config.arg_inputs {
             HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
         } else {
             HashMap::new()
         };
-        let elem_input_map = if let Some(elem_inputs) = elem_inputs {
+        let elem_input_map = if let Some(elem_inputs) = code_config.elem_inputs {
             HashMap::from_iter(elem_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
         } else {
             HashMap::new()
@@ -741,12 +735,12 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 
     let (var_allocs, var_num, output_vars) = gen_var_allocs(
         &circuit,
-        input_placement,
-        output_placement,
+        code_config.input_placement,
+        code_config.output_placement,
         &mut gen_var_usage(&circuit),
-        single_buffer,
+        code_config.single_buffer,
         input_map.as_ref(),
-        aggr_output_code.is_some(),
+        code_config.aggr_output_code.is_some(),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -754,13 +748,13 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         name,
         input_len,
         circuit.outputs().len(),
-        input_placement,
-        output_placement,
-        arg_inputs,
-        elem_inputs,
-        single_buffer,
-        init_code,
-        aggr_output_code,
+        code_config.input_placement,
+        code_config.output_placement,
+        code_config.arg_inputs,
+        code_config.elem_inputs,
+        code_config.single_buffer,
+        code_config.init_code,
+        code_config.aggr_output_code,
         output_vars
             .as_ref()
             .map(|ov| ov.iter().map(|(x, _)| *x).collect()),
@@ -781,11 +775,11 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         gen_func_code_for_ximpl(
             &mut func_writer,
             &vcircuit,
-            input_placement,
-            output_placement,
+            code_config.input_placement,
+            code_config.output_placement,
             &swap_args,
             &var_allocs,
-            single_buffer,
+            code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
         );
@@ -805,11 +799,11 @@ pub fn generate_code_ext<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         gen_func_code_for_binop(
             &mut func_writer,
             &vcircuit,
-            input_placement,
-            output_placement,
+            code_config.input_placement,
+            code_config.output_placement,
             &swap_args,
             &var_allocs,
-            single_buffer,
+            code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
         );
@@ -833,18 +827,15 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    generate_code_ext(
+    generate_code_with_config(
         writer,
         name,
         circuit,
         optimize_negs,
-        input_placement,
-        output_placement,
-        arg_inputs,
-        None,
-        false,
-        None,
-        None,
+        CodeConfig::new()
+            .input_placement(input_placement)
+            .output_placement(output_placement)
+            .arg_inputs(arg_inputs),
     );
 }
 
