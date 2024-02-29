@@ -365,7 +365,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         } else {
             0
         };
-        let mut output = vec![0; num * real_output_words];
+        let mut output = if self.aggregated_output {
+            vec![0; self.aggr_output_len.unwrap()]
+        } else {
+            vec![0; num * real_output_words]
+        };
         if self.elem_input_num != 0 {
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
@@ -448,7 +452,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         };
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
-        assert!(output_len >= real_output_words * num);
+        if !self.aggregated_output {
+            assert!(output_len >= real_output_words * num);
+        }
         if self.elem_input_num != 0 {
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =

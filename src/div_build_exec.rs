@@ -77,7 +77,11 @@ where
             } else {
                 0
             };
-            let mut buffer = self.new_data(num * self.buffer_len);
+            let mut buffer = self.new_data(if self.output_is_aggregated() {
+                self.aggr_output_len().unwrap()
+            } else {
+                num * self.buffer_len
+            });
             let mut output = self.new_data(num * self.real_output_len());
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {

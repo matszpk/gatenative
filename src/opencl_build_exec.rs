@@ -282,7 +282,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             0
         };
         let output = OpenCLDataHolder::new(
-            real_output_words * num,
+            if self.aggregated_output {
+                self.aggr_output_len.unwrap()
+            } else {
+                real_output_words * num
+            },
             &self.context,
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
@@ -339,6 +343,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
         let num = if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
@@ -346,6 +351,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         } else {
             (output.range.end - output.range.start) / real_output_words
         };
+        if !self.aggregated_output {
+            assert!(output_len >= real_output_words * num);
+        }
         let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
