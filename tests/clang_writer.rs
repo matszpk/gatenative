@@ -110,29 +110,27 @@ fn write_test_code_single_buffer(
     let mut cw = cw_config.writer();
     let supported_ops = cw.supported_ops();
     cw.prolog();
-    let mut fw = cw.func_writer_ext(
+    let mut fw = cw.func_writer_with_config(
         "func1",
         3,
         3,
-        if inout_placement {
-            if arg_input {
-                Some((&[11], 99))
+        CodeConfig::new()
+            .input_placement(if inout_placement {
+                if arg_input {
+                    Some((&[11], 99))
+                } else {
+                    Some((&[6, 11, 44], 99))
+                }
             } else {
-                Some((&[6, 11, 44], 99))
-            }
-        } else {
-            None
-        },
-        if inout_placement {
-            Some((&[48, 72, 25], 99))
-        } else {
-            None
-        },
-        if arg_input { Some(&[0, 2]) } else { None },
-        None,
-        true,
-        None,
-        None,
+                None
+            })
+            .output_placement(if inout_placement {
+                Some((&[48, 72, 25], 99))
+            } else {
+                None
+            })
+            .arg_inputs(if arg_input { Some(&[0, 2]) } else { None })
+            .single_buffer(true),
         None,
     );
     fw.func_start();

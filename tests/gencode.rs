@@ -124,13 +124,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         name: &'c str,
         input_len: usize,
         output_len: usize,
-        input_placement: Option<(&'c [usize], usize)>,
-        output_placement: Option<(&'c [usize], usize)>,
-        arg_inputs: Option<&'c [usize]>,
-        _elem_inputs: Option<&'c [usize]>,
-        single_buffer: bool,
-        _init_code: Option<&'c str>,
-        _aggr_output_code: Option<&'c str>,
+        code_config: CodeConfig<'c>,
         _output_vars: Option<Vec<usize>>,
     ) -> TestFuncWriter<'c> {
         TestFuncWriter::<'c> {
@@ -138,16 +132,17 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
             name,
             input_len,
             output_len,
-            input_placement,
-            output_placement,
+            input_placement: code_config.input_placement,
+            output_placement: code_config.output_placement,
             arg_input_map: HashMap::from_iter(
-                arg_inputs
+                code_config
+                    .arg_inputs
                     .unwrap_or(&[])
                     .into_iter()
                     .enumerate()
                     .map(|(i, x)| (*x, i)),
             ),
-            single_buffer,
+            single_buffer: code_config.single_buffer,
         }
     }
 

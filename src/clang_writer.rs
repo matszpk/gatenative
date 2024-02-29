@@ -1093,26 +1093,20 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         name: &'c str,
         input_len: usize,
         output_len: usize,
-        input_placement: Option<(&'c [usize], usize)>,
-        output_placement: Option<(&'c [usize], usize)>,
-        arg_inputs: Option<&'c [usize]>,
-        elem_inputs: Option<&'c [usize]>,
-        single_buffer: bool,
-        init_code: Option<&'c str>,
-        aggr_output_code: Option<&'c str>,
+        code_config: CodeConfig<'c>,
         output_vars: Option<Vec<usize>>,
     ) -> CLangFuncWriter<'a, 'c> {
-        if let Some(elem_inputs) = elem_inputs {
+        if let Some(elem_inputs) = code_config.elem_inputs {
             assert!(elem_inputs.len() <= 64 + (self.elem_low_bits as usize));
         }
 
         let (input_map, arg_input_map, elem_input_map) = {
-            let arg_input_map = if let Some(arg_inputs) = arg_inputs {
+            let arg_input_map = if let Some(arg_inputs) = code_config.arg_inputs {
                 HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
             } else {
                 HashMap::new()
             };
-            let elem_input_map = if let Some(elem_inputs) = elem_inputs {
+            let elem_input_map = if let Some(elem_inputs) = code_config.elem_inputs {
                 HashMap::from_iter(elem_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
             } else {
                 HashMap::new()
@@ -1135,14 +1129,14 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             name,
             input_len,
             output_len,
-            input_placement,
-            output_placement,
+            input_placement: code_config.input_placement,
+            output_placement: code_config.output_placement,
             input_map,
             arg_input_map,
             elem_input_map,
-            single_buffer,
-            init_code,
-            aggr_output_code,
+            single_buffer: code_config.single_buffer,
+            init_code: code_config.init_code,
+            aggr_output_code: code_config.aggr_output_code,
             output_vars,
         }
     }

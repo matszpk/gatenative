@@ -162,56 +162,47 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         name: &'a str,
         input_len: usize,
         output_len: usize,
-        input_placement: Option<(&'a [usize], usize)>,
-        output_placement: Option<(&'a [usize], usize)>,
-        arg_inputs: Option<&'a [usize]>,
-        elem_inputs: Option<&'a [usize]>,
-        single_buffer: bool,
-        init_code: Option<&'a str>,
-        aggr_output_code: Option<&'a str>,
+        code_config: CodeConfig<'a>,
         output_vars: Option<Vec<usize>>,
     ) -> FW;
 
-    fn func_writer_ext(
+    fn func_writer_with_config(
         &'a mut self,
         name: &'a str,
         input_len: usize,
         output_len: usize,
-        input_placement: Option<(&'a [usize], usize)>,
-        output_placement: Option<(&'a [usize], usize)>,
-        arg_inputs: Option<&'a [usize]>,
-        elem_inputs: Option<&'a [usize]>,
-        single_buffer: bool,
-        init_code: Option<&'a str>,
-        aggr_output_code: Option<&'a str>,
+        code_config: CodeConfig<'a>,
         output_vars: Option<Vec<usize>>,
     ) -> FW {
         // for checking requirements for single_buffer
-        let real_input_len = if let Some((_, len)) = input_placement {
+        let real_input_len = if let Some((_, len)) = code_config.input_placement {
             len
         } else {
             input_len
-                - arg_inputs.map(|x| x.len()).unwrap_or(0)
-                - elem_inputs.map(|x| x.len()).unwrap_or(0)
+                - code_config.arg_inputs.map(|x| x.len()).unwrap_or(0)
+                - code_config.elem_inputs.map(|x| x.len()).unwrap_or(0)
         };
-        let real_output_len = if let Some((_, len)) = output_placement {
+        let real_output_len = if let Some((_, len)) = code_config.output_placement {
             len
         } else {
             output_len
         };
         // check requirements for single buffer
-        assert!(!single_buffer || real_input_len == real_output_len);
-        assert!(check_placements(input_placement, output_placement));
-        if let Some(arg_inputs) = arg_inputs {
+        assert!(!code_config.single_buffer || real_input_len == real_output_len);
+        assert!(check_placements(
+            code_config.input_placement,
+            code_config.output_placement
+        ));
+        if let Some(arg_inputs) = code_config.arg_inputs {
             assert!(arg_inputs.len() <= 64);
             assert!(arg_inputs.iter().all(|x| *x < input_len));
         }
-        if let Some(elem_inputs) = elem_inputs {
+        if let Some(elem_inputs) = code_config.elem_inputs {
             assert!(elem_inputs.iter().all(|x| *x < input_len));
         }
         // check whether arg_input and elem_input have common inputs
-        if let Some(arg_inputs) = arg_inputs {
-            if let Some(elem_inputs) = elem_inputs {
+        if let Some(arg_inputs) = code_config.arg_inputs {
+            if let Some(elem_inputs) = code_config.elem_inputs {
                 use std::collections::HashSet;
                 let arg_input_set = HashSet::<usize>::from_iter(arg_inputs.iter().copied());
                 let elem_input_set = HashSet::from_iter(elem_inputs.iter().copied());
@@ -219,21 +210,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             }
         }
 
-        unsafe {
-            self.func_writer_internal(
-                name,
-                input_len,
-                output_len,
-                input_placement,
-                output_placement,
-                arg_inputs,
-                elem_inputs,
-                single_buffer,
-                init_code,
-                aggr_output_code,
-                output_vars,
-            )
-        }
+        unsafe { self.func_writer_internal(name, input_len, output_len, code_config, output_vars) }
     }
 
     fn func_writer(
@@ -245,17 +222,14 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         output_placement: Option<(&'a [usize], usize)>,
         arg_inputs: Option<&'a [usize]>,
     ) -> FW {
-        self.func_writer_ext(
+        self.func_writer_with_config(
             name,
             input_len,
             output_len,
-            input_placement,
-            output_placement,
-            arg_inputs,
-            None,
-            false,
-            None,
-            None,
+            CodeConfig::new()
+                .input_placement(input_placement)
+                .output_placement(output_placement)
+                .arg_inputs(arg_inputs),
             None,
         )
     }

@@ -744,17 +744,11 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut func_writer = writer.func_writer_ext(
+    let mut func_writer = writer.func_writer_with_config(
         name,
         input_len,
         circuit.outputs().len(),
-        code_config.input_placement,
-        code_config.output_placement,
-        code_config.arg_inputs,
-        code_config.elem_inputs,
-        code_config.single_buffer,
-        code_config.init_code,
-        code_config.aggr_output_code,
+        code_config.clone(),
         output_vars
             .as_ref()
             .map(|ov| ov.iter().map(|(x, _)| *x).collect()),
