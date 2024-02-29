@@ -26,12 +26,12 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output) {
+    void* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -49,7 +49,7 @@ fn test_clang_writer_aggregate_output() {
     v0 = ~v0;
 #define o0 (v4)
 #define o1 (v0)
-    output[0] |= o0 ^ o1;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1;
 #undef o0
 #undef o1
 }
@@ -64,12 +64,12 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output) {
+    void* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -87,7 +87,7 @@ fn test_clang_writer_aggregate_output() {
     v0 = _mm_or_ps(v2, v0);
 #define o0 (v4)
 #define o1 (v0)
-    output[0] |= o0 ^ o1;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1;
 #undef o0
 #undef o1
 }
@@ -115,12 +115,12 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output) {
+    void* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -140,7 +140,7 @@ fn test_clang_writer_aggregate_output() {
 #define o0 (v4)
 #define o1 (v0)
 #define o2 (v1)
-    output[0] |= o0 ^ o1 ^ o2;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;
 #undef o0
 #undef o1
 #undef o2
@@ -156,12 +156,12 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;\n")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output) {
+    void* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -181,7 +181,7 @@ fn test_clang_writer_aggregate_output() {
 #define o0 (v4)
 #define o1 (v0)
 #define o2 (v1)
-    output[0] |= o0 ^ o1 ^ o2;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;
 #undef o0
 #undef o1
 #undef o2
@@ -217,12 +217,14 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+            )),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    uint32_t* output) {
+    void* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
@@ -246,7 +248,7 @@ fn test_clang_writer_aggregate_output() {
 #define o3 (v1)
 #define o4 (v0)
 #define o5 (v4)
-    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
 #undef o0
 #undef o1
 #undef o2
@@ -265,12 +267,14 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+            )),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output) {
+    void* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -294,7 +298,7 @@ fn test_clang_writer_aggregate_output() {
 #define o3 (v1)
 #define o4 (v0)
 #define o5 (v4)
-    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
 #undef o0
 #undef o1
 #undef o2
@@ -334,12 +338,14 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+            )),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    __m128* output) {
+    void* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
     __m128 v0;
@@ -364,7 +370,7 @@ fn test_clang_writer_aggregate_output() {
 #define o3 (v1)
 #define o4 (v0)
 #define o5 (v4)
-    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
 #undef o0
 #undef o1
 #undef o2
@@ -383,14 +389,16 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+            .aggr_output_code(Some(
+                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+            )),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
-    global uint* output) {
+    global void* output) {
     const size_t idx = get_global_id(0);
     const size_t ivn = 3 * idx + input_shift;
     const size_t ovn = 6 * idx + output_shift;
@@ -417,7 +425,7 @@ fn test_clang_writer_aggregate_output() {
 #define o3 (v1)
 #define o4 (v0)
 #define o5 (v4)
-    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
 #undef o0
 #undef o1
 #undef o2
@@ -436,14 +444,16 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n")),
+            .aggr_output_code(Some(
+                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+            )),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
-    global uint* output) {
+    global void* output) {
     const size_t idx = get_group_id(0);
     const uint lidx = get_local_id(0);
     const uint llen = get_local_size(0);
@@ -472,7 +482,7 @@ fn test_clang_writer_aggregate_output() {
 #define o3 (v1)
 #define o4 (v0)
 #define o5 (v4)
-    output[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
 #undef o0
 #undef o1
 #undef o2

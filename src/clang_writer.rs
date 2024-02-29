@@ -715,18 +715,27 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     ""
                 },
-                self.writer.config.type_name
+                if self.output_vars.is_some() {
+                    "void"
+                } else {
+                    self.writer.config.type_name
+                }
             )
         } else {
             format!(
-                "const {0}{1}{2}* input,\n    {0}{1}{2}* output",
+                "const {0}{1}{2}* input,\n    {0}{1}{3}* output",
                 self.writer.config.arg_modifier.unwrap_or(""),
                 if self.writer.config.arg_modifier.is_some() {
                     " "
                 } else {
                     ""
                 },
-                self.writer.config.type_name
+                self.writer.config.type_name,
+                if self.output_vars.is_some() {
+                    "void"
+                } else {
+                    self.writer.config.type_name
+                }
             )
         };
         if let Some(init_index) = self.writer.config.init_index {
