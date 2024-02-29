@@ -44,6 +44,7 @@ pub struct CodeConfig<'a> {
     pub single_buffer: bool,
     pub init_code: Option<&'a str>,
     pub aggr_output_code: Option<&'a str>,
+    pub aggr_output_len: Option<usize>, // length in 32-bit words
 }
 
 impl<'a> CodeConfig<'a> {
@@ -56,6 +57,7 @@ impl<'a> CodeConfig<'a> {
             single_buffer: false,
             init_code: None,
             aggr_output_code: None,
+            aggr_output_len: None,
         }
     }
 
@@ -87,6 +89,14 @@ impl<'a> CodeConfig<'a> {
         self.aggr_output_code = aggr;
         self
     }
+    pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
+        self.aggr_output_len = aggr;
+        self
+    }
+}
+
+pub fn default_aggr_output_len(word_len: u32) -> usize {
+    (word_len as usize) >> 5
 }
 
 #[repr(u8)]
@@ -208,6 +218,10 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
                 let elem_input_set = HashSet::from_iter(elem_inputs.iter().copied());
                 assert_eq!(arg_input_set.intersection(&elem_input_set).count(), 0);
             }
+        }
+
+        if code_config.aggr_output_code.is_some() {
+            assert!(!code_config.single_buffer);
         }
 
         unsafe { self.func_writer_internal(name, input_len, output_len, code_config, output_vars) }
@@ -333,6 +347,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     fn output_is_aggregated(&self) -> bool;
 
+    fn aggr_output_len(&self) -> Option<usize>;
+
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.real_input_len() != 0 {
@@ -346,7 +362,11 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     // in 32-bit words
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.real_output_len()) >> 5
+        if self.output_is_aggregated() {
+            self.aggr_output_len().unwrap()
+        } else {
+            (elem_num * self.real_output_len()) >> 5
+        }
     }
 
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
@@ -492,7 +512,11 @@ where
     // in 32-bit words
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.output_len()) >> 5
+        if self.output_is_aggregated() {
+            self.aggr_output_len().unwrap()
+        } else {
+            (elem_num * self.output_len()) >> 5
+        }
     }
 
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
@@ -503,6 +527,8 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+
+    fn aggr_output_len(&self) -> Option<usize>;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -641,7 +667,11 @@ where
     // in 32-bit words
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.output_len()) >> 5
+        if self.output_is_aggregated() {
+            self.aggr_output_len().unwrap()
+        } else {
+            (elem_num * self.output_len()) >> 5
+        }
     }
 
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
@@ -652,6 +682,8 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+
+    fn aggr_output_len(&self) -> Option<usize>;
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

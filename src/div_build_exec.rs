@@ -211,6 +211,11 @@ where
     fn output_is_aggregated(&self) -> bool {
         self.executors.last().unwrap().output_is_aggregated()
     }
+
+    #[inline]
+    fn aggr_output_len(&self) -> Option<usize> {
+        self.executors[9].aggr_output_len()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>

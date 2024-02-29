@@ -234,6 +234,7 @@ pub struct OpenCLExecutor {
     single_buffer: bool,
     group_vec: bool,
     aggregated_output: bool,
+    aggr_output_len: Option<usize>,
 }
 
 impl OpenCLExecutor {
@@ -492,6 +493,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             group_vec: self.group_vec,
             elem_input_num: self.elem_input_num,
             aggregated_output: self.aggregated_output,
+            aggr_output_len: self.aggr_output_len,
         })
     }
 
@@ -508,6 +510,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     #[inline]
     fn output_is_aggregated(&self) -> bool {
         self.aggregated_output
+    }
+
+    #[inline]
+    fn aggr_output_len(&self) -> Option<usize> {
+        self.aggr_output_len
     }
 }
 
@@ -604,6 +611,7 @@ struct CircuitEntry {
     elem_input_len: Option<usize>,
     single_buffer: bool,
     aggregated_output: bool,
+    aggr_output_len: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -697,6 +705,15 @@ impl<'b, 'a>
             elem_input_len: code_config.elem_inputs.map(|x| x.len()),
             single_buffer: code_config.single_buffer,
             aggregated_output: code_config.aggr_output_code.is_some(),
+            aggr_output_len: if code_config.aggr_output_code.is_some() {
+                Some(
+                    code_config
+                        .aggr_output_len
+                        .unwrap_or(default_aggr_output_len(self.word_len())),
+                )
+            } else {
+                None
+            },
         });
         generate_code_with_config(
             &mut self.writer,
@@ -743,6 +760,7 @@ impl<'b, 'a>
                     single_buffer: e.single_buffer,
                     group_vec: self.group_vec,
                     aggregated_output: e.aggregated_output,
+                    aggr_output_len: e.aggr_output_len,
                 })
             })
             .collect::<Result<Vec<_>, _>>()
