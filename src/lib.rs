@@ -331,6 +331,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     fn word_len(&self) -> u32;
 
+    fn output_is_aggregated(&self) -> bool;
+
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.real_input_len() != 0 {
@@ -499,6 +501,8 @@ where
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
     }
+
+    fn output_is_aggregated(&self) -> bool;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -646,6 +650,8 @@ where
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
     }
+
+    fn output_is_aggregated(&self) -> bool;
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

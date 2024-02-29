@@ -233,6 +233,7 @@ pub struct OpenCLExecutor {
     kernel: Kernel,
     single_buffer: bool,
     group_vec: bool,
+    aggregated_output: bool,
 }
 
 impl OpenCLExecutor {
@@ -490,6 +491,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             single_buffer: self.single_buffer,
             group_vec: self.group_vec,
             elem_input_num: self.elem_input_num,
+            aggregated_output: self.aggregated_output,
         })
     }
 
@@ -501,6 +503,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     #[inline]
     fn word_len(&self) -> u32 {
         u32::try_from(self.words_per_real_word << 5).unwrap()
+    }
+
+    #[inline]
+    fn output_is_aggregated(&self) -> bool {
+        self.aggregated_output
     }
 }
 
@@ -596,6 +603,7 @@ struct CircuitEntry {
     arg_input_len: Option<usize>,
     elem_input_len: Option<usize>,
     single_buffer: bool,
+    aggregated_output: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -688,6 +696,7 @@ impl<'b, 'a>
             arg_input_len: code_config.arg_inputs.map(|x| x.len()),
             elem_input_len: code_config.elem_inputs.map(|x| x.len()),
             single_buffer: code_config.single_buffer,
+            aggregated_output: code_config.aggr_output_code.is_some(),
         });
         generate_code_with_config(
             &mut self.writer,
@@ -733,6 +742,7 @@ impl<'b, 'a>
                     kernel: Kernel::create(&program, &e.sym_name)?,
                     single_buffer: e.single_buffer,
                     group_vec: self.group_vec,
+                    aggregated_output: e.aggregated_output,
                 })
             })
             .collect::<Result<Vec<_>, _>>()

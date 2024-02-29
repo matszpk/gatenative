@@ -326,6 +326,7 @@ pub struct CPUExecutor {
     library: Arc<Library>,
     sym_name: String,
     single_buffer: bool,
+    aggregated_output: bool,
 }
 
 impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for CPUExecutor {
@@ -600,6 +601,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn word_len(&self) -> u32 {
         u32::try_from(self.words_per_real_word << 5).unwrap()
     }
+
+    #[inline]
+    fn output_is_aggregated(&self) -> bool {
+        self.aggregated_output
+    }
 }
 
 impl<'a>
@@ -651,6 +657,7 @@ struct CircuitEntry {
     arg_input_len: Option<usize>,
     elem_input_len: Option<usize>,
     single_buffer: bool,
+    aggregated_output: bool,
 }
 
 pub struct CPUBuilder<'a> {
@@ -717,6 +724,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             arg_input_len: code_config.arg_inputs.map(|x| x.len()),
             elem_input_len: code_config.elem_inputs.map(|x| x.len()),
             single_buffer: code_config.single_buffer,
+            aggregated_output: code_config.aggr_output_code.is_some(),
         });
         generate_code_with_config(
             &mut self.writer,
@@ -754,6 +762,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     library: lib,
                     sym_name: e.sym_name.clone(),
                     single_buffer: e.single_buffer,
+                    aggregated_output: e.aggregated_output,
                 }
             })
             .collect::<Vec<_>>())

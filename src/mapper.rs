@@ -90,8 +90,14 @@ where
         self.executor.new_data_from_slice(data)
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.executor.word_len()
+    }
+
+    #[inline]
+    fn output_is_aggregated(&self) -> bool {
+        self.executor.output_is_aggregated()
     }
 }
 
@@ -341,8 +347,14 @@ where
         self.executor.new_data_from_slice(data)
     }
 
+    #[inline]
     fn word_len(&self) -> u32 {
         self.executor.word_len()
+    }
+
+    #[inline]
+    fn output_is_aggregated(&self) -> bool {
+        self.executor.output_is_aggregated()
     }
 }
 

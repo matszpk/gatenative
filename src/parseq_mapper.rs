@@ -439,6 +439,11 @@ where
         out.check_length();
         out
     }
+
+    #[inline]
+    pub fn output_is_aggregated(&self) -> bool {
+        self.par.output_is_aggregated()
+    }
 }
 
 #[derive(Error, Debug)]

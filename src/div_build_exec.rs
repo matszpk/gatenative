@@ -206,6 +206,11 @@ where
     fn word_len(&self) -> u32 {
         self.executors[0].word_len()
     }
+
+    #[inline]
+    fn output_is_aggregated(&self) -> bool {
+        self.executors.last().unwrap().output_is_aggregated()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
