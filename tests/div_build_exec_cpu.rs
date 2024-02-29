@@ -3,6 +3,200 @@ use gatenative::cpu_build_exec::*;
 use gatenative::div_build_exec::*;
 use gatenative::*;
 use gatesim::*;
+use gateutil::*;
+
+const MUL_ADD_INPUT_MAP: [usize; 24] = [
+    0, 4, 7, 10, 13, 16, 19, 22, 1, 3, 6, 9, 12, 15, 18, 21, 2, 5, 8, 11, 14, 17, 20, 23,
+];
+
+fn get_mul_add_circuit() -> Circuit<u32> {
+    Circuit::new(
+        24,
+        [
+            Gate::new_and(0, 1),
+            Gate::new_xor(24, 2),
+            Gate::new_and(0, 3),
+            Gate::new_and(4, 1),
+            Gate::new_xor(26, 27),
+            Gate::new_xor(28, 5),
+            Gate::new_and(24, 2),
+            Gate::new_xor(29, 30),
+            Gate::new_and(0, 6),
+            Gate::new_and(4, 3),
+            Gate::new_and(7, 1),
+            Gate::new_xor(33, 34),
+            Gate::new_xor(32, 35),
+            Gate::new_and(26, 27),
+            Gate::new_xor(36, 37),
+            Gate::new_xor(38, 8),
+            Gate::new_and(29, 30),
+            Gate::new_and(28, 5),
+            Gate::new_nor(40, 41),
+            Gate::new_xor(39, 42),
+            Gate::new_and(0, 9),
+            Gate::new_and(4, 6),
+            Gate::new_xor(44, 45),
+            Gate::new_and(7, 3),
+            Gate::new_and(10, 1),
+            Gate::new_xor(47, 48),
+            Gate::new_xor(46, 49),
+            Gate::new_and(33, 34),
+            Gate::new_xor(50, 51),
+            Gate::new_and(36, 37),
+            Gate::new_and(32, 35),
+            Gate::new_nor(53, 54),
+            Gate::new_xor(52, 55),
+            Gate::new_xor(56, 11),
+            Gate::new_nimpl(39, 42),
+            Gate::new_and(38, 8),
+            Gate::new_nor(58, 59),
+            Gate::new_xor(57, 60),
+            Gate::new_and(0, 12),
+            Gate::new_and(4, 9),
+            Gate::new_and(7, 6),
+            Gate::new_xor(63, 64),
+            Gate::new_and(10, 3),
+            Gate::new_and(13, 1),
+            Gate::new_xor(66, 67),
+            Gate::new_xor(65, 68),
+            Gate::new_xor(62, 69),
+            Gate::new_and(47, 48),
+            Gate::new_xor(70, 71),
+            Gate::new_and(46, 49),
+            Gate::new_and(44, 45),
+            Gate::new_nor(73, 74),
+            Gate::new_xor(72, 75),
+            Gate::new_nimpl(52, 55),
+            Gate::new_and(50, 51),
+            Gate::new_nor(77, 78),
+            Gate::new_xor(76, 79),
+            Gate::new_xor(80, 14),
+            Gate::new_nor(57, 60),
+            Gate::new_nimpl(11, 56),
+            Gate::new_nor(82, 83),
+            Gate::new_xor(81, 84),
+            Gate::new_and(0, 15),
+            Gate::new_and(4, 12),
+            Gate::new_and(7, 9),
+            Gate::new_xor(87, 88),
+            Gate::new_and(10, 6),
+            Gate::new_xor(89, 90),
+            Gate::new_and(13, 3),
+            Gate::new_and(16, 1),
+            Gate::new_xor(92, 93),
+            Gate::new_xor(91, 94),
+            Gate::new_and(66, 67),
+            Gate::new_xor(95, 96),
+            Gate::new_xor(86, 97),
+            Gate::new_and(65, 68),
+            Gate::new_and(63, 64),
+            Gate::new_nor(99, 100),
+            Gate::new_xor(98, 101),
+            Gate::new_and(70, 71),
+            Gate::new_and(62, 69),
+            Gate::new_nor(103, 104),
+            Gate::new_xor(102, 105),
+            Gate::new_nor(76, 79),
+            Gate::new_nimpl(72, 75),
+            Gate::new_nor(107, 108),
+            Gate::new_xor(106, 109),
+            Gate::new_xor(110, 17),
+            Gate::new_nimpl(81, 84),
+            Gate::new_and(80, 14),
+            Gate::new_nor(112, 113),
+            Gate::new_xor(111, 114),
+            Gate::new_and(0, 18),
+            Gate::new_and(4, 15),
+            Gate::new_xor(116, 117),
+            Gate::new_and(7, 12),
+            Gate::new_xor(118, 119),
+            Gate::new_and(10, 9),
+            Gate::new_and(13, 6),
+            Gate::new_xor(121, 122),
+            Gate::new_and(16, 3),
+            Gate::new_and(19, 1),
+            Gate::new_xor(124, 125),
+            Gate::new_xor(123, 126),
+            Gate::new_and(89, 90),
+            Gate::new_and(87, 88),
+            Gate::new_nor(128, 129),
+            Gate::new_xor(127, 130),
+            Gate::new_and(92, 93),
+            Gate::new_xor(131, 132),
+            Gate::new_xor(120, 133),
+            Gate::new_and(95, 96),
+            Gate::new_and(91, 94),
+            Gate::new_nor(135, 136),
+            Gate::new_xor(134, 137),
+            Gate::new_nimpl(98, 101),
+            Gate::new_and(86, 97),
+            Gate::new_nor(139, 140),
+            Gate::new_xor(138, 141),
+            Gate::new_nimpl(106, 109),
+            Gate::new_nor(102, 105),
+            Gate::new_nor(143, 144),
+            Gate::new_xor(142, 145),
+            Gate::new_xor(146, 20),
+            Gate::new_nor(111, 114),
+            Gate::new_nimpl(17, 110),
+            Gate::new_nor(148, 149),
+            Gate::new_xor(147, 150),
+            Gate::new_and(0, 21),
+            Gate::new_and(4, 18),
+            Gate::new_xor(152, 153),
+            Gate::new_and(7, 15),
+            Gate::new_xor(154, 155),
+            Gate::new_and(10, 12),
+            Gate::new_and(13, 9),
+            Gate::new_xor(157, 158),
+            Gate::new_and(16, 6),
+            Gate::new_xor(159, 160),
+            Gate::new_and(19, 3),
+            Gate::new_and(22, 1),
+            Gate::new_xor(162, 163),
+            Gate::new_xor(161, 164),
+            Gate::new_and(124, 125),
+            Gate::new_xor(165, 166),
+            Gate::new_and(118, 119),
+            Gate::new_and(116, 117),
+            Gate::new_nor(168, 169),
+            Gate::new_xor(167, 170),
+            Gate::new_and(123, 126),
+            Gate::new_and(121, 122),
+            Gate::new_nor(172, 173),
+            Gate::new_xor(171, 174),
+            Gate::new_xor(156, 175),
+            Gate::new_nimpl(132, 131),
+            Gate::new_nimpl(127, 130),
+            Gate::new_nor(177, 178),
+            Gate::new_xor(176, 179),
+            Gate::new_nor(134, 137),
+            Gate::new_nimpl(120, 133),
+            Gate::new_nor(181, 182),
+            Gate::new_xor(180, 183),
+            Gate::new_nor(142, 145),
+            Gate::new_nimpl(138, 141),
+            Gate::new_nor(185, 186),
+            Gate::new_xor(184, 187),
+            Gate::new_xor(188, 23),
+            Gate::new_nimpl(147, 150),
+            Gate::new_and(146, 20),
+            Gate::new_nor(190, 191),
+            Gate::new_xor(189, 192),
+        ],
+        [
+            (25, false),
+            (31, false),
+            (43, true),
+            (61, false),
+            (85, true),
+            (115, false),
+            (151, true),
+            (193, false),
+        ],
+    )
+    .unwrap()
+}
 
 #[test]
 fn test_div_builder_and_exec_cpu() {
@@ -348,5 +542,338 @@ fn test_div_executor_cpu_clone() {
         assert_eq!(exec1.real_input_len(), execs[1].real_input_len());
         assert_eq!(exec1.real_output_len(), execs[1].real_output_len());
         assert_eq!(exec1.is_single_buffer(), execs[1].is_single_buffer());
+    }
+}
+
+#[test]
+fn test_cpu_div_builder_and_exec_with_arg_input() {
+    use CPUExtension::*;
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+    };
+
+    let mut configs = vec![
+        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
+        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
+        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
+    ];
+    #[cfg(target_pointer_width = "32")]
+    {
+        configs.push((NoExtension, &CLANG_WRITER_U32, None));
+    }
+    #[cfg(target_pointer_width = "64")]
+    configs.push((NoExtension, &CLANG_WRITER_U64, None));
+
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE
+        || *CPU_EXTENSION == IntelMMX
+    {
+        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
+        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
+        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 {
+        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
+    }
+    if *CPU_EXTENSION == ARMNEON {
+        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
+    }
+
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        // with arg_input
+        let circuit = translate_inputs_rev(get_mul_add_circuit(), MUL_ADD_INPUT_MAP);
+        let builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        let mut builder = DivBuilder::new(builder, 20);
+        builder.add_with_config(
+            "mul_add_sb",
+            circuit.clone(),
+            CodeConfig::new()
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 20)))
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
+        builder.add_with_config(
+            "mul_add_sb_ip",
+            circuit.clone(),
+            CodeConfig::new()
+                .input_placement(Some((
+                    &(0..20).map(|i| (19 - i) + 4).collect::<Vec<_>>(),
+                    24,
+                )))
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 24)))
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input =
+                execs[0].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
+            let mut input_circ = it.transform(&input).unwrap();
+            execs[0].execute_single(&mut input_circ, arg_input).unwrap();
+            let output = ot.transform(&input_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {}", config_num, i);
+            }
+        }
+
+        let mut it = execs[1]
+            .input_tx(
+                32,
+                &(0..24)
+                    .map(|i| if i >= 4 { 23 - i } else { 0 })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input =
+                execs[1].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
+            let mut input_circ = it.transform(&input).unwrap();
+            execs[1].execute_single(&mut input_circ, arg_input).unwrap();
+            let output = ot.transform(&input_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {}", config_num, i);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_cpu_div_builder_and_exec_with_elem_input() {
+    use CPUExtension::*;
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+    };
+
+    let mut configs = vec![
+        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
+        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
+        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
+    ];
+    #[cfg(target_pointer_width = "32")]
+    {
+        configs.push((NoExtension, &CLANG_WRITER_U32, None));
+    }
+    #[cfg(target_pointer_width = "64")]
+    configs.push((NoExtension, &CLANG_WRITER_U64, None));
+
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE
+        || *CPU_EXTENSION == IntelMMX
+    {
+        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
+        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
+        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 {
+        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
+    }
+    if *CPU_EXTENSION == ARMNEON {
+        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
+    }
+
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        // with elem_index
+        let circuit = translate_inputs_rev(get_mul_add_circuit(), MUL_ADD_INPUT_MAP);
+        let builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        let mut builder = DivBuilder::new(builder, 20);
+        builder.add_with_config(
+            "mul_add_elem",
+            circuit.clone(),
+            CodeConfig::new().elem_inputs(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "mul_add_elem_full",
+            circuit.clone(),
+            CodeConfig::new().elem_inputs(Some(&(0..24).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "mul_add_elem_sb",
+            circuit.clone(),
+            CodeConfig::new()
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 12)))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
+        builder.add_with_config(
+            "mul_add_elem_arginput",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "mul_add_elem_sb_ip",
+            circuit.clone(),
+            CodeConfig::new()
+                .input_placement(Some((
+                    &(0..12).map(|i| (11 - i) + 4).collect::<Vec<_>>(),
+                    16,
+                )))
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 16)))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
+        let mut execs = builder.build().unwrap();
+
+        // input and output len
+        assert_eq!(execs[0].input_data_len(16 * 1024), 6144);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 4096);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 1);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 4096);
+
+        let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        println!("Point1");
+        let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+        println!("Point2");
+        let output_circ_len = output_circ.len();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        let mut output_circ = execs[0].new_data(output_circ_len);
+        println!("Point3");
+        execs[0]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        println!("Point4");
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        // with elem full
+        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input = execs[1].new_data(1);
+        println!("Point5");
+        let output_circ = execs[1].execute(&input, 0).unwrap();
+        println!("Point6");
+        let output_circ_len = output_circ.len();
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        assert!(output.len() != 0);
+        for (ix, v) in output.into_iter().enumerate() {
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, ix);
+        }
+
+        let mut output_circ = execs[1].new_data(output_circ_len);
+        println!("Point7");
+        execs[1]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        println!("Point8");
+        let output = ot.transform(&output_circ).unwrap();
+        let output = output.release();
+        for (ix, v) in output.into_iter().enumerate() {
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, ix);
+        }
+
+        // with single buffer
+        let mut it = execs[2].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[2].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[2].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
+        let mut input_circ = it.transform(&input).unwrap();
+        execs[2].execute_single(&mut input_circ, 0).unwrap();
+        let output = ot.transform(&input_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
+        }
+
+        // with elem_input and arg_input
+        let mut it = execs[3].input_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[3].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        for arg_input in 0..16 {
+            let input = execs[3]
+                .new_data_from_vec((0..1 << 20).map(|i| (i >> 12) ^ 0xff).collect::<Vec<_>>());
+            let input_circ = it.transform(&input).unwrap();
+            let output_circ = execs[3].execute(&input_circ, arg_input).unwrap();
+            let output_circ_len = output_circ.len();
+            let output = ot.transform(&output_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {} {}", config_num, arg_input, i);
+            }
+
+            let mut output_circ = execs[3].new_data(output_circ_len);
+            execs[3]
+                .execute_reuse(&input_circ, arg_input, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap();
+            let output = output.release();
+            for (i, v) in output.into_iter().enumerate() {
+                let ix = (i ^ 0xff000) | (usize::try_from(arg_input).unwrap() << 20);
+                let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+                assert_eq!(out, v, "{}: {} {}", config_num, arg_input, i);
+            }
+        }
+
+        // with single buffer and input_placement
+        let mut it = execs[4]
+            .input_tx(
+                32,
+                &(0..16)
+                    .map(|i| if i >= 4 { 15 - i } else { 0 })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap();
+        let mut ot = execs[4].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[4].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
+        let mut input_circ = it.transform(&input).unwrap();
+        execs[4].execute_single(&mut input_circ, 0).unwrap();
+        let output = ot.transform(&input_circ).unwrap();
+        let output = output.release();
+        for (i, v) in output.into_iter().enumerate() {
+            let ix = i ^ 0xfff000;
+            let out = u32::try_from(((ix & 0xff) * (ix >> 8) + (ix >> 16)) & 0xff).unwrap();
+            assert_eq!(out, v, "{}: {}", config_num, i);
+        }
     }
 }

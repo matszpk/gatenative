@@ -21,6 +21,7 @@ where
     executors: Vec<E>,
     buffer_len: usize,
     single_buffer: bool,
+    elem_input_num: usize,
     d: PhantomData<&'a D>,
     dr: PhantomData<&'a DR>,
     dw: PhantomData<&'a DW>,
@@ -71,6 +72,8 @@ where
             let input_chunk_len = self.real_input_len();
             let num = if input_chunk_len != 0 {
                 input_len / input_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
             } else {
                 0
             };
@@ -105,6 +108,8 @@ where
             let output_chunk_len = self.real_output_len();
             let num = if input_chunk_len != 0 {
                 input_len / input_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
             } else {
                 output_len / output_chunk_len
             };
@@ -182,6 +187,7 @@ where
                     .collect::<Vec<_>>(),
                 buffer_len: self.buffer_len,
                 single_buffer: self.single_buffer,
+                elem_input_num: self.elem_input_num,
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
@@ -240,6 +246,7 @@ struct CircuitInfo {
     subcircuit_num: usize,
     buffer_len: usize,
     single_buffer: bool,
+    elem_input_len: Option<usize>,
 }
 
 pub struct DivBuilder<'a, DR, DW, D, E, B>
@@ -367,6 +374,7 @@ where
             subcircuit_num,
             buffer_len,
             single_buffer: code_config.single_buffer,
+            elem_input_len: code_config.elem_inputs.map(|x| x.len()),
         });
     }
 
@@ -384,6 +392,7 @@ where
                 executors: circuit_execs,
                 buffer_len: circuit_infos.buffer_len,
                 single_buffer: circuit_infos.single_buffer,
+                elem_input_num: circuit_infos.elem_input_len.unwrap_or(0),
                 d: PhantomData,
                 dr: PhantomData,
                 dw: PhantomData,
