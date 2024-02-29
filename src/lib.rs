@@ -37,17 +37,56 @@ mod vcircuit;
 
 #[derive(Clone, Copy)]
 pub struct CodeConfig<'a> {
-    pub init: &'a str,
-    pub iter_num: usize,
-    pub loop_cond: &'a str,
-    // to populate single input bits
-    pub pop_inputs: Option<&'a [&'a str]>,
-    pub loop_populate: &'a str, // input population inside loop
-    pub populate: &'a str,
-    // to aggregate single output bits
-    pub aggr_outputs: Option<&'a [&'a str]>,
-    pub loop_aggregate: &'a str, // output aggregation inside loop
-    pub aggregate: &'a str,
+    pub input_placement: Option<(&'a [usize], usize)>,
+    pub output_placement: Option<(&'a [usize], usize)>,
+    pub arg_inputs: Option<&'a [usize]>,
+    pub elem_inputs: Option<&'a [usize]>,
+    pub single_buffer: bool,
+    pub init_code: Option<&'a str>,
+    pub aggr_output_code: Option<&'a str>,
+}
+
+impl<'a> CodeConfig<'a> {
+    pub fn new() -> Self {
+        Self {
+            input_placement: None,
+            output_placement: None,
+            arg_inputs: None,
+            elem_inputs: None,
+            single_buffer: false,
+            init_code: None,
+            aggr_output_code: None,
+        }
+    }
+
+    pub fn input_placement(mut self, p: Option<(&'a [usize], usize)>) -> Self {
+        self.input_placement = p;
+        self
+    }
+    pub fn output_placement(mut self, p: Option<(&'a [usize], usize)>) -> Self {
+        self.output_placement = p;
+        self
+    }
+    pub fn arg_inputs(mut self, arg: Option<&'a [usize]>) -> Self {
+        self.arg_inputs = arg;
+        self
+    }
+    pub fn elem_inputs(mut self, elem: Option<&'a [usize]>) -> Self {
+        self.elem_inputs = elem;
+        self
+    }
+    pub fn single_buffer(mut self, s: bool) -> Self {
+        self.single_buffer = s;
+        self
+    }
+    pub fn init_code(mut self, init: Option<&'a str>) -> Self {
+        self.init_code = init;
+        self
+    }
+    pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
+        self.aggr_output_code = aggr;
+        self
+    }
 }
 
 #[repr(u8)]
