@@ -291,18 +291,8 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     type ErrorType = B::ErrorType;
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        input_placement: Option<(&[usize], usize)>,
-        output_placement: Option<(&[usize], usize)>,
-        arg_inputs: Option<&[usize]>,
-        elem_inputs: Option<&[usize]>,
-        single_buffer: bool,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
@@ -322,56 +312,61 @@ where
                 output_ps: subcircuit.output_ps,
             };
             let name_0 = format!("{}_{}", name, i);
-            self.builder.add_ext(
+            self.builder.add_with_config(
                 &name_0,
                 subcircuit.circuit,
-                if i == 0 {
-                    input_placement
-                } else {
-                    // use placement from subcircuit
-                    last_placement
-                        .input_ps
-                        .as_ref()
-                        .map(|p| (p.ps.as_slice(), p.real_len))
-                },
-                if i + 1 == subcircuit_num {
-                    output_placement
-                } else {
-                    // use placement from subcircuit
-                    last_placement
-                        .output_ps
-                        .as_ref()
-                        .map(|p| (p.ps.as_slice(), p.real_len))
-                },
-                if i == 0 { arg_inputs } else { None },
-                if i == 0 { elem_inputs } else { None },
-                if i + 1 == subcircuit_num {
-                    // if only one subcircuit then apply single_buffer
-                    single_buffer && subcircuit_num == 1
-                } else {
-                    // for subcircuits after first and before last
-                    i != 0
-                },
-                if i + 1 == subcircuit_num {
-                    // if only one subcircuit then apply single_buffer
-                    init_code
-                } else {
-                    // for subcircuits after first and before last
-                    None
-                },
-                if i + 1 == subcircuit_num {
-                    // if only one subcircuit then apply single_buffer
-                    aggr_output_code
-                } else {
-                    // for subcircuits after first and before last
-                    None
-                },
+                CodeConfig::new()
+                    .input_placement(if i == 0 {
+                        code_config.input_placement
+                    } else {
+                        // use placement from subcircuit
+                        last_placement
+                            .input_ps
+                            .as_ref()
+                            .map(|p| (p.ps.as_slice(), p.real_len))
+                    })
+                    .output_placement(if i + 1 == subcircuit_num {
+                        code_config.output_placement
+                    } else {
+                        // use placement from subcircuit
+                        last_placement
+                            .output_ps
+                            .as_ref()
+                            .map(|p| (p.ps.as_slice(), p.real_len))
+                    })
+                    .arg_inputs(if i == 0 { code_config.arg_inputs } else { None })
+                    .elem_inputs(if i == 0 {
+                        code_config.elem_inputs
+                    } else {
+                        None
+                    })
+                    .single_buffer(if i + 1 == subcircuit_num {
+                        // if only one subcircuit then apply single_buffer
+                        code_config.single_buffer && subcircuit_num == 1
+                    } else {
+                        // for subcircuits after first and before last
+                        i != 0
+                    })
+                    .init_code(if i + 1 == subcircuit_num {
+                        // if only one subcircuit then apply init_code
+                        code_config.init_code
+                    } else {
+                        // for subcircuits after first and before last
+                        None
+                    })
+                    .aggr_output_code(if i + 1 == subcircuit_num {
+                        // if only one subcircuit then apply aggr_output_code
+                        code_config.aggr_output_code
+                    } else {
+                        // for subcircuits after first and before last
+                        None
+                    }),
             );
         }
         self.circuit_infos.push(CircuitInfo {
             subcircuit_num,
             buffer_len,
-            single_buffer,
+            single_buffer: code_config.single_buffer,
         });
     }
 

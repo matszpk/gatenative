@@ -282,16 +282,10 @@ fn test_opencl_builder_and_exec() {
             Some(output_ps.clone()),
             None,
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul2x2sb",
             circuit.clone(),
-            None,
-            None,
-            None,
-            None,
-            true,
-            None,
-            None,
+            CodeConfig::new().single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
@@ -580,27 +574,25 @@ fn test_opencl_builder_and_exec_with_arg_input() {
         // with arg_input
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_sb",
             circuit.clone(),
-            None,
-            Some((&(0..8).collect::<Vec<_>>(), 20)),
-            Some(&(20..24).collect::<Vec<_>>()),
-            None,
-            true,
-            None,
-            None,
+            CodeConfig::new()
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 20)))
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .single_buffer(true),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_sb_ip",
             circuit.clone(),
-            Some((&(0..20).map(|i| (19 - i) + 4).collect::<Vec<_>>(), 24)),
-            Some((&(0..8).collect::<Vec<_>>(), 24)),
-            Some(&(20..24).collect::<Vec<_>>()),
-            None,
-            true,
-            None,
-            None,
+            CodeConfig::new()
+                .input_placement(Some((
+                    &(0..20).map(|i| (19 - i) + 4).collect::<Vec<_>>(),
+                    24,
+                )))
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 24)))
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
@@ -669,60 +661,42 @@ fn test_opencl_builder_and_exec_with_elem_input() {
         // with elem_index
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_elem",
             circuit.clone(),
-            None,
-            None,
-            None,
-            Some(&(0..12).collect::<Vec<_>>()),
-            false,
-            None,
-            None,
+            CodeConfig::new().elem_inputs(Some(&(0..12).collect::<Vec<_>>())),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_elem_full",
             circuit.clone(),
-            None,
-            None,
-            None,
-            Some(&(0..24).collect::<Vec<_>>()),
-            false,
-            None,
-            None,
+            CodeConfig::new().elem_inputs(Some(&(0..24).collect::<Vec<_>>())),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_elem_sb",
             circuit.clone(),
-            None,
-            Some((&(0..8).collect::<Vec<_>>(), 12)),
-            None,
-            Some(&(0..12).collect::<Vec<_>>()),
-            true,
-            None,
-            None,
+            CodeConfig::new()
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 12)))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>()))
+                .single_buffer(true),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_elem_arginput",
             circuit.clone(),
-            None,
-            None,
-            Some(&(20..24).collect::<Vec<_>>()),
-            Some(&(0..12).collect::<Vec<_>>()),
-            false,
-            None,
-            None,
+            CodeConfig::new()
+                .arg_inputs(Some(&(20..24).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>())),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul_add_elem_sb_ip",
             circuit.clone(),
-            Some((&(0..12).map(|i| (11 - i) + 4).collect::<Vec<_>>(), 16)),
-            Some((&(0..8).collect::<Vec<_>>(), 16)),
-            None,
-            Some(&(0..12).collect::<Vec<_>>()),
-            true,
-            None,
-            None,
+            CodeConfig::new()
+                .input_placement(Some((
+                    &(0..12).map(|i| (11 - i) + 4).collect::<Vec<_>>(),
+                    16,
+                )))
+                .output_placement(Some((&(0..8).collect::<Vec<_>>(), 16)))
+                .elem_inputs(Some(&(0..12).collect::<Vec<_>>()))
+                .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
         let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
@@ -887,16 +861,10 @@ fn test_opencl_builder_and_exec_group_vec() {
         [(4, false), (8, false), (10, false), (11, false)],
     )
     .unwrap();
-    builder.add_ext(
+    builder.add_with_config(
         "mul2x2sb",
         circuit.clone(),
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
 
     let mut execs = builder.build().unwrap();
@@ -977,9 +945,7 @@ fn test_opencl_data_holder() {
             Circuit::new(4, [], [(0, false), (1, false), (2, false), (3, false)]).unwrap();
         builder.add("mul2x2", circuit.clone(), None, None, None);
         let circuit = Circuit::new(4, [], [(0, true), (1, true), (2, true), (3, true)]).unwrap();
-        builder.add_ext(
-            "mul2x2sb", circuit, None, None, None, None, true, None, None,
-        );
+        builder.add_with_config("mul2x2sb", circuit, CodeConfig::new().single_buffer(true));
         let circuit = Circuit::new(
             8,
             [
@@ -998,16 +964,12 @@ fn test_opencl_data_holder() {
             None,
             Some(&[4, 5, 6, 7]),
         );
-        builder.add_ext(
+        builder.add_with_config(
             "mul2x2argsb",
             circuit.clone(),
-            None,
-            None,
-            Some(&[4, 5, 6, 7]),
-            None,
-            true,
-            None,
-            None,
+            CodeConfig::new()
+                .arg_inputs(Some(&[4, 5, 6, 7]))
+                .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
         let mut data = execs[0].new_data(10);

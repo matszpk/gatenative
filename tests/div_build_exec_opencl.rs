@@ -58,16 +58,10 @@ fn test_div_builder_and_exec_opencl() {
                 Some(output_ps.clone()),
                 None,
             );
-            builder.add_ext(
+            builder.add_with_config(
                 "mul2x2sb",
                 circuit.clone(),
-                None,
-                None,
-                None,
-                None,
-                true,
-                None,
-                None,
+                CodeConfig::new().single_buffer(true),
             );
             let mut execs = builder.build().unwrap();
 

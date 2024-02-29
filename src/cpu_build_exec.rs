@@ -698,18 +698,8 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
 {
     type ErrorType = BuildError;
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        input_placement: Option<(&[usize], usize)>,
-        output_placement: Option<(&[usize], usize)>,
-        arg_inputs: Option<&[usize]>,
-        elem_inputs: Option<&[usize]>,
-        single_buffer: bool,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
@@ -722,25 +712,18 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             sym_name,
             input_len: usize::try_from(circuit.input_len()).unwrap(),
             output_len: circuit.outputs().len(),
-            input_placement: input_placement.map(|(p, l)| (p.to_vec(), l)),
-            output_placement: output_placement.map(|(p, l)| (p.to_vec(), l)),
-            arg_input_len: arg_inputs.map(|x| x.len()),
-            elem_input_len: elem_inputs.map(|x| x.len()),
-            single_buffer,
+            input_placement: code_config.input_placement.map(|(p, l)| (p.to_vec(), l)),
+            output_placement: code_config.output_placement.map(|(p, l)| (p.to_vec(), l)),
+            arg_input_len: code_config.arg_inputs.map(|x| x.len()),
+            elem_input_len: code_config.elem_inputs.map(|x| x.len()),
+            single_buffer: code_config.single_buffer,
         });
         generate_code_with_config(
             &mut self.writer,
             &name,
             circuit,
             self.optimize_negs,
-            CodeConfig::new()
-                .input_placement(input_placement)
-                .output_placement(output_placement)
-                .arg_inputs(arg_inputs)
-                .elem_inputs(elem_inputs)
-                .single_buffer(single_buffer)
-                .init_code(init_code)
-                .aggr_output_code(aggr_output_code),
+            code_config,
         );
     }
 

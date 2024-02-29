@@ -171,33 +171,17 @@ where
 {
     type ErrorType = B::ErrorType;
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        arg_inputs: &[usize],
-        elem_inputs: Option<&[usize]>,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.arg_input_lens.push(arg_inputs.len());
-        self.builder.add_ext(
-            name,
-            circuit,
-            None,
-            None,
-            Some(arg_inputs),
-            elem_inputs,
-            false,
-            init_code,
-            aggr_output_code,
-        );
+        self.arg_input_lens
+            .push(code_config.arg_inputs.as_ref().unwrap().len());
+        self.builder.add_with_config(name, circuit, code_config);
     }
 
     fn build(self) -> Result<Vec<BasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {
@@ -444,34 +428,17 @@ where
 {
     type ErrorType = B::ErrorType;
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        arg_inputs: &[usize],
-        elem_inputs: Option<&[usize]>,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        assert!(arg_inputs.len() <= 32);
-        self.arg_input_lens.push(arg_inputs.len());
-        self.builder.add_ext(
-            name,
-            circuit,
-            None,
-            None,
-            Some(arg_inputs),
-            elem_inputs,
-            false,
-            init_code,
-            aggr_output_code,
-        );
+        self.arg_input_lens
+            .push(code_config.arg_inputs.as_ref().unwrap().len());
+        self.builder.add_with_config(name, circuit, code_config);
     }
 
     fn build(self) -> Result<Vec<ParBasicMapperExecutor<'a, DR, DW, D, E>>, Self::ErrorType> {

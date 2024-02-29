@@ -379,31 +379,18 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(
+        self.add_with_config(
             name,
             circuit,
-            input_placement,
-            output_placement,
-            arg_inputs,
-            None,
-            false,
-            None,
-            None,
+            CodeConfig::new()
+                .input_placement(input_placement)
+                .output_placement(output_placement)
+                .arg_inputs(arg_inputs),
         );
     }
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        input_placement: Option<(&[usize], usize)>,
-        output_placement: Option<(&[usize], usize)>,
-        arg_inputs: Option<&[usize]>,
-        elem_inputs: Option<&[usize]>,
-        single_buffer: bool,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
@@ -523,20 +510,30 @@ where
 {
     type ErrorType;
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        arg_inputs: &[usize],
-        elem_inputs: Option<&[usize]>,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
+
+    fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        assert!(code_config.input_placement.is_none());
+        assert!(code_config.output_placement.is_none());
+        assert!(!code_config.single_buffer);
+        assert!(code_config.arg_inputs.is_some());
+        unsafe {
+            self.add_internal(name, circuit, code_config);
+        }
+    }
 
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
@@ -546,7 +543,11 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(name, circuit, arg_inputs, None, None, None);
+        self.add_with_config(
+            name,
+            circuit,
+            CodeConfig::new().arg_inputs(Some(arg_inputs)),
+        );
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
@@ -656,20 +657,30 @@ where
 {
     type ErrorType;
 
-    fn add_ext<T>(
-        &mut self,
-        name: &str,
-        circuit: Circuit<T>,
-        arg_inputs: &[usize],
-        elem_inputs: Option<&[usize]>,
-        init_code: Option<&str>,
-        aggr_output_code: Option<&str>,
-    ) where
+    unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
+
+    fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        assert!(code_config.input_placement.is_none());
+        assert!(code_config.output_placement.is_none());
+        assert!(!code_config.single_buffer);
+        assert!(code_config.arg_inputs.is_some());
+        unsafe {
+            self.add_internal(name, circuit, code_config);
+        }
+    }
 
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
@@ -679,7 +690,11 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(name, circuit, arg_inputs, None, None, None);
+        self.add_with_config(
+            name,
+            circuit,
+            CodeConfig::new().arg_inputs(Some(arg_inputs)),
+        );
     }
 
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;

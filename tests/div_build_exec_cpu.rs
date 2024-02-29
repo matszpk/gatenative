@@ -57,16 +57,10 @@ fn test_div_builder_and_exec_cpu() {
                 Some(output_ps.clone()),
                 None,
             );
-            builder.add_ext(
+            builder.add_with_config(
                 "mul2x2sb",
                 circuit.clone(),
-                None,
-                None,
-                None,
-                None,
-                true,
-                None,
-                None,
+                CodeConfig::new().single_buffer(true),
             );
             let mut execs = builder.build().unwrap();
 
@@ -333,16 +327,10 @@ fn test_div_executor_cpu_clone() {
     )
     .unwrap();
     builder.add("mul2x2", circuit.clone(), None, None, None);
-    builder.add_ext(
+    builder.add_with_config(
         "mul2x2sb",
         circuit.clone(),
-        None,
-        None,
-        None,
-        None,
-        true,
-        None,
-        None,
+        CodeConfig::new().single_buffer(true),
     );
     let execs = builder.build().unwrap();
     {

@@ -582,6 +582,29 @@ pub enum ParSeqMapperBuilderError<PE, SE> {
     SeqError(usize, SE),
 }
 
+#[derive(Clone, Copy)]
+pub struct ParSeqDynamicConfig<'a> {
+    pub init_code: Option<&'a str>,
+    pub aggr_output_code: Option<&'a str>,
+}
+
+impl<'a> ParSeqDynamicConfig<'a> {
+    pub fn new() -> Self {
+        Self {
+            init_code: None,
+            aggr_output_code: None,
+        }
+    }
+    pub fn init_code(mut self, init: Option<&'a str>) -> Self {
+        self.init_code = init;
+        self
+    }
+    pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
+        self.aggr_output_code = aggr;
+        self
+    }
+}
+
 pub struct ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
 where
     PDR: DataReader + Send + Sync,
@@ -649,47 +672,43 @@ where
         }
     }
 
-    pub fn add_ext<'b, T, IF, AOF>(
+    pub fn add_with_config<'b, T, DCF>(
         &mut self,
         name: &str,
         circuit: Circuit<T>,
         arg_inputs: &[usize],
         elem_inputs: Option<&[usize]>,
-        mut init_code: IF,
-        mut aggr_output_code: AOF,
+        mut dyn_config: DCF,
     ) where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
         <T as TryFrom<usize>>::Error: Debug,
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
-        IF: FnMut(ParSeqSelection) -> Option<&'b str>,
-        AOF: FnMut(ParSeqSelection) -> Option<&'b str>,
+        DCF: FnMut(ParSeqSelection) -> ParSeqDynamicConfig<'b>,
     {
         assert!(arg_inputs.len() < 64);
         self.arg_input_lens.push(arg_inputs.len());
-        self.par.add_ext(
+        let dyncfg = dyn_config(ParSeqSelection::Par);
+        self.par.add_with_config(
             name,
             circuit.clone(),
-            None,
-            None,
-            Some(arg_inputs),
-            elem_inputs,
-            false,
-            init_code(ParSeqSelection::Par),
-            aggr_output_code(ParSeqSelection::Par),
+            CodeConfig::new()
+                .arg_inputs(Some(arg_inputs))
+                .elem_inputs(elem_inputs)
+                .init_code(dyncfg.init_code)
+                .aggr_output_code(dyncfg.aggr_output_code),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
-            s.add_ext(
+            let dyncfg = dyn_config(ParSeqSelection::Seq(i));
+            s.add_with_config(
                 name,
                 circuit.clone(),
-                None,
-                None,
-                Some(arg_inputs),
-                elem_inputs,
-                false,
-                init_code(ParSeqSelection::Seq(i)),
-                aggr_output_code(ParSeqSelection::Seq(i)),
+                CodeConfig::new()
+                    .arg_inputs(Some(arg_inputs))
+                    .elem_inputs(elem_inputs)
+                    .init_code(dyncfg.init_code)
+                    .aggr_output_code(dyncfg.aggr_output_code),
             );
         }
     }
@@ -702,7 +721,9 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
-        self.add_ext(name, circuit, arg_inputs, None, |_| None, |_| None);
+        self.add_with_config(name, circuit, arg_inputs, None, |_| {
+            ParSeqDynamicConfig::new()
+        });
     }
 
     pub fn build(
