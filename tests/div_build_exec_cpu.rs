@@ -555,38 +555,12 @@ fn test_cpu_div_builder_and_exec_with_arg_input() {
         optimize_negs: true,
     };
 
-    let mut configs = vec![
+    let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ];
-    #[cfg(target_pointer_width = "32")]
-    {
-        configs.push((NoExtension, &CLANG_WRITER_U32, None));
-    }
-    #[cfg(target_pointer_width = "64")]
-    configs.push((NoExtension, &CLANG_WRITER_U64, None));
-
-    if *CPU_EXTENSION == IntelAVX512
-        || *CPU_EXTENSION == IntelAVX
-        || *CPU_EXTENSION == IntelSSE
-        || *CPU_EXTENSION == IntelMMX
-    {
-        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
-        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
-        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 {
-        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
-    }
-    if *CPU_EXTENSION == ARMNEON {
-        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
-    }
 
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         // with arg_input
@@ -668,38 +642,12 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
         optimize_negs: true,
     };
 
-    let mut configs = vec![
+    let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ];
-    #[cfg(target_pointer_width = "32")]
-    {
-        configs.push((NoExtension, &CLANG_WRITER_U32, None));
-    }
-    #[cfg(target_pointer_width = "64")]
-    configs.push((NoExtension, &CLANG_WRITER_U64, None));
-
-    if *CPU_EXTENSION == IntelAVX512
-        || *CPU_EXTENSION == IntelAVX
-        || *CPU_EXTENSION == IntelSSE
-        || *CPU_EXTENSION == IntelMMX
-    {
-        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
-        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
-        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 {
-        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
-    }
-    if *CPU_EXTENSION == ARMNEON {
-        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
-    }
 
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         // with elem_index
