@@ -12,7 +12,7 @@ pub struct CLangTransformConfig<'a> {
     shr_op: &'a str,
     init: &'a str,
     values: [(&'a str, &'a str); 5],
-    store_op: Option<&'a str>,
+    store_op: Option<[&'a str; 5]>,
 }
 
 pub(crate) const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -100,7 +100,7 @@ pub(crate) const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTran
             "*((const __m64*)(transform_mask_tbl + 18))",
         ),
     ],
-    store_op: None,
+    store_op: Some(["{} = {}", "{} = int _m_to_int({})", "", "", ""]),
 };
 
 pub(crate) const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -144,7 +144,13 @@ pub(crate) const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTra
             "*((const __m128i*)(transform_mask_tbl + 4*9))",
         ),
     ],
-    store_op: None,
+    store_op: Some([
+        "{} = {}",
+        "_mm_storeu_si64({}, {})",
+        "_mm_storeu_si32({}, {})",
+        "",
+        "",
+    ]),
 };
 
 pub(crate) const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -193,7 +199,13 @@ pub(crate) const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTra
             "*((const __m256i*)(transform_mask_tbl + 8*9))",
         ),
     ],
-    store_op: Some("_mm256_storeu_si256((uint32_t*)&{}, {})"),
+    store_op: Some([
+        "_mm256_storeu_si256((uint32_t*)&{}, {})",
+        "{} = _mm256_castsi256_si128({})",
+        "_mm_storeu_si64({}, _mm256_castsi256_si128({}))",
+        "_mm_storeu_si32({}, _mm256_castsi256_si128({}))",
+        "",
+    ]),
 };
 
 pub(crate) const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -252,7 +264,13 @@ pub(crate) const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangT
             "*((const __m512i*)(transform_mask_tbl + 16*9))",
         ),
     ],
-    store_op: Some("_mm512_storeu_epi64(&{}, {})"),
+    store_op: Some([
+        "_mm512_storeu_epi64(&{}, {})",
+        "_mm256_storeu_si256((uint32_t*)&{}, _mm512_castsi512_si256({}))",
+        "{} = _mm512_castsi512_si128({})",
+        "_mm_storeu_si64({}, _mm512_castsi512_si128({}))",
+        "_mm_storeu_si32({}, _mm512_castsi512_si128({}))",
+    ]),
 };
 
 pub(crate) const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
