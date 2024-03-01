@@ -254,3 +254,25 @@ pub(crate) const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangT
     ],
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
 };
+
+pub(crate) const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
+    func_modifier: None,
+    in_type_name: "uint",
+    out_type_name: "uint",
+    cast_type: None,
+    type_bit_len: 32,
+    type_name_u32: "uint",
+    and_op: "{} & {}",
+    or_op: "{} & {}",
+    shl_op: "{} << {}",
+    shr_op: "{} >> {}",
+    init: "",
+    values: [
+        ("0x55555555U", "0xaaaaaaaaU"),
+        ("0x33333333U", "0xccccccccU"),
+        ("0x0f0f0f0fU", "0xf0f0f0f0U"),
+        ("0x00ff00ffU", "0xff00ff00U"),
+        ("0x0000ffffU", "0xffff0000U"),
+    ],
+    store_op: None,
+};
