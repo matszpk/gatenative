@@ -1,3 +1,4 @@
+use crate::clang_transform;
 use crate::*;
 
 use std::collections::HashMap;
@@ -905,7 +906,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
         }
         if self.aggr_output_code.is_some() && self.writer.config.init_index.is_some() {
-            self.writer.out.extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+            self.writer
+                .out
+                .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
         }
         if let Some(init_code) = self.init_code {
             self.writer.out.extend(init_code.as_bytes());

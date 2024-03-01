@@ -19,6 +19,7 @@ pub enum VNegs {
     NegOutput,
 }
 
+mod clang_transform;
 pub mod clang_writer;
 pub mod cpu_build_exec;
 pub mod cpu_data_transform;
