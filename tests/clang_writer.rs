@@ -493,6 +493,7 @@ void gate_sys_func1(const uint64_t* input,
     assert_eq!(
         r##"#include <mmintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[2] = { 0, 0 };
 static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
 static const unsigned int elem_index_low_tbl[6*2] = {
@@ -532,6 +533,7 @@ void gate_sys_func1(const __m64* input,
     assert_eq!(
         r##"#include <mmintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[2] = { 0, 0 };
 static const unsigned int one_value[2] = { 0xffffffff, 0xffffffff };
 static const unsigned int elem_index_low_tbl[6*2] = {
@@ -570,6 +572,7 @@ void gate_sys_func1(const __m64* input,
     assert_eq!(
         r##"#include <xmmintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
 static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
@@ -614,6 +617,7 @@ void gate_sys_func1(const __m128* input,
     assert_eq!(
         r##"#include <xmmintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
 static const unsigned int one_value[4] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
@@ -657,6 +661,7 @@ void gate_sys_func1(const __m128* input,
     assert_eq!(
         r##"#include <immintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
     0, 0, 0, 0, 0, 0, 0, 0
 };
@@ -706,6 +711,7 @@ void gate_sys_func1(const __m256* input,
     assert_eq!(
         r##"#include <immintrin.h>
 #include <stddef.h>
+#include <stdint.h>
 static const unsigned int zero_value[16] __attribute__((aligned(64))) = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
@@ -767,6 +773,7 @@ void gate_sys_func1(const __m512i* input,
     assert_eq!(
         r##"#include <arm_neon.h>
 #include <stddef.h>
+#include <stdint.h>
 #define TYPE_LEN (128)
 #define TYPE_NAME uint32x4_t
 void gate_sys_func1(const uint32x4_t* input,
@@ -798,6 +805,7 @@ void gate_sys_func1(const uint32x4_t* input,
     assert_eq!(
         r##"#include <arm_neon.h>
 #include <stddef.h>
+#include <stdint.h>
 #define TYPE_LEN (128)
 #define TYPE_NAME uint32x4_t
 void gate_sys_func1(const uint32x4_t* input,

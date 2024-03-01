@@ -18,6 +18,7 @@ pub struct CLangWriterConfig<'a> {
     buffer_shift: bool,
     include_name: Option<&'a str>,
     include_name_2: Option<&'a str>,
+    include_name_3: Option<&'a str>,
     type_name: &'a str,
     type_bit_len: u32,
     arg_modifier: Option<&'a str>,
@@ -41,6 +42,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("stdint.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: None,
     type_name: "uint32_t",
     type_bit_len: 32,
     arg_modifier: None,
@@ -85,6 +87,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("stdint.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: None,
     type_name: "uint64_t",
     type_bit_len: 64,
     arg_modifier: None,
@@ -129,6 +132,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     buffer_shift: false,
     include_name: Some("stdint.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: None,
     type_name: "uint64_t",
     type_bit_len: 64,
     arg_modifier: None,
@@ -173,6 +177,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     buffer_shift: false,
     include_name: Some("stdint.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: None,
     type_name: "uint64_t",
     type_bit_len: 64,
     arg_modifier: None,
@@ -217,6 +222,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("mmintrin.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
     type_name: "__m64",
     type_bit_len: 64,
     arg_modifier: None,
@@ -270,6 +276,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("xmmintrin.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
     type_name: "__m128",
     type_bit_len: 128,
     arg_modifier: None,
@@ -329,6 +336,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("immintrin.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
     type_name: "__m256",
     type_bit_len: 256,
     arg_modifier: None,
@@ -394,6 +402,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("immintrin.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
     type_name: "__m512i",
     type_bit_len: 512,
     arg_modifier: None,
@@ -471,6 +480,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: false,
     include_name: Some("arm_neon.h"),
     include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
     type_name: "uint32x4_t",
     type_bit_len: 128,
     arg_modifier: None,
@@ -515,6 +525,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     buffer_shift: true,
     include_name: None,
     include_name_2: None,
+    include_name_3: None,
     type_name: "uint",
     type_bit_len: 32,
     arg_modifier: Some("global"),
@@ -562,6 +573,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     buffer_shift: true,
     include_name: None,
     include_name_2: None,
+    include_name_3: None,
     type_name: "uint",
     type_bit_len: 32,
     arg_modifier: Some("global"),
@@ -1079,6 +1091,9 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         }
         if let Some(include_name_2) = self.config.include_name_2 {
             writeln!(self.out, "#include <{}>", include_name_2).unwrap();
+        }
+        if let Some(include_name_3) = self.config.include_name_3 {
+            writeln!(self.out, "#include <{}>", include_name_3).unwrap();
         }
         if !self.config.zero_value.0.is_empty() {
             self.out.extend(self.config.zero_value.0.as_bytes());
