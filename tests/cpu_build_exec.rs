@@ -228,8 +228,11 @@ fn get_mul_add_circuit() -> Circuit<u32> {
     .unwrap()
 }
 
-#[test]
-fn test_cpu_builder_and_exec() {
+fn get_builder_configs() -> Vec<(
+    CPUExtension,
+    &'static CLangWriterConfig<'static>,
+    Option<CPUBuilderConfig>,
+)> {
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
@@ -238,8 +241,6 @@ fn test_cpu_builder_and_exec() {
         optimize_negs: true,
     };
 
-    let mut mul_add_data_map = HashMap::<usize, (CPUDataHolder, Vec<u32>)>::new();
-    mul_add_data_map.insert(2, gen_mul_add_input(2));
     let mut configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
@@ -263,19 +264,33 @@ fn test_cpu_builder_and_exec() {
     }
     if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
         configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
-        mul_add_data_map.insert(4, gen_mul_add_input(4));
     }
     if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
         configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
-        mul_add_data_map.insert(8, gen_mul_add_input(8));
     }
     if *CPU_EXTENSION == IntelAVX512 {
         configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
-        mul_add_data_map.insert(16, gen_mul_add_input(16));
     }
     if *CPU_EXTENSION == ARMNEON {
         configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
-        mul_add_data_map.insert(4, gen_mul_add_input(4));
+    }
+    configs
+}
+
+#[test]
+fn test_cpu_builder_and_exec() {
+    let configs = get_builder_configs();
+    let mut mul_add_data_map = HashMap::<usize, (CPUDataHolder, Vec<u32>)>::new();
+    for (cpu_ext, writer_config, builder_config) in configs.iter() {
+        let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            *cpu_ext,
+            writer_config,
+            builder_config.clone(),
+        );
+        let word_num = (builder.word_len() >> 5) as usize;
+        if !mul_add_data_map.contains_key(&word_num) {
+            mul_add_data_map.insert(word_num, gen_mul_add_input(word_num));
+        }
     }
 
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
@@ -580,47 +595,7 @@ fn test_cpu_builder_and_exec() {
 
 #[test]
 fn test_cpu_builder_and_exec_with_arg_input() {
-    use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-    };
-
-    let mut configs = vec![
-        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
-        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
-        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
-        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
-    ];
-    #[cfg(target_pointer_width = "32")]
-    {
-        configs.push((NoExtension, &CLANG_WRITER_U32, None));
-    }
-    #[cfg(target_pointer_width = "64")]
-    configs.push((NoExtension, &CLANG_WRITER_U64, None));
-
-    if *CPU_EXTENSION == IntelAVX512
-        || *CPU_EXTENSION == IntelAVX
-        || *CPU_EXTENSION == IntelSSE
-        || *CPU_EXTENSION == IntelMMX
-    {
-        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
-        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
-        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 {
-        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
-    }
-    if *CPU_EXTENSION == ARMNEON {
-        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
-    }
-
+    let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         // with arg_input
         let circuit = translate_inputs_rev(get_mul_add_circuit(), MUL_ADD_INPUT_MAP);
@@ -692,47 +667,7 @@ fn test_cpu_builder_and_exec_with_arg_input() {
 
 #[test]
 fn test_cpu_builder_and_exec_with_elem_input() {
-    use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-    };
-
-    let mut configs = vec![
-        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
-        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
-        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
-        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
-    ];
-    #[cfg(target_pointer_width = "32")]
-    {
-        configs.push((NoExtension, &CLANG_WRITER_U32, None));
-    }
-    #[cfg(target_pointer_width = "64")]
-    configs.push((NoExtension, &CLANG_WRITER_U64, None));
-
-    if *CPU_EXTENSION == IntelAVX512
-        || *CPU_EXTENSION == IntelAVX
-        || *CPU_EXTENSION == IntelSSE
-        || *CPU_EXTENSION == IntelMMX
-    {
-        configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
-        configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
-        configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
-    }
-    if *CPU_EXTENSION == IntelAVX512 {
-        configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
-    }
-    if *CPU_EXTENSION == ARMNEON {
-        configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
-    }
-
+    let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         // with elem_index
         let circuit = translate_inputs_rev(get_mul_add_circuit(), MUL_ADD_INPUT_MAP);
