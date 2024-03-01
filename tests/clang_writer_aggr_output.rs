@@ -27,7 +27,7 @@ fn test_clang_writer_aggregate_output() {
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;")),
     );
     writer.epilog();
     assert_eq!(
@@ -71,7 +71,7 @@ void gate_sys_xor(const uint32_t* input,
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;")),
     );
     writer.epilog();
     assert_eq!(
@@ -140,7 +140,7 @@ void gate_sys_xor(const __m128* input,
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -181,7 +181,7 @@ void gate_sys_xor(const __m128* input,
         false,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
-            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;\n")),
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;")),
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
@@ -243,7 +243,7 @@ void gate_sys_xor(const __m128* input,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some(
-                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
     );
     assert_eq!(
@@ -293,7 +293,7 @@ void gate_sys_xor(const __m128* input,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some(
-                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
     );
     assert_eq!(
@@ -364,7 +364,7 @@ void gate_sys_xor(const __m128* input,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some(
-                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
     );
     assert_eq!(
@@ -416,7 +416,7 @@ void gate_sys_xor(const __m128* input,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some(
-                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
     );
     writer.epilog();
@@ -474,7 +474,7 @@ kernel void gate_sys_xor(unsigned long n,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some(
-                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
+                "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
     );
     assert_eq!(

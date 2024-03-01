@@ -887,6 +887,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 }
             }
             self.writer.out.extend(aggr_output_code.as_bytes());
+            self.writer.out.push(b'\n');
             if let Some(output_vars) = self.output_vars.as_ref() {
                 for i in 0..output_vars.len() {
                     writeln!(self.writer.out, "#undef o{}", i).unwrap();
