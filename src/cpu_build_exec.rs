@@ -374,27 +374,53 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                            i,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                                i,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                                i,
+                            );
+                        }
                     }
                 }
             } else {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            i,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                i,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                i,
+                            );
+                        }
                     }
                 }
             }
@@ -402,25 +428,49 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                            );
+                        }
                     }
                 }
             } else {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                            );
+                        }
                     }
                 }
             }
@@ -459,27 +509,53 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                            i,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                                i,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                                i,
+                            );
+                        }
                     }
                 }
             } else {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            i,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                i,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                i,
+                            );
+                        }
                     }
                 }
             }
@@ -487,25 +563,49 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             if self.have_arg_inputs {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                            );
+                        }
                     }
                 }
             } else {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            input[i * real_input_words..].as_ptr(),
-                            output[i * real_output_words..].as_mut_ptr(),
-                        );
+                if self.aggregated_output {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                            );
+                        }
+                    }
+                } else {
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                input[i * real_input_words..].as_ptr(),
+                                output[i * real_output_words..].as_mut_ptr(),
+                            );
+                        }
                     }
                 }
             }
