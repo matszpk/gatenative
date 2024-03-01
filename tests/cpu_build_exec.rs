@@ -876,8 +876,9 @@ fn test_cpu_builder_and_exec_with_argg_output() {
         builder.add_with_config(
             "comb_aggr_out",
             circuit.clone(),
-            CodeConfig::new().aggr_output_code(Some(
-                r##"{
+            CodeConfig::new()
+                .aggr_output_code(Some(
+                    r##"{
     unsigned int i;
     uint32_t out[(TYPE_LEN >> 5)*12];
     *((TYPE_NAME*)(out + (TYPE_LEN>>5)*0)) = o0;
@@ -910,8 +911,8 @@ fn test_cpu_builder_and_exec_with_argg_output() {
     }
 }
 "##,
-            ))
-            .aggr_output_len(1 << (12 - 5)),
+                ))
+                .aggr_output_len(Some(1 << (12 - 5))),
         );
         let mut execs = builder.build().unwrap();
 
