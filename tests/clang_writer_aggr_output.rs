@@ -19,6 +19,7 @@ fn test_clang_writer_aggregate_output() {
     .unwrap();
 
     let mut writer = CLANG_WRITER_U32.writer();
+    writer.prolog();
     generate_code_with_config(
         &mut writer,
         "xor",
@@ -28,9 +29,14 @@ fn test_clang_writer_aggregate_output() {
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
     );
+    writer.epilog();
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(const uint32_t* input,
+        r##"#include <stdint.h>
+#include <stddef.h>
+#define TYPE_LEN (32)
+#define TYPE_NAME uint32_t
+void gate_sys_xor(const uint32_t* input,
     void* output) {
     unsigned int xxx = 1111;
     uint32_t v0;
@@ -57,6 +63,7 @@ fn test_clang_writer_aggregate_output() {
     );
 
     let mut writer = CLANG_WRITER_INTEL_SSE.writer();
+    writer.prolog();
     generate_code_with_config(
         &mut writer,
         "xor",
@@ -66,9 +73,27 @@ fn test_clang_writer_aggregate_output() {
             .init_code(Some("    unsigned int xxx = 1111;\n"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;\n")),
     );
+    writer.epilog();
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(const __m128* input,
+        r##"#include <xmmintrin.h>
+#include <stddef.h>
+#include <stdint.h>
+static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
+static const unsigned int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
+static const unsigned int elem_index_low_tbl[7*4] = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff
+};
+#define TYPE_LEN (128)
+#define TYPE_NAME __m128
+void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
     unsigned int xxx = 1111;
@@ -382,6 +407,7 @@ fn test_clang_writer_aggregate_output() {
     );
 
     let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    writer.prolog();
     generate_code_with_config(
         &mut writer,
         "xor",
@@ -393,9 +419,12 @@ fn test_clang_writer_aggregate_output() {
                 "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;\n",
             )),
     );
+    writer.epilog();
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"kernel void gate_sys_xor(unsigned long n, 
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
     global void* output) {
