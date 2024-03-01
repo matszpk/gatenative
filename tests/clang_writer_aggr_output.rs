@@ -38,12 +38,12 @@ fn test_clang_writer_aggregate_output() {
 #define TYPE_NAME uint32_t
 void gate_sys_xor(const uint32_t* input,
     void* output) {
-    unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
     uint32_t v3;
     uint32_t v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = (v0 ^ v1);
@@ -96,12 +96,12 @@ static const unsigned int elem_index_low_tbl[7*4] = {
 void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
-    unsigned int xxx = 1111;
     __m128 v0;
     __m128 v1;
     __m128 v2;
     __m128 v3;
     __m128 v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = _mm_xor_ps(v0, v1);
@@ -146,12 +146,12 @@ void gate_sys_xor(const __m128* input,
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
     void* output) {
-    unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
     uint32_t v3;
     uint32_t v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = (v0 ^ v1);
@@ -188,12 +188,12 @@ void gate_sys_xor(const __m128* input,
         r##"void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
-    unsigned int xxx = 1111;
     __m128 v0;
     __m128 v1;
     __m128 v2;
     __m128 v3;
     __m128 v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = _mm_xor_ps(v0, v1);
@@ -250,12 +250,12 @@ void gate_sys_xor(const __m128* input,
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
     void* output) {
-    unsigned int xxx = 1111;
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
     uint32_t v3;
     uint32_t v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = (v0 ^ v1);
@@ -301,12 +301,12 @@ void gate_sys_xor(const __m128* input,
         r##"void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
-    unsigned int xxx = 1111;
     __m128 v0;
     __m128 v1;
     __m128 v2;
     __m128 v3;
     __m128 v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = _mm_xor_ps(v0, v1);
@@ -372,12 +372,12 @@ void gate_sys_xor(const __m128* input,
         r##"void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
-    unsigned int xxx = 1111;
     __m128 v0;
     __m128 v1;
     __m128 v2;
     __m128 v3;
     __m128 v4;
+    unsigned int xxx = 1111;
     v0 = input[0];
     v1 = input[1];
     v2 = _mm_xor_ps(v0, v1);
@@ -431,13 +431,14 @@ kernel void gate_sys_xor(unsigned long n,
     const size_t idx = get_global_id(0);
     const size_t ivn = 3 * idx + input_shift;
     const size_t ovn = 6 * idx + output_shift;
-    unsigned int xxx = 1111;
     uint v0;
     uint v1;
     uint v2;
     uint v3;
     uint v4;
     if (idx >= n) return;
+    output = (void*)(((char*)output) + 4*output_shift);
+    unsigned int xxx = 1111;
     v0 = input[ivn + 0];
     v1 = input[ivn + 1];
     v2 = (v0 ^ v1);
@@ -488,13 +489,14 @@ kernel void gate_sys_xor(unsigned long n,
     const uint llen = get_local_size(0);
     const size_t ivn = llen * (3 * idx) + input_shift;
     const size_t ovn = llen * (6 * idx) + output_shift;
-    unsigned int xxx = 1111;
     uint v0;
     uint v1;
     uint v2;
     uint v3;
     uint v4;
     if (idx >= n) return;
+    output = (void*)(((char*)output) + 4*output_shift);
+    unsigned int xxx = 1111;
     v0 = input[ivn + llen*0 + lidx];
     v1 = input[ivn + llen*1 + lidx];
     v2 = (v0 ^ v1);
