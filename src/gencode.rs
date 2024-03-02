@@ -274,7 +274,39 @@ where
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             single_var_alloc(&mut var_alloc, &mut alloc_vars, *o);
-            if !keep_output_vars {
+            let outlist = out_map.get(o).unwrap();
+            if let Some(output_vars) = output_vars.as_mut() {
+                let mut use_normal = false;
+                let mut use_neg = false;
+                let circ_outputs = circuit.outputs();
+                let out_var =
+                    usize::try_from(alloc_vars[usize::try_from(*o).unwrap()].unwrap()).unwrap();
+                // check whether both normal and neg
+                for oi in outlist {
+                    if circ_outputs[*oi].1 {
+                        use_neg = true;
+                    } else {
+                        use_normal = true;
+                    }
+                }
+                // allocate neg_var (for negated out_var)
+                // It is using first occurred sign in output list ordered by
+                // circuit outputs index. Main goal is keeping sign of output
+                // if it can be changed by circuit conversion.
+                let first_neg = circ_outputs[*outlist.first().unwrap()].1;
+                for oi in outlist {
+                    if use_neg && use_normal {
+                        // it will be allocated later after releasing other variables
+                        outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
+                        if circ_outputs[*oi].1 == first_neg {
+                            // if first sign occurence
+                            output_vars[*oi] = (out_var, None);
+                        }
+                    } else {
+                        output_vars[*oi] = (out_var, None);
+                    }
+                }
+            } else {
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
             }
         }
