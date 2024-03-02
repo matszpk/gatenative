@@ -905,7 +905,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
             (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
             (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
-        output_u32[out_idx >> 5] |= (1 << (out_idx & 31));
+        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
     }
 }"##;
         // 0
