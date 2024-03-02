@@ -594,7 +594,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         unsafe {
                             (symbol)(
                                 input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
+                                output[..].as_mut_ptr(),
                             );
                         }
                     }

@@ -941,6 +941,14 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        builder.add_with_config(
+            "comb_aggr_out_arg",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(12..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
         let mut execs = builder.build().unwrap();
 
         let expected = vec![
@@ -971,10 +979,24 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
         }
+        let mut output = execs[0].new_data(output.len());
+        execs[0].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected.len(), output.len());
+        let output = output.release();
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
 
         // with full elem inputs
         let output = execs[1].execute(&input_circ, 0).unwrap().release();
         assert_eq!(expected.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+        let mut output = execs[1].new_data(output.len());
+        execs[1].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected.len(), output.len());
+        let output = output.release();
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
         }
@@ -988,6 +1010,13 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
         }
+        let mut output = execs[2].new_data(output.len());
+        execs[2].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected.len(), output.len());
+        let output = output.release();
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
 
         // elem input
         let mut it = execs[3].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
@@ -995,6 +1024,13 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         let input_circ = it.transform(&input).unwrap();
         let output = execs[3].execute(&input_circ, 0).unwrap().release();
         assert_eq!(expected.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+        let mut output = execs[3].new_data(output.len());
+        execs[3].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected.len(), output.len());
+        let output = output.release();
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
         }
