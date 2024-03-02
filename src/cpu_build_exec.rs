@@ -4,6 +4,7 @@ use crate::gencode::generate_code_with_config;
 use crate::utils::get_timestamp;
 use crate::*;
 use libloading::{Library, Symbol};
+use rayon::prelude::*;
 use static_init::dynamic;
 use thiserror::Error;
 
@@ -333,6 +334,8 @@ pub struct CPUExecutor {
     parallel: bool,
 }
 
+const PAR_CHUNK_LEN: usize = 128;
+
 impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for CPUExecutor {
     type ErrorType = libloading::Error;
     #[inline]
@@ -373,106 +376,275 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         } else {
             vec![0; num * real_output_words]
         };
-        if self.elem_input_num != 0 {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                                i,
-                            );
-                        }
+        if self.parallel {
+            // parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<
+                        unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize),
+                    > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(
+                                        input[i * real_input_words..].as_ptr(),
+                                        output_ptr,
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                        i,
+                                    );
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            (arg_input & 0xffffffff) as u32,
+                                            (arg_input >> 32) as u32,
+                                            i,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                                i,
-                            );
-                        }
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(input[i * real_input_words..].as_ptr(), output_ptr, i);
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            i,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                i,
-                            );
-                        }
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(
+                                        input[i * real_input_words..].as_ptr(),
+                                        output_ptr,
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                    );
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            (arg_input & 0xffffffff) as u32,
+                                            (arg_input >> 32) as u32,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                i,
-                            );
-                        }
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(input[i * real_input_words..].as_ptr(), output_ptr);
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                        );
+                                    }
+                                }
+                            });
                     }
                 }
             }
         } else {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                            );
+            // non-parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<
+                        unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize),
+                    > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    i,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    i,
+                                );
+                            }
                         }
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                            );
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    i,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    i,
+                                );
+                            }
                         }
                     }
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                            );
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                );
+                            }
                         }
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                            );
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                );
+                            }
                         }
                     }
                 }
@@ -508,106 +680,275 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         if !self.aggregated_output {
             assert!(output_len >= real_output_words * num);
         }
-        if self.elem_input_num != 0 {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                                i,
-                            );
-                        }
+        if self.parallel {
+            // parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<
+                        unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize),
+                    > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(
+                                        input[i * real_input_words..].as_ptr(),
+                                        output_ptr,
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                        i,
+                                    );
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            (arg_input & 0xffffffff) as u32,
+                                            (arg_input >> 32) as u32,
+                                            i,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                                i,
-                            );
-                        }
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(input[i * real_input_words..].as_ptr(), output_ptr, i);
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            i,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                i,
-                            );
-                        }
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(
+                                        input[i * real_input_words..].as_ptr(),
+                                        output_ptr,
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                    );
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                            (arg_input & 0xffffffff) as u32,
+                                            (arg_input >> 32) as u32,
+                                        );
+                                    }
+                                }
+                            });
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                i,
-                            );
-                        }
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        (0..chunk_num).par_bridge().for_each(|ch_idx| {
+                            let output_ptr = output[..].as_ptr();
+                            unsafe {
+                                let output_ptr = output_ptr.cast_mut();
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    (symbol)(input[i * real_input_words..].as_ptr(), output_ptr);
+                                }
+                            }
+                        });
+                    } else {
+                        output
+                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .enumerate()
+                            .par_bridge()
+                            .for_each(|(ch_idx, out_chunk)| {
+                                let start = ch_idx * PAR_CHUNK_LEN;
+                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                for i in start..end {
+                                    unsafe {
+                                        (symbol)(
+                                            input[i * real_input_words..].as_ptr(),
+                                            out_chunk[(i - start) * real_output_words..]
+                                                .as_mut_ptr(),
+                                        );
+                                    }
+                                }
+                            });
                     }
                 }
             }
         } else {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                            );
+            // non-parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<
+                        unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize),
+                    > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    i,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    i,
+                                );
+                            }
                         }
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                                (arg_input & 0xffffffff) as u32,
-                                (arg_input >> 32) as u32,
-                            );
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    i,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    i,
+                                );
+                            }
                         }
                     }
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                if self.aggregated_output {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[..].as_mut_ptr(),
-                            );
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                );
+                            }
                         }
                     }
                 } else {
-                    for i in 0..num {
-                        unsafe {
-                            (symbol)(
-                                input[i * real_input_words..].as_ptr(),
-                                output[i * real_output_words..].as_mut_ptr(),
-                            );
+                    let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    if self.aggregated_output {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[..].as_mut_ptr(),
+                                );
+                            }
+                        }
+                    } else {
+                        for i in 0..num {
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    output[i * real_output_words..].as_mut_ptr(),
+                                );
+                            }
                         }
                     }
                 }
@@ -634,48 +975,136 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        if self.elem_input_num != 0 {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                            i,
-                        );
-                    }
+        if self.parallel {
+            // parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    output
+                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .enumerate()
+                        .par_bridge()
+                        .for_each(|(ch_idx, out_chunk)| {
+                            let start = ch_idx * PAR_CHUNK_LEN;
+                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            for i in start..end {
+                                unsafe {
+                                    (symbol)(
+                                        out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                        i,
+                                    );
+                                }
+                            }
+                        });
+                } else {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    output
+                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .enumerate()
+                        .par_bridge()
+                        .for_each(|(ch_idx, out_chunk)| {
+                            let start = ch_idx * PAR_CHUNK_LEN;
+                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            for i in start..end {
+                                unsafe {
+                                    (symbol)(
+                                        out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                        i,
+                                    );
+                                }
+                            }
+                        });
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*mut u32, usize)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(output[i * real_output_words..].as_mut_ptr(), i);
-                    }
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    output
+                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .enumerate()
+                        .par_bridge()
+                        .for_each(|(ch_idx, out_chunk)| {
+                            let start = ch_idx * PAR_CHUNK_LEN;
+                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            for i in start..end {
+                                unsafe {
+                                    (symbol)(
+                                        out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                        (arg_input & 0xffffffff) as u32,
+                                        (arg_input >> 32) as u32,
+                                    );
+                                }
+                            }
+                        });
+                } else {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    output
+                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .enumerate()
+                        .par_bridge()
+                        .for_each(|(ch_idx, out_chunk)| {
+                            let start = ch_idx * PAR_CHUNK_LEN;
+                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            for i in start..end {
+                                unsafe {
+                                    (symbol)(
+                                        out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                    );
+                                }
+                            }
+                        });
                 }
             }
         } else {
-            if self.have_arg_inputs {
-                let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(
-                            output[i * real_output_words..].as_mut_ptr(),
-                            (arg_input & 0xffffffff) as u32,
-                            (arg_input >> 32) as u32,
-                        );
+            // non-parallel code
+            if self.elem_input_num != 0 {
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                                i,
+                            );
+                        }
+                    }
+                } else {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, usize)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(output[i * real_output_words..].as_mut_ptr(), i);
+                        }
                     }
                 }
             } else {
-                let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
-                    unsafe { self.library.get(self.sym_name.as_bytes())? };
-                for i in 0..num {
-                    unsafe {
-                        (symbol)(output[i * real_output_words..].as_mut_ptr());
+                if self.have_arg_inputs {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(
+                                output[i * real_output_words..].as_mut_ptr(),
+                                (arg_input & 0xffffffff) as u32,
+                                (arg_input >> 32) as u32,
+                            );
+                        }
+                    }
+                } else {
+                    let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
+                        unsafe { self.library.get(self.sym_name.as_bytes())? };
+                    for i in 0..num {
+                        unsafe {
+                            (symbol)(output[i * real_output_words..].as_mut_ptr());
+                        }
                     }
                 }
             }
