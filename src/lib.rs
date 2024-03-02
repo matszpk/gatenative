@@ -11,6 +11,8 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add ability to build once circuits for many these same builders.
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
 // TODO: Add output aggregator to execution.
+// TODO: Add (transforming to CLang).
+// TODO: Add parallel execution in CPUExecutor.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
