@@ -13,6 +13,7 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add output aggregator to execution.
 // TODO: Add (transforming to CLang).
 // TODO: Add parallel execution in CPUExecutor.
+// TODO: Add output aggregation with same original output
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
