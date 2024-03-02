@@ -1061,6 +1061,16 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 6
+        builder.add_with_config(
+            "comb_aggr_out_arg_elem",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..2).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(4..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
         let mut execs = builder.build().unwrap();
 
         let expected = vec![
@@ -1196,6 +1206,37 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
         for i in 0..16 {
             let mut output = execs[5].new_data(expected.len());
             execs[5].execute_reuse(&input_circ, i, &mut output).unwrap();
+            assert_eq!(output_comb.len(), output.len());
+            let output = output.release();
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // arg_input and elem_input
+        let mut it = execs[6].input_tx(32, &(0..2).collect::<Vec<_>>()).unwrap();
+        let input =
+            execs[6].new_data_from_vec((0..1 << 14).map(|i| (i >> 12) & 3).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..4 {
+            let output = execs[6].execute(&input_circ, i).unwrap().release();
+            assert_eq!(output_comb.len(), output.len());
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..4 {
+            let mut output = execs[6].new_data(expected.len());
+            execs[6].execute_reuse(&input_circ, i, &mut output).unwrap();
             assert_eq!(output_comb.len(), output.len());
             let output = output.release();
             for (i, v) in output_comb.iter_mut().enumerate() {
