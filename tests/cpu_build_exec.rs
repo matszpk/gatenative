@@ -877,12 +877,8 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
             "xor(144,147) nimpl(0,148):11}(16)"))
             .unwrap();
-        builder.add_with_config(
-            "comb_aggr_out",
-            circuit.clone(),
-            CodeConfig::new()
-                .aggr_output_code(Some(
-                    r##"{
+
+        let aggr_output_code = r##"{
     unsigned int i;
     uint32_t out[(TYPE_LEN >> 5)*12];
     uint32_t* output_u32 = (uint32_t*)output;
@@ -913,8 +909,36 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
         output_u32[out_idx >> 5] |= (1 << (out_idx & 31));
     }
-}"##,
-                ))
+}"##;
+        builder.add_with_config(
+            "comb_aggr_out",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        builder.add_with_config(
+            "comb_aggr_out_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        builder.add_with_config(
+            "comb_aggr_out_ip",
+            circuit.clone(),
+            CodeConfig::new()
+                .input_placement(Some((&(4..20).collect::<Vec<_>>(), 24)))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        builder.add_with_config(
+            "comb_aggr_out_elem",
+            circuit.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
         let mut execs = builder.build().unwrap();
@@ -943,6 +967,33 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         let input = execs[0].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let output = execs[0].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(expected.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // with full elem inputs
+        let output = execs[1].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(expected.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // with input_placement
+        let mut it = execs[2].input_tx(32, &(0..24).collect::<Vec<_>>()).unwrap();
+        let input = execs[2].new_data_from_vec((0..1 << 16).map(|i| i << 4).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let output = execs[2].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(expected.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // elem input
+        let mut it = execs[3].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let input = execs[3].new_data_from_vec((0..1 << 16).map(|i| i >> 4).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let output = execs[3].execute(&input_circ, 0).unwrap().release();
         assert_eq!(expected.len(), output.len());
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
