@@ -77,12 +77,12 @@ where
             } else {
                 0
             };
-            let mut buffer = self.new_data(if self.output_is_aggregated() {
+            let mut buffer = self.new_data(num * self.buffer_len);
+            let mut output = self.new_data(if self.output_is_aggregated() {
                 self.aggr_output_len().unwrap()
             } else {
-                num * self.buffer_len
+                num * self.real_output_len()
             });
-            let mut output = self.new_data(num * self.real_output_len());
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
                     exec.execute_reuse_internal(input, arg_input, &mut buffer)?;
@@ -218,7 +218,7 @@ where
 
     #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
-        self.executors[9].aggr_output_len()
+        self.executors.last().unwrap().aggr_output_len()
     }
 }
 
@@ -380,6 +380,11 @@ where
                         code_config.aggr_output_code
                     } else {
                         // for subcircuits after first and before last
+                        None
+                    })
+                    .aggr_output_len(if i + 1 == subcircuit_num {
+                        code_config.aggr_output_len
+                    } else {
                         None
                     }),
             );
