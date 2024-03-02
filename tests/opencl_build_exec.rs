@@ -977,8 +977,8 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
 
         let aggr_output_code = r##"{
     unsigned int i;
-    uint32_t out[(TYPE_LEN >> 5)*12];
-    uint32_t* output_u32 = (uint32_t*)output;
+    uint out[(TYPE_LEN >> 5)*12];
+    global uint* output_u32 = (global uint*)output;
     GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
     GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
     GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
@@ -992,7 +992,7 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
     GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
     GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
     for (i = 0; i < TYPE_LEN; i++) {
-        uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+        uint out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
             (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
             (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
             (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
@@ -1004,7 +1004,7 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
             (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
             (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
-        output_u32[out_idx >> 5] |= (1 << (out_idx & 31));
+        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
     }
 }"##;
         // 0
