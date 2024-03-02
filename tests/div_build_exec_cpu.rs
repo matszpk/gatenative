@@ -204,9 +204,11 @@ fn get_mul_add_circuit() -> Circuit<u32> {
 fn test_div_builder_and_exec_cpu() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     for (config_num, (writer_config, builder_config)) in [
@@ -552,9 +554,11 @@ fn test_cpu_div_builder_and_exec_with_arg_input() {
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     let configs = vec![
@@ -639,9 +643,11 @@ fn test_cpu_div_builder_and_exec_with_elem_input() {
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     let configs = vec![
@@ -833,9 +839,11 @@ fn test_cpu_div_builder_and_exec_with_aggr_output() {
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     let configs = vec![

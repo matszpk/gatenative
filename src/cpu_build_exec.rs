@@ -308,10 +308,12 @@ impl RangedData for CPUDataHolder {
 #[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
     pub optimize_negs: bool,
+    pub parallel: bool,
 }
 
 const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
+    parallel: false,
 };
 
 #[derive(Clone)]
@@ -328,6 +330,7 @@ pub struct CPUExecutor {
     single_buffer: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
+    parallel: bool,
 }
 
 impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for CPUExecutor {
@@ -778,6 +781,7 @@ pub struct CPUBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
+    parallel: bool,
 }
 
 impl<'a> CPUBuilder<'a> {
@@ -788,11 +792,13 @@ impl<'a> CPUBuilder<'a> {
     ) -> Self {
         let mut writer = clang_config.writer();
         writer.prolog();
+        let config = config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
         Self {
             cpu_ext,
             entries: vec![],
             writer,
-            optimize_negs: config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT).optimize_negs,
+            optimize_negs: config.optimize_negs,
+            parallel: config.parallel,
         }
     }
 
@@ -809,6 +815,16 @@ impl<'a> CPUBuilder<'a> {
             *CPU_EXTENSION,
             get_build_config(*CPU_EXTENSION).writer_config,
             config,
+        )
+    }
+
+    pub fn new_parallel(config: Option<CPUBuilderConfig>) -> Self {
+        let mut config = config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
+        config.parallel = true;
+        Self::new_with_cpu_ext_and_clang_config(
+            *CPU_EXTENSION,
+            get_build_config(*CPU_EXTENSION).writer_config,
+            Some(config),
         )
     }
 }
@@ -886,6 +902,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     single_buffer: e.single_buffer,
                     aggregated_output: e.aggregated_output,
                     aggr_output_len: e.aggr_output_len,
+                    parallel: self.parallel,
                 }
             })
             .collect::<Vec<_>>())

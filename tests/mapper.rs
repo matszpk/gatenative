@@ -13,9 +13,11 @@ use std::sync::{
 fn test_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     for (config_num, (writer_config, builder_config)) in [
@@ -322,9 +324,11 @@ fn test_basic_mapper_builder_and_exec() {
 fn test_par_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
+        parallel: false,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
+        parallel: false,
     };
 
     for (config_num, (writer_config, builder_config)) in [
