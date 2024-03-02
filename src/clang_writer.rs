@@ -944,9 +944,18 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
         }
         if self.aggr_output_code.is_some() && self.writer.config.init_index.is_some() {
-            self.writer
-                .out
-                .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+            if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                writeln!(
+                    self.writer.out,
+                    "    output = ({0} void*)((({0} char*)output) + 4*output_shift);",
+                    arg_modifier
+                )
+                .unwrap();
+            } else {
+                self.writer
+                    .out
+                    .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+            }
         }
         if let Some(init_code) = self.init_code {
             self.writer.out.extend(init_code.as_bytes());

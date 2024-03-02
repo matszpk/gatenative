@@ -446,7 +446,7 @@ kernel void gate_sys_xor(unsigned long n,
     uint v3;
     uint v4;
     if (idx >= n) return;
-    output = (void*)(((char*)output) + 4*output_shift);
+    output = (global void*)(((global char*)output) + 4*output_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + 0];
     v1 = input[ivn + 1];
@@ -504,7 +504,7 @@ kernel void gate_sys_xor(unsigned long n,
     uint v3;
     uint v4;
     if (idx >= n) return;
-    output = (void*)(((char*)output) + 4*output_shift);
+    output = (global void*)(((global char*)output) + 4*output_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + llen*0 + lidx];
     v1 = input[ivn + llen*1 + lidx];
