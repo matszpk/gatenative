@@ -275,6 +275,10 @@ fn get_builder_configs() -> Vec<(
     if *CPU_EXTENSION == ARMNEON {
         configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
     }
+    println!(
+        "Config: {:?}",
+        configs.iter().map(|(ext, _, _)| ext).collect::<Vec<_>>()
+    );
     configs
 }
 
@@ -882,19 +886,18 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
     unsigned int i;
     uint32_t out[(TYPE_LEN >> 5)*12];
     uint32_t* output_u32 = (uint32_t*)output;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*0)) = o0;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*1)) = o1;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*2)) = o2;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*3)) = o3;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*4)) = o4;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*5)) = o5;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*6)) = o6;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*7)) = o7;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*8)) = o8;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*9)) = o9;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*10)) = o10;
-    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*11)) = o11;
-    //printf("ID: %p %p %p\n", output_u32, (out + (TYPE_LEN>>5)*0), (out + (TYPE_LEN>>5)*1));
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
     for (i = 0; i < TYPE_LEN; i++) {
         uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
             (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
@@ -908,7 +911,6 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
             (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
             (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
-        //printf("ID: %u\n", out_idx);
         output_u32[out_idx >> 5] |= (1 << (out_idx & 31));
     }
 }"##,

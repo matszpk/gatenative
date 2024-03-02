@@ -36,6 +36,8 @@ fn test_clang_writer_aggregate_output() {
 #include <stddef.h>
 #define TYPE_LEN (32)
 #define TYPE_NAME uint32_t
+#define GET_U32(D,X,I) { (D) = (X); }
+#define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_xor(const uint32_t* input,
     void* output) {
     uint32_t v0;
@@ -93,6 +95,11 @@ static const unsigned int elem_index_low_tbl[7*4] = {
 };
 #define TYPE_LEN (128)
 #define TYPE_NAME __m128
+#define GET_U32(D,X,I) { uint32_t temp[4]; \
+    _mm_storeu_ps((float*)temp, (X)); \
+    (D) = temp[(I)]; \
+}
+#define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
 void gate_sys_xor(const __m128* input,
     void* output) {
     const __m128 one = *((const __m128*)one_value);
@@ -424,6 +431,8 @@ void gate_sys_xor(const __m128* input,
         &String::from_utf8(writer.out()).unwrap(),
         r##"#define TYPE_LEN (32)
 #define TYPE_NAME uint
+#define GET_U32(D,X,I) { (D) = (X); }
+#define GET_U32_ALL(D,X) { (D)[0] = (X); }
 kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
