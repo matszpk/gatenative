@@ -312,7 +312,7 @@ pub struct CPUBuilderConfig {
     pub parallel: bool,
 }
 
-const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
+pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
     parallel: false,
 };
@@ -404,7 +404,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -442,7 +442,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -485,7 +485,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -522,7 +522,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -708,7 +708,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -746,7 +746,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -789,7 +789,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -826,7 +826,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
@@ -982,7 +982,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
@@ -1003,7 +1003,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, usize)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
@@ -1024,7 +1024,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
@@ -1044,7 +1044,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_input_words)
+                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {

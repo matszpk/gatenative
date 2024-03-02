@@ -277,6 +277,22 @@ fn get_builder_configs() -> Vec<(
     if *CPU_EXTENSION == ARMNEON {
         configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
     }
+    // double for parallel
+    let configs = configs
+        .clone()
+        .into_iter()
+        .chain(
+            configs
+                .clone()
+                .into_iter()
+                .map(|(ext, clang_config, cpu_builder_config)| {
+                    let mut cpu_builder_config =
+                        cpu_builder_config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
+                    cpu_builder_config.parallel = true;
+                    (ext, clang_config, Some(cpu_builder_config))
+                }),
+        )
+        .collect::<Vec<_>>();
     configs
 }
 
