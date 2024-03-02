@@ -945,7 +945,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             "comb_aggr_out_arg",
             circuit.clone(),
             CodeConfig::new()
-                .arg_inputs(Some(&(12..16).collect::<Vec<_>>()))
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
@@ -1032,6 +1032,36 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         assert_eq!(expected.len(), output.len());
         let output = output.release();
         for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // arg_input
+        let mut it = execs[4].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let input = execs[4].new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..16 {
+            let output = execs[4].execute(&input_circ, i).unwrap().release();
+            assert_eq!(output_comb.len(), output.len());
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..16 {
+            let mut output = execs[4].new_data(expected.len());
+            execs[4].execute_reuse(&input_circ, i, &mut output).unwrap();
+            assert_eq!(output_comb.len(), output.len());
+            let output = output.release();
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
         }
     }
