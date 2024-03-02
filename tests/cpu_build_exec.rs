@@ -880,23 +880,21 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(
                     r##"{
     unsigned int i;
-    uint8_t out8[(TYPE_LEN >> 5)*12*4];
-    uint32_t* out;
+    uint32_t out[(TYPE_LEN >> 5)*12];
     uint32_t* output_u32 = (uint32_t*)output;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*0)) = o0;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*1)) = o1;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*2)) = o2;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*3)) = o3;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*4)) = o4;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*5)) = o5;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*6)) = o6;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*7)) = o7;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*8)) = o8;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*9)) = o9;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*10)) = o10;
-    *((TYPE_NAME*)(out8 + (TYPE_LEN>>5)*11)) = o11;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*0)) = o0;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*1)) = o1;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*2)) = o2;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*3)) = o3;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*4)) = o4;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*5)) = o5;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*6)) = o6;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*7)) = o7;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*8)) = o8;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*9)) = o9;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*10)) = o10;
+    *((TYPE_NAME*)(out + (TYPE_LEN>>5)*11)) = o11;
     //printf("ID: %p %p %p\n", output_u32, (out + (TYPE_LEN>>5)*0), (out + (TYPE_LEN>>5)*1));
-    out = (uint32_t*)out8;
     for (i = 0; i < TYPE_LEN; i++) {
         uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
             (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |

@@ -1,4 +1,3 @@
-use crate::clang_transform;
 use crate::*;
 
 use std::collections::HashMap;
@@ -34,6 +33,7 @@ pub struct CLangWriterConfig<'a> {
     elem_index: ElemIndexConfig<'a>,
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
+    get_u32_op: &'a str,
 }
 
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -79,6 +79,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = (X); }",
 };
 
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -124,6 +125,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
 };
 
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -169,6 +171,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
 };
 
 pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -214,6 +217,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
 };
 
 pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -268,6 +272,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = (uint32_t)(_m_to_int(_mm_srli_si64((X), ((I) << 5)))); }",
 };
 
 pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -328,6 +333,11 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: r##"{ __m64 temp; \
+    if ((I) == 0) _mm_storel_pi(&temp, (X)); \
+    else _mm_storeh_pi(&temp, (X)); \
+    (D) = (uint32_t)(_m_to_int(_mm_srli_si64(temp, (((I) & 1) << 5)))); \
+}"##,
 };
 
 pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -394,6 +404,10 @@ __attribute__((aligned(32))) = {
     },
     load_op: Some("_mm256_loadu_ps((const float*)&{})"),
     store_op: Some("_mm256_storeu_ps((float*)&{}, {})"),
+    get_u32_op: r##"{ uint32_t temp[8]; \
+    _mm256_storeu_ps((float*)temp, (X)); \
+    (D) = temp[(I)]; \
+}"##,
 };
 
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -472,6 +486,10 @@ __attribute__((aligned(64))) = {
     },
     load_op: Some("_mm512_loadu_epi64(&{})"),
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
+    get_u32_op: r##"{ uint32_t temp[16]; \
+    _mm512_storeu_si512(temp, (X)); \
+    (D) = temp[(I)]; \
+}"##,
 };
 
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -517,6 +535,10 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: r##"{ uint32_t temp[4]; \
+    vst4q_u32(temp, (X)); \
+    (D) = temp[(I)]; \
+}"##,
 };
 
 pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -562,6 +584,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = (X); }",
 };
 
 pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -610,6 +633,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     },
     load_op: None,
     store_op: None,
+    get_u32_op: "{ (D) = (X); }",
 };
 
 pub struct CLangFuncWriter<'a, 'c> {
