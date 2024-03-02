@@ -275,10 +275,6 @@ fn get_builder_configs() -> Vec<(
     if *CPU_EXTENSION == ARMNEON {
         configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
     }
-    println!(
-        "Config: {:?}",
-        configs.iter().map(|(ext, _, _)| ext).collect::<Vec<_>>()
-    );
     configs
 }
 
@@ -910,6 +906,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         output_u32[out_idx >> 5] |= (1 << (out_idx & 31));
     }
 }"##;
+        // 0
         builder.add_with_config(
             "comb_aggr_out",
             circuit.clone(),
@@ -917,6 +914,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 1
         builder.add_with_config(
             "comb_aggr_out_elem_full",
             circuit.clone(),
@@ -925,6 +923,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 2
         builder.add_with_config(
             "comb_aggr_out_ip",
             circuit.clone(),
@@ -933,6 +932,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 3
         builder.add_with_config(
             "comb_aggr_out_elem",
             circuit.clone(),
@@ -941,11 +941,22 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 4
         builder.add_with_config(
             "comb_aggr_out_arg",
             circuit.clone(),
             CodeConfig::new()
                 .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        // 5
+        builder.add_with_config(
+            "comb_aggr_out_arg_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(4..16).collect::<Vec<_>>()))
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
@@ -988,6 +999,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         }
 
         // with full elem inputs
+        let input_circ = execs[1].new_data(1);
         let output = execs[1].execute(&input_circ, 0).unwrap().release();
         assert_eq!(expected.len(), output.len());
         for (i, out) in output.iter().enumerate() {
@@ -1055,6 +1067,34 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         for i in 0..16 {
             let mut output = execs[4].new_data(expected.len());
             execs[4].execute_reuse(&input_circ, i, &mut output).unwrap();
+            assert_eq!(output_comb.len(), output.len());
+            let output = output.release();
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // arg_input and elem_input
+        let input_circ = execs[5].new_data(1);
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..16 {
+            let output = execs[5].execute(&input_circ, i).unwrap().release();
+            assert_eq!(output_comb.len(), output.len());
+            for (i, v) in output_comb.iter_mut().enumerate() {
+                *v |= output[i];
+            }
+        }
+        for (i, out) in output_comb.iter().enumerate() {
+            assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output_comb = vec![0u32; expected.len()];
+        for i in 0..16 {
+            let mut output = execs[5].new_data(expected.len());
+            execs[5].execute_reuse(&input_circ, i, &mut output).unwrap();
             assert_eq!(output_comb.len(), output.len());
             let output = output.release();
             for (i, v) in output_comb.iter_mut().enumerate() {
