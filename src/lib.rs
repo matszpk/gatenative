@@ -787,12 +787,12 @@ where
 {
     type ErrorType;
 
-    fn input_tx(
+    fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<IDT, Self::ErrorType>;
-    fn output_tx(
+    fn output_transformer(
         &self,
         output_elem_len: usize,
         bit_mapping: &[usize],

@@ -641,8 +641,12 @@ fn test_cpu_builder_and_exec_with_arg_input() {
                 .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
-        let mut it = execs[0].input_tx(32, &(0..20).collect::<Vec<_>>()).unwrap();
-        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[0]
+            .input_transformer(32, &(0..20).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         for arg_input in 0..16 {
             let input =
                 execs[0].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
@@ -659,14 +663,16 @@ fn test_cpu_builder_and_exec_with_arg_input() {
         }
 
         let mut it = execs[1]
-            .input_tx(
+            .input_transformer(
                 32,
                 &(0..24)
                     .map(|i| if i >= 4 { 23 - i } else { 0 })
                     .collect::<Vec<_>>(),
             )
             .unwrap();
-        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         for arg_input in 0..16 {
             let input =
                 execs[1].new_data_from_vec((0..1 << 20).map(|i| i ^ 0xff000).collect::<Vec<_>>());
@@ -737,8 +743,12 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         assert_eq!(execs[1].input_data_len(16 * 1024), 1);
         assert_eq!(execs[1].output_data_len(16 * 1024), 4096);
 
-        let mut it = execs[0].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
-        let mut ot = execs[0].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[0]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         let input =
             execs[0].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
@@ -766,7 +776,9 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         }
 
         // with elem full
-        let mut ot = execs[1].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         let input = execs[1].new_data(1);
         let output_circ = execs[1].execute(&input, 0).unwrap();
         let output_circ_len = output_circ.len();
@@ -791,8 +803,12 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         }
 
         // with single buffer
-        let mut it = execs[2].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
-        let mut ot = execs[2].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[2]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         let input =
             execs[2].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
         let mut input_circ = it.transform(&input).unwrap();
@@ -807,8 +823,12 @@ fn test_cpu_builder_and_exec_with_elem_input() {
         }
 
         // with elem_input and arg_input
-        let mut it = execs[3].input_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
-        let mut ot = execs[3].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[3]
+            .input_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[3]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         for arg_input in 0..16 {
             let input = execs[3]
                 .new_data_from_vec((0..1 << 20).map(|i| (i >> 12) ^ 0xff).collect::<Vec<_>>());
@@ -839,14 +859,16 @@ fn test_cpu_builder_and_exec_with_elem_input() {
 
         // with single buffer and input_placement
         let mut it = execs[4]
-            .input_tx(
+            .input_transformer(
                 32,
                 &(0..16)
                     .map(|i| if i >= 4 { 15 - i } else { 0 })
                     .collect::<Vec<_>>(),
             )
             .unwrap();
-        let mut ot = execs[4].output_tx(32, &(0..8).collect::<Vec<_>>()).unwrap();
+        let mut ot = execs[4]
+            .output_transformer(32, &(0..8).collect::<Vec<_>>())
+            .unwrap();
         let input =
             execs[4].new_data_from_vec((0..1 << 24).map(|i| (i >> 12) ^ 0xfff).collect::<Vec<_>>());
         let mut input_circ = it.transform(&input).unwrap();
@@ -1010,7 +1032,9 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             374806295, 1449088863, 21697055, 117526879, 21299231, 56581983, 273094487, 123016983,
             84085013, 274661723, 67311135, 1140916567, 16781322,
         ];
-        let mut it = execs[0].input_tx(32, &(0..16).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[0]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
         let input = execs[0].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let output = execs[0].execute(&input_circ, 0).unwrap().release();
@@ -1042,7 +1066,9 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         }
 
         // with input_placement
-        let mut it = execs[2].input_tx(32, &(0..24).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[2]
+            .input_transformer(32, &(0..24).collect::<Vec<_>>())
+            .unwrap();
         let input = execs[2].new_data_from_vec((0..1 << 16).map(|i| i << 4).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let output = execs[2].execute(&input_circ, 0).unwrap().release();
@@ -1059,7 +1085,9 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         }
 
         // elem input
-        let mut it = execs[3].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[3]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
         let input = execs[3].new_data_from_vec((0..1 << 16).map(|i| i >> 4).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let output = execs[3].execute(&input_circ, 0).unwrap().release();
@@ -1076,7 +1104,9 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         }
 
         // arg_input
-        let mut it = execs[4].input_tx(32, &(0..12).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[4]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
         let input = execs[4].new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();
         let mut output_comb = vec![0u32; expected.len()];
@@ -1134,7 +1164,9 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
         }
 
         // arg_input and elem_input
-        let mut it = execs[6].input_tx(32, &(0..2).collect::<Vec<_>>()).unwrap();
+        let mut it = execs[6]
+            .input_transformer(32, &(0..2).collect::<Vec<_>>())
+            .unwrap();
         let input =
             execs[6].new_data_from_vec((0..1 << 14).map(|i| (i >> 12) & 3).collect::<Vec<_>>());
         let input_circ = it.transform(&input).unwrap();

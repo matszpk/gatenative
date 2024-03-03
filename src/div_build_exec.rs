@@ -234,7 +234,7 @@ where
 {
     type ErrorType = <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType;
 
-    fn input_tx(
+    fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
@@ -242,9 +242,9 @@ where
         self.executors
             .first()
             .unwrap()
-            .input_tx(input_elem_len, bit_mapping)
+            .input_transformer(input_elem_len, bit_mapping)
     }
-    fn output_tx(
+    fn output_transformer(
         &self,
         output_elem_len: usize,
         bit_mapping: &[usize],
@@ -252,7 +252,7 @@ where
         self.executors
             .last()
             .unwrap()
-            .output_tx(output_elem_len, bit_mapping)
+            .output_transformer(output_elem_len, bit_mapping)
     }
 }
 

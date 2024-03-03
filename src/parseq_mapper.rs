@@ -536,12 +536,14 @@ where
         F: FnMut(ParSeqObject<PIDT, (usize, SIDT)>),
     {
         f(ParSeqObject::Par(
-            self.executor.par.input_tx(input_elem_len, bit_mapping)?,
+            self.executor
+                .par
+                .input_transformer(input_elem_len, bit_mapping)?,
         ));
         for (i, s) in self.executor.seqs.iter().enumerate() {
             let sitx = {
                 let s = s.lock().unwrap();
-                s.input_tx(input_elem_len, bit_mapping)
+                s.input_transformer(input_elem_len, bit_mapping)
                     .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
             };
             f(ParSeqObject::Seq((i, sitx)));
@@ -565,12 +567,14 @@ where
         F: FnMut(ParSeqObject<PODT, (usize, SODT)>),
     {
         f(ParSeqObject::Par(
-            self.executor.par.output_tx(output_elem_len, bit_mapping)?,
+            self.executor
+                .par
+                .output_transformer(output_elem_len, bit_mapping)?,
         ));
         for (i, s) in self.executor.seqs.iter().enumerate() {
             let sotx = {
                 let s = s.lock().unwrap();
-                s.output_tx(output_elem_len, bit_mapping)
+                s.output_transformer(output_elem_len, bit_mapping)
                     .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
             };
             f(ParSeqObject::Seq((i, sotx)));

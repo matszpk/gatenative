@@ -1164,7 +1164,7 @@ impl<'a>
 {
     type ErrorType = Infallible;
 
-    fn input_tx(
+    fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
@@ -1177,7 +1177,7 @@ impl<'a>
             true,
         ))
     }
-    fn output_tx(
+    fn output_transformer(
         &self,
         output_elem_len: usize,
         bit_mapping: &[usize],

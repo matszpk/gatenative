@@ -118,19 +118,20 @@ where
 {
     type ErrorType = <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType;
 
-    fn input_tx(
+    fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<IDT, Self::ErrorType> {
-        self.executor.input_tx(input_elem_len, bit_mapping)
+        self.executor.input_transformer(input_elem_len, bit_mapping)
     }
-    fn output_tx(
+    fn output_transformer(
         &self,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<ODT, Self::ErrorType> {
-        self.executor.output_tx(output_elem_len, bit_mapping)
+        self.executor
+            .output_transformer(output_elem_len, bit_mapping)
     }
 }
 
@@ -382,19 +383,20 @@ where
 {
     type ErrorType = <E as DataTransforms<'a, DR, DW, D, IDT, ODT>>::ErrorType;
 
-    fn input_tx(
+    fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<IDT, Self::ErrorType> {
-        self.executor.input_tx(input_elem_len, bit_mapping)
+        self.executor.input_transformer(input_elem_len, bit_mapping)
     }
-    fn output_tx(
+    fn output_transformer(
         &self,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<ODT, Self::ErrorType> {
-        self.executor.output_tx(output_elem_len, bit_mapping)
+        self.executor
+            .output_transformer(output_elem_len, bit_mapping)
     }
 }
 

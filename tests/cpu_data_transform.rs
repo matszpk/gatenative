@@ -112,10 +112,10 @@ fn test_cpu_data_transforms() {
             .collect::<Vec<_>>(),
     );
     let mut it = execs[0]
-        .input_tx(64, &(0..20).chain(32..32 + 20).collect::<Vec<_>>())
+        .input_transformer(64, &(0..20).chain(32..32 + 20).collect::<Vec<_>>())
         .unwrap();
     let mut ot = execs[0]
-        .output_tx(32, &(0..20).collect::<Vec<_>>())
+        .output_transformer(32, &(0..20).collect::<Vec<_>>())
         .unwrap();
     let mut input_circ =
         execs[0].new_data((input.len() * it.output_elem_len()) / it.input_elem_len());
