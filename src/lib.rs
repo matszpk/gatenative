@@ -55,6 +55,7 @@ pub struct CodeConfig<'a> {
     pub aggr_output_code: Option<&'a str>,
     pub aggr_output_len: Option<usize>, // length in 32-bit words
     // if some then aggregate some choosen circuit outputs to output_extra buffer.
+    // and keep storing circuit outputs to original output buffer.
     pub aggr_to_output_extra: Option<&'a [usize]>,
 }
 
