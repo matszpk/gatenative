@@ -37,8 +37,11 @@ kernel void xxx_gate_input_transform(ulong n, ulong input_start, ulong output_st
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const size_t i = get_global_id(0);
     if (i >= n) return;
+    const size_t li = get_local_id(0);
     uint ibi;
+    local uint local_data[64];
     const uint word_w = word_len >> 5;
+    const uint lvi = li >> 5;
     const size_t gidx = i / word_len;
     const uint widx = (i>>5) - gidx * word_w;
     const uint sbit = i & 31;
@@ -46,10 +49,20 @@ kernel void xxx_gate_input_transform(ulong n, ulong input_start, ulong output_st
     const uint output_group_word_num = output_elem_len * word_w;
     const global uint* input_elem = input + i*input_elem_word_num + input_start;
     global uint* output_group = output + widx + gidx*output_group_word_num + output_start;
+    if (li < 64) {
+        local_data[li] = 0;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
     for (ibi = 0; ibi < bit_mapping_len; ibi++) {
         const uint inbit = bit_mapping[ibi];
         const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-        atomic_or(output_group + word_w*ibi, (inbit_val << sbit));
+        atomic_or(&local_data[lvi], (inbit_val << sbit));
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if (sbit == 0) {
+            output_group[word_w*ibi] = local_data[lvi];
+            local_data[lvi] = 0;
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
     }
 }
 "##;
@@ -124,6 +137,9 @@ impl OpenCLDataInputTransformer {
                 &[],
             )?;
         }
+        let group_len = usize::try_from(device.max_work_group_size().unwrap()).unwrap();
+        assert!(group_len >= 32);
+        let group_len = std::cmp::min(32 * 64, (group_len >> 5) << 5);
         Ok(Self {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
@@ -132,7 +148,7 @@ impl OpenCLDataInputTransformer {
             bit_mapping_len,
             context,
             cmd_queue,
-            group_len: usize::try_from(device.max_work_group_size().unwrap()).unwrap(),
+            group_len,
             kernel: Kernel::create(&program, "xxx_gate_input_transform").unwrap(),
         })
     }
