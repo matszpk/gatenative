@@ -706,6 +706,7 @@ where
     par: PB,
     seqs: Vec<SB>,
     arg_input_lens: Vec<usize>,
+    num_threads: Option<usize>,
     pdr: PhantomData<&'a PDR>,
     pdw: PhantomData<&'a PDW>,
     pd: PhantomData<&'a PD>,
@@ -744,6 +745,35 @@ where
                 })
                 .collect::<Vec<_>>(),
             arg_input_lens: vec![],
+            num_threads: None,
+            pdr: PhantomData,
+            pdw: PhantomData,
+            pd: PhantomData,
+            pe: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
+            sd: PhantomData,
+            se: PhantomData,
+        }
+    }
+
+    pub fn new_with_num_threads(
+        par_builder: PB,
+        seq_builders: impl IntoIterator<Item = SB>,
+        par_num_threads: usize,
+    ) -> Self {
+        assert!(par_builder.is_empty());
+        Self {
+            par: par_builder,
+            seqs: seq_builders
+                .into_iter()
+                .map(|sb| {
+                    assert!(sb.is_empty());
+                    sb
+                })
+                .collect::<Vec<_>>(),
+            arg_input_lens: vec![],
+            num_threads: Some(par_num_threads),
             pdr: PhantomData,
             pdw: PhantomData,
             pd: PhantomData,
@@ -837,7 +867,7 @@ where
                 }
             }
         }
-        let num_threads = rayon::current_num_threads();
+        let num_threads = self.num_threads.unwrap_or(rayon::current_num_threads());
         Ok(par_execs
             .into_iter()
             .enumerate()
