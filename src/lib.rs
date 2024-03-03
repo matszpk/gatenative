@@ -48,8 +48,8 @@ pub struct CodeConfig<'a> {
     // determine what circuit input bits is assigned to argument passed to execute.
     pub arg_inputs: Option<&'a [usize]>,
     // determine what circuit input bits is assigned to element index.
-    pub elem_inputs: Option<&'a [usize]>,.
-    // use single buffer to store input and output
+    pub elem_inputs: Option<&'a [usize]>,
+    // use single buffer to store input and output.
     pub single_buffer: bool,
     pub init_code: Option<&'a str>,
     // aggregated output code - aggregates all outputs into single output.
