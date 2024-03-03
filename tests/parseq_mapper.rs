@@ -7,6 +7,7 @@ use gatesim::*;
 
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 
+use std::str::FromStr;
 use std::sync::{
     atomic::{self, AtomicUsize},
     Arc,
@@ -642,5 +643,250 @@ fn test_parseq_mapper_builder_and_exec() {
             )
             .unwrap());
         assert_eq!(32, call_count.load(atomic::Ordering::SeqCst));
+    }
+}
+
+const COMB_CIRCUIT_CODE: &str = concat!(
+    "{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ",
+    "xor(0,7) and(16,5):0 xor(1,8) and(0,7) xor(18,19) and(20,6):1 xor(2,9) ",
+    "and(18,19) and(1,8) nor(23,24) xor(22,25) nimpl(7,26):2 xor(3,10) nimpl(22,25) ",
+    "and(2,9) nor(29,30) xor(28,31) nimpl(8,32):3 xor(4,0) xor(34,11) nimpl(28,31) ",
+    "and(3,10) nor(36,37) xor(35,38) xor(39,5) nimpl(9,40):4 xor(5,1) and(4,0) ",
+    "xor(42,43) xor(44,12) nimpl(35,38) and(34,11) nor(46,47) xor(45,48) xor(49,6) ",
+    "nimpl(5,39) xor(50,51) nimpl(10,52):5 xor(6,2) and(42,43) and(5,1) nor(55,56) ",
+    "xor(54,57) xor(58,13) nimpl(45,48) and(44,12) nor(60,61) xor(59,62) xor(63,7) ",
+    "nimpl(51,50) nimpl(6,49) nor(65,66) xor(64,67) nimpl(11,68):6 xor(7,3) ",
+    "nimpl(54,57) and(6,2) nor(71,72) xor(70,73) xor(74,14) nor(59,62) nimpl(13,58) ",
+    "nor(76,77) xor(75,78) xor(79,8) nimpl(64,67) and(63,7) nor(81,82) xor(80,83) ",
+    "nimpl(12,84):7 xor(8,4) nimpl(70,73) and(7,3) nor(87,88) xor(86,89) xor(90,15) ",
+    "nor(75,78) nimpl(14,74) nor(92,93) xor(91,94) xor(95,9) nimpl(80,83) and(79,8) ",
+    "nor(97,98) xor(96,99) nimpl(13,100):8 xor(9,5) nimpl(86,89) and(8,4) nor(103,104) ",
+    "xor(102,105) xor(106,0) nor(91,94) nimpl(15,90) nor(108,109) xor(107,110) ",
+    "xor(111,10) nimpl(96,99) and(95,9) nor(113,114) xor(112,115) nimpl(14,116):9 ",
+    "xor(10,6) nimpl(102,105) and(9,5) nor(119,120) xor(118,121) xor(122,1) ",
+    "nor(107,110) nimpl(0,106) nor(124,125) xor(123,126) xor(127,11) nimpl(112,115) ",
+    "and(111,10) nor(129,130) xor(128,131) nimpl(15,132):10 xor(11,7) nimpl(118,121) ",
+    "and(10,6) nor(135,136) xor(134,137) xor(138,2) nor(123,126) nimpl(1,122) ",
+    "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
+    "xor(144,147) nimpl(0,148):11}(16)"
+);
+
+const COMB_CIRCUIT_AGGR_CODE: &str = r##"{
+    unsigned int i;
+    uint32_t out[(TYPE_LEN >> 5)*12];
+    uint32_t* output_u32 = (uint32_t*)output;
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
+        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+
+const COMB_CIRCUIT_AGGR_CODE_OPENCL: &str = r##"{
+    unsigned int i;
+    uint out[(TYPE_LEN >> 5)*12];
+    global uint* output_u32 = (global uint*)output;
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        uint out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
+        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+
+const COMB_CIRCUIT_EXPECTED: [u32; 128] = [
+    4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 939491327,
+    4294967295, 4294967295, 3221225471, 1543503871, 2147483647, 2004844543, 3086483455, 805142527,
+    4294967295, 4294967295, 4294967295, 4160749567, 4294967295, 3489658879, 2147481599, 536565759,
+    4294967295, 3087007743, 3082813439, 2077734911, 503316479, 2809659391, 2503417855, 19096951,
+    4294967295, 2147483647, 2013265919, 4160749567, 4294967295, 931102719, 1610612735, 85292543,
+    4294967295, 2147483647, 1438646271, 1312536575, 4290772991, 291452927, 565411711, 285546271,
+    4294967295, 935288831, 930611199, 1744295935, 662700031, 94330879, 1732196351, 289738727,
+    2013265919, 1970789887, 1466940927, 118362399, 394256255, 10175999, 69310335, 68157743,
+    1600085855, 1600085855, 1600085855, 358571871, 1600085855, 387931999, 1600085855, 375349087,
+    1600085855, 1465868127, 1600085855, 522147679, 1465868127, 392109919, 257908575, 320019295,
+    1600085855, 526344031, 1600085855, 387931999, 1465868127, 354359135, 1196623711, 18027615,
+    1600085855, 358571359, 425156447, 421024607, 1129799519, 270472479, 17651039, 1179993,
+    1600085855, 526344031, 1461673823, 392124255, 1600085855, 291446623, 325017439, 88301395,
+    1600085855, 526341983, 1432311639, 17506127, 454778719, 18436959, 23007063, 65558, 1600085855,
+    118955871, 1398759263, 374806295, 1449088863, 21697055, 117526879, 21299231, 56581983,
+    273094487, 123016983, 84085013, 274661723, 67311135, 1140916567, 16781322,
+];
+
+#[test]
+fn test_parseq_mapper_builder_and_exec_with_aggr_output() {
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
+    for (config_num, do_use_seq) in [false, true].into_iter().enumerate() {
+        let par_builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            CPUExtension::NoExtension,
+            &CLANG_WRITER_U64,
+            None,
+        );
+        let seq_builders = if do_use_seq {
+            get_all_devices(CL_DEVICE_TYPE_GPU)
+                .unwrap()
+                .into_iter()
+                .map(|dev_id| {
+                    let device = Device::new(dev_id);
+                    OpenCLBuilder::new(&device, None)
+                })
+                .collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
+        let seq_num = seq_builders.len();
+        let mut builder = ParSeqMapperBuilder::new(par_builder, seq_builders);
+        let sel_config = |sel| match sel {
+            ParSeqSelection::Par => ParSeqDynamicConfig::new()
+                .aggr_output_code(Some(COMB_CIRCUIT_AGGR_CODE))
+                .aggr_output_len(Some(1 << (12 - 5))),
+            ParSeqSelection::Seq(_) => ParSeqDynamicConfig::new()
+                .aggr_output_code(Some(COMB_CIRCUIT_AGGR_CODE_OPENCL))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        };
+        builder.add_with_config(
+            "comb_aggr_out_arg",
+            circuit.clone(),
+            &(0..4).collect::<Vec<_>>(),
+            None,
+            sel_config,
+        );
+        builder.add_with_config(
+            "comb_aggr_out_arg_elem_full",
+            circuit.clone(),
+            &(0..4).collect::<Vec<_>>(),
+            Some(&(4..16).collect::<Vec<_>>()),
+            sel_config,
+        );
+        let mut execs = builder.build().unwrap();
+        //let input = execs.new_data_from_vec(|sel| (0..1 << 12).collect::<Vec<_>>());
+        let mut par_it = None;
+        let mut seq_it = vec![None; seq_num];
+        {
+            let ptransforms = ParSeqMapperTransforms::new(&execs[0]);
+            ptransforms
+                .with_input_transforms(
+                    |itobj| match itobj {
+                        ParSeqObject::Par(it) => {
+                            par_it = Some(it);
+                        }
+                        ParSeqObject::Seq((i, it)) => {
+                            seq_it[i] = Some(Arc::new(it));
+                        }
+                    },
+                    32,
+                    &(0..12).collect::<Vec<_>>(),
+                )
+                .unwrap();
+        }
+        let input_circ = execs[0].new_data_with_executor(|execobj| match execobj {
+            ParSeqObject::Par(exec) => {
+                let input = exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+                ParSeqObject::Par(par_it.as_mut().unwrap().transform(&input).unwrap())
+            }
+            ParSeqObject::Seq((i, exec)) => {
+                let input = exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+                ParSeqObject::Seq(
+                    Arc::get_mut(seq_it[i].as_mut().unwrap())
+                        .unwrap()
+                        .transform(&input)
+                        .unwrap(),
+                )
+            }
+        });
+        let exec_count = Arc::new(AtomicUsize::new(0));
+        let output = execs[0]
+            .execute_direct(
+                &input_circ,
+                vec![0u32; COMB_CIRCUIT_EXPECTED.len()],
+                |_, _, result_out, _| {
+                    exec_count.fetch_add(1, atomic::Ordering::SeqCst);
+                    result_out.to_vec()
+                },
+                |out, result_out| {
+                    let mut new_out = vec![0u32; COMB_CIRCUIT_EXPECTED.len()];
+                    for (i, v) in new_out.iter_mut().enumerate() {
+                        *v = out[i] | result_out[i];
+                    }
+                    new_out
+                },
+                |_| false,
+            )
+            .unwrap();
+        assert_eq!(exec_count.load(atomic::Ordering::SeqCst), 16);
+        assert_eq!(COMB_CIRCUIT_EXPECTED.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(COMB_CIRCUIT_EXPECTED[i], *out, "{}: {}", config_num, i);
+        }
+
+        // with elem input full
+        let input_circ = execs[1].new_data(16);
+        let exec_count = Arc::new(AtomicUsize::new(0));
+        let output = execs[1]
+            .execute_direct(
+                &input_circ,
+                vec![0u32; COMB_CIRCUIT_EXPECTED.len()],
+                |_, _, result_out, _| {
+                    exec_count.fetch_add(1, atomic::Ordering::SeqCst);
+                    result_out.to_vec()
+                },
+                |out, result_out| {
+                    let mut new_out = vec![0u32; COMB_CIRCUIT_EXPECTED.len()];
+                    for (i, v) in new_out.iter_mut().enumerate() {
+                        *v = out[i] | result_out[i];
+                    }
+                    new_out
+                },
+                |_| false,
+            )
+            .unwrap();
+        assert_eq!(exec_count.load(atomic::Ordering::SeqCst), 16);
+        assert_eq!(COMB_CIRCUIT_EXPECTED.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(COMB_CIRCUIT_EXPECTED[i], *out, "{}: {}", config_num, i);
+        }
     }
 }

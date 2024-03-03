@@ -125,12 +125,14 @@ where
         let expected_len = self.par.len();
         assert!(self.seqs.iter().all(|s| s.len() == expected_len));
         let expected_word_num = expected_len / self.max_word_len;
-        let expected_chunks = (expected_word_num) / self.real_input_len;
-        assert_eq!((expected_word_num) % self.real_input_len, 0);
-        assert!(self.seqs.iter().all(|s| {
-            let s_len = s.len() / self.max_word_len;
-            s_len % self.real_input_len == 0 && s_len / self.real_input_len == expected_chunks
-        }));
+        if self.real_input_len != 0 {
+            let expected_chunks = (expected_word_num) / self.real_input_len;
+            assert_eq!((expected_word_num) % self.real_input_len, 0);
+            assert!(self.seqs.iter().all(|s| {
+                let s_len = s.len() / self.max_word_len;
+                s_len % self.real_input_len == 0 && s_len / self.real_input_len == expected_chunks
+            }));
+        }
     }
 }
 
@@ -387,6 +389,42 @@ where
         out
     }
 
+    pub fn new_data_with_executor(
+        &mut self,
+        mut data: impl FnMut(ParSeqObject<&mut PE, (usize, &mut SE)>) -> ParSeqObject<PD, SD>,
+    ) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
+        let out = ParSeqAllDataHolder {
+            par: match data(ParSeqObject::Par(&mut self.par)) {
+                ParSeqObject::Par(pd) => pd,
+                ParSeqObject::Seq(_) => {
+                    panic!("Unexpected!");
+                }
+            },
+            seqs: self
+                .seqs
+                .iter_mut()
+                .enumerate()
+                .map(|(i, s)| {
+                    let mut s = s.lock().unwrap();
+                    match data(ParSeqObject::Seq((i, &mut s))) {
+                        ParSeqObject::Par(_) => {
+                            panic!("Unexpected!");
+                        }
+                        ParSeqObject::Seq(sd) => sd,
+                    }
+                })
+                .collect::<Vec<_>>(),
+            real_input_len: self.real_input_len(),
+            max_word_len: self.max_word_len,
+            pdr: PhantomData,
+            pdw: PhantomData,
+            sdr: PhantomData,
+            sdw: PhantomData,
+        };
+        out.check_length();
+        out
+    }
+
     pub fn new_data_from_slice<'b>(
         &mut self,
         mut data: impl FnMut(ParSeqSelection) -> &'b [u32],
@@ -595,6 +633,7 @@ pub enum ParSeqMapperBuilderError<PE, SE> {
 pub struct ParSeqDynamicConfig<'a> {
     pub init_code: Option<&'a str>,
     pub aggr_output_code: Option<&'a str>,
+    pub aggr_output_len: Option<usize>,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
@@ -602,6 +641,7 @@ impl<'a> ParSeqDynamicConfig<'a> {
         Self {
             init_code: None,
             aggr_output_code: None,
+            aggr_output_len: None,
         }
     }
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
@@ -610,6 +650,10 @@ impl<'a> ParSeqDynamicConfig<'a> {
     }
     pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
         self.aggr_output_code = aggr;
+        self
+    }
+    pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
+        self.aggr_output_len = aggr;
         self
     }
 }
@@ -706,7 +750,8 @@ where
                 .arg_inputs(Some(arg_inputs))
                 .elem_inputs(elem_inputs)
                 .init_code(dyncfg.init_code)
-                .aggr_output_code(dyncfg.aggr_output_code),
+                .aggr_output_code(dyncfg.aggr_output_code)
+                .aggr_output_len(dyncfg.aggr_output_len),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
             let dyncfg = dyn_config(ParSeqSelection::Seq(i));
@@ -717,7 +762,8 @@ where
                     .arg_inputs(Some(arg_inputs))
                     .elem_inputs(elem_inputs)
                     .init_code(dyncfg.init_code)
-                    .aggr_output_code(dyncfg.aggr_output_code),
+                    .aggr_output_code(dyncfg.aggr_output_code)
+                    .aggr_output_len(dyncfg.aggr_output_len),
             );
         }
     }
