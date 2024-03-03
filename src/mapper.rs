@@ -58,12 +58,10 @@ where
         F: FnMut(Out, &D, &D, u64) -> Out,
         Stop: FnMut(&Out) -> bool,
     {
-        let count = self.executor.elem_count(input.len());
-        let mut output = self.executor.new_data_output_elems(count);
         let mut out = init;
         // just execute
         for arg in 0..=self.arg_input_max {
-            self.executor.execute_reuse(input, arg, &mut output)?;
+            let output = self.executor.execute(input, arg)?;
             out = f(out, input, &output, arg);
             if stop(&out) {
                 break;
