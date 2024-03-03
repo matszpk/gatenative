@@ -523,7 +523,7 @@ pub struct ParSeqMapperTransforms<
     SIDT: DataTransformer<'a, SDR, SDW, SD>,
     SODT: DataTransformer<'a, SDR, SDW, SD>,
 {
-    executor: &'b ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
+    executor: &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
     pidt: PhantomData<&'a PIDT>,
     podt: PhantomData<&'a PODT>,
     sidt: PhantomData<&'a SIDT>,
@@ -548,7 +548,7 @@ where
     SIDT: DataTransformer<'a, SDR, SDW, SD>,
     SODT: DataTransformer<'a, SDR, SDW, SD>,
 {
-    pub fn new(e: &'b ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>) -> Self {
+    pub fn new(e: &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>) -> Self {
         Self {
             executor: e,
             pidt: PhantomData,
@@ -559,7 +559,7 @@ where
     }
 
     pub fn with_input_transforms<F>(
-        &self,
+        &'b mut self,
         mut f: F,
         input_elem_len: usize,
         bit_mapping: &[usize],
@@ -571,26 +571,41 @@ where
         >,
     >
     where
-        F: FnMut(ParSeqObject<PIDT, (usize, SIDT)>),
+        F: FnMut(
+            &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
+            PIDT,
+            Vec<Arc<SIDT>>,
+        ),
     {
-        f(ParSeqObject::Par(
-            self.executor
-                .par
-                .input_transformer(input_elem_len, bit_mapping)?,
-        ));
-        for (i, s) in self.executor.seqs.iter().enumerate() {
-            let sitx = {
+        let pidt = self
+            .executor
+            .par
+            .input_transformer(input_elem_len, bit_mapping)?;
+        let sidts = self
+            .executor
+            .seqs
+            .iter()
+            .enumerate()
+            .map(|(i, s)| {
                 let s = s.lock().unwrap();
-                s.input_transformer(input_elem_len, bit_mapping)
-                    .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
-            };
-            f(ParSeqObject::Seq((i, sitx)));
-        }
+                Ok::<
+                    _,
+                    ParSeqMapperTransformsError<
+                        <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
+                        <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
+                    >,
+                >(Arc::new(
+                    s.input_transformer(input_elem_len, bit_mapping)
+                        .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?,
+                ))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        f(self.executor, pidt, sidts);
         Ok(())
     }
 
     pub fn with_output_transforms<F>(
-        &self,
+        &'b mut self,
         mut f: F,
         output_elem_len: usize,
         bit_mapping: &[usize],
@@ -602,21 +617,36 @@ where
         >,
     >
     where
-        F: FnMut(ParSeqObject<PODT, (usize, SODT)>),
+        F: FnMut(
+            &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
+            PODT,
+            Vec<Arc<SODT>>,
+        ),
     {
-        f(ParSeqObject::Par(
-            self.executor
-                .par
-                .output_transformer(output_elem_len, bit_mapping)?,
-        ));
-        for (i, s) in self.executor.seqs.iter().enumerate() {
-            let sotx = {
+        let podt = self
+            .executor
+            .par
+            .output_transformer(output_elem_len, bit_mapping)?;
+        let sodts = self
+            .executor
+            .seqs
+            .iter()
+            .enumerate()
+            .map(|(i, s)| {
                 let s = s.lock().unwrap();
-                s.output_transformer(output_elem_len, bit_mapping)
-                    .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?
-            };
-            f(ParSeqObject::Seq((i, sotx)));
-        }
+                Ok::<
+                    _,
+                    ParSeqMapperTransformsError<
+                        <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
+                        <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
+                    >,
+                >(Arc::new(
+                    s.output_transformer(output_elem_len, bit_mapping)
+                        .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?,
+                ))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        f(self.executor, podt, sodts);
         Ok(())
     }
 }

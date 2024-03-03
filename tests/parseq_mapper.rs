@@ -777,7 +777,6 @@ fn test_parseq_mapper_builder_and_exec_with_aggr_output() {
         } else {
             vec![]
         };
-        let seq_num = seq_builders.len();
         let mut builder = ParSeqMapperBuilder::new(par_builder, seq_builders);
         let sel_config = |sel| match sel {
             ParSeqSelection::Par => ParSeqDynamicConfig::new()
@@ -803,40 +802,37 @@ fn test_parseq_mapper_builder_and_exec_with_aggr_output() {
         );
         let mut execs = builder.build().unwrap();
         //let input = execs.new_data_from_vec(|sel| (0..1 << 12).collect::<Vec<_>>());
-        let mut par_it = None;
-        let mut seq_it = vec![None; seq_num];
+        let mut input_circ = None;
         {
-            let ptransforms = ParSeqMapperTransforms::new(&execs[0]);
+            let mut ptransforms = ParSeqMapperTransforms::new(&mut execs[0]);
             ptransforms
                 .with_input_transforms(
-                    |itobj| match itobj {
-                        ParSeqObject::Par(it) => {
-                            par_it = Some(it);
-                        }
-                        ParSeqObject::Seq((i, it)) => {
-                            seq_it[i] = Some(Arc::new(it));
-                        }
+                    |ps_exec, mut par_it, mut seq_it| {
+                        input_circ =
+                            Some(ps_exec.new_data_with_executor(|execobj| match execobj {
+                                ParSeqObject::Par(exec) => {
+                                    let input =
+                                        exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+                                    ParSeqObject::Par(par_it.transform(&input).unwrap())
+                                }
+                                ParSeqObject::Seq((i, exec)) => {
+                                    let input =
+                                        exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+                                    ParSeqObject::Seq(
+                                        Arc::get_mut(&mut seq_it[i])
+                                            .unwrap()
+                                            .transform(&input)
+                                            .unwrap(),
+                                    )
+                                }
+                            }));
                     },
                     32,
                     &(0..12).collect::<Vec<_>>(),
                 )
                 .unwrap();
         }
-        let input_circ = execs[0].new_data_with_executor(|execobj| match execobj {
-            ParSeqObject::Par(exec) => {
-                let input = exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
-                ParSeqObject::Par(par_it.as_mut().unwrap().transform(&input).unwrap())
-            }
-            ParSeqObject::Seq((i, exec)) => {
-                let input = exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
-                ParSeqObject::Seq(
-                    Arc::get_mut(seq_it[i].as_mut().unwrap())
-                        .unwrap()
-                        .transform(&input)
-                        .unwrap(),
-                )
-            }
-        });
+        let input_circ = input_circ.unwrap();
         let exec_count = Arc::new(AtomicUsize::new(0));
         let output = execs[0]
             .execute_direct(
