@@ -39,12 +39,20 @@ mod vcircuit;
 
 #[derive(Clone, Copy)]
 pub struct CodeConfig<'a> {
+    // determine place of circuit input bits in input bits and its length.
+    // first: index - circuit input bit, value - destination input bit. second - input length.
     pub input_placement: Option<(&'a [usize], usize)>,
+    // determine place of circuit output bits in input bits and its length.
+    // first: index - circuit output bit, value - destination output bit. second - output length.
     pub output_placement: Option<(&'a [usize], usize)>,
+    // determine what circuit input bits is assigned to argument passed to execute.
     pub arg_inputs: Option<&'a [usize]>,
-    pub elem_inputs: Option<&'a [usize]>,
+    // determine what circuit input bits is assigned to element index.
+    pub elem_inputs: Option<&'a [usize]>,.
+    // use single buffer to store input and output
     pub single_buffer: bool,
     pub init_code: Option<&'a str>,
+    // aggregated output code - aggregates all outputs into single output.
     pub aggr_output_code: Option<&'a str>,
     pub aggr_output_len: Option<usize>, // length in 32-bit words
 }
