@@ -316,6 +316,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Get real output length (number of entries in area of output placements)
     fn real_output_len(&self) -> usize;
 
+    fn elem_count(&self, input_len: usize) -> usize;
+
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType>;
     fn execute(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType> {
         assert!(!self.is_single_buffer());

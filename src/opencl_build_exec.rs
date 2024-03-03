@@ -267,6 +267,16 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         self.real_output_len
     }
 
+    fn elem_count(&self, input_len: usize) -> usize {
+        if self.real_input_len != 0 {
+            (input_len / self.real_input_len) << 5
+        } else if self.elem_input_num != 0 {
+            1 << self.elem_input_num
+        } else {
+            0
+        }
+    }
+
     unsafe fn execute_internal(
         &mut self,
         input: &OpenCLDataHolder,

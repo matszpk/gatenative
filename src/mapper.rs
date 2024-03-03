@@ -58,14 +58,8 @@ where
         F: FnMut(Out, &D, &D, u64) -> Out,
         Stop: FnMut(&Out) -> bool,
     {
-        let input_len = self.real_input_len();
-        // calculate chunk count
-        let count = if input_len != 0 {
-            input.len() / input_len
-        } else {
-            0
-        };
-        let mut output = self.executor.new_data(count * self.output_len());
+        let count = self.executor.elem_count(input.len());
+        let mut output = self.executor.new_data_output_elems(count);
         let mut out = init;
         // just execute
         for arg in 0..=self.arg_input_max {

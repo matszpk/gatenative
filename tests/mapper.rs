@@ -143,6 +143,13 @@ fn test_basic_mapper_builder_and_exec() {
         };
         builder.add("xcircuit", circuit.clone(), &arg_input_indices[..]);
         builder.add("xcircuit2", circuit2.clone(), &arg_input_indices_2[..]);
+        builder.add_with_config(
+            "xcircuit",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&arg_input_indices[..]))
+                .elem_inputs(Some(&rest_input_indices[..])),
+        );
         let mut execs = builder.build().unwrap();
 
         // check input and output len
@@ -247,6 +254,47 @@ fn test_basic_mapper_builder_and_exec() {
             config_num
         );
         assert_eq!(exec_count, 16);
+        // elem_input
+        let mut exec_count = 0;
+        assert!(
+            execs[2]
+                .execute_direct(
+                    &input,
+                    true,
+                    |out, _, result_out, arg_input| {
+                        exec_count += 1;
+                        let mut input = vec![false; 12];
+                        let mut xcircuit_out = vec![0u32; xcircuit_data_num];
+                        // fill inputs by arg_inputs
+                        for (i, v) in arg_input_indices.iter().enumerate() {
+                            input[*v] = ((arg_input >> i) & 1) != 0;
+                        }
+                        // prepare expected output
+                        for rest in 0..256 {
+                            // fill input by rest of bits of input
+                            for (i, v) in rest_input_indices.iter().enumerate() {
+                                input[*v] = ((rest >> i) & 1) != 0;
+                            }
+                            let value = circuit.eval(input.clone())[0];
+                            let idx = (rest >> 5) / word_len;
+                            let widx = (rest >> 5) % word_len;
+                            let bit = rest & 31;
+                            xcircuit_out[word_len * idx + widx] |= (value as u32) << bit;
+                        }
+                        // get result output and compare
+                        out && xcircuit_out
+                            .into_iter()
+                            .enumerate()
+                            .all(|(i, exp)| result_out[i] == exp)
+                    },
+                    |_| false
+                )
+                .unwrap(),
+            "{}",
+            config_num
+        );
+        assert_eq!(exec_count, 16);
+
         if word_len == 1 {
             // number of chunks
             let xcircuit_data_num = (((32 >> 5) + word_len - 1) / word_len) * word_len;

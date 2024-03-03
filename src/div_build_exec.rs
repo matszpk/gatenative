@@ -65,6 +65,10 @@ where
         self.executors.last().unwrap().real_output_len()
     }
 
+    fn elem_count(&self, input_len: usize) -> usize {
+        self.executors.first().unwrap().elem_count(input_len)
+    }
+
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, E::ErrorType> {
         let exec_len = self.executors.len();
         if exec_len != 1 {
