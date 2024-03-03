@@ -54,6 +54,8 @@ pub struct CodeConfig<'a> {
     // aggregated output code - aggregates all outputs into single output.
     pub aggr_output_code: Option<&'a str>,
     pub aggr_output_len: Option<usize>, // length in 32-bit words
+    // if some then aggregate some choosen circuit outputs to output_extra buffer.
+    pub aggr_to_output_extra: Option<&'a [usize]>,
 }
 
 impl<'a> CodeConfig<'a> {
@@ -67,6 +69,7 @@ impl<'a> CodeConfig<'a> {
             init_code: None,
             aggr_output_code: None,
             aggr_output_len: None,
+            aggr_to_output_extra: None,
         }
     }
 
@@ -100,6 +103,10 @@ impl<'a> CodeConfig<'a> {
     }
     pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
         self.aggr_output_len = aggr;
+        self
+    }
+    pub fn aggr_to_output_extra(mut self, aggr: Option<&'a [usize]>) -> Self {
+        self.aggr_to_output_extra = aggr;
         self
     }
 }
