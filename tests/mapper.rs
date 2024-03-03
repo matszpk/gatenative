@@ -918,3 +918,107 @@ fn test_par_basic_mapper_builder_and_exec() {
         assert!(call_count.load(atomic::Ordering::SeqCst) < 12);
     }
 }
+
+#[test]
+fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+        parallel: false,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+        parallel: false,
+    };
+
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
+    for (config_num, (writer_config, builder_config)) in [
+        (&CLANG_WRITER_U32, &no_opt_neg_config),
+        (&CLANG_WRITER_U32, &opt_neg_config),
+        (&CLANG_WRITER_U64, &no_opt_neg_config),
+        (&CLANG_WRITER_U64, &opt_neg_config),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            CPUExtension::NoExtension,
+            writer_config,
+            Some(builder_config.clone()),
+        );
+        let mut builder = ParBasicMapperBuilder::new(builder);
+        builder.add_with_config(
+            "comb_aggr_out_arg",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .aggr_output_code(Some(COMB_CIRCUIT_AGGR_CODE))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        builder.add_with_config(
+            "comb_aggr_out_arg_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(4..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(COMB_CIRCUIT_AGGR_CODE))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[0].new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let exec_count = Arc::new(AtomicUsize::new(0));
+        let output = execs[0]
+            .execute_direct(
+                &input_circ,
+                vec![0u32; COMB_CIRCUIT_EXPECTED.len()],
+                |_, result_out, _| {
+                    exec_count.fetch_add(1, atomic::Ordering::SeqCst);
+                    result_out.to_vec()
+                },
+                |out, result_out| {
+                    let mut new_out = vec![0u32; COMB_CIRCUIT_EXPECTED.len()];
+                    for (i, v) in new_out.iter_mut().enumerate() {
+                        *v = out[i] | result_out[i];
+                    }
+                    new_out
+                },
+                |_| false,
+            )
+            .unwrap();
+        assert_eq!(exec_count.load(atomic::Ordering::SeqCst), 16);
+        assert_eq!(COMB_CIRCUIT_EXPECTED.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(COMB_CIRCUIT_EXPECTED[i], *out, "{}: {}", config_num, i);
+        }
+
+        // with elem input full
+        let input_circ = execs[1].new_data(1);
+        let exec_count = Arc::new(AtomicUsize::new(0));
+        let output = execs[1]
+            .execute_direct(
+                &input_circ,
+                vec![0u32; COMB_CIRCUIT_EXPECTED.len()],
+                |_, result_out, _| {
+                    exec_count.fetch_add(1, atomic::Ordering::SeqCst);
+                    result_out.to_vec()
+                },
+                |out, result_out| {
+                    let mut new_out = vec![0u32; COMB_CIRCUIT_EXPECTED.len()];
+                    for (i, v) in new_out.iter_mut().enumerate() {
+                        *v = out[i] | result_out[i];
+                    }
+                    new_out
+                },
+                |_| false,
+            )
+            .unwrap();
+        assert_eq!(exec_count.load(atomic::Ordering::SeqCst), 16);
+        assert_eq!(COMB_CIRCUIT_EXPECTED.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(COMB_CIRCUIT_EXPECTED[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}
