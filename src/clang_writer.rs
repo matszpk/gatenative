@@ -9,6 +9,8 @@ pub struct ElemIndexConfig<'a> {
     low_bits_defs: [&'a str; 16],
 }
 
+// TODO: Add set_u32_op and set_u32_all_op
+
 #[derive(Clone, Debug)]
 pub struct CLangWriterConfig<'a> {
     func_modifier: Option<&'a str>,
