@@ -102,7 +102,7 @@ fn gen_var_allocs<T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     keep_output_vars: bool,
-    pop_input_vars: bool,
+    pop_input: bool,
 ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -150,6 +150,14 @@ where
     // list of outputs awaits allocation for second value
     let mut outputs_awaits_alloc = BTreeMap::new();
 
+    // if populated input then allocate variables as first to avoid next allocations
+    if pop_input {
+        for i in 0..input_len {
+            single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+            input_already_read[i] = true;
+        }
+    }
+
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             continue;
@@ -192,12 +200,16 @@ where
                 // allocate and use
                 // allocate circuit inputs now if not allocated
                 if gates[node_index].i0 < input_len_t {
-                    single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
-                    input_already_read[usize::try_from(gates[node_index].i0).unwrap()] = true;
+                    if !pop_input {
+                        single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
+                        input_already_read[usize::try_from(gates[node_index].i0).unwrap()] = true;
+                    }
                 }
                 if gates[node_index].i1 < input_len_t {
-                    single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
-                    input_already_read[usize::try_from(gates[node_index].i1).unwrap()] = true;
+                    if !pop_input {
+                        single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
+                        input_already_read[usize::try_from(gates[node_index].i1).unwrap()] = true;
+                    }
                 }
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i0);
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i1);
@@ -391,6 +403,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
 
     let mut used_inputs = vec![false; input_len];
 
+    // if populated input then allocate variables as first to avoid next allocations
+    if pop_input {
+        for i in 0..input_len {
+            writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+            used_inputs[i] = true;
+        }
+    }
+
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
         if *o < input_len_t {
@@ -442,12 +462,16 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
-                    used_inputs[gi0] = true;
+                    if !pop_input {
+                        writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
+                        used_inputs[gi0] = true;
+                    }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
-                    used_inputs[gi1] = true;
+                    if !pop_input {
+                        writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
+                        used_inputs[gi1] = true;
+                    }
                 }
                 writer.gen_op(
                     match gates[node_index].func {
@@ -577,6 +601,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
 
+    // if populated input then allocate variables as first to avoid next allocations
+    if pop_input {
+        for i in 0..input_len {
+            writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+            used_inputs[i] = true;
+        }
+    }
+
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
         if *o < input_len_t {
@@ -628,12 +660,16 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].0.i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].0.i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
-                    used_inputs[gi0] = true;
+                    if !pop_input {
+                        writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
+                        used_inputs[gi0] = true;
+                    }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
-                    used_inputs[gi1] = true;
+                    if !pop_input {
+                        writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
+                        used_inputs[gi1] = true;
+                    }
                 }
                 writer.gen_op(
                     match gates[node_index].0.func {
