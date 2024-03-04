@@ -102,6 +102,7 @@ fn gen_var_allocs<T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     keep_output_vars: bool,
+    pop_input_vars: bool,
 ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -354,6 +355,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&[(usize, Option<usize>)]>,
+    pop_input: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -540,6 +542,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&[(usize, Option<usize>)]>,
+    pop_input: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -771,6 +774,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         code_config.single_buffer,
         input_map.as_ref(),
         code_config.aggr_output_code.is_some(),
+        code_config.pop_input_code.is_some(),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -806,6 +810,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
+            code_config.pop_input_code.is_some(),
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -830,6 +835,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
+            code_config.pop_input_code.is_some(),
         );
     }
 
@@ -885,13 +891,31 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                false,
+                false
+            )
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                false
+            )
         );
         // keep outputs
         let mut var_usage = gen_var_usage(&circuit);
@@ -902,7 +926,16 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None)])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                false
+            )
         );
 
         // keep outputs with double outputs (with both normal and negated)
@@ -926,7 +959,16 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None), (1, Some(4))])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                false
+            )
         );
         // keep outputs with double outputs (with both normal and negated)
         let circuit = Circuit::new(
@@ -949,7 +991,16 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None), (2, Some(4)), (1, Some(0))])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                false
+            )
         );
 
         // keep outputs with double outputs (with both normal and negated)
@@ -987,7 +1038,16 @@ mod tests {
                     (4, None)
                 ])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                false
+            )
         );
 
         let circuit = Circuit::new(
@@ -1011,13 +1071,31 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                false,
+                false
+            )
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                false
+            )
         );
         // keep outputs
         let mut var_usage = gen_var_usage(&circuit);
@@ -1028,7 +1106,16 @@ mod tests {
                 6,
                 Some(vec![(2, None), (5, None), (1, None), (0, None)])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                false
+            )
         );
 
         // read/write conflict
@@ -1047,13 +1134,31 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                false
+            )
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 1, 0, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                false,
+                false
+            )
         );
         // with placement
         let mut var_usage = gen_var_usage(&circuit);
@@ -1067,6 +1172,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
+                false,
                 false
             )
         );
@@ -1081,6 +1187,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
+                false,
                 false
             )
         );
@@ -1095,6 +1202,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
+                false,
                 false
             )
         );
@@ -1109,6 +1217,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
+                false,
                 false
             )
         );
@@ -1128,13 +1237,31 @@ mod tests {
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                false
+            )
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 4, 0, 1, 2, 2, 0, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                false,
+                false
+            )
         );
 
         let circuit = Circuit::new(
@@ -1156,13 +1283,31 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, false, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                false
+            )
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![4, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 5, None),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, false)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                false,
+                false
+            )
         );
         // testcase with placements
         let mut var_usage = gen_var_usage(&circuit);
@@ -1176,6 +1321,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
+                false,
                 false,
             )
         );
@@ -1191,6 +1337,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1)])),
+                false,
                 false,
             )
         );
@@ -1221,6 +1368,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
+                false,
                 false,
             )
         );
