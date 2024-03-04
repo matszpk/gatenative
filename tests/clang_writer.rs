@@ -225,7 +225,7 @@ fn test_clang_writer() {
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output) {
+    uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -258,7 +258,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output) {
+    uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -290,7 +290,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output) {
+    uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -321,7 +321,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -354,7 +354,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -387,7 +387,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_func1(const uint32_t* input,
-    uint32_t* output, unsigned int arg, unsigned int arg2) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -420,7 +420,7 @@ void gate_sys_func1(const uint32_t* input,
 #define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
-    uint64_t* output) {
+    uint64_t* output, size_t idx) {
     uint64_t v0;
     uint64_t v1;
     uint64_t v2;
@@ -451,7 +451,7 @@ void gate_sys_func1(const uint64_t* input,
 #define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
-    uint64_t* output) {
+    uint64_t* output, size_t idx) {
     uint64_t v0;
     uint64_t v1;
     uint64_t v2;
@@ -482,7 +482,7 @@ void gate_sys_func1(const uint64_t* input,
 #define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
-    uint64_t* output, unsigned int arg, unsigned int arg2) {
+    uint64_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint64_t zero = 0ULL;
     const uint64_t one = 0xffffffffffffffffULL;
     uint64_t v0;
@@ -526,7 +526,7 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     (D)[1] = (uint32_t)(_m_to_int(_mm_srli_si64((X), 32))); \
 }
 void gate_sys_func1(const __m64* input,
-    __m64* output) {
+    __m64* output, size_t idx) {
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;
     __m64 v1;
@@ -571,7 +571,7 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     (D)[1] = (uint32_t)(_m_to_int(_mm_srli_si64((X), 32))); \
 }
 void gate_sys_func1(const __m64* input,
-    __m64* output) {
+    __m64* output, size_t idx) {
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;
     __m64 v1;
@@ -621,7 +621,7 @@ static const unsigned int elem_index_low_tbl[7*4] = {
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
 void gate_sys_func1(const __m128* input,
-    __m128* output) {
+    __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -671,7 +671,7 @@ static const unsigned int elem_index_low_tbl[7*4] = {
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
 void gate_sys_func1(const __m128* input,
-    __m128* output) {
+    __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -726,7 +726,7 @@ __attribute__((aligned(32))) = {
 }
 #define GET_U32_ALL(D,X) { _mm256_storeu_ps((float*)(D), (X)); }
 void gate_sys_func1(const __m256* input,
-    __m256* output) {
+    __m256* output, size_t idx) {
     const __m256 one = *((const __m256*)one_value);
     __m256 v0;
     __m256 v1;
@@ -793,7 +793,7 @@ __attribute__((aligned(64))) = {
 }
 #define GET_U32_ALL(D,X) { _mm512_storeu_si512((float*)(D), (X)); }
 void gate_sys_func1(const __m512i* input,
-    __m512i* output) {
+    __m512i* output, size_t idx) {
     const __m512i one = *((const __m512i*)one_value);
     __m512i v0;
     __m512i v1;
@@ -830,7 +830,7 @@ void gate_sys_func1(const __m512i* input,
 }
 #define GET_U32_ALL(D,X) { vst4q_u32((D), (X)); }
 void gate_sys_func1(const uint32x4_t* input,
-    uint32x4_t* output) {
+    uint32x4_t* output, size_t idx) {
     uint32x4_t v0;
     uint32x4_t v1;
     uint32x4_t v2;
@@ -867,7 +867,7 @@ void gate_sys_func1(const uint32x4_t* input,
 }
 #define GET_U32_ALL(D,X) { vst4q_u32((D), (X)); }
 void gate_sys_func1(const uint32x4_t* input,
-    uint32x4_t* output) {
+    uint32x4_t* output, size_t idx) {
     uint32x4_t v0;
     uint32x4_t v1;
     uint32x4_t v2;
@@ -1082,7 +1082,7 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
-void gate_sys_func1(uint32_t* output) {
+void gate_sys_func1(uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -1113,7 +1113,7 @@ void gate_sys_func1(uint32_t* output) {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
-void gate_sys_func1(uint32_t* output) {
+void gate_sys_func1(uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -1144,7 +1144,7 @@ void gate_sys_func1(uint32_t* output) {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
-void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2) {
+void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -1705,7 +1705,7 @@ fn test_clang_writer_extra() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2) {
+        r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -1745,7 +1745,7 @@ fn test_clang_writer_extra() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(__m64* output, unsigned int arg, unsigned int arg2) {
+        r##"void gate_sys_xor(__m64* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;
@@ -1801,7 +1801,7 @@ fn test_clang_writer_extra() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2) {
+        r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     uint32_t v0;
@@ -1842,7 +1842,7 @@ fn test_clang_writer_extra() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_xor(__m64* output, unsigned int arg, unsigned int arg2) {
+        r##"void gate_sys_xor(__m64* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     __m64 v0;

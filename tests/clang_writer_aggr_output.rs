@@ -39,7 +39,7 @@ fn test_clang_writer_aggregate_output() {
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 void gate_sys_xor(const uint32_t* input,
-    void* output) {
+    void* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -101,7 +101,7 @@ static const unsigned int elem_index_low_tbl[7*4] = {
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
 void gate_sys_xor(const __m128* input,
-    void* output) {
+    void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -152,7 +152,7 @@ void gate_sys_xor(const __m128* input,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    void* output) {
+    void* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -193,7 +193,7 @@ void gate_sys_xor(const __m128* input,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    void* output) {
+    void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -256,7 +256,7 @@ void gate_sys_xor(const __m128* input,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    void* output) {
+    void* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -306,7 +306,7 @@ void gate_sys_xor(const __m128* input,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    void* output) {
+    void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -377,7 +377,7 @@ void gate_sys_xor(const __m128* input,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    void* output) {
+    void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
@@ -581,7 +581,7 @@ kernel void gate_sys_xor(unsigned long n,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const uint32_t* input,
-    void* output) {
+    void* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
     uint32_t v2;
@@ -661,7 +661,7 @@ kernel void gate_sys_xor(unsigned long n,
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_xor(const __m128* input,
-    void* output) {
+    void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
     __m128 v1;
