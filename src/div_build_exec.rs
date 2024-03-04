@@ -316,6 +316,11 @@ where
     B: Builder<'a, DR, DW, D, E>,
 {
     type ErrorType = B::ErrorType;
+
+    fn user_defs(&mut self, user_defs: &str) {
+        self.builder.user_defs(user_defs);
+    }
+
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,

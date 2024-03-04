@@ -193,6 +193,8 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn preferred_var_num(&self) -> usize;
     /// Generates prolog.
     fn prolog(&mut self);
+    /// user definitions
+    fn user_defs(&mut self, user_defs: &str);
     /// Generates epilog.
     fn epilog(&mut self);
     /// Get function writer.
@@ -421,6 +423,8 @@ where
 {
     type ErrorType;
 
+    fn user_defs(&mut self, user_defs: &str);
+
     // Add new circuit to built. arg_inputs - input that will be set by argument arg_input.
     fn add<T>(
         &mut self,
@@ -574,6 +578,8 @@ where
     E: MapperExecutor<'a, DR, DW, D>,
 {
     type ErrorType;
+
+    fn user_defs(&mut self, user_defs: &str);
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -729,6 +735,8 @@ where
     E: ParMapperExecutor<'a, DR, DW, D>,
 {
     type ErrorType;
+
+    fn user_defs(&mut self, user_defs: &str);
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where

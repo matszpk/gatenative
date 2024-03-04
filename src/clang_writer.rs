@@ -1201,6 +1201,11 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         .unwrap();
     }
 
+    fn user_defs(&mut self, user_defs: &str) {
+        self.out.extend(user_defs.as_bytes());
+        self.out.push(b'\n');
+    }
+
     fn epilog(&mut self) {}
 
     unsafe fn func_writer_internal(

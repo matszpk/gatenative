@@ -785,6 +785,13 @@ where
         }
     }
 
+    pub fn user_defs<'b>(&mut self, mut user_defs: impl FnMut(ParSeqSelection) -> &'b str) {
+        self.par.user_defs(user_defs(ParSeqSelection::Par));
+        for (i, s) in self.seqs.iter_mut().enumerate() {
+            s.user_defs(user_defs(ParSeqSelection::Seq(i)));
+        }
+    }
+
     pub fn add_with_config<'b, T, DCF>(
         &mut self,
         name: &str,
