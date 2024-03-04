@@ -417,7 +417,7 @@ void gate_sys_func1(const uint32_t* input,
 #include <stddef.h>
 #define TYPE_LEN (64)
 #define TYPE_NAME uint64_t
-#define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
+#define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, size_t idx) {
@@ -448,7 +448,7 @@ void gate_sys_func1(const uint64_t* input,
 #include <stddef.h>
 #define TYPE_LEN (64)
 #define TYPE_NAME uint64_t
-#define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
+#define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, size_t idx) {
@@ -479,7 +479,7 @@ void gate_sys_func1(const uint64_t* input,
 #include <stddef.h>
 #define TYPE_LEN (64)
 #define TYPE_NAME uint64_t
-#define GET_U32(D,X,I) { (D) = ((X) >> (I<<5)); }
+#define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, unsigned int arg, unsigned int arg2, size_t idx) {

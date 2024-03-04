@@ -124,7 +124,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     },
     load_op: None,
     store_op: None,
-    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
+    get_u32_op: "{ (D) = ((X) >> ((I)<<5)); }",
     get_u32_all_op: "{ (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }",
 };
 
@@ -170,7 +170,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     },
     load_op: None,
     store_op: None,
-    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
+    get_u32_op: "{ (D) = ((X) >> ((I)<<5)); }",
     get_u32_all_op: "{ (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }",
 };
 
@@ -216,7 +216,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     },
     load_op: None,
     store_op: None,
-    get_u32_op: "{ (D) = ((X) >> (I<<5)); }",
+    get_u32_op: "{ (D) = ((X) >> ((I)<<5)); }",
     get_u32_all_op: "{ (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }",
 };
 
