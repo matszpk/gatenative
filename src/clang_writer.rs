@@ -944,12 +944,20 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if let Some(pop_input_code) = self.pop_input_code {
             for i in 0..self.input_len {
-                writeln!(self.writer.out, "#define i{0} (v{0})", i).unwrap();
+                if !self.input_map.is_empty() {
+                    if let Some(iv) = self.input_map.get(&i) {
+                        writeln!(self.writer.out, "#define i{} (v{})", i, iv).unwrap();
+                    }
+                } else {
+                    writeln!(self.writer.out, "#define i{} (v{})", i, i).unwrap();
+                }
             }
             self.writer.out.extend(pop_input_code.as_bytes());
             self.writer.out.push(b'\n');
             for i in 0..self.input_len {
-                writeln!(self.writer.out, "#define i{0}", i).unwrap();
+                if self.input_map.is_empty() || self.input_map.contains_key(&i) {
+                    writeln!(self.writer.out, "#define i{0}", i).unwrap();
+                }
             }
         }
     }

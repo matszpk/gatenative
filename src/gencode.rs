@@ -150,11 +150,14 @@ where
     // list of outputs awaits allocation for second value
     let mut outputs_awaits_alloc = BTreeMap::new();
 
+    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if pop_input {
         for i in 0..input_len {
-            single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
-            input_already_read[i] = true;
+            if is_in_input_map(i) {
+                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+                input_already_read[i] = true;
+            }
         }
     }
 
@@ -200,15 +203,17 @@ where
                 // allocate and use
                 // allocate circuit inputs now if not allocated
                 if gates[node_index].i0 < input_len_t {
-                    if !pop_input {
+                    let gi0 = usize::try_from(gates[node_index].i0).unwrap();
+                    if !pop_input || !is_in_input_map(gi0) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
-                        input_already_read[usize::try_from(gates[node_index].i0).unwrap()] = true;
+                        input_already_read[gi0] = true;
                     }
                 }
                 if gates[node_index].i1 < input_len_t {
-                    if !pop_input {
+                    let gi1 = usize::try_from(gates[node_index].i1).unwrap();
+                    if !pop_input || !is_in_input_map(gi1) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
-                        input_already_read[usize::try_from(gates[node_index].i1).unwrap()] = true;
+                        input_already_read[gi1] = true;
                     }
                 }
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i0);
@@ -403,11 +408,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
 
     let mut used_inputs = vec![false; input_len];
 
+    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if pop_input {
         for i in 0..input_len {
-            writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
-            used_inputs[i] = true;
+            if is_in_input_map(i) {
+                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                used_inputs[i] = true;
+            }
         }
     }
 
@@ -462,13 +470,13 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !pop_input {
+                    if !pop_input || !is_in_input_map(gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !pop_input {
+                    if !pop_input || !is_in_input_map(gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
@@ -601,11 +609,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
 
+    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if pop_input {
         for i in 0..input_len {
-            writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
-            used_inputs[i] = true;
+            if is_in_input_map(i) {
+                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                used_inputs[i] = true;
+            }
         }
     }
 
@@ -660,13 +671,13 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].0.i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].0.i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !pop_input {
+                    if !pop_input || !is_in_input_map(gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !pop_input {
+                    if !pop_input || !is_in_input_map(gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
