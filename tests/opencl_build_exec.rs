@@ -949,6 +949,25 @@ fn test_opencl_builder_and_exec_group_vec() {
     }
 }
 
+const COMB_CIRCUIT2: &str = r##"
+{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 xor(4,9) and(20,5):0 xor(5,0) xor(22,10)
+nimpl(4,9) nimpl(20,24) xor(23,25) and(26,6):1 xor(6,1) and(5,0) xor(28,29) xor(30,11)
+nor(23,25) nimpl(22,10) nor(32,33) xor(31,34) and(35,7):2 xor(7,2) and(28,29) and(6,1)
+nor(38,39) xor(37,40) xor(41,12) nor(31,34) nimpl(30,11) nor(43,44) xor(42,45) nimpl(8,46):3
+xor(8,3) nimpl(37,40) and(7,2) nor(49,50) xor(48,51) xor(52,13) nimpl(42,45) nor(41,12)
+nor(54,55) xor(53,56) xor(57,7) nimpl(9,58):4 xor(9,4) nimpl(48,51) and(8,3) nor(61,62)
+xor(60,63) xor(64,14) nimpl(53,56) nor(52,13) nor(66,67) xor(65,68) xor(69,8) nimpl(7,57)
+xor(70,71) nimpl(10,72):5 xor(10,5) nimpl(60,63) and(9,4) nor(75,76) xor(74,77) xor(78,15)
+nimpl(65,68) nor(64,14) nor(80,81) xor(79,82) xor(83,9) nimpl(71,70) nimpl(8,69) nor(85,86)
+xor(84,87) and(88,11):6 xor(11,6) nimpl(74,77) and(10,5) nor(91,92) xor(90,93) xor(94,16)
+nimpl(79,82) nor(78,15) nor(96,97) xor(95,98) xor(99,10) nor(84,87) nimpl(9,83) nor(101,102)
+xor(100,103) and(104,12):7 xor(0,17) nimpl(95,98) nor(94,16) nor(107,108) xor(106,109)
+xor(110,11) nor(100,103) nimpl(10,99) nor(112,113) xor(111,114) nimpl(13,115):8 xor(1,18)
+nor(106,109) nimpl(0,17) nor(118,119) xor(117,120) nimpl(111,114) and(110,11) nor(122,123)
+xor(121,124) nimpl(14,125):9 xor(2,19) nor(117,120) nimpl(1,18) nor(128,129) xor(127,130)
+nimpl(121,124) xor(131,132) and(133,15):10 xor(3,0) nor(127,130) nimpl(2,19) nor(136,137)
+xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
+
 #[test]
 fn test_opencl_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = OpenCLBuilderConfig {
@@ -996,6 +1015,7 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
             "xor(144,147) nimpl(0,148):11}(16)"))
             .unwrap();
+        let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
 
         let aggr_output_code = r##"{
     unsigned int i;
@@ -1093,6 +1113,23 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
                 .aggr_output_code(Some(aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
+        // 7
+        builder.add_with_config(
+            "comb2_aggr_out",
+            circuit2.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
+        // 8
+        builder.add_with_config(
+            "comb2_aggr_out_elem_full",
+            circuit2.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..20).collect::<Vec<_>>()))
+                .aggr_output_code(Some(aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5))),
+        );
         let mut execs = builder.build().unwrap();
 
         let expected = vec![
@@ -1114,6 +1151,27 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             17506127, 454778719, 18436959, 23007063, 65558, 1600085855, 118955871, 1398759263,
             374806295, 1449088863, 21697055, 117526879, 21299231, 56581983, 273094487, 123016983,
             84085013, 274661723, 67311135, 1140916567, 16781322,
+        ];
+        let expected2 = vec![
+            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 2013265919, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 4294967295, 2013265919, 4294967295, 4294967295,
+            4294967295, 1442840575, 4294967295, 4294967295, 4294967295, 1442840575, 4294967295,
+            4294967295, 4294967295, 1442840575, 4294967295, 4294967295, 4294967295, 1442840575,
+            4294967295, 4294967295, 4294967295, 1442840575, 4294967295, 3221225343, 4160716799,
+            1442840575, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
+            2147483647, 4294967295, 3758096383, 4294967295, 4294967295, 4294967295, 4286545919,
+            4294967295, 4294934527, 2147483647, 3758063615, 4294967295, 4286578687, 2147483647,
+            3212804095, 4294967295, 3221192703, 2147483647, 2684321663, 4294967295, 4294967295,
+            4294967295, 4152360959, 4294967295, 4294967295, 4294967295, 1610055679, 4294967295,
+            4294967295, 4294967295, 358612991, 2147483647, 3221225471, 2147483647, 1429700599,
+            4294967295, 4294967295, 4294967295, 1432354815, 2013265919, 3212828671, 2147483647,
+            1429436279, 4294967295, 2139095039, 4286578687, 1432353791, 2013265919, 4018135039,
+            503316479, 288584567,
         ];
         let mut it = execs[0]
             .input_transformer(32, &(0..16).collect::<Vec<_>>())
@@ -1277,6 +1335,40 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
         }
         for (i, out) in output_comb.iter().enumerate() {
             assert_eq!(expected[i], *out, "{}: {}", config_num, i);
+        }
+
+        // circuit 2
+        let mut it = execs[7]
+            .input_transformer(32, &(0..20).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[7].new_data_from_vec((0..1 << 20).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let output = execs[7].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(expected2.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected2[i], *out, "{}: {}", config_num, i);
+        }
+        let mut output = execs[7].new_data(output.len());
+        execs[7].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected2.len(), output.len());
+        let output = output.release();
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected2[i], *out, "{}: {}", config_num, i);
+        }
+
+        // with full elem inputs
+        let input_circ = execs[8].new_data(1);
+        let output = execs[8].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(expected2.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected2[i], *out, "{}: {}", config_num, i);
+        }
+        let mut output = execs[8].new_data(output.len());
+        execs[8].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        assert_eq!(expected2.len(), output.len());
+        let output = output.release();
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected2[i], *out, "{}: {}", config_num, i);
         }
     }
 }
