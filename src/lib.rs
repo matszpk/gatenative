@@ -13,6 +13,8 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add (transforming to CLang).
 // TODO: Add output aggregation with same original output.
 // TODO: Add populate input.
+// TODO: Optional: Add ability to use single buffer if pop_input and aggr_output is enabled
+//       with same input/output length.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
@@ -251,7 +253,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             }
         }
 
-        if code_config.aggr_output_code.is_some() {
+        if code_config.pop_input_code.is_some() || code_config.aggr_output_code.is_some() {
             assert!(!code_config.single_buffer);
         }
 
