@@ -407,6 +407,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    // if populated input then allocate variables as first to avoid next allocations
+    if pop_input {
+        for i in 0..input_len {
+            if is_in_input_map(i) {
+                used_inputs[i] = true;
+            }
+        }
+    }
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
@@ -598,6 +606,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    // if populated input then allocate variables as first to avoid next allocations
+    if pop_input {
+        for i in 0..input_len {
+            if is_in_input_map(i) {
+                used_inputs[i] = true;
+            }
+        }
+    }
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
