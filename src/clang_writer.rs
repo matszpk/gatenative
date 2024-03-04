@@ -764,7 +764,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     ""
                 },
-                self.writer.config.type_name,
+                if self.pop_input_code.is_some() {
+                    "void"
+                } else {
+                    self.writer.config.type_name
+                },
                 if self.output_vars.is_some() {
                     "void"
                 } else {
@@ -923,19 +927,33 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if self.writer.config.init_index.is_some() {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
-        }
-        if self.aggr_output_code.is_some() && self.writer.config.init_index.is_some() {
-            if let Some(arg_modifier) = self.writer.config.arg_modifier {
-                writeln!(
-                    self.writer.out,
-                    "    output = ({0} void*)((({0} char*)output) + 4*output_shift);",
-                    arg_modifier
-                )
-                .unwrap();
-            } else {
-                self.writer
-                    .out
-                    .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+            if self.pop_input_code.is_some() {
+                if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                    writeln!(
+                        self.writer.out,
+                        "    input = (const {0} void*)(((const {0} char*)input) + 4*input_shift);",
+                        arg_modifier
+                    )
+                    .unwrap();
+                } else {
+                    self.writer.out.extend(
+                        b"    input = (const void*)(((const char*)input) + 4*input_shift);\n",
+                    );
+                }
+            }
+            if self.aggr_output_code.is_some() {
+                if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                    writeln!(
+                        self.writer.out,
+                        "    output = ({0} void*)((({0} char*)output) + 4*output_shift);",
+                        arg_modifier
+                    )
+                    .unwrap();
+                } else {
+                    self.writer
+                        .out
+                        .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+                }
             }
         }
         if let Some(init_code) = self.init_code {

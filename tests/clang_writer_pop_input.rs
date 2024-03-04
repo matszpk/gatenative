@@ -36,7 +36,7 @@ fn test_clang_writer_populate_input() {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
-void gate_sys_testcirc(const uint32_t* input,
+void gate_sys_testcirc(const void* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -94,7 +94,7 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
-void gate_sys_testcirc(const __m128* input,
+void gate_sys_testcirc(const void* input,
     __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
@@ -137,7 +137,7 @@ void gate_sys_testcirc(const __m128* input,
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
 kernel void gate_sys_testcirc(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
-    const global uint* input,
+    const global void* input,
     global uint* output) {
     const size_t idx = get_global_id(0);
     const size_t ivn = 3 * idx + input_shift;
@@ -148,6 +148,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     uint v3;
     uint v4;
     if (idx >= n) return;
+    input = (const global void*)(((const global char*)input) + 4*input_shift);
 #define i0 (v0)
 #define i1 (v1)
 #define i2 (v2)
@@ -193,7 +194,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -234,7 +235,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
@@ -278,7 +279,7 @@ kernel void gate_sys_testcirc(unsigned long n,
         &String::from_utf8(writer.out()).unwrap(),
         r##"kernel void gate_sys_testcirc(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
-    const global uint* input,
+    const global void* input,
     global uint* output) {
     const size_t idx = get_global_id(0);
     const size_t ivn = 4 * idx + input_shift;
@@ -289,6 +290,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     uint v3;
     uint v4;
     if (idx >= n) return;
+    input = (const global void*)(((const global char*)input) + 4*input_shift);
 #define i0 (v0)
 #define i1 (v1)
 #define i2 (v2)
@@ -327,7 +329,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -370,7 +372,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     __m128* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
@@ -413,7 +415,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     uint32_t* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -477,7 +479,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -524,7 +526,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     __m128 v0;
@@ -575,7 +577,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     uint32_t* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -631,7 +633,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     __m128* output, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
@@ -691,7 +693,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     void* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -754,7 +756,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     void* output, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
@@ -844,7 +846,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const uint32_t* input,
+        r##"void gate_sys_testcirc(const void* input,
     void* output, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -912,7 +914,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const __m128* input,
+        r##"void gate_sys_testcirc(const void* input,
     void* output, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
