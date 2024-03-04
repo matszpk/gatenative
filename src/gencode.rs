@@ -1170,6 +1170,26 @@ mod tests {
                 false
             )
         );
+        // keep outputs with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 2, 0, 1, 5, 0, 2, 0],
+                6,
+                Some(vec![(4, None), (5, None), (2, None), (0, None)])
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                true,
+                true
+            )
+        );
 
         // read/write conflict
         let circuit = Circuit::new(
