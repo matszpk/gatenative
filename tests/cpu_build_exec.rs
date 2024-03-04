@@ -237,11 +237,11 @@ fn get_builder_configs() -> Vec<(
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     let mut configs = vec![
@@ -288,7 +288,7 @@ fn get_builder_configs() -> Vec<(
                 .map(|(ext, clang_config, cpu_builder_config)| {
                     let mut cpu_builder_config =
                         cpu_builder_config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
-                    cpu_builder_config.parallel = true;
+                    cpu_builder_config.parallel = Some(64);
                     (ext, clang_config, Some(cpu_builder_config))
                 }),
         )
@@ -1294,11 +1294,11 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
 fn test_cpu_data_holder() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()

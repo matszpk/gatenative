@@ -14,11 +14,11 @@ use std::sync::{
 fn test_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     for (config_num, (writer_config, builder_config)) in [
@@ -450,11 +450,11 @@ const COMB_CIRCUIT_EXPECTED: [u32; 128] = [
 fn test_basic_mapper_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
@@ -548,11 +548,11 @@ fn test_basic_mapper_builder_and_exec_with_aggr_output() {
 fn test_par_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     for (config_num, (writer_config, builder_config)) in [
@@ -923,11 +923,11 @@ fn test_par_basic_mapper_builder_and_exec() {
 fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
-        parallel: false,
+        parallel: None,
     };
     let opt_neg_config = CPUBuilderConfig {
         optimize_negs: true,
-        parallel: false,
+        parallel: None,
     };
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();

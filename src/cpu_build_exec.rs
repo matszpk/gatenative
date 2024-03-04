@@ -309,12 +309,13 @@ impl RangedData for CPUDataHolder {
 #[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
     pub optimize_negs: bool,
-    pub parallel: bool,
+    // if some then parallel - value is parallel chunk length
+    pub parallel: Option<usize>,
 }
 
 pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
-    parallel: false,
+    parallel: None,
 };
 
 #[derive(Clone)]
@@ -331,10 +332,9 @@ pub struct CPUExecutor {
     single_buffer: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
-    parallel: bool,
+    // parallel chunk length
+    parallel: Option<usize>,
 }
-
-const PAR_CHUNK_LEN: usize = 128;
 
 impl CPUExecutor {
     fn call_execute_internal(
@@ -346,7 +346,7 @@ impl CPUExecutor {
         real_output_words: usize,
         arg_input: u64,
     ) -> Result<(), libloading::Error> {
-        if self.parallel {
+        if let Some(par_chunk_len) = self.parallel {
             // parallel code
             if self.elem_input_num != 0 {
                 if self.have_arg_inputs {
@@ -354,13 +354,13 @@ impl CPUExecutor {
                         unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize),
                     > = unsafe { self.library.get(self.sym_name.as_bytes())? };
                     if self.aggregated_output {
-                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        let chunk_num = (num + par_chunk_len - 1) / par_chunk_len;
                         (0..chunk_num).par_bridge().for_each(|ch_idx| {
                             let output_ptr = output[..].as_ptr();
                             unsafe {
                                 let output_ptr = output_ptr.cast_mut();
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     (symbol)(
                                         input[i * real_input_words..].as_ptr(),
@@ -374,12 +374,12 @@ impl CPUExecutor {
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                            .chunks_mut(par_chunk_len * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     unsafe {
                                         (symbol)(
@@ -398,13 +398,13 @@ impl CPUExecutor {
                     let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, usize)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     if self.aggregated_output {
-                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        let chunk_num = (num + par_chunk_len - 1) / par_chunk_len;
                         (0..chunk_num).par_bridge().for_each(|ch_idx| {
                             let output_ptr = output[..].as_ptr();
                             unsafe {
                                 let output_ptr = output_ptr.cast_mut();
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     (symbol)(input[i * real_input_words..].as_ptr(), output_ptr, i);
                                 }
@@ -412,12 +412,12 @@ impl CPUExecutor {
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                            .chunks_mut(par_chunk_len * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     unsafe {
                                         (symbol)(
@@ -436,13 +436,13 @@ impl CPUExecutor {
                     let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     if self.aggregated_output {
-                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        let chunk_num = (num + par_chunk_len - 1) / par_chunk_len;
                         (0..chunk_num).par_bridge().for_each(|ch_idx| {
                             let output_ptr = output[..].as_ptr();
                             unsafe {
                                 let output_ptr = output_ptr.cast_mut();
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     (symbol)(
                                         input[i * real_input_words..].as_ptr(),
@@ -455,12 +455,12 @@ impl CPUExecutor {
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                            .chunks_mut(par_chunk_len * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     unsafe {
                                         (symbol)(
@@ -478,13 +478,13 @@ impl CPUExecutor {
                     let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     if self.aggregated_output {
-                        let chunk_num = (num + PAR_CHUNK_LEN - 1) / PAR_CHUNK_LEN;
+                        let chunk_num = (num + par_chunk_len - 1) / par_chunk_len;
                         (0..chunk_num).par_bridge().for_each(|ch_idx| {
                             let output_ptr = output[..].as_ptr();
                             unsafe {
                                 let output_ptr = output_ptr.cast_mut();
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     (symbol)(input[i * real_input_words..].as_ptr(), output_ptr);
                                 }
@@ -492,12 +492,12 @@ impl CPUExecutor {
                         });
                     } else {
                         output
-                            .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                            .chunks_mut(par_chunk_len * real_output_words)
                             .enumerate()
                             .par_bridge()
                             .for_each(|(ch_idx, out_chunk)| {
-                                let start = ch_idx * PAR_CHUNK_LEN;
-                                let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                                let start = ch_idx * par_chunk_len;
+                                let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                                 for i in start..end {
                                     unsafe {
                                         (symbol)(
@@ -740,19 +740,19 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
         assert!(output_len >= real_output_words * num);
-        if self.parallel {
+        if let Some(par_chunk_len) = self.parallel {
             // parallel code
             if self.elem_input_num != 0 {
                 if self.have_arg_inputs {
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                        .chunks_mut(par_chunk_len * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
-                            let start = ch_idx * PAR_CHUNK_LEN;
-                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            let start = ch_idx * par_chunk_len;
+                            let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                             for i in start..end {
                                 unsafe {
                                     (symbol)(
@@ -768,12 +768,12 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, usize)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                        .chunks_mut(par_chunk_len * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
-                            let start = ch_idx * PAR_CHUNK_LEN;
-                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            let start = ch_idx * par_chunk_len;
+                            let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                             for i in start..end {
                                 unsafe {
                                     (symbol)(
@@ -789,12 +789,12 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                        .chunks_mut(par_chunk_len * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
-                            let start = ch_idx * PAR_CHUNK_LEN;
-                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            let start = ch_idx * par_chunk_len;
+                            let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                             for i in start..end {
                                 unsafe {
                                     (symbol)(
@@ -809,12 +809,12 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
                     let symbol: Symbol<unsafe extern "C" fn(*mut u32)> =
                         unsafe { self.library.get(self.sym_name.as_bytes())? };
                     output
-                        .chunks_mut(PAR_CHUNK_LEN * real_output_words)
+                        .chunks_mut(par_chunk_len * real_output_words)
                         .enumerate()
                         .par_bridge()
                         .for_each(|(ch_idx, out_chunk)| {
-                            let start = ch_idx * PAR_CHUNK_LEN;
-                            let end = std::cmp::min((ch_idx + 1) * PAR_CHUNK_LEN, num);
+                            let start = ch_idx * par_chunk_len;
+                            let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
                             for i in start..end {
                                 unsafe {
                                     (symbol)(
@@ -975,7 +975,7 @@ pub struct CPUBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
-    parallel: bool,
+    parallel: Option<usize>,
 }
 
 impl<'a> CPUBuilder<'a> {
@@ -1012,9 +1012,9 @@ impl<'a> CPUBuilder<'a> {
         )
     }
 
-    pub fn new_parallel(config: Option<CPUBuilderConfig>) -> Self {
+    pub fn new_parallel(config: Option<CPUBuilderConfig>, par_chunk_len: Option<usize>) -> Self {
         let mut config = config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
-        config.parallel = true;
+        config.parallel = Some(par_chunk_len.unwrap_or(4096));
         Self::new_with_cpu_ext_and_clang_config(
             *CPU_EXTENSION,
             get_build_config(*CPU_EXTENSION).writer_config,
