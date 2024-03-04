@@ -1467,5 +1467,21 @@ mod tests {
                 false,
             )
         );
+        // with pop_input and input_map
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![6, 0, 4, 1, 2, 3, 5, 1, 6, 4, 6, 1, 4, 0], 7, None),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
+                false,
+                true
+            )
+        );
     }
 }
