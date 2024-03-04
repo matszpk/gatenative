@@ -25,8 +25,7 @@ fn test_clang_writer_populate_input() {
         "testcirc",
         circuit.clone(),
         false,
-        CodeConfig::new()
-            .pop_input_code(Some("    i0 = ((TYPE_NAME*)output)[0];")),
+        CodeConfig::new().pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];")),
     );
     writer.epilog();
     assert_eq!(
@@ -47,7 +46,7 @@ void gate_sys_testcirc(const uint32_t* input,
 #define i0 (v0)
 #define i1 (v1)
 #define i2 (v2)
-    i0 = ((TYPE_NAME*)output)[0];
+    i0 = ((TYPE_NAME*)input)[0];
 #define i0
 #define i1
 #define i2
