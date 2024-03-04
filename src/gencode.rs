@@ -974,6 +974,23 @@ mod tests {
             )
         );
 
+        // with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 0], 5, None),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                true
+            )
+        );
+
         // keep outputs with double outputs (with both normal and negated)
         let circuit = Circuit::new(
             3,
@@ -1328,6 +1345,22 @@ mod tests {
                 None,
                 false,
                 false
+            )
+        );
+        // with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 5, 3, 0, 2, 0], 6, None),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                true
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
