@@ -662,6 +662,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     elem_input_map: HashMap<usize, usize>,
     single_buffer: bool,
     init_code: Option<&'c str>,
+    pop_input_code: Option<&'c str>,
     aggr_output_code: Option<&'c str>,
     output_vars: Option<Vec<usize>>,
 }
@@ -959,6 +960,17 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if let Some(init_code) = self.init_code {
             self.writer.out.extend(init_code.as_bytes());
+            self.writer.out.push(b'\n');
+        }
+        if let Some(pop_input_code) = self.pop_input_code {
+            for i in 0..self.input_len {
+                writeln!(self.writer.out, "#define i{0} (v{0})", i).unwrap();
+            }
+            self.writer.out.extend(pop_input_code.as_bytes());
+            self.writer.out.push(b'\n');
+            for i in 0..self.input_len {
+                writeln!(self.writer.out, "#define i{0}", i).unwrap();
+            }
         }
     }
 
@@ -1231,6 +1243,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             elem_input_map,
             single_buffer: code_config.single_buffer,
             init_code: code_config.init_code,
+            pop_input_code: code_config.pop_input_code,
             aggr_output_code: code_config.aggr_output_code,
             output_vars,
         }

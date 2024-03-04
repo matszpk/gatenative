@@ -26,7 +26,7 @@ fn test_clang_writer_aggregate_output() {
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;")),
     );
     writer.epilog();
@@ -72,7 +72,7 @@ void gate_sys_xor(const uint32_t* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1;")),
     );
     writer.epilog();
@@ -146,7 +146,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;")),
     );
     assert_eq!(
@@ -187,7 +187,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2;")),
     );
     assert_eq!(
@@ -248,7 +248,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -298,7 +298,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -369,7 +369,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -421,7 +421,7 @@ void gate_sys_xor(const __m128* input,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -482,7 +482,7 @@ kernel void gate_sys_xor(unsigned long n,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -573,7 +573,7 @@ kernel void gate_sys_xor(unsigned long n,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -653,7 +653,7 @@ kernel void gate_sys_xor(unsigned long n,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
@@ -736,7 +736,7 @@ kernel void gate_sys_xor(unsigned long n,
         circuit.clone(),
         false,
         CodeConfig::new()
-            .init_code(Some("    unsigned int xxx = 1111;\n"))
+            .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some(
                 "    ((global TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
             )),
