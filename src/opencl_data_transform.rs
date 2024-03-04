@@ -13,6 +13,7 @@ use opencl3::types::{cl_uint, cl_ulong, CL_BLOCKING};
 
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
+use std::ops::Deref;
 use std::sync::Arc;
 
 struct HashableContext(Arc<Context>);
@@ -90,7 +91,7 @@ pub struct OpenCLDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
     output_elem_len: usize,
-    bit_mapping: Buffer<u32>,
+    bit_mapping: Arc<Buffer<u32>>,
     bit_mapping_len: usize,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
@@ -144,7 +145,7 @@ impl OpenCLDataInputTransformer {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
             output_elem_len,
-            bit_mapping: buffer,
+            bit_mapping: Arc::new(buffer),
             bit_mapping_len,
             context,
             cmd_queue,
@@ -222,7 +223,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
                 .set_arg(&cl_input_elem_len)
                 .set_arg(&cl_output_elem_len)
                 .set_arg(&cl_bit_mapping_len)
-                .set_arg(&self.bit_mapping)
+                .set_arg(self.bit_mapping.deref())
                 .set_arg(&input.buffer)
                 .set_arg(&output.buffer)
                 .set_local_work_size(self.group_len)
@@ -240,6 +241,23 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     }
     fn output_elem_len(&self) -> usize {
         self.output_elem_len
+    }
+}
+
+impl Clone for OpenCLDataInputTransformer {
+    fn clone(&self) -> Self {
+        let program = get_input_tx_program(self.context.clone()).unwrap();
+        Self {
+            word_len: self.word_len,
+            input_elem_len: self.input_elem_len,
+            output_elem_len: self.output_elem_len,
+            bit_mapping: self.bit_mapping.clone(),
+            bit_mapping_len: self.bit_mapping_len,
+            context: self.context.clone(),
+            cmd_queue: self.cmd_queue.clone(),
+            kernel: Kernel::create(&program, "xxx_gate_input_transform").unwrap(),
+            group_len: self.group_len,
+        }
     }
 }
 
@@ -289,7 +307,7 @@ pub struct OpenCLDataOutputTransformer {
     word_len: u32,
     input_elem_len: usize,
     output_elem_len: usize,
-    bit_mapping: Buffer<u32>,
+    bit_mapping: Arc<Buffer<u32>>,
     bit_mapping_len: usize,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
@@ -343,7 +361,7 @@ impl OpenCLDataOutputTransformer {
             word_len,
             input_elem_len: ((input_elem_len + 31) >> 5) << 5,
             output_elem_len,
-            bit_mapping: buffer,
+            bit_mapping: Arc::new(buffer),
             bit_mapping_len,
             context,
             cmd_queue,
@@ -423,7 +441,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
                 .set_arg(&cl_input_elem_len)
                 .set_arg(&cl_output_elem_len)
                 .set_arg(&cl_bit_mapping_len)
-                .set_arg(&self.bit_mapping)
+                .set_arg(self.bit_mapping.deref())
                 .set_arg(&output.buffer)
                 .set_arg(&input.buffer)
                 .set_local_work_size(self.group_len)
@@ -441,5 +459,22 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     }
     fn output_elem_len(&self) -> usize {
         self.input_elem_len
+    }
+}
+
+impl Clone for OpenCLDataOutputTransformer {
+    fn clone(&self) -> Self {
+        let program = get_output_tx_program(self.context.clone()).unwrap();
+        Self {
+            word_len: self.word_len,
+            input_elem_len: self.input_elem_len,
+            output_elem_len: self.output_elem_len,
+            bit_mapping: self.bit_mapping.clone(),
+            bit_mapping_len: self.bit_mapping_len,
+            context: self.context.clone(),
+            cmd_queue: self.cmd_queue.clone(),
+            kernel: Kernel::create(&program, "xxx_gate_output_transform").unwrap(),
+            group_len: self.group_len,
+        }
     }
 }

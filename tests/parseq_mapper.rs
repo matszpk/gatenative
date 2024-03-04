@@ -818,12 +818,7 @@ fn test_parseq_mapper_builder_and_exec_with_aggr_output() {
                                 ParSeqObject::Seq((i, exec)) => {
                                     let input =
                                         exec.new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
-                                    ParSeqObject::Seq(
-                                        Arc::get_mut(&mut seq_it[i])
-                                            .unwrap()
-                                            .transform(&input)
-                                            .unwrap(),
-                                    )
+                                    ParSeqObject::Seq(seq_it[i].transform(&input).unwrap())
                                 }
                             }));
                     },

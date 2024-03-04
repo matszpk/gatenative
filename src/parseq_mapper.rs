@@ -574,7 +574,7 @@ where
         F: FnMut(
             &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
             PIDT,
-            Vec<Arc<SIDT>>,
+            Vec<SIDT>,
         ),
     {
         let pidt = self
@@ -594,10 +594,10 @@ where
                         <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
                         <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
                     >,
-                >(Arc::new(
+                >(
                     s.input_transformer(input_elem_len, bit_mapping)
                         .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?,
-                ))
+                )
             })
             .collect::<Result<Vec<_>, _>>()?;
         f(self.executor, pidt, sidts);
@@ -620,7 +620,7 @@ where
         F: FnMut(
             &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>,
             PODT,
-            Vec<Arc<SODT>>,
+            Vec<SODT>,
         ),
     {
         let podt = self
@@ -640,10 +640,10 @@ where
                         <PE as DataTransforms<'a, PDR, PDW, PD, PIDT, PODT>>::ErrorType,
                         <SE as DataTransforms<'a, SDR, SDW, SD, SIDT, SODT>>::ErrorType,
                     >,
-                >(Arc::new(
+                >(
                     s.output_transformer(output_elem_len, bit_mapping)
                         .map_err(|e| ParSeqMapperTransformsError::SeqError(i, e))?,
-                ))
+                )
             })
             .collect::<Result<Vec<_>, _>>()?;
         f(self.executor, podt, sodts);

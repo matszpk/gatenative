@@ -6,6 +6,7 @@ use rayon::prelude::*;
 use std::convert::Infallible;
 
 /// convert input data into circuit input form.
+#[derive(Clone)]
 pub struct CPUDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -129,6 +130,7 @@ impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder
     }
 }
 
+#[derive(Clone)]
 pub struct CPUDataOutputTransformer {
     word_len: u32,
     input_elem_len: usize,
