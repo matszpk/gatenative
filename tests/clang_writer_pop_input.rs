@@ -806,4 +806,167 @@ kernel void gate_sys_testcirc(unsigned long n,
 }
 "##
     );
+
+    // other circuit
+    let circuit = Circuit::new(
+        6,
+        [
+            Gate::new_and(2, 3),
+            Gate::new_xor(2, 3),
+            Gate::new_nor(0, 3),
+            Gate::new_and(6, 7),
+            Gate::new_nimpl(6, 8),
+            Gate::new_xor(7, 9),
+            Gate::new_xor(10, 11),
+            Gate::new_nimpl(11, 1),
+        ],
+        [
+            (0, false),
+            (1, true),
+            (4, false),
+            (5, true),
+            (12, false),
+            (13, true),
+        ],
+    )
+    .unwrap();
+    // with aggr_output and input_map
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 2]))
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .aggr_output_code(Some("    output[0] = o0 ^ o1;")),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    void* output, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+#define i1 (v0)
+#define i3 (v1)
+#define i4 (v2)
+#define i5 (v3)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i3
+#define i4
+#define i5
+    v4 = elem_low_bit1;
+    v5 = (v4 & v1);
+    v6 = elem_low_bit0;
+    v7 = ~(v6 | v1);
+    v7 = (v5 & ~v7);
+    v1 = (v4 ^ v1);
+    v4 = (v5 & v1);
+    v1 = (v1 ^ v4);
+    v4 = (v7 ^ v1);
+    v1 = (v1 & ~v0);
+    v1 = ~v1;
+#define o0 (v6)
+#define o1 (v0)
+#define o2 (v2)
+#define o3 (v3)
+#define o4 (v4)
+#define o5 (v1)
+    output[0] = o0 ^ o1;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 2]))
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .aggr_output_code(Some("    output[0] = o0 ^ o1;")),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const __m128* input,
+    void* output, size_t idx) {
+    const __m128 zero = *((const __m128*)zero_value);
+    const __m128 one = *((const __m128*)one_value);
+    const __m128 elem_low_bit0 = *((const __m128*)elem_index_low_tbl);
+    const __m128 elem_low_bit1 = *((const __m128*)(elem_index_low_tbl + 4));
+    const __m128 elem_low_bit2 = *((const __m128*)(elem_index_low_tbl + 8));
+    const __m128 elem_low_bit3 = *((const __m128*)(elem_index_low_tbl + 12));
+    const __m128 elem_low_bit4 = *((const __m128*)(elem_index_low_tbl + 16));
+    const __m128 elem_low_bit5 = *((const __m128*)(elem_index_low_tbl + 20));
+    const __m128 elem_low_bit6 = *((const __m128*)(elem_index_low_tbl + 24));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+    __m128 v5;
+    __m128 v6;
+    __m128 v7;
+#define i1 (v0)
+#define i3 (v1)
+#define i4 (v2)
+#define i5 (v3)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i3
+#define i4
+#define i5
+    v4 = elem_low_bit1;
+    v5 = _mm_and_ps(v4, v1);
+    v6 = elem_low_bit0;
+    v7 = _mm_or_ps(v6, v1);
+    v7 = _mm_and_ps(v5, v7);
+    v1 = _mm_xor_ps(v4, v1);
+    v4 = _mm_and_ps(v5, v1);
+    v1 = _mm_xor_ps(v1, v4);
+    v4 = _mm_xor_ps(v7, v1);
+    v1 = _mm_andnot_ps(v0, v1);
+    v1 = _mm_xor_ps(v1, one);
+#define o0 (v6)
+#define o1 (v0)
+#define o2 (v2)
+#define o3 (v3)
+#define o4 (v4)
+#define o5 (v1)
+    output[0] = o0 ^ o1;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
 }
