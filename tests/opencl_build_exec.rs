@@ -968,6 +968,39 @@ xor(121,124) nimpl(14,125):9 xor(2,19) nor(117,120) nimpl(1,18) nor(128,129) xor
 nimpl(121,124) xor(131,132) and(133,15):10 xor(3,0) nor(127,130) nimpl(2,19) nor(136,137)
 xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
 
+const COMB_AGGR_OUTPUT_CODE: &str = r##"{
+    unsigned int i;
+    uint out[(TYPE_LEN >> 5)*12];
+    global uint* output_u32 = (global uint*)output;
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        uint out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
+        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+
 #[test]
 fn test_opencl_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = OpenCLBuilderConfig {
@@ -1017,38 +1050,7 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             .unwrap();
         let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
 
-        let aggr_output_code = r##"{
-    unsigned int i;
-    uint out[(TYPE_LEN >> 5)*12];
-    global uint* output_u32 = (global uint*)output;
-    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
-    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
-    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
-    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
-    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
-    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
-    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
-    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
-    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
-    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
-    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
-    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
-    for (i = 0; i < TYPE_LEN; i++) {
-        uint out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
-        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
-    }
-}"##;
+        let aggr_output_code = COMB_AGGR_OUTPUT_CODE;
         // 0
         builder.add_with_config(
             "comb_aggr_out",
