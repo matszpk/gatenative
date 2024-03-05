@@ -1356,6 +1356,19 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             circuit2_out[(x as usize) | ((old_x & 0xf0000) as usize)]
         })
         .collect::<Vec<_>>();
+    let expected_out_4 = (0..1u32 << 20)
+        .map(|x| {
+            let old_x = x;
+            let new_x = x >> 4;
+            let x = (new_x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((new_x << params[1]) & !params[2])
+                .0)
+                & 0xfff;
+            circuit2_out[((x << 4) as usize) | ((old_x & 0xf000f) as usize)]
+        })
+        .collect::<Vec<_>>();
 
     let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
@@ -1461,6 +1474,44 @@ fn test_cpu_builder_and_exec_with_pop_input() {
     SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
     SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
 }"##;
+        let pop_input_code_3 = r##"{
+    unsigned int i;
+    uint32_t inp[(TYPE_LEN >> 5)*12];
+    const uint32_t* params = (const uint32_t*)input;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*12; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = (idx*TYPE_LEN + i) >> 4;
+        const uint32_t y = (x*p0 + ((x << p1) & ~p2)) & 0xfff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+    }
+    SET_U32_ALL(i4, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 11*(TYPE_LEN>>5));
+}"##;
         builder.add_with_config(
             "comb_pop_in",
             circuit2.clone(),
@@ -1469,10 +1520,18 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                 .pop_input_len(Some(3)),
         );
         builder.add_with_config(
-            "comb_pop_in_2",
+            "comb_pop_in_1",
             circuit2.clone(),
             CodeConfig::new()
                 .elem_inputs(Some(&(16..20).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3)),
+        );
+        builder.add_with_config(
+            "comb_pop_in_2",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(16..20).collect::<Vec<_>>()))
                 .pop_input_code(Some(pop_input_code_2))
                 .pop_input_len(Some(3)),
         );
@@ -1481,7 +1540,8 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             circuit2.clone(),
             CodeConfig::new()
                 .arg_inputs(Some(&(16..20).collect::<Vec<_>>()))
-                .pop_input_code(Some(pop_input_code_2))
+                .elem_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_3))
                 .pop_input_len(Some(3)),
         );
         let mut execs = builder.build().unwrap();
@@ -1557,6 +1617,43 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             for (i, out) in output.iter().enumerate() {
                 assert_eq!(
                     expected_out_3[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+        }
+        // arg_inputs with elem_inputs
+        let mut ot = execs[3]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[3].new_data_from_slice(&params[..]);
+        for arg in 0..16 {
+            let output_circ = execs[3].execute(&input_circ, arg).unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_4[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+            // reuse
+            let mut output_circ = execs[3].new_data(output_circ.len());
+            execs[3]
+                .execute_reuse(&input_circ, arg, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_4[((arg << 16) as usize) + i],
                     *out,
                     "{} {}: {}",
                     config_num,
