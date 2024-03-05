@@ -552,7 +552,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         };
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if self.populated_input {
-            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+            (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
         } else if real_input_words != 0 {
             input.len() / real_input_words
         } else if self.elem_input_num != 0 {
@@ -596,7 +596,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let output_len = output.get().get().len();
         let num = if self.populated_input {
-            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+            (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
         } else if real_input_words != 0 {
             input.len() / real_input_words
         } else if self.elem_input_num != 0 {
