@@ -646,6 +646,55 @@ void gate_sys_func1(const __m128* input,
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE, false, false)
     );
+    assert_eq!(
+        r##"#include <xmmintrin.h>
+#include <stddef.h>
+#include <stdint.h>
+static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
+static const unsigned int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
+static const unsigned int elem_index_low_tbl[7*4] = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff
+};
+#define TYPE_LEN (128)
+#define TYPE_NAME __m128i
+#define GET_U32(D,X,I) { uint32_t temp[4]; \
+    _mm_storeu_si128((__m128i*)temp, (X)); \
+    (D) = temp[(I)]; \
+}
+#define GET_U32_ALL(D,X) { _mm_storeu_si128((__m128i*)(D), (X)); }
+void gate_sys_func1(const __m128i* input,
+    __m128i* output, size_t idx) {
+    const __m128i one = *((const __m128i*)one_value);
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = _mm_and_si128(v0, v1);
+    v1 = _mm_or_si128(v2, v1);
+    v3 = _mm_xor_si128(v0, v1);
+    v3 = _mm_xor_si128(_mm_and_si128(v0, v1), one);
+    output[1] = _mm_xor_si128(v3, one);
+    v2 = _mm_xor_si128(_mm_or_si128(v2, v3), one);
+    v4 = _mm_xor_si128(_mm_xor_si128(v1, v3), one);
+    v4 = _mm_and_si128(v4, _mm_xor_si128(v1, one));
+    v4 = _mm_xor_si128(v4, _mm_xor_si128(v1, one));
+    v4 = _mm_andnot_si128(v4, v2);
+    output[0] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_INTEL_SSE2, false, false)
+    );
     // with not
     assert_eq!(
         r##"#include <xmmintrin.h>
@@ -750,6 +799,61 @@ void gate_sys_func1(const __m256* input,
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX, false, false)
+    );
+    assert_eq!(
+        r##"#include <immintrin.h>
+#include <stddef.h>
+#include <stdint.h>
+static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+static const unsigned int one_value[8] __attribute__((aligned(32))) = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};
+static const unsigned int elem_index_low_tbl[8*8]
+__attribute__((aligned(32))) = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};
+#define TYPE_LEN (256)
+#define TYPE_NAME __m256i
+#define GET_U32(D,X,I) { uint32_t temp[8]; \
+    _mm256_storeu_si256((__m256i*)temp, (X)); \
+    (D) = temp[(I)]; \
+}
+#define GET_U32_ALL(D,X) { _mm256_storeu_si256((__m256i*)(D), (X)); }
+void gate_sys_func1(const __m256i* input,
+    __m256i* output, size_t idx) {
+    const __m256i one = *((const __m256i*)one_value);
+    __m256i v0;
+    __m256i v1;
+    __m256i v2;
+    __m256i v3;
+    __m256i v4;
+    v2 = _mm256_loadu_si256((const float*)&input[0]);
+    v1 = _mm256_loadu_si256((const float*)&input[1]);
+    v0 = _mm256_loadu_si256((const float*)&input[2]);
+    v2 = _mm256_and_si256(v0, v1);
+    v1 = _mm256_or_si256(v2, v1);
+    v3 = _mm256_xor_si256(v0, v1);
+    v3 = _mm256_xor_si256(_mm256_and_si256(v0, v1), one);
+    _mm256_storeu_si256((float*)&output[1], _mm256_xor_si256(v3, one));
+    v2 = _mm256_xor_si256(_mm256_or_si256(v2, v3), one);
+    v4 = _mm256_xor_si256(_mm256_xor_si256(v1, v3), one);
+    v4 = _mm256_and_si256(v4, _mm256_xor_si256(v1, one));
+    v4 = _mm256_xor_si256(v4, _mm256_xor_si256(v1, one));
+    v4 = _mm256_andnot_si256(v4, v2);
+    _mm256_storeu_si256((float*)&output[0], v4);
+}
+"##,
+        write_test_code(&CLANG_WRITER_INTEL_AVX2, false, false)
     );
     assert_eq!(
         r##"#include <immintrin.h>

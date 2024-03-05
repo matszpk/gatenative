@@ -344,6 +344,70 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     get_u32_all_op: "{ _mm_storeu_ps((float*)(D), (X)); }",
 };
 
+pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    init_local_index: None,
+    buffer_shift: false,
+    include_name: Some("xmmintrin.h"),
+    include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
+    type_name: "__m128i",
+    type_bit_len: 128,
+    arg_modifier: None,
+    and_op: "_mm_and_si128({}, {})",
+    or_op: "_mm_or_si128({}, {})",
+    xor_op: "_mm_xor_si128({}, {})",
+    impl_op: None,
+    nimpl_op: Some("_mm_andnot_si128({1}, {0})"),
+    not_op: None,
+    zero_value: (
+        r##"static const unsigned int zero_value[4] = { 0, 0, 0, 0 };"##,
+        "*((const __m128i*)zero_value)",
+    ),
+    one_value: (
+        r##"static const unsigned int one_value[4] = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
+        "*((const __m128i*)one_value)",
+    ),
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4] = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff
+};"##,
+        low_bits_defs: [
+            "*((const __m128i*)elem_index_low_tbl)",
+            "*((const __m128i*)(elem_index_low_tbl + 4))",
+            "*((const __m128i*)(elem_index_low_tbl + 8))",
+            "*((const __m128i*)(elem_index_low_tbl + 12))",
+            "*((const __m128i*)(elem_index_low_tbl + 16))",
+            "*((const __m128i*)(elem_index_low_tbl + 20))",
+            "*((const __m128i*)(elem_index_low_tbl + 24))",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: None,
+    store_op: None,
+    get_u32_op: r##"{ uint32_t temp[4]; \
+    _mm_storeu_si128((__m128i*)temp, (X)); \
+    (D) = temp[(I)]; \
+}"##,
+    get_u32_all_op: "{ _mm_storeu_si128((__m128i*)(D), (X)); }",
+};
+
 pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -412,6 +476,76 @@ __attribute__((aligned(32))) = {
     (D) = temp[(I)]; \
 }"##,
     get_u32_all_op: "{ _mm256_storeu_ps((float*)(D), (X)); }",
+};
+
+pub const CLANG_WRITER_INTEL_AVX2: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    init_local_index: None,
+    buffer_shift: false,
+    include_name: Some("immintrin.h"),
+    include_name_2: Some("stddef.h"),
+    include_name_3: Some("stdint.h"),
+    type_name: "__m256i",
+    type_bit_len: 256,
+    arg_modifier: None,
+    and_op: "_mm256_and_si256({}, {})",
+    or_op: "_mm256_or_si256({}, {})",
+    xor_op: "_mm256_xor_si256({}, {})",
+    impl_op: None,
+    nimpl_op: Some("_mm256_andnot_si256({1}, {0})"),
+    not_op: None,
+    zero_value: (
+        r##"static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
+    0, 0, 0, 0, 0, 0, 0, 0
+};"##,
+        "*((const __m256i*)zero_value)",
+    ),
+    one_value: (
+        r##"static const unsigned int one_value[8] __attribute__((aligned(32))) = {
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+    0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};"##,
+        "*((const __m256i*)one_value)",
+    ),
+    elem_index: ElemIndexConfig {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[8*8]
+__attribute__((aligned(32))) = {
+    0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
+    0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
+    0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
+    0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00, 0xff00ff00,
+    0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000, 0xffff0000,
+    0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff,
+    0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
+};"##,
+        low_bits_defs: [
+            "*((const __m256i*)elem_index_low_tbl)",
+            "*((const __m256i*)(elem_index_low_tbl + 8))",
+            "*((const __m256i*)(elem_index_low_tbl + 16))",
+            "*((const __m256i*)(elem_index_low_tbl + 24))",
+            "*((const __m256i*)(elem_index_low_tbl + 32))",
+            "*((const __m256i*)(elem_index_low_tbl + 40))",
+            "*((const __m256i*)(elem_index_low_tbl + 48))",
+            "*((const __m256i*)(elem_index_low_tbl + 56))",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: Some("_mm256_loadu_si256((const float*)&{})"),
+    store_op: Some("_mm256_storeu_si256((float*)&{}, {})"),
+    get_u32_op: r##"{ uint32_t temp[8]; \
+    _mm256_storeu_si256((__m256i*)temp, (X)); \
+    (D) = temp[(I)]; \
+}"##,
+    get_u32_all_op: "{ _mm256_storeu_si256((__m256i*)(D), (X)); }",
 };
 
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {

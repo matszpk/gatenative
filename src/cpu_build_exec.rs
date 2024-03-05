@@ -40,7 +40,9 @@ pub enum CPUExtension {
     NoExtension,
     IntelMMX,
     IntelSSE,
+    IntelSSE2,
     IntelAVX,
+    IntelAVX2,
     IntelAVX512,
     ARMNEON,
 }
@@ -54,8 +56,12 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
         if line.starts_with("flags") || line.starts_with("Features") {
             if line.find(" avx512").is_some() {
                 return Ok(CPUExtension::IntelAVX512);
+            } else if line.find(" avx2").is_some() {
+                return Ok(CPUExtension::IntelAVX2);
             } else if line.find(" avx").is_some() {
                 return Ok(CPUExtension::IntelAVX);
+            } else if line.find(" sse2").is_some() {
+                return Ok(CPUExtension::IntelSSE2);
             } else if line.find(" sse").is_some() {
                 return Ok(CPUExtension::IntelSSE);
             } else if line.find(" mmx").is_some() {
@@ -117,9 +123,19 @@ const BUILD_CONFIG_INTEL_SSE: BuildConfig = BuildConfig {
     extra_flags: &["-msse"],
 };
 
+const BUILD_CONFIG_INTEL_SSE2: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_SSE2,
+    extra_flags: &["-msse2"],
+};
+
 const BUILD_CONFIG_INTEL_AVX: BuildConfig = BuildConfig {
     writer_config: &CLANG_WRITER_INTEL_AVX,
     extra_flags: &["-mavx"],
+};
+
+const BUILD_CONFIG_INTEL_AVX2: BuildConfig = BuildConfig {
+    writer_config: &CLANG_WRITER_INTEL_AVX2,
+    extra_flags: &["-mavx2"],
 };
 
 const BUILD_CONFIG_INTEL_AVX512: BuildConfig = BuildConfig {
@@ -146,7 +162,9 @@ fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
         }
         CPUExtension::IntelMMX => BUILD_CONFIG_INTEL_MMX,
         CPUExtension::IntelSSE => BUILD_CONFIG_INTEL_SSE,
+        CPUExtension::IntelSSE2 => BUILD_CONFIG_INTEL_SSE2,
         CPUExtension::IntelAVX => BUILD_CONFIG_INTEL_AVX,
+        CPUExtension::IntelAVX2 => BUILD_CONFIG_INTEL_AVX2,
         CPUExtension::IntelAVX512 => BUILD_CONFIG_INTEL_AVX512,
         CPUExtension::ARMNEON => BUILD_CONFIG_ARM_NEON,
     }
@@ -950,12 +968,23 @@ mod tests {
         );
         assert_eq!(
             CPUExtension::IntelSSE,
+            detect_cpu_from_file(&mut BufReader::new(&b"flags\t\t: fpu mmx sse"[..])).unwrap()
+        );
+        assert_eq!(
+            CPUExtension::IntelSSE2,
             detect_cpu_from_file(&mut BufReader::new(&b"flags\t\t: fpu mmx sse sse2"[..])).unwrap()
         );
         assert_eq!(
             CPUExtension::IntelAVX,
             detect_cpu_from_file(&mut BufReader::new(&b"flags\t\t: fpu mmx sse sse2 avx"[..]))
                 .unwrap()
+        );
+        assert_eq!(
+            CPUExtension::IntelAVX2,
+            detect_cpu_from_file(&mut BufReader::new(
+                &b"flags\t\t: fpu mmx sse sse2 avx avx2"[..]
+            ))
+            .unwrap()
         );
         assert_eq!(
             CPUExtension::IntelAVX512,

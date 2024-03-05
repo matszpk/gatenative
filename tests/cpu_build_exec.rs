@@ -259,17 +259,34 @@ fn get_builder_configs() -> Vec<(
     configs.push((NoExtension, &CLANG_WRITER_U64, None));
 
     if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX2
         || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE2
         || *CPU_EXTENSION == IntelSSE
         || *CPU_EXTENSION == IntelMMX
     {
         configs.push((IntelMMX, &CLANG_WRITER_INTEL_MMX, None));
     }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX || *CPU_EXTENSION == IntelSSE {
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX2
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE2
+        || *CPU_EXTENSION == IntelSSE
+    {
         configs.push((IntelSSE, &CLANG_WRITER_INTEL_SSE, None));
     }
-    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX {
+    if *CPU_EXTENSION == IntelAVX512
+        || *CPU_EXTENSION == IntelAVX2
+        || *CPU_EXTENSION == IntelAVX
+        || *CPU_EXTENSION == IntelSSE2
+    {
+        configs.push((IntelSSE2, &CLANG_WRITER_INTEL_SSE2, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX2 || *CPU_EXTENSION == IntelAVX {
         configs.push((IntelAVX, &CLANG_WRITER_INTEL_AVX, None));
+    }
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX2 {
+        configs.push((IntelAVX2, &CLANG_WRITER_INTEL_AVX2, None));
     }
     if *CPU_EXTENSION == IntelAVX512 {
         configs.push((IntelAVX512, &CLANG_WRITER_INTEL_AVX512, None));
