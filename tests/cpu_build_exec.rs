@@ -919,6 +919,39 @@ xor(121,124) nimpl(14,125):9 xor(2,19) nor(117,120) nimpl(1,18) nor(128,129) xor
 nimpl(121,124) xor(131,132) and(133,15):10 xor(3,0) nor(127,130) nimpl(2,19) nor(136,137)
 xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
 
+const COMB_AGGR_OUTPUT_CODE: &str = r##"{
+    unsigned int i;
+    uint32_t out[(TYPE_LEN >> 5)*12];
+    uint32_t* output_u32 = (uint32_t*)output;
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
+        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+
 #[test]
 fn test_cpu_builder_and_exec_with_aggr_output() {
     let configs = get_builder_configs();
@@ -951,38 +984,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
             .unwrap();
         let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
 
-        let aggr_output_code = r##"{
-    unsigned int i;
-    uint32_t out[(TYPE_LEN >> 5)*12];
-    uint32_t* output_u32 = (uint32_t*)output;
-    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
-    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
-    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
-    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
-    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
-    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
-    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
-    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
-    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
-    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
-    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
-    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
-    for (i = 0; i < TYPE_LEN; i++) {
-        uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
-            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
-        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
-    }
-}"##;
+        let aggr_output_code = COMB_AGGR_OUTPUT_CODE;
         // 0
         builder.add_with_config(
             "comb_aggr_out",
@@ -1512,6 +1514,60 @@ fn test_cpu_builder_and_exec_with_pop_input() {
     SET_U32_ALL(i14, inp + 10*(TYPE_LEN>>5));
     SET_U32_ALL(i15, inp + 11*(TYPE_LEN>>5));
 }"##;
+        let pop_input_code_aggr = r##"{
+    unsigned int i;
+    uint32_t inp[(TYPE_LEN >> 5)*20];
+    const uint32_t* params = (const uint32_t*)input;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*20; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        const uint32_t y = ((x*p0 & 0xea1b) + ((x << p1) & ~p2)) & 0xfffff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*12] |= (((y >> 12)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*13] |= (((y >> 13)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*14] |= (((y >> 14)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*15] |= (((y >> 15)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*16] |= (((y >> 16)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*17] |= (((y >> 17)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*18] |= (((y >> 18)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*19] |= (((y >> 19)&1) << (i&31));
+    }
+    SET_U32_ALL(i0, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i1, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i2, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i3, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i4, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 11*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 12*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 13*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
+    SET_U32_ALL(i16, inp + 16*(TYPE_LEN>>5));
+    SET_U32_ALL(i17, inp + 17*(TYPE_LEN>>5));
+    SET_U32_ALL(i18, inp + 18*(TYPE_LEN>>5));
+    SET_U32_ALL(i19, inp + 19*(TYPE_LEN>>5));
+}"##;
         builder.add_with_config(
             "comb_pop_in",
             circuit2.clone(),
@@ -1543,6 +1599,16 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                 .elem_inputs(Some(&(0..4).collect::<Vec<_>>()))
                 .pop_input_code(Some(pop_input_code_3))
                 .pop_input_len(Some(3)),
+        );
+        // 4
+        builder.add_with_config(
+            "comb_pop_in_aggr_out",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code_aggr))
+                .pop_input_len(Some(3))
+                .aggr_output_code(Some(COMB_AGGR_OUTPUT_CODE))
+                .aggr_output_len(Some(128)),
         );
         let mut execs = builder.build().unwrap();
 
@@ -1661,6 +1727,34 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                     i
                 );
             }
+        }
+        // with aggr_output
+        let epxected_out_aggr = [
+            4294967295, 4294967295, 4294967295, 2684354559, 4294967295, 1073692671, 4294934527,
+            2612510719, 4294967295, 2139095039, 2147483647, 1073725439, 2147467263, 1040130047,
+            2145097599, 1058510719, 4294967295, 3219128191, 1610612735, 3017801599, 1073709055,
+            2550112095, 1064779775, 3084098399, 4286578687, 966524767, 2139092991, 563320671,
+            796868607, 857446231, 1062671351, 293606751, 4294967295, 4294967295, 4286578687,
+            297762815, 1073692671, 3212820351, 2139060223, 299188147, 4253024255, 2000682879,
+            2139092991, 1096794047, 1040138239, 1065295743, 2136150911, 21042999, 2147483647,
+            3084869503, 1535115263, 295696223, 536821759, 2541723487, 930559999, 294719253,
+            4286562303, 698081119, 1870100479, 26448735, 224083903, 589005591, 605229879,
+            293601299, 4294967295, 2139095039, 939524095, 1472184319, 1069498367, 2549858303,
+            4292870111, 2337774999, 4294967295, 2105540607, 931133439, 2009020407, 1069498367,
+            932385791, 2144437215, 257394007, 2684352511, 926908287, 931133439, 860829567,
+            2146910207, 856887135, 1331525591, 71505495, 394231807, 658220895, 897398655,
+            286463839, 1435962367, 622002975, 253563231, 67244119, 536870911, 528482303, 868204543,
+            1360213951, 2012692479, 1058478463, 2199903583, 5308743, 366968831, 225653759,
+            1906835263, 286491455, 934478847, 756489083, 190415135, 1118471, 2684354559, 125261695,
+            1665094655, 286508831, 1400846335, 38996823, 155802947, 268439623, 91183103, 33625423,
+            557139455, 286425361, 1444348799, 621937239, 155783451, 4167,
+        ];
+
+        let input_circ = execs[4].new_data_from_slice(&params[..]);
+        let output = execs[4].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(epxected_out_aggr.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(epxected_out_aggr[i], *out, "{}: {}", config_num, i);
         }
     }
 }
