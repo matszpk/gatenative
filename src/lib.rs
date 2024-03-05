@@ -131,6 +131,9 @@ impl<'a> CodeConfig<'a> {
 pub fn default_aggr_output_len(word_len: u32) -> usize {
     (word_len as usize) >> 5
 }
+pub fn default_pop_input_len(word_len: u32) -> usize {
+    (word_len as usize) >> 5
+}
 
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
@@ -382,13 +385,17 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     fn word_len(&self) -> u32;
 
+    fn input_is_populated(&self) -> bool;
     fn output_is_aggregated(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
+    fn pop_input_len(&self) -> Option<usize>;
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
-        if self.real_input_len() != 0 {
+        if self.input_is_populated() {
+            self.pop_input_len().unwrap()
+        } else if self.real_input_len() != 0 {
             assert_eq!(elem_num % (self.word_len() as usize), 0);
             (elem_num * self.real_input_len()) >> 5
         } else {
@@ -544,8 +551,12 @@ where
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
-        assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.real_input_len()) >> 5
+        if self.input_is_populated() {
+            self.pop_input_len().unwrap()
+        } else {
+            assert_eq!(elem_num % (self.word_len() as usize), 0);
+            (elem_num * self.real_input_len()) >> 5
+        }
     }
 
     // in 32-bit words
@@ -566,8 +577,10 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+    fn input_is_populated(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
+    fn pop_input_len(&self) -> Option<usize>;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -701,8 +714,12 @@ where
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
-        assert_eq!(elem_num % (self.word_len() as usize), 0);
-        (elem_num * self.real_input_len()) >> 5
+        if self.input_is_populated() {
+            self.pop_input_len().unwrap()
+        } else {
+            assert_eq!(elem_num % (self.word_len() as usize), 0);
+            (elem_num * self.real_input_len()) >> 5
+        }
     }
 
     // in 32-bit words
@@ -723,8 +740,10 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+    fn input_is_populated(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
+    fn pop_input_len(&self) -> Option<usize>;
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

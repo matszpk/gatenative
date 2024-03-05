@@ -343,13 +343,15 @@ pub struct CPUExecutor {
     real_input_len: usize,
     real_output_len: usize,
     words_per_real_word: usize,
-    have_arg_inputs: bool,
+    arg_input_len: Option<usize>,
     elem_input_num: usize,
     library: Arc<Library>,
     sym_name: String,
     single_buffer: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
+    populated_input: bool,
+    pop_input_len: Option<usize>,
     // parallel chunk length
     parallel: Option<usize>,
 }
@@ -366,7 +368,7 @@ impl CPUExecutor {
     ) -> Result<(), libloading::Error> {
         if let Some(par_chunk_len) = self.parallel {
             // parallel code
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
                 if self.aggregated_output {
@@ -447,7 +449,7 @@ impl CPUExecutor {
             }
         } else {
             // non-parallel code
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
                 if self.aggregated_output {
@@ -525,7 +527,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     }
 
     fn elem_count(&self, input_len: usize) -> usize {
-        if self.real_input_len != 0 {
+        if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0))
+        } else if self.real_input_len != 0 {
             (input_len / self.real_input_len) << 5
         } else if self.elem_input_num != 0 {
             1 << self.elem_input_num
@@ -543,7 +547,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let input = input_r.get();
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+        } else if real_input_words != 0 {
             input.len() / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word
@@ -581,7 +587,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let output_len = output.get().get().len();
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+        } else if real_input_words != 0 {
             input.len() / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word
@@ -623,7 +631,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         assert!(output_len >= real_output_words * num);
         if let Some(par_chunk_len) = self.parallel {
             // parallel code
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
                 output
@@ -666,7 +674,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             }
         } else {
             // non-parallel code
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, usize)> =
                     unsafe { self.library.get(self.sym_name.as_bytes())? };
                 for i in 0..num {
@@ -730,6 +738,16 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn aggr_output_len(&self) -> Option<usize> {
         self.aggr_output_len
     }
+
+    #[inline]
+    fn input_is_populated(&self) -> bool {
+        self.populated_input
+    }
+
+    #[inline]
+    fn pop_input_len(&self) -> Option<usize> {
+        self.pop_input_len
+    }
 }
 
 impl<'a>
@@ -783,6 +801,8 @@ struct CircuitEntry {
     single_buffer: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
+    populated_input: bool,
+    pop_input_len: Option<usize>,
 }
 
 pub struct CPUBuilder<'a> {
@@ -876,6 +896,16 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             } else {
                 None
             },
+            populated_input: code_config.pop_input_code.is_some(),
+            pop_input_len: if code_config.pop_input_code.is_some() {
+                Some(
+                    code_config
+                        .pop_input_len
+                        .unwrap_or(default_pop_input_len(self.word_len())),
+                )
+            } else {
+                None
+            },
         });
         generate_code_with_config(
             &mut self.writer,
@@ -908,13 +938,15 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                         .map(|x| x.1)
                         .unwrap_or(e.output_len),
                     words_per_real_word,
-                    have_arg_inputs: e.arg_input_len.is_some(),
+                    arg_input_len: e.arg_input_len,
                     elem_input_num: e.elem_input_len.unwrap_or(0),
                     library: lib,
                     sym_name: e.sym_name.clone(),
                     single_buffer: e.single_buffer,
                     aggregated_output: e.aggregated_output,
                     aggr_output_len: e.aggr_output_len,
+                    populated_input: e.populated_input,
+                    pop_input_len: e.pop_input_len,
                     parallel: self.parallel,
                 }
             })

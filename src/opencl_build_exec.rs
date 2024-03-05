@@ -224,7 +224,7 @@ pub struct OpenCLExecutor {
     real_input_len: usize,
     real_output_len: usize,
     words_per_real_word: usize,
-    have_arg_inputs: bool,
+    arg_input_len: Option<usize>,
     elem_input_num: usize,
     context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
@@ -235,6 +235,8 @@ pub struct OpenCLExecutor {
     group_vec: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
+    populated_input: bool,
+    pop_input_len: Option<usize>,
 }
 
 impl OpenCLExecutor {
@@ -268,7 +270,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     }
 
     fn elem_count(&self, input_len: usize) -> usize {
-        if self.real_input_len != 0 {
+        if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0))
+        } else if self.real_input_len != 0 {
             (input_len / self.real_input_len) << 5
         } else if self.elem_input_num != 0 {
             1 << self.elem_input_num
@@ -284,7 +288,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     ) -> Result<OpenCLDataHolder, Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+        } else if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word
@@ -313,7 +319,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             num
         };
         unsafe {
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&cl_input_start)
@@ -354,7 +360,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let output_len = output.get().get().len();
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
+        } else if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word
@@ -376,7 +384,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             num
         };
         unsafe {
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&cl_input_start)
@@ -432,7 +440,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             num
         };
         unsafe {
-            if self.have_arg_inputs {
+            if self.arg_input_len.is_some() {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&cl_output_start)
@@ -500,7 +508,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             real_input_len: self.real_input_len,
             real_output_len: self.real_output_len,
             words_per_real_word: self.words_per_real_word,
-            have_arg_inputs: self.have_arg_inputs,
+            arg_input_len: self.arg_input_len,
             context: self.context.clone(),
             #[allow(deprecated)]
             cmd_queue: Arc::new(unsafe { CommandQueue::create(&self.context, device, 0).unwrap() }),
@@ -512,6 +520,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             elem_input_num: self.elem_input_num,
             aggregated_output: self.aggregated_output,
             aggr_output_len: self.aggr_output_len,
+            populated_input: self.populated_input,
+            pop_input_len: self.pop_input_len,
         })
     }
 
@@ -533,6 +543,16 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.aggr_output_len
+    }
+
+    #[inline]
+    fn input_is_populated(&self) -> bool {
+        self.populated_input
+    }
+
+    #[inline]
+    fn pop_input_len(&self) -> Option<usize> {
+        self.pop_input_len
     }
 }
 
@@ -630,6 +650,8 @@ struct CircuitEntry {
     single_buffer: bool,
     aggregated_output: bool,
     aggr_output_len: Option<usize>,
+    populated_input: bool,
+    pop_input_len: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -736,6 +758,16 @@ impl<'b, 'a>
             } else {
                 None
             },
+            populated_input: code_config.pop_input_code.is_some(),
+            pop_input_len: if code_config.pop_input_code.is_some() {
+                Some(
+                    code_config
+                        .pop_input_len
+                        .unwrap_or(default_pop_input_len(self.word_len())),
+                )
+            } else {
+                None
+            },
         });
         generate_code_with_config(
             &mut self.writer,
@@ -772,7 +804,7 @@ impl<'b, 'a>
                         .map(|x| x.1)
                         .unwrap_or(e.output_len),
                     words_per_real_word,
-                    have_arg_inputs: e.arg_input_len.is_some(),
+                    arg_input_len: e.arg_input_len,
                     elem_input_num: e.elem_input_len.unwrap_or(0),
                     context: self.context.clone(),
                     cmd_queue: cmd_queue.clone(),
@@ -783,6 +815,8 @@ impl<'b, 'a>
                     group_vec: self.group_vec,
                     aggregated_output: e.aggregated_output,
                     aggr_output_len: e.aggr_output_len,
+                    populated_input: e.populated_input,
+                    pop_input_len: e.pop_input_len,
                 })
             })
             .collect::<Result<Vec<_>, _>>()

@@ -482,6 +482,17 @@ where
     pub fn output_is_aggregated(&self) -> bool {
         self.par.output_is_aggregated()
     }
+    #[inline]
+    pub fn input_is_populated(&self) -> bool {
+        self.par.input_is_populated()
+    }
+    #[inline]
+    pub fn pop_input_len(&self, sel: ParSeqSelection) -> Option<usize> {
+        match sel {
+            ParSeqSelection::Par => self.par.pop_input_len(),
+            ParSeqSelection::Seq(i) => self.seqs[i].lock().unwrap().pop_input_len(),
+        }
+    }
 }
 
 #[derive(Error, Debug)]

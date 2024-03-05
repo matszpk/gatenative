@@ -74,7 +74,9 @@ where
         if exec_len != 1 {
             let input_len = input.len();
             let input_chunk_len = self.real_input_len();
-            let num = if input_chunk_len != 0 {
+            let num = if self.input_is_populated() {
+                self.elem_count(1) >> 5
+            } else if input_chunk_len != 0 {
                 input_len / input_chunk_len
             } else if self.elem_input_num != 0 {
                 1 << (self.elem_input_num - 5)
@@ -114,7 +116,9 @@ where
             let output_len = output.len();
             let input_chunk_len = self.real_input_len();
             let output_chunk_len = self.real_output_len();
-            let num = if input_chunk_len != 0 {
+            let num = if self.input_is_populated() {
+                self.elem_count(1) >> 5
+            } else if input_chunk_len != 0 {
                 input_len / input_chunk_len
             } else if self.elem_input_num != 0 {
                 1 << (self.elem_input_num - 5)
@@ -223,6 +227,16 @@ where
     #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.executors.last().unwrap().aggr_output_len()
+    }
+
+    #[inline]
+    fn input_is_populated(&self) -> bool {
+        self.executors.first().unwrap().input_is_populated()
+    }
+
+    #[inline]
+    fn pop_input_len(&self) -> Option<usize> {
+        self.executors.first().unwrap().pop_input_len()
     }
 }
 

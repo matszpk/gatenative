@@ -96,6 +96,16 @@ where
     fn aggr_output_len(&self) -> Option<usize> {
         self.executor.aggr_output_len()
     }
+
+    #[inline]
+    fn input_is_populated(&self) -> bool {
+        self.executor.input_is_populated()
+    }
+
+    #[inline]
+    fn pop_input_len(&self) -> Option<usize> {
+        self.executor.pop_input_len()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
@@ -362,6 +372,16 @@ where
     #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.executor.aggr_output_len()
+    }
+
+    #[inline]
+    fn input_is_populated(&self) -> bool {
+        self.executor.input_is_populated()
+    }
+
+    #[inline]
+    fn pop_input_len(&self) -> Option<usize> {
+        self.executor.pop_input_len()
     }
 }
 
