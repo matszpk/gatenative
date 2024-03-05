@@ -1406,6 +1406,16 @@ fn test_cpu_builder_and_exec_with_pop_input() {
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
         }
+        // reuse
+        let mut output_circ = execs[0].new_data(output_circ.len());
+        execs[0]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
     }
 }
 
