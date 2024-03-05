@@ -1344,6 +1344,18 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             circuit2_out[(x as usize) | (((old_x & 15) << 16) as usize)]
         })
         .collect::<Vec<_>>();
+    let expected_out_3 = (0..1u32 << 20)
+        .map(|x| {
+            let old_x = x;
+            let x = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            circuit2_out[(x as usize) | ((old_x & 0xf0000) as usize)]
+        })
+        .collect::<Vec<_>>();
 
     let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
@@ -1464,6 +1476,14 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                 .pop_input_code(Some(pop_input_code_2))
                 .pop_input_len(Some(3)),
         );
+        builder.add_with_config(
+            "comb_pop_in_3",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(16..20).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3)),
+        );
         let mut execs = builder.build().unwrap();
 
         // tests
@@ -1507,6 +1527,43 @@ fn test_cpu_builder_and_exec_with_pop_input() {
         assert_eq!(1 << 20, output.len());
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
+        }
+        // arg_inputs
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[2].new_data_from_slice(&params[..]);
+        for arg in 0..16 {
+            let output_circ = execs[2].execute(&input_circ, arg).unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_3[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+            // reuse
+            let mut output_circ = execs[2].new_data(output_circ.len());
+            execs[2]
+                .execute_reuse(&input_circ, arg, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_3[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
         }
     }
 }
