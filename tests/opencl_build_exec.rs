@@ -1376,6 +1376,481 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
 }
 
 #[test]
+fn test_opencl_builder_and_exec_with_pop_input() {
+    let no_opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: false,
+        group_vec: false,
+        group_len: None,
+    };
+    let opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: true,
+        group_vec: false,
+        group_len: None,
+    };
+
+    let device = Device::new(
+        *get_all_devices(CL_DEVICE_TYPE_GPU)
+            .unwrap()
+            .get(0)
+            .expect("No device in platform"),
+    );
+
+    let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
+    let circuit2_out = (0..1u32 << 20)
+        .map(|x| {
+            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+    let params = [7, 3, 19];
+    let expected_out = (0..1u32 << 20)
+        .map(|x| {
+            let x = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xfffff;
+            circuit2_out[x as usize]
+        })
+        .collect::<Vec<_>>();
+    let expected_out_2 = (0..1u32 << 20)
+        .map(|x| {
+            let old_x = x;
+            let x = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            circuit2_out[(x as usize) | (((old_x & 15) << 16) as usize)]
+        })
+        .collect::<Vec<_>>();
+    let expected_out_3 = (0..1u32 << 20)
+        .map(|x| {
+            let old_x = x;
+            let x = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            circuit2_out[(x as usize) | ((old_x & 0xf0000) as usize)]
+        })
+        .collect::<Vec<_>>();
+    let expected_out_4 = (0..1u32 << 20)
+        .map(|x| {
+            let old_x = x;
+            let new_x = x >> 4;
+            let x = (new_x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((new_x << params[1]) & !params[2])
+                .0)
+                & 0xfff;
+            circuit2_out[((x << 4) as usize) | ((old_x & 0xf000f) as usize)]
+        })
+        .collect::<Vec<_>>();
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
+        let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
+        let pop_input_code = r##"{
+    unsigned int i;
+    uint inp[(TYPE_LEN >> 5)*20];
+    const global uint* params = (const global uint*)input;
+    const uint p0 = params[0];
+    const uint p1 = params[1];
+    const uint p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*20; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint x = idx*TYPE_LEN + i;
+        const uint y = (x*p0 + ((x << p1) & ~p2)) & 0xfffff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*12] |= (((y >> 12)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*13] |= (((y >> 13)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*14] |= (((y >> 14)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*15] |= (((y >> 15)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*16] |= (((y >> 16)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*17] |= (((y >> 17)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*18] |= (((y >> 18)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*19] |= (((y >> 19)&1) << (i&31));
+    }
+    SET_U32_ALL(i0, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i1, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i2, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i3, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i4, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 11*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 12*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 13*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
+    SET_U32_ALL(i16, inp + 16*(TYPE_LEN>>5));
+    SET_U32_ALL(i17, inp + 17*(TYPE_LEN>>5));
+    SET_U32_ALL(i18, inp + 18*(TYPE_LEN>>5));
+    SET_U32_ALL(i19, inp + 19*(TYPE_LEN>>5));
+}"##;
+        let pop_input_code_2 = r##"{
+    unsigned int i;
+    uint inp[(TYPE_LEN >> 5)*16];
+    const global uint* params = (const global uint*)input;
+    const uint p0 = params[0];
+    const uint p1 = params[1];
+    const uint p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*16; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint x = idx*TYPE_LEN + i;
+        const uint y = (x*p0 + ((x << p1) & ~p2)) & 0xffff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*12] |= (((y >> 12)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*13] |= (((y >> 13)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*14] |= (((y >> 14)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*15] |= (((y >> 15)&1) << (i&31));
+    }
+    SET_U32_ALL(i0, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i1, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i2, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i3, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i4, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 11*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 12*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 13*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
+}"##;
+        let pop_input_code_3 = r##"{
+    unsigned int i;
+    uint inp[(TYPE_LEN >> 5)*12];
+    const global uint* params = (const global uint*)input;
+    const uint p0 = params[0];
+    const uint p1 = params[1];
+    const uint p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*12; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint x = (idx*TYPE_LEN + i) >> 4;
+        const uint y = (x*p0 + ((x << p1) & ~p2)) & 0xfff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+    }
+    SET_U32_ALL(i4, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 11*(TYPE_LEN>>5));
+}"##;
+        let pop_input_code_aggr = r##"{
+    unsigned int i;
+    uint inp[(TYPE_LEN >> 5)*20];
+    const global uint* params = (const global uint*)input;
+    const uint p0 = params[0];
+    const uint p1 = params[1];
+    const uint p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*20; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint x = idx*TYPE_LEN + i;
+        const uint y = ((x*p0 & 0xea1b) + ((x << p1) & ~p2)) & 0xfffff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*12] |= (((y >> 12)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*13] |= (((y >> 13)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*14] |= (((y >> 14)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*15] |= (((y >> 15)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*16] |= (((y >> 16)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*17] |= (((y >> 17)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*18] |= (((y >> 18)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*19] |= (((y >> 19)&1) << (i&31));
+    }
+    SET_U32_ALL(i0, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i1, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i2, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i3, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i4, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 11*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 12*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 13*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
+    SET_U32_ALL(i16, inp + 16*(TYPE_LEN>>5));
+    SET_U32_ALL(i17, inp + 17*(TYPE_LEN>>5));
+    SET_U32_ALL(i18, inp + 18*(TYPE_LEN>>5));
+    SET_U32_ALL(i19, inp + 19*(TYPE_LEN>>5));
+}"##;
+        builder.add_with_config(
+            "comb_pop_in",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3)),
+        );
+        builder.add_with_config(
+            "comb_pop_in_1",
+            circuit2.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(16..20).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3)),
+        );
+        builder.add_with_config(
+            "comb_pop_in_2",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(16..20).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3)),
+        );
+        builder.add_with_config(
+            "comb_pop_in_3",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(16..20).collect::<Vec<_>>()))
+                .elem_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_3))
+                .pop_input_len(Some(3)),
+        );
+        // 4
+        builder.add_with_config(
+            "comb_pop_in_aggr_out",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code_aggr))
+                .pop_input_len(Some(3))
+                .aggr_output_code(Some(COMB_AGGR_OUTPUT_CODE))
+                .aggr_output_len(Some(128)),
+        );
+        let mut execs = builder.build().unwrap();
+
+        // tests
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[0].new_data_from_slice(&params[..]);
+        let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output_circ = execs[0].new_data(output_circ.len());
+        execs[0]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // tests
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[1].new_data_from_slice(&params[..]);
+        let output_circ = execs[1].execute(&input_circ, 0).unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output_circ = execs[1].new_data(output_circ.len());
+        execs[1]
+            .execute_reuse(&input_circ, 0, &mut output_circ)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
+        }
+        // arg_inputs
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[2].new_data_from_slice(&params[..]);
+        for arg in 0..16 {
+            let output_circ = execs[2].execute(&input_circ, arg).unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_3[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+            // reuse
+            let mut output_circ = execs[2].new_data(output_circ.len());
+            execs[2]
+                .execute_reuse(&input_circ, arg, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_3[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+        }
+        // arg_inputs with elem_inputs
+        let mut ot = execs[3]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[3].new_data_from_slice(&params[..]);
+        for arg in 0..16 {
+            let output_circ = execs[3].execute(&input_circ, arg).unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_4[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+            // reuse
+            let mut output_circ = execs[3].new_data(output_circ.len());
+            execs[3]
+                .execute_reuse(&input_circ, arg, &mut output_circ)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_4[((arg << 16) as usize) + i],
+                    *out,
+                    "{} {}: {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+        }
+        // with aggr_output
+        let epxected_out_aggr = [
+            4294967295, 4294967295, 4294967295, 2684354559, 4294967295, 1073692671, 4294934527,
+            2612510719, 4294967295, 2139095039, 2147483647, 1073725439, 2147467263, 1040130047,
+            2145097599, 1058510719, 4294967295, 3219128191, 1610612735, 3017801599, 1073709055,
+            2550112095, 1064779775, 3084098399, 4286578687, 966524767, 2139092991, 563320671,
+            796868607, 857446231, 1062671351, 293606751, 4294967295, 4294967295, 4286578687,
+            297762815, 1073692671, 3212820351, 2139060223, 299188147, 4253024255, 2000682879,
+            2139092991, 1096794047, 1040138239, 1065295743, 2136150911, 21042999, 2147483647,
+            3084869503, 1535115263, 295696223, 536821759, 2541723487, 930559999, 294719253,
+            4286562303, 698081119, 1870100479, 26448735, 224083903, 589005591, 605229879,
+            293601299, 4294967295, 2139095039, 939524095, 1472184319, 1069498367, 2549858303,
+            4292870111, 2337774999, 4294967295, 2105540607, 931133439, 2009020407, 1069498367,
+            932385791, 2144437215, 257394007, 2684352511, 926908287, 931133439, 860829567,
+            2146910207, 856887135, 1331525591, 71505495, 394231807, 658220895, 897398655,
+            286463839, 1435962367, 622002975, 253563231, 67244119, 536870911, 528482303, 868204543,
+            1360213951, 2012692479, 1058478463, 2199903583, 5308743, 366968831, 225653759,
+            1906835263, 286491455, 934478847, 756489083, 190415135, 1118471, 2684354559, 125261695,
+            1665094655, 286508831, 1400846335, 38996823, 155802947, 268439623, 91183103, 33625423,
+            557139455, 286425361, 1444348799, 621937239, 155783451, 4167,
+        ];
+
+        let input_circ = execs[4].new_data_from_slice(&params[..]);
+        let output = execs[4].execute(&input_circ, 0).unwrap().release();
+        assert_eq!(epxected_out_aggr.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(epxected_out_aggr[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut output = execs[4].new_data(output.len());
+        execs[4].execute_reuse(&input_circ, 0, &mut output).unwrap();
+        let output = output.release();
+        assert_eq!(epxected_out_aggr.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(epxected_out_aggr[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}
+
+#[test]
 fn test_opencl_data_holder() {
     let no_opt_neg_config = OpenCLBuilderConfig {
         optimize_negs: false,
