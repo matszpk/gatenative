@@ -409,6 +409,16 @@ where
                         code_config.aggr_output_len
                     } else {
                         None
+                    })
+                    .pop_input_code(if i == 0 {
+                        code_config.pop_input_code
+                    } else {
+                        None
+                    })
+                    .pop_input_len(if i == 0 {
+                        code_config.pop_input_len
+                    } else {
+                        None
                     }),
             );
         }
