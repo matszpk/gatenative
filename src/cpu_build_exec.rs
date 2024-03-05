@@ -545,7 +545,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     ) -> Result<CPUDataHolder, Self::ErrorType> {
         let input_r = input.get();
         let input = input_r.get();
-        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_input_words = if !self.populated_input {
+            self.real_input_len * self.words_per_real_word
+        } else {
+            0
+        };
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let num = if self.populated_input {
             1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5) / self.words_per_real_word
@@ -584,7 +588,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     ) -> Result<(), Self::ErrorType> {
         let input_r = input.get();
         let input = input_r.get();
-        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_input_words = if !self.populated_input {
+            self.real_input_len * self.words_per_real_word
+        } else {
+            0
+        };
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let output_len = output.get().get().len();
         let num = if self.populated_input {
