@@ -38,6 +38,8 @@ fn test_clang_writer_aggregate_output() {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_xor(const uint32_t* input,
     void* output, size_t idx) {
     uint32_t v0;
@@ -100,6 +102,12 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4]; \
+    _mm_storeu_ps((float*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm_loadu_ps((float*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm_loadu_ps((float*)(S)); }
 void gate_sys_xor(const __m128* input,
     void* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
@@ -433,6 +441,8 @@ void gate_sys_xor(const __m128* input,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -748,6 +758,8 @@ kernel void gate_sys_xor(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_xor(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,

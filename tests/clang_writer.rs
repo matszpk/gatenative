@@ -224,6 +224,8 @@ fn test_clang_writer() {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
@@ -257,6 +259,8 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
@@ -289,6 +293,8 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, size_t idx) {
     uint32_t v0;
@@ -320,6 +326,8 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
@@ -353,6 +361,8 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
@@ -386,6 +396,8 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(const uint32_t* input,
     uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
@@ -419,6 +431,9 @@ void gate_sys_func1(const uint32_t* input,
 #define TYPE_NAME uint64_t
 #define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
+#define SET_U32(X,S,I) { uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
+#define SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, size_t idx) {
     uint64_t v0;
@@ -450,6 +465,9 @@ void gate_sys_func1(const uint64_t* input,
 #define TYPE_NAME uint64_t
 #define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
+#define SET_U32(X,S,I) { uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
+#define SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, size_t idx) {
     uint64_t v0;
@@ -481,6 +499,9 @@ void gate_sys_func1(const uint64_t* input,
 #define TYPE_NAME uint64_t
 #define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
 #define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
+#define SET_U32(X,S,I) { uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
+#define SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 void gate_sys_func1(const uint64_t* input,
     uint64_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint64_t zero = 0ULL;
@@ -525,6 +546,12 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     (D)[0] = (uint32_t)(_m_to_int((X))); \
     (D)[1] = (uint32_t)(_m_to_int(_mm_srli_si64((X), 32))); \
 }
+#define SET_U32(X,S,I) { uint32_t temp[2]; \
+    *(__m64*)temp = (X); \
+    temp[(I)] = (S); \
+    (X) = *(__m64*)temp; \
+}
+#define SET_U32_ALL(X,S) { (X) = *(__m64*)(S); }
 void gate_sys_func1(const __m64* input,
     __m64* output, size_t idx) {
     const __m64 one = *((const __m64*)one_value);
@@ -570,6 +597,12 @@ static const unsigned int elem_index_low_tbl[6*2] = {
     (D)[0] = (uint32_t)(_m_to_int((X))); \
     (D)[1] = (uint32_t)(_m_to_int(_mm_srli_si64((X), 32))); \
 }
+#define SET_U32(X,S,I) { uint32_t temp[2]; \
+    *(__m64*)temp = (X); \
+    temp[(I)] = (S); \
+    (X) = *(__m64*)temp; \
+}
+#define SET_U32_ALL(X,S) { (X) = *(__m64*)(S); }
 void gate_sys_func1(const __m64* input,
     __m64* output, size_t idx) {
     const __m64 one = *((const __m64*)one_value);
@@ -620,6 +653,12 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4]; \
+    _mm_storeu_ps((float*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm_loadu_ps((float*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm_loadu_ps((float*)(S)); }
 void gate_sys_func1(const __m128* input,
     __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
@@ -669,6 +708,12 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_si128((__m128i*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4]; \
+    _mm_storeu_si128((__m128i*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm_loadu_si128((__m128i*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm_loadu_si128((__m128i*)(S)); }
 void gate_sys_func1(const __m128i* input,
     __m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
@@ -719,6 +764,12 @@ static const unsigned int elem_index_low_tbl[7*4] = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm_storeu_ps((float*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4]; \
+    _mm_storeu_ps((float*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm_loadu_ps((float*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm_loadu_ps((float*)(S)); }
 void gate_sys_func1(const __m128* input,
     __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
@@ -774,6 +825,12 @@ __attribute__((aligned(32))) = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm256_storeu_ps((float*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[8]; \
+    _mm256_storeu_ps((float*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm256_loadu_ps((float*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm256_loadu_ps((float*)(S)); }
 void gate_sys_func1(const __m256* input,
     __m256* output, size_t idx) {
     const __m256 one = *((const __m256*)one_value);
@@ -829,6 +886,12 @@ __attribute__((aligned(32))) = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm256_storeu_si256((__m256i*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[8]; \
+    _mm256_storeu_si256((__m256i*)temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm256_loadu_si256((__m256i*)temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm256_loadu_si256((__m256i*)(S)); }
 void gate_sys_func1(const __m256i* input,
     __m256i* output, size_t idx) {
     const __m256i one = *((const __m256i*)one_value);
@@ -896,6 +959,12 @@ __attribute__((aligned(64))) = {
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { _mm512_storeu_si512((float*)(D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[16]; \
+    _mm512_storeu_si512(temp, (X)); \
+    temp[(I)] = (S); \
+    (X) = _mm512_loadu_si512(temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = _mm512_loadu_si512((S)); }
 void gate_sys_func1(const __m512i* input,
     __m512i* output, size_t idx) {
     const __m512i one = *((const __m512i*)one_value);
@@ -928,11 +997,17 @@ void gate_sys_func1(const __m512i* input,
 #include <stdint.h>
 #define TYPE_LEN (128)
 #define TYPE_NAME uint32x4_t
-#define GET_U32(D,X,I) { uint32_t temp[4]; \
+#define GET_U32(D,X,I) { uint32_t temp[4] __attribute__((aligned(16))); \
     vst4q_u32(temp, (X)); \
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { vst4q_u32((D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4] __attribute__((aligned(16))); \
+    vst4q_u32(temp, (X)); \
+    (D) = temp[(I)]; \
+    (X) = vld4q_u32(temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = vld4q_u32((S)); }
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output, size_t idx) {
     uint32x4_t v0;
@@ -965,11 +1040,17 @@ void gate_sys_func1(const uint32x4_t* input,
 #include <stdint.h>
 #define TYPE_LEN (128)
 #define TYPE_NAME uint32x4_t
-#define GET_U32(D,X,I) { uint32_t temp[4]; \
+#define GET_U32(D,X,I) { uint32_t temp[4] __attribute__((aligned(16))); \
     vst4q_u32(temp, (X)); \
     (D) = temp[(I)]; \
 }
 #define GET_U32_ALL(D,X) { vst4q_u32((D), (X)); }
+#define SET_U32(X,S,I) { uint32_t temp[4] __attribute__((aligned(16))); \
+    vst4q_u32(temp, (X)); \
+    (D) = temp[(I)]; \
+    (X) = vld4q_u32(temp); \
+}
+#define SET_U32_ALL(X,S) { (X) = vld4q_u32((S)); }
 void gate_sys_func1(const uint32x4_t* input,
     uint32x4_t* output, size_t idx) {
     uint32x4_t v0;
@@ -1002,6 +1083,8 @@ void gate_sys_func1(const uint32x4_t* input,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1038,6 +1121,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1073,6 +1158,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1108,6 +1195,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1145,6 +1234,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1186,6 +1277,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -1217,6 +1310,8 @@ void gate_sys_func1(uint32_t* output, size_t idx) {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(uint32_t* output, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -1248,6 +1343,8 @@ void gate_sys_func1(uint32_t* output, size_t idx) {
 #define TYPE_NAME uint32_t
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
@@ -1281,6 +1378,8 @@ void gate_sys_func1(uint32_t* output, unsigned int arg, unsigned int arg2, size_
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
@@ -1316,6 +1415,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
@@ -1351,6 +1452,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output, unsigned int arg, unsigned int arg2) {
@@ -1390,6 +1493,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1427,6 +1532,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
@@ -1467,6 +1574,8 @@ kernel void gate_sys_func1(unsigned long n,
 #define TYPE_NAME uint
 #define GET_U32(D,X,I) { (D) = (X); }
 #define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
 kernel void gate_sys_func1(unsigned long n, 
     unsigned long output_shift,
     global uint* output) {
