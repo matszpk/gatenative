@@ -1310,6 +1310,16 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
 #[test]
 fn test_cpu_builder_and_exec_with_pop_input() {
     let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
+    let circuit2_out = (0..1u32 << 20)
+        .map(|x| {
+            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
     let params = [7, 3, 19];
     let expected_out = (0..1u32 << 20)
         .map(|x| {
@@ -1319,12 +1329,7 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                 .overflowing_add((x << params[1]) & !params[2])
                 .0)
                 & 0xfffff;
-            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
-            let mut y = 0;
-            for (i, outb) in out.into_iter().enumerate() {
-                y |= u32::from(outb) << i;
-            }
-            y
+            circuit2_out[x as usize]
         })
         .collect::<Vec<_>>();
 
