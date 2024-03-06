@@ -571,6 +571,62 @@ fn test_basic_mapper_builder_and_exec_with_aggr_output() {
 }
 
 #[test]
+fn test_basic_mapper_builder_and_exec_info() {
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+        parallel: None,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+        parallel: None,
+    };
+
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
+    for (config_num, (writer_config, builder_config)) in [
+        (&CLANG_WRITER_U32, &no_opt_neg_config),
+        (&CLANG_WRITER_U32, &opt_neg_config),
+        (&CLANG_WRITER_U64, &no_opt_neg_config),
+        (&CLANG_WRITER_U64, &opt_neg_config),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            CPUExtension::NoExtension,
+            writer_config,
+            Some(builder_config.clone()),
+        );
+        let mut builder = BasicMapperBuilder::new(builder);
+        builder.add_with_config(
+            "comb_pop_input_arg",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .pop_input_code(Some("i4 = ((const TYPE_NAME*)input)[0];"))
+                .pop_input_len(Some(4)),
+        );
+        builder.add_with_config(
+            "comb_pop_input_arg_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(12..16).collect::<Vec<_>>()))
+                .pop_input_code(Some("i0 = ((const TYPE_NAME*)input)[0];"))
+                .pop_input_len(Some(4)),
+        );
+        let execs = builder.build().unwrap();
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(exec.input_data_len(12 * 512), 4, "{}: {}", config_num, i);
+            assert!(exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), Some(4), "{}: {}", config_num, i);
+        }
+        assert_eq!(execs[0].elem_count(111), 1 << 12);
+        assert_eq!(execs[1].elem_count(111), 1 << 12);
+        assert_eq!(execs[0].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[1].output_data_len(12 * 512), 2304);
+    }
+}
+
+#[test]
 fn test_par_basic_mapper_builder_and_exec() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,
@@ -1072,5 +1128,61 @@ fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
         for (i, out) in output.iter().enumerate() {
             assert_eq!(COMB_CIRCUIT_EXPECTED[i], *out, "{}: {}", config_num, i);
         }
+    }
+}
+
+#[test]
+fn test_par_basic_mapper_builder_and_exec_info() {
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+        parallel: None,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+        parallel: None,
+    };
+
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
+    for (config_num, (writer_config, builder_config)) in [
+        (&CLANG_WRITER_U32, &no_opt_neg_config),
+        (&CLANG_WRITER_U32, &opt_neg_config),
+        (&CLANG_WRITER_U64, &no_opt_neg_config),
+        (&CLANG_WRITER_U64, &opt_neg_config),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            CPUExtension::NoExtension,
+            writer_config,
+            Some(builder_config.clone()),
+        );
+        let mut builder = ParBasicMapperBuilder::new(builder);
+        builder.add_with_config(
+            "comb_pop_input_arg",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .pop_input_code(Some("i4 = ((const TYPE_NAME*)input)[0];"))
+                .pop_input_len(Some(4)),
+        );
+        builder.add_with_config(
+            "comb_pop_input_arg_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(12..16).collect::<Vec<_>>()))
+                .pop_input_code(Some("i0 = ((const TYPE_NAME*)input)[0];"))
+                .pop_input_len(Some(4)),
+        );
+        let execs = builder.build().unwrap();
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(exec.input_data_len(12 * 512), 4, "{}: {}", config_num, i);
+            assert!(exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), Some(4), "{}: {}", config_num, i);
+        }
+        assert_eq!(execs[0].elem_count(111), 1 << 12);
+        assert_eq!(execs[1].elem_count(111), 1 << 12);
+        assert_eq!(execs[0].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[1].output_data_len(12 * 512), 2304);
     }
 }

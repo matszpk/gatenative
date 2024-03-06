@@ -70,6 +70,11 @@ where
         Ok(out)
     }
 
+    #[inline]
+    fn elem_count(&self, input_len: usize) -> usize {
+        self.executor.elem_count(input_len)
+    }
+
     fn new_data(&mut self, len: usize) -> D {
         self.executor.new_data(len)
     }
@@ -345,6 +350,11 @@ where
                     }
                 },
             )
+    }
+
+    #[inline]
+    fn elem_count(&self, input_len: usize) -> usize {
+        self.executor.elem_count(input_len)
     }
 
     fn new_data(&mut self, len: usize) -> D {

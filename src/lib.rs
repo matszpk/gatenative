@@ -549,6 +549,8 @@ where
 
     fn word_len(&self) -> u32;
 
+    fn elem_count(&self, input_len: usize) -> usize;
+
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.input_is_populated() {
@@ -713,6 +715,8 @@ where
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
 
     fn word_len(&self) -> u32;
+
+    fn elem_count(&self, input_len: usize) -> usize;
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
