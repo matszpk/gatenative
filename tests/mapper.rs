@@ -158,6 +158,12 @@ fn test_basic_mapper_builder_and_exec() {
         assert_eq!(execs[0].output_data_len(16 * 1024), 512);
         assert_eq!(execs[1].input_data_len(16 * 1024), 2560);
         assert_eq!(execs[1].output_data_len(16 * 1024), 512);
+        for (i, exec) in execs.iter().enumerate() {
+            assert!(!exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(exec.aggr_output_len(), None, "{}: {}", config_num, i);
+            assert!(!exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), None, "{}: {}", config_num, i);
+        }
 
         // number of chunks
         let xcircuit_data_num = (((256 >> 5) + word_len - 1) / word_len) * word_len;
@@ -491,6 +497,26 @@ fn test_basic_mapper_builder_and_exec_with_aggr_output() {
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
         let mut execs = builder.build().unwrap();
+        assert_eq!(execs[0].input_data_len(12 * 512), 2304);
+        assert_eq!(execs[1].input_data_len(12 * 512), 1);
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(
+                exec.output_data_len(17 * 1024),
+                128,
+                "{}: {}",
+                config_num,
+                i
+            );
+            assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(
+                exec.aggr_output_len(),
+                Some(1 << (12 - 5)),
+                "{}: {}",
+                config_num,
+                i
+            );
+        }
+
         let mut it = execs[0]
             .input_transformer(32, &(0..12).collect::<Vec<_>>())
             .unwrap();
@@ -692,6 +718,12 @@ fn test_par_basic_mapper_builder_and_exec() {
         assert_eq!(execs[0].output_data_len(16 * 1024), 512);
         assert_eq!(execs[1].input_data_len(16 * 1024), 2560);
         assert_eq!(execs[1].output_data_len(16 * 1024), 512);
+        for (i, exec) in execs.iter().enumerate() {
+            assert!(!exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(exec.aggr_output_len(), None, "{}: {}", config_num, i);
+            assert!(!exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), None, "{}: {}", config_num, i);
+        }
 
         // number of chunks
         let xcircuit_data_num = (((256 >> 5) + word_len - 1) / word_len) * word_len;
@@ -964,6 +996,26 @@ fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
         let mut execs = builder.build().unwrap();
+        assert_eq!(execs[0].input_data_len(12 * 512), 2304);
+        assert_eq!(execs[1].input_data_len(12 * 512), 1);
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(
+                exec.output_data_len(17 * 1024),
+                128,
+                "{}: {}",
+                config_num,
+                i
+            );
+            assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(
+                exec.aggr_output_len(),
+                Some(1 << (12 - 5)),
+                "{}: {}",
+                config_num,
+                i
+            );
+        }
+
         let mut it = execs[0]
             .input_transformer(32, &(0..12).collect::<Vec<_>>())
             .unwrap();

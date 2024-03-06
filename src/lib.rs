@@ -553,9 +553,11 @@ where
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.input_is_populated() {
             self.pop_input_len().unwrap()
-        } else {
+        } else if self.real_input_len() != 0 {
             assert_eq!(elem_num % (self.word_len() as usize), 0);
             (elem_num * self.real_input_len()) >> 5
+        } else {
+            1
         }
     }
 
@@ -716,9 +718,11 @@ where
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.input_is_populated() {
             self.pop_input_len().unwrap()
-        } else {
+        } else if self.real_input_len() != 0 {
             assert_eq!(elem_num % (self.word_len() as usize), 0);
             (elem_num * self.real_input_len()) >> 5
+        } else {
+            1
         }
     }
 
