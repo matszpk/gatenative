@@ -740,6 +740,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     v1 = (v1 ^ v4);
     v4 = (v6 ^ v1);
     v0 = (v1 & ~v0);
+    v3 = ~v3;
     v0 = ~v0;
 #define o0 (v2)
 #define o1 (v3)
@@ -805,6 +806,7 @@ kernel void gate_sys_testcirc(unsigned long n,
     v1 = _mm_xor_ps(v1, v4);
     v4 = _mm_xor_ps(v6, v1);
     v0 = _mm_andnot_ps(v0, v1);
+    v3 = _mm_xor_ps(v3, one);
     v0 = _mm_xor_ps(v0, one);
 #define o0 (v2)
 #define o1 (v3)
@@ -894,6 +896,8 @@ kernel void gate_sys_testcirc(unsigned long n,
     v1 = (v1 ^ v4);
     v4 = (v7 ^ v1);
     v1 = (v1 & ~v0);
+    v0 = ~v0;
+    v3 = ~v3;
     v1 = ~v1;
 #define o0 (v6)
 #define o1 (v0)
@@ -964,6 +968,8 @@ kernel void gate_sys_testcirc(unsigned long n,
     v1 = _mm_xor_ps(v1, v4);
     v4 = _mm_xor_ps(v7, v1);
     v1 = _mm_andnot_ps(v0, v1);
+    v0 = _mm_xor_ps(v0, one);
+    v3 = _mm_xor_ps(v3, one);
     v1 = _mm_xor_ps(v1, one);
 #define o0 (v6)
 #define o1 (v0)
@@ -1027,6 +1033,8 @@ kernel void gate_sys_testcirc(unsigned long n,
     v2 = (v2 ^ v3);
     v3 = (v7 ^ v2);
     v2 = (v2 & ~v1);
+    v1 = ~v1;
+    v5 = ~v5;
     v2 = ~v2;
 #define o0 (v0)
 #define o1 (v1)

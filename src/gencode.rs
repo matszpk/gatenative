@@ -3,7 +3,7 @@ use gatesim::*;
 
 use int_enum::IntEnum;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -500,7 +500,6 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 );
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
-                    let mut use_neg = false;
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
@@ -517,16 +516,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                             }
                         }
                         // if output then store
-                        if let Some(output_vars) = output_vars {
-                            if !use_neg && *on && output_vars[*oi].1.is_none() {
-                                // only if negation neeeded and is first occurred sign.
-                                // negate output
-                                let v =
-                                    usize::try_from(var_allocs[input_len + node_index]).unwrap();
-                                writer.gen_not(v, v);
-                                use_neg = true;
-                            }
-                        } else {
+                        if output_vars.is_none() {
                             writer.gen_store(
                                 *on,
                                 *oi,
@@ -540,6 +530,8 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         }
     }
 
+    let mut out_negs = HashSet::new();
+    let mut out_negs_2 = HashSet::new();
     for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
             let ou = usize::try_from(*o).unwrap();
@@ -556,8 +548,18 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             }
         }
         if let Some(output_vars) = output_vars {
-            if let Some(orig_var) = output_vars[oi].1 {
-                writer.gen_not(output_vars[oi].0, orig_var);
+            if !out_negs.contains(&o) && *on && output_vars[oi].1.is_none() {
+                // only if negation neeeded and is first occurred sign.
+                // negate output
+                let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
+                writer.gen_not(v, v);
+                out_negs.insert(o);
+            }
+            if !out_negs_2.contains(&o) {
+                if let Some(orig_var) = output_vars[oi].1 {
+                    writer.gen_not(output_vars[oi].0, orig_var);
+                    out_negs_2.insert(o);
+                }
             }
         }
     }
@@ -698,7 +700,6 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 );
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
-                    let mut use_neg = false;
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
@@ -715,16 +716,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                             }
                         }
                         // if output then store
-                        if let Some(output_vars) = output_vars {
-                            if !use_neg && *on && output_vars[*oi].1.is_none() {
-                                // only if negation neeeded and is first occurred sign.
-                                // negate output
-                                let v =
-                                    usize::try_from(var_allocs[input_len + node_index]).unwrap();
-                                writer.gen_not(v, v);
-                                use_neg = true;
-                            }
-                        } else {
+                        if output_vars.is_none() {
                             writer.gen_store(
                                 *on,
                                 *oi,
@@ -738,6 +730,8 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         }
     }
 
+    let mut out_negs = HashSet::new();
+    let mut out_negs_2 = HashSet::new();
     for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
             let ou = usize::try_from(*o).unwrap();
@@ -754,8 +748,18 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
             }
         }
         if let Some(output_vars) = output_vars {
-            if let Some(orig_var) = output_vars[oi].1 {
-                writer.gen_not(output_vars[oi].0, orig_var);
+            if !out_negs.contains(&o) && *on && output_vars[oi].1.is_none() {
+                // only if negation neeeded and is first occurred sign.
+                // negate output
+                let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
+                writer.gen_not(v, v);
+                out_negs.insert(o);
+            }
+            if !out_negs_2.contains(&o) {
+                if let Some(orig_var) = output_vars[oi].1 {
+                    writer.gen_not(output_vars[oi].0, orig_var);
+                    out_negs_2.insert(o);
+                }
             }
         }
     }

@@ -613,6 +613,8 @@ kernel void gate_sys_xor(unsigned long n,
     v2 = ~(v2 | v5);
     v9 = ~v4;
     v7 = ~v2;
+    v0 = ~v0;
+    v3 = ~v3;
     v5 = ~v0;
     v8 = ~v3;
     v6 = ~v1;
@@ -695,6 +697,8 @@ kernel void gate_sys_xor(unsigned long n,
     v2 = _mm_xor_ps(v2, one);
     v9 = _mm_xor_ps(v4, one);
     v7 = _mm_xor_ps(v2, one);
+    v0 = _mm_xor_ps(v0, one);
+    v3 = _mm_xor_ps(v3, one);
     v5 = _mm_xor_ps(v0, one);
     v8 = _mm_xor_ps(v3, one);
     v6 = _mm_xor_ps(v1, one);
@@ -790,6 +794,8 @@ kernel void gate_sys_xor(unsigned long n,
     v2 = ~(v2 | v5);
     v9 = ~v4;
     v7 = ~v2;
+    v0 = ~v0;
+    v3 = ~v3;
     v5 = ~v0;
     v8 = ~v3;
     v6 = ~v1;
