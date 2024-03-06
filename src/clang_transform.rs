@@ -10,7 +10,7 @@ pub struct CLangTransformConfig<'a> {
     or_op: &'a str,
     shl32_op: &'a str,
     shr32_op: &'a str,
-    unpack_ops: [Option<&'a str>; 4],
+    unpack_ops: [Option<&'a str>; 5],
     init_defs: &'a str,
     constant_defs: [&'a str; 2 * 5],
 }
@@ -24,7 +24,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     or_op: "({} | {})",
     shl32_op: "({} << {})",
     shr32_op: "({} >> {})",
-    unpack_ops: [None, None, None, None],
+    unpack_ops: [None, None, None, None, None],
     init_defs: "",
     constant_defs: [
         "0x55555555U",
