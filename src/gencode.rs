@@ -116,6 +116,7 @@ where
         node: usize,
         way: usize,
     }
+    let single_buffer = single_buffer && !(keep_output_vars && pop_input);
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
@@ -385,6 +386,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
+    let single_buffer = single_buffer && !(output_vars.is_some() && pop_input);
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -584,6 +586,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
+    let single_buffer = single_buffer && !(output_vars.is_some() && pop_input);
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();

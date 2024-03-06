@@ -258,7 +258,15 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             }
         }
 
-        if code_config.pop_input_code.is_some() || code_config.aggr_output_code.is_some() {
+        if code_config.pop_input_code.is_some()
+            && code_config.aggr_output_code.is_some()
+            && code_config.single_buffer
+        {
+            assert_eq!(
+                code_config.pop_input_len.unwrap(),
+                code_config.aggr_output_len.unwrap()
+            );
+        } else if code_config.pop_input_code.is_some() || code_config.aggr_output_code.is_some() {
             assert!(!code_config.single_buffer);
         }
 
