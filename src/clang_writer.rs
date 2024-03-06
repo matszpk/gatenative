@@ -1120,7 +1120,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if self.writer.config.init_index.is_some() {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
-            if self.pop_input_code.is_some() {
+            if self.pop_input_code.is_some() && !self.single_buffer {
                 if let Some(arg_modifier) = self.writer.config.arg_modifier {
                     writeln!(
                         self.writer.out,

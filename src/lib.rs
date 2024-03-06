@@ -236,7 +236,12 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             output_len
         };
         // check requirements for single buffer
-        assert!(!code_config.single_buffer || real_input_len == real_output_len);
+        if !(code_config.pop_input_code.is_some()
+            && code_config.aggr_output_code.is_some()
+            && code_config.single_buffer)
+        {
+            assert!(!code_config.single_buffer || real_input_len == real_output_len);
+        }
         assert!(check_placements(
             code_config.input_placement,
             code_config.output_placement

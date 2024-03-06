@@ -430,7 +430,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         arg_input: u64,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
+        } else if real_input_words != 0 {
             (output.range.end - output.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word

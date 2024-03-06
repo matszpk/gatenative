@@ -627,7 +627,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
         let output_len = output.get().get().len();
-        let num = if real_input_words != 0 {
+        let num = if self.populated_input {
+            (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
+        } else if real_input_words != 0 {
             output_len / real_input_words
         } else if self.elem_input_num != 0 {
             (1 << (self.elem_input_num - 5)) / self.words_per_real_word
@@ -636,7 +638,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         };
         let mut output_w = output.get_mut();
         let output = output_w.get_mut();
-        assert!(output_len >= real_output_words * num);
+        if !self.aggregated_output {
+            assert!(output_len >= real_output_words * num);
+        }
         if let Some(par_chunk_len) = self.parallel {
             // parallel code
             if self.arg_input_len.is_some() {

@@ -1253,4 +1253,75 @@ kernel void gate_sys_testcirc(unsigned long n,
 }
 "##
     );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)output)[0];"))
+            .pop_input_len(Some(11))
+            .aggr_output_code(Some("    output[0] = o0 ^ o1;"))
+            .aggr_output_len(Some(11))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long output_shift,
+    global void* output) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 6 * idx + output_shift;
+    const size_t ovn = 6 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    uint v6;
+    uint v7;
+    if (idx >= n) return;
+    output = (global void*)(((global char*)output) + 4*output_shift);
+#define i0 (v0)
+#define i1 (v1)
+#define i2 (v2)
+#define i3 (v3)
+#define i4 (v4)
+#define i5 (v5)
+    i0 = ((TYPE_NAME*)output)[0];
+#define i0
+#define i1
+#define i2
+#define i3
+#define i4
+#define i5
+    v6 = (v2 & v3);
+    v7 = ~(v0 | v3);
+    v7 = (v6 & ~v7);
+    v2 = (v2 ^ v3);
+    v3 = (v6 & v2);
+    v2 = (v2 ^ v3);
+    v3 = (v7 ^ v2);
+    v2 = (v2 & ~v1);
+    v1 = ~v1;
+    v5 = ~v5;
+    v2 = ~v2;
+#define o0 (v0)
+#define o1 (v1)
+#define o2 (v4)
+#define o3 (v5)
+#define o4 (v3)
+#define o5 (v2)
+    output[0] = o0 ^ o1;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
 }

@@ -251,10 +251,7 @@ fn get_builder_configs() -> Vec<(
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ];
     #[cfg(target_pointer_width = "32")]
-    {
-        configs.push((NoExtension, &CLANG_WRITER_U32, None));
-        mul_add_data_map.insert(1, gen_mul_add_input(1));
-    }
+    configs.push((NoExtension, &CLANG_WRITER_U32, None));
     #[cfg(target_pointer_width = "64")]
     configs.push((NoExtension, &CLANG_WRITER_U64, None));
 
@@ -1402,6 +1399,7 @@ fn test_cpu_builder_and_exec_with_pop_input() {
 
     let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        println!("Config: {}", config_num);
         let mut builder =
             CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
         let pop_input_code = r##"{
@@ -1596,6 +1594,92 @@ fn test_cpu_builder_and_exec_with_pop_input() {
     SET_U32_ALL(i18, inp + 18*(TYPE_LEN>>5));
     SET_U32_ALL(i19, inp + 19*(TYPE_LEN>>5));
 }"##;
+        let fixed_aggr_output_code = r##"{
+    unsigned int i;
+    uint32_t out[(TYPE_LEN >> 5)*12];
+    uint32_t* output_u32 = ((uint32_t*)output) + 3;
+    GET_U32_ALL(out + 0*(TYPE_LEN>>5), o0);
+    GET_U32_ALL(out + 1*(TYPE_LEN>>5), o1);
+    GET_U32_ALL(out + 2*(TYPE_LEN>>5), o2);
+    GET_U32_ALL(out + 3*(TYPE_LEN>>5), o3);
+    GET_U32_ALL(out + 4*(TYPE_LEN>>5), o4);
+    GET_U32_ALL(out + 5*(TYPE_LEN>>5), o5);
+    GET_U32_ALL(out + 6*(TYPE_LEN>>5), o6);
+    GET_U32_ALL(out + 7*(TYPE_LEN>>5), o7);
+    GET_U32_ALL(out + 8*(TYPE_LEN>>5), o8);
+    GET_U32_ALL(out + 9*(TYPE_LEN>>5), o9);
+    GET_U32_ALL(out + 10*(TYPE_LEN>>5), o10);
+    GET_U32_ALL(out + 11*(TYPE_LEN>>5), o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        uint32_t out_idx = ((out[(i>>5) + (TYPE_LEN>>5)*0] >> (i&31)) & 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*1] >> (i&31)) & 1) << 1) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*2] >> (i&31)) & 1) << 2) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*3] >> (i&31)) & 1) << 3) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*4] >> (i&31)) & 1) << 4) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*5] >> (i&31)) & 1) << 5) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*6] >> (i&31)) & 1) << 6) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*7] >> (i&31)) & 1) << 7) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*8] >> (i&31)) & 1) << 8) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*9] >> (i&31)) & 1) << 9) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*10] >> (i&31)) & 1) << 10) |
+            (((out[(i>>5) + (TYPE_LEN>>5)*11] >> (i&31)) & 1) << 11);
+        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+        let pop_input_code_aggr_sb = r##"{
+    unsigned int i;
+    uint32_t inp[(TYPE_LEN >> 5)*20];
+    const uint32_t* params = (const uint32_t*)output;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < (TYPE_LEN >> 5)*20; i++)
+        inp[i] = 0;
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        const uint32_t y = ((x*p0 & 0xea1b) + ((x << p1) & ~p2)) & 0xfffff;
+        inp[(i>>5) + (TYPE_LEN>>5)*0] |= (((y >> 0)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*1] |= (((y >> 1)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*2] |= (((y >> 2)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*3] |= (((y >> 3)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*4] |= (((y >> 4)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*5] |= (((y >> 5)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*6] |= (((y >> 6)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*7] |= (((y >> 7)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*8] |= (((y >> 8)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*9] |= (((y >> 9)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*10] |= (((y >> 10)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*11] |= (((y >> 11)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*12] |= (((y >> 12)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*13] |= (((y >> 13)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*14] |= (((y >> 14)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*15] |= (((y >> 15)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*16] |= (((y >> 16)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*17] |= (((y >> 17)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*18] |= (((y >> 18)&1) << (i&31));
+        inp[(i>>5) + (TYPE_LEN>>5)*19] |= (((y >> 19)&1) << (i&31));
+    }
+    SET_U32_ALL(i0, inp + 0*(TYPE_LEN>>5));
+    SET_U32_ALL(i1, inp + 1*(TYPE_LEN>>5));
+    SET_U32_ALL(i2, inp + 2*(TYPE_LEN>>5));
+    SET_U32_ALL(i3, inp + 3*(TYPE_LEN>>5));
+    SET_U32_ALL(i4, inp + 4*(TYPE_LEN>>5));
+    SET_U32_ALL(i5, inp + 5*(TYPE_LEN>>5));
+    SET_U32_ALL(i6, inp + 6*(TYPE_LEN>>5));
+    SET_U32_ALL(i7, inp + 7*(TYPE_LEN>>5));
+    SET_U32_ALL(i8, inp + 8*(TYPE_LEN>>5));
+    SET_U32_ALL(i9, inp + 9*(TYPE_LEN>>5));
+    SET_U32_ALL(i10, inp + 10*(TYPE_LEN>>5));
+    SET_U32_ALL(i11, inp + 11*(TYPE_LEN>>5));
+    SET_U32_ALL(i12, inp + 12*(TYPE_LEN>>5));
+    SET_U32_ALL(i13, inp + 13*(TYPE_LEN>>5));
+    SET_U32_ALL(i14, inp + 14*(TYPE_LEN>>5));
+    SET_U32_ALL(i15, inp + 15*(TYPE_LEN>>5));
+    SET_U32_ALL(i16, inp + 16*(TYPE_LEN>>5));
+    SET_U32_ALL(i17, inp + 17*(TYPE_LEN>>5));
+    SET_U32_ALL(i18, inp + 18*(TYPE_LEN>>5));
+    SET_U32_ALL(i19, inp + 19*(TYPE_LEN>>5));
+}"##;
         builder.add_with_config(
             "comb_pop_in",
             circuit2.clone(),
@@ -1638,8 +1722,19 @@ fn test_cpu_builder_and_exec_with_pop_input() {
                 .aggr_output_code(Some(COMB_AGGR_OUTPUT_CODE))
                 .aggr_output_len(Some(128)),
         );
+        // 5
+        builder.add_with_config(
+            "comb_pop_in_aggr_out_sb",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code_aggr_sb))
+                .pop_input_len(Some(128 + 3))
+                .aggr_output_code(Some(fixed_aggr_output_code))
+                .aggr_output_len(Some(128 + 3))
+                .single_buffer(true),
+        );
         let mut execs = builder.build().unwrap();
-        for (i, exec) in execs.iter().enumerate() {
+        for (i, exec) in execs[0..5].iter().enumerate() {
             assert_eq!(exec.input_data_len(12 * 512), 3, "{}: {}", config_num, i);
             assert!(exec.input_is_populated(), "{}: {}", config_num, i);
             assert_eq!(exec.pop_input_len(), Some(3), "{}: {}", config_num, i);
@@ -1772,7 +1867,7 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             }
         }
         // with aggr_output
-        let epxected_out_aggr = [
+        let expected_out_aggr = [
             4294967295, 4294967295, 4294967295, 2684354559, 4294967295, 1073692671, 4294934527,
             2612510719, 4294967295, 2139095039, 2147483647, 1073725439, 2147467263, 1040130047,
             2145097599, 1058510719, 4294967295, 3219128191, 1610612735, 3017801599, 1073709055,
@@ -1795,17 +1890,28 @@ fn test_cpu_builder_and_exec_with_pop_input() {
 
         let input_circ = execs[4].new_data_from_slice(&params[..]);
         let output = execs[4].execute(&input_circ, 0).unwrap().release();
-        assert_eq!(epxected_out_aggr.len(), output.len());
+        assert_eq!(expected_out_aggr.len(), output.len());
         for (i, out) in output.iter().enumerate() {
-            assert_eq!(epxected_out_aggr[i], *out, "{}: {}", config_num, i);
+            assert_eq!(expected_out_aggr[i], *out, "{}: {}", config_num, i);
         }
         // reuse
         let mut output = execs[4].new_data(output.len());
         execs[4].execute_reuse(&input_circ, 0, &mut output).unwrap();
         let output = output.release();
-        assert_eq!(epxected_out_aggr.len(), output.len());
+        assert_eq!(expected_out_aggr.len(), output.len());
         for (i, out) in output.iter().enumerate() {
-            assert_eq!(epxected_out_aggr[i], *out, "{}: {}", config_num, i);
+            assert_eq!(expected_out_aggr[i], *out, "{}: {}", config_num, i);
+        }
+        // with aggr_output with single buffer
+        let mut params_extended = vec![0u32; 128 + 3];
+        params_extended[0..3].copy_from_slice(&params[..]);
+        let mut output = execs[5].new_data_from_vec(params_extended);
+        execs[5].execute_single(&mut output, 0).unwrap();
+        let output = output.release();
+        assert_eq!(expected_out_aggr.len() + 3, output.len());
+        assert_eq!(&output[0..3], &params[..]);
+        for (i, out) in output[3..].iter().enumerate() {
+            assert_eq!(expected_out_aggr[i], *out, "{}: {}", config_num, i);
         }
     }
 }
