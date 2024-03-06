@@ -1144,6 +1144,18 @@ mod tests {
                 false
             )
         );
+        // single buffer with pop_input and aggr_output_code
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 2, 0, 1, 5, 0, 2, 0],
+                6,
+                Some(vec![(4, None), (5, None), (2, None), (0, None)])
+            ),
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, true, true)
+        );
+        //
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
@@ -1241,6 +1253,17 @@ mod tests {
                 false,
                 false
             )
+        );
+        // with single_buffer, pop_input and keep_output_vars
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 5, 0, 1],
+                6,
+                Some(vec![(4, None), (5, None), (0, None), (1, None)])
+            ),
+            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, true, true)
         );
         // with placement
         let mut var_usage = gen_var_usage(&circuit);
