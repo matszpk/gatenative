@@ -839,4 +839,120 @@ kernel void gate_sys_xor(unsigned long n,
 }
 "##
     );
+    
+    // check double negation - shouldn't be generated
+    let circuit = Circuit::new(
+        3,
+        [
+            Gate::new_xor(0, 1),
+            Gate::new_xor(2, 3),
+            Gate::new_and(2, 3),
+            Gate::new_and(0, 1),
+            Gate::new_nor(5, 6),
+        ],
+        [
+            (4, true),
+            (7, false),
+            (4, false),
+            (7, true),
+            (7, false),
+            (4, false),
+            (0, true),
+            (1, false),
+            (2, true),
+            (0, false),
+            (2, false),
+            (1, true),
+            (2, true),
+            (1, false),
+            (0, true),
+            (0, true),
+            (1, false),
+            (2, true),
+        ],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            )),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    void* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v5 = (v0 & v1);
+    v2 = ~(v2 | v5);
+    v4 = ~v4;
+    v9 = ~v4;
+    v7 = ~v2;
+    v0 = ~v0;
+    v3 = ~v3;
+    v5 = ~v0;
+    v8 = ~v3;
+    v6 = ~v1;
+#define o0 (v4)
+#define o1 (v2)
+#define o2 (v9)
+#define o3 (v7)
+#define o4 (v2)
+#define o5 (v9)
+#define o6 (v0)
+#define o7 (v1)
+#define o8 (v3)
+#define o9 (v5)
+#define o10 (v8)
+#define o11 (v6)
+#define o12 (v3)
+#define o13 (v1)
+#define o14 (v0)
+#define o15 (v0)
+#define o16 (v1)
+#define o17 (v3)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+#undef o6
+#undef o7
+#undef o8
+#undef o9
+#undef o10
+#undef o11
+#undef o12
+#undef o13
+#undef o14
+#undef o15
+#undef o16
+#undef o17
+}
+"##
+    );
 }
