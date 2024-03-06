@@ -291,7 +291,17 @@ fn test_opencl_builder_and_exec() {
         );
         let mut execs = builder.build().unwrap();
         // check elem_count
+        assert_eq!(execs[0].input_data_len(16 * 1024), 2048);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 2048);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 4096);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 3584);
         assert_eq!(execs[0].elem_count(135 * 32 * 4), 138240);
+        for (i, exec) in execs.iter().enumerate() {
+            assert!(!exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(exec.aggr_output_len(), None, "{}: {}", config_num, i);
+            assert!(!exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), None, "{}: {}", config_num, i);
+        }
 
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
             0b1010101010101010,
@@ -1153,6 +1163,14 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
                 config_num,
                 i
             );
+            assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert_eq!(
+                exec.aggr_output_len(),
+                Some(1 << (12 - 5)),
+                "{}: {}",
+                config_num,
+                i
+            );
         }
 
         let expected = vec![
@@ -1717,6 +1735,8 @@ fn test_opencl_builder_and_exec_with_pop_input() {
         let mut execs = builder.build().unwrap();
         for (i, exec) in execs.iter().enumerate() {
             assert_eq!(exec.input_data_len(12 * 512), 3, "{}: {}", config_num, i);
+            assert!(exec.input_is_populated(), "{}: {}", config_num, i);
+            assert_eq!(exec.pop_input_len(), Some(3), "{}: {}", config_num, i);
         }
         assert_eq!(execs[0].elem_count(111), 1 << 20);
         assert_eq!(execs[1].elem_count(111), 1 << 20);
