@@ -1715,6 +1715,14 @@ fn test_opencl_builder_and_exec_with_pop_input() {
                 .aggr_output_len(Some(128)),
         );
         let mut execs = builder.build().unwrap();
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(exec.input_data_len(12 * 512), 3, "{}: {}", config_num, i);
+        }
+        assert_eq!(execs[0].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[1].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[2].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[3].output_data_len(12 * 512), 2304);
+        assert_eq!(execs[4].output_data_len(12 * 512), 128);
 
         // tests
         let mut ot = execs[0]
