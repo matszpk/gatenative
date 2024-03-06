@@ -839,7 +839,7 @@ kernel void gate_sys_xor(unsigned long n,
 }
 "##
     );
-    
+
     // check double negation - shouldn't be generated
     let circuit = Circuit::new(
         3,
