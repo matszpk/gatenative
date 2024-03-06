@@ -290,6 +290,9 @@ fn test_opencl_builder_and_exec() {
             CodeConfig::new().single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
+        // check elem_count
+        assert_eq!(execs[0].elem_count(135 * 32 * 4), 138240);
+
         const MUL2X2_INPUT_TEMPLATE: [u32; 4] = [
             0b1010101010101010,
             0b1100110011001100,
@@ -709,6 +712,13 @@ fn test_opencl_builder_and_exec_with_elem_input() {
                 .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
+        assert_eq!(execs[0].input_data_len(16 * 1024), 6144);
+        assert_eq!(execs[0].output_data_len(16 * 1024), 4096);
+        assert_eq!(execs[1].input_data_len(16 * 1024), 1);
+        assert_eq!(execs[1].output_data_len(16 * 1024), 4096);
+        assert_eq!(execs[0].elem_count(1024 * 48), 131072);
+        assert_eq!(execs[1].elem_count(1024 * 48), 1 << 24);
+
         let mut it = execs[0]
             .input_transformer(32, &(0..12).collect::<Vec<_>>())
             .unwrap();
@@ -1133,6 +1143,17 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
                 .aggr_output_len(Some(1 << (12 - 5))),
         );
         let mut execs = builder.build().unwrap();
+        assert_eq!(execs[0].input_data_len(12 * 512), 3072);
+        assert_eq!(execs[1].input_data_len(12 * 512), 1);
+        for (i, exec) in execs.iter().enumerate() {
+            assert_eq!(
+                exec.output_data_len(17 * 1024),
+                128,
+                "{}: {}",
+                config_num,
+                i
+            );
+        }
 
         let expected = vec![
             4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
