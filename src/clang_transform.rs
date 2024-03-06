@@ -120,25 +120,27 @@ impl<'a> CLangTransform<'a> {
         self.out.push_str("{ \\\n");
         for i in (0..5).rev() {
             for j in 0..16 {
+                let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
+                let sj = fj | (1 << i);
                 let t0 = if i == 4 {
-                    Self::format_arg_s(2 * j)
+                    Self::format_arg_s(fj)
                 } else if (i & 1) != 0 {
-                    format!("t{}", 2 * j)
+                    format!("t{}", fj)
                 } else {
-                    format!("s{}", 2 * j)
+                    format!("s{}", fj)
                 };
                 let t1 = if i == 4 {
-                    Self::format_arg_s(2 * j + 1)
+                    Self::format_arg_s(sj)
                 } else if (i & 1) != 0 {
-                    format!("t{}", 2 * j + 1)
+                    format!("t{}", sj)
                 } else {
-                    format!("s{}", 2 * j + 1)
+                    format!("s{}", sj)
                 };
                 self.write_left_side_assign(
                     i >= 3,
                     i == 0,
                     if (i & 1) == 0 { "t" } else { "s" },
-                    2 * j,
+                    fj,
                 );
                 let p0 =
                     Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]]);
@@ -151,7 +153,7 @@ impl<'a> CLangTransform<'a> {
                     i >= 3,
                     i == 0,
                     if (i & 1) == 0 { "t" } else { "s" },
-                    2 * j + 1,
+                    sj,
                 );
                 let p0 = Self::format_op(
                     self.config.and_op,
