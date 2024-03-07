@@ -162,8 +162,7 @@ where
         if !self.usage_mode {
             // returned value is variable original index
             let v = self.var_usages[var_type].len();
-            self.var_usages[var_type].resize(v + 1, T::default());
-            self.var_usages[var_type][v] = T::try_from(1).unwrap();
+            self.var_usages[var_type].push(T::try_from(1).unwrap());
             T::try_from(v).unwrap()
         } else {
             // returned value is allocated variable index
