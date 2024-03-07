@@ -20,6 +20,7 @@ pub struct CLangTransformConfig<'a> {
     or_op: &'a str,
     shl32_op: &'a str,
     shr32_op: &'a str,
+    failed_shl32_op: bool,
     unpack_ops: [Option<&'a str>; 5 * 2],
     init_defs: &'a str,
     // masks for transposition operations (unpackings)
@@ -36,6 +37,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     or_op: "({} | {})",
     shl32_op: "({} << {})",
     shr32_op: "({} >> {})",
+    failed_shl32_op: false,
     unpack_ops: [None, None, None, None, None, None, None, None, None, None],
     init_defs: "",
     constant_defs: [
@@ -61,6 +63,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     or_op: "({} | {})",
     shl32_op: "({} << {})",
     shr32_op: "({} >> {})",
+    failed_shl32_op: true,
     unpack_ops: [None, None, None, None, None, None, None, None, None, None],
     init_defs: "",
     constant_defs: [
@@ -92,6 +95,7 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     or_op: "_m_por({}, {})",
     shl32_op: "_m_pslldi({}, {})",
     shr32_op: "_m_psrldi({}, {})",
+    failed_shl32_op: false,
     unpack_ops: [
         None,
         None,
@@ -153,6 +157,7 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     or_op: "_mm_or_si128({}, {})",
     shl32_op: "_mm_slli_epi32({}, {})",
     shr32_op: "_mm_srli_epi32({}, {})",
+    failed_shl32_op: false,
     unpack_ops: [
         None,
         None,
@@ -214,6 +219,7 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     or_op: "_mm256_or_si256({}, {})",
     shl32_op: "_mm256_slli_epi32({}, {})",
     shr32_op: "_mm256_srli_epi32({}, {})",
+    failed_shl32_op: false,
     unpack_ops: [
         None,
         None,
@@ -292,6 +298,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
     or_op: "vorrq_u32({}, {})",
     shl32_op: "vshlq_n_u32({}, {})",
     shr32_op: " vshrq_n_u32({}, {})",
+    failed_shl32_op: false,
     unpack_ops: [
         None,
         None,
@@ -334,6 +341,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
     or_op: "({} | {})",
     shl32_op: "({} << {})",
     shr32_op: "({} >> {})",
+    failed_shl32_op: false,
     unpack_ops: [None, None, None, None, None, None, None, None, None, None],
     init_defs: "",
     constant_defs: [
@@ -506,7 +514,7 @@ impl<'a> CLangTransform<'a> {
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
-                    let expr = if j != ((1 << (5 - bits_log)) - 1) {
+                    let expr = if self.config.failed_shl32_op || j != ((1 << (5 - bits_log)) - 1) {
                         Self::format_op(
                             self.config.and_op,
                             &[&tv, self.config.constant2_defs[bits_log]],
