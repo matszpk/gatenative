@@ -10,5 +10,10 @@ fn test_clang_transform_gen_in_transform() {
     transform.gen_input_transform(16);
     transform.gen_input_transform(12);
     transform.gen_input_transform(8);
+    transform.gen_input_transform(6);
+    transform.gen_input_transform(4);
+    transform.gen_input_transform(3);
+    transform.gen_input_transform(2);
+    transform.gen_input_transform(1);
     println!("Code: {}", transform.out());
 }

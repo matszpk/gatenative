@@ -480,7 +480,7 @@ impl<'a> CLangTransform<'a> {
     }
 
     pub fn format_arg_s(arg: usize) -> String {
-        format!("(S[{}])", arg)
+        format!("((S)[{}])", arg)
     }
     pub fn format_arg_d(arg: usize) -> String {
         format!("(D{})", arg)
@@ -493,17 +493,27 @@ impl<'a> CLangTransform<'a> {
         let mut prev_pass = (0..32).collect::<Vec<_>>();
         if bits_log < 5 {
             for i in 0..1 << bits_log {
-                let v = mvars.new_var(0);
-                write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+                let v = if bits_log != 0 {
+                    let v = mvars.new_var(0);
+                    write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+                    v
+                } else {
+                    write!(mvars, "    {} = ", mvars.format_var(OUTPUT_TYPE, 0)).unwrap();
+                    0
+                };
                 let mut final_expr = String::new();
                 let mut bit_usg = 0;
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
-                    let expr = Self::format_op(
-                        self.config.and_op,
-                        &[&tv, self.config.constant2_defs[bits_log]],
-                    );
+                    let expr = if j != ((1 << (5 - bits_log)) - 1) {
+                        Self::format_op(
+                            self.config.and_op,
+                            &[&tv, self.config.constant2_defs[bits_log]],
+                        )
+                    } else {
+                        tv
+                    };
                     let expr = if j != 0 {
                         Self::format_op(
                             self.config.shl32_op,
@@ -522,7 +532,9 @@ impl<'a> CLangTransform<'a> {
                 }
                 bit_usage[i] = bit_usg;
                 write!(mvars, "{};\\\n", final_expr).unwrap();
-                prev_pass[i] = v;
+                if bits_log != 0 {
+                    prev_pass[i] = v;
+                }
             }
             prev_type = 0;
         }
