@@ -174,11 +174,19 @@ fn check_placements(
         if placement.iter().any(|x| *x >= len) {
             return false;
         }
+        let mut psorted = placement.to_vec();
+        psorted.sort();
+        psorted.dedup();
+        assert_eq!(psorted.len(), placement.len());
     }
     if let Some((placement, len)) = output_placement {
         if placement.iter().any(|x| *x >= len) {
             return false;
         }
+        let mut psorted = placement.to_vec();
+        psorted.sort();
+        psorted.dedup();
+        assert_eq!(psorted.len(), placement.len());
     }
     return true;
 }
@@ -247,9 +255,17 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         if let Some(arg_inputs) = code_config.arg_inputs {
             assert!(arg_inputs.len() <= 64);
             assert!(arg_inputs.iter().all(|x| *x < input_len));
+            let mut psorted = arg_inputs.to_vec();
+            psorted.sort();
+            psorted.dedup();
+            assert_eq!(psorted.len(), arg_inputs.len());
         }
         if let Some(elem_inputs) = code_config.elem_inputs {
             assert!(elem_inputs.iter().all(|x| *x < input_len));
+            let mut psorted = elem_inputs.to_vec();
+            psorted.sort();
+            psorted.dedup();
+            assert_eq!(psorted.len(), elem_inputs.len());
         }
         // check whether arg_input and elem_input have common inputs
         if let Some(arg_inputs) = code_config.arg_inputs {
