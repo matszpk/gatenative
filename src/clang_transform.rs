@@ -16,6 +16,8 @@ pub struct CLangTransformConfig<'a> {
     final_type_name: &'a str,
     final_type_bit_len: u32,
     inter_type: Option<InterType<'a>>,
+    load_op: Option<&'a str>,
+    store_op: Option<&'a str>,
     and_op: &'a str,
     or_op: &'a str,
     shl32_op: &'a str,
@@ -33,6 +35,8 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     final_type_name: "uint32_t",
     final_type_bit_len: 32,
     inter_type: None,
+    load_op: None,
+    store_op: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
     shl32_op: "({} << {})",
@@ -59,6 +63,8 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     final_type_name: "uint64_t",
     final_type_bit_len: 64,
     inter_type: None,
+    load_op: None,
+    store_op: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
     shl32_op: "({} << {})",
@@ -91,6 +97,8 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     final_type_name: "__m64",
     final_type_bit_len: 64,
     inter_type: None,
+    load_op: None,
+    store_op: None,
     and_op: "_m_pand({}, {})",
     or_op: "_m_por({}, {})",
     shl32_op: "_m_pslldi({}, {})",
@@ -153,6 +161,8 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "__m128i",
     final_type_bit_len: 128,
     inter_type: None,
+    load_op: Some("_mm_loadu_si128((const __m128i*)&{})"),
+    store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
     and_op: "_mm_and_si128({}, {})",
     or_op: "_mm_or_si128({}, {})",
     shl32_op: "_mm_slli_epi32({}, {})",
@@ -170,7 +180,8 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         Some("_mm_unpacklo_epi16({}, {})"),
         Some("_mm_unpackhi_epi16({}, {})"),
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*4] = {
+    init_defs: r##"static const unsigned int transform_const_tbl[5*2*4]
+__attribute__((aligned(16))) = {
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU,
     0x33333333U, 0x33333333U, 0x33333333U, 0x33333333U,
@@ -182,7 +193,8 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
 };
-static const unsigned int transform_const2_tbl[5*4] = {
+static const unsigned int transform_const2_tbl[5*4]
+__attribute__((aligned(16))) = {
     0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U,
     0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
     0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
@@ -215,6 +227,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "__m256i",
     final_type_bit_len: 256,
     inter_type: None,
+    load_op: Some("_mm256_loadu_si256((const float*)&{})"),
+    store_op: Some("_mm256_storeu_si256((float*)&{}, {})"),
     and_op: "_mm256_and_si256({}, {})",
     or_op: "_mm256_or_si256({}, {})",
     shl32_op: "_mm256_slli_epi32({}, {})",
@@ -294,6 +308,8 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
     final_type_name: "uint32x4_t",
     final_type_bit_len: 128,
     inter_type: None,
+    load_op: None,
+    store_op: None,
     and_op: "vandq_u32({}, {})",
     or_op: "vorrq_u32({}, {})",
     shl32_op: "vshlq_n_u32({}, {})",
@@ -337,6 +353,8 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "uint",
     final_type_bit_len: 32,
     inter_type: None,
+    load_op: None,
+    store_op: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
     shl32_op: "({} << {})",
