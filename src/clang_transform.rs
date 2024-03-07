@@ -439,6 +439,11 @@ impl Write for CLangMacroVars {
     }
 }
 
+const BIT_MASK_TBL: [u32; 5 * 2] = [
+    0x55555555, 0xaaaaaaaa, 0x33333333, 0xcccccccc, 0x0f0f0f0f, 0xf0f0f0f0, 0x00ff00ff, 0xff00ff00,
+    0x0000ffff, 0xffff0000,
+];
+
 impl<'a> CLangTransform<'a> {
     fn write_op(out: &mut String, op: &str, args: &[&str]) {
         let mut rest = op;
@@ -479,21 +484,6 @@ impl<'a> CLangTransform<'a> {
         format!("(D{})", arg)
     }
 
-    // pub fn write_left_side_assign(&mut self, new_var: bool, out: bool, prefix: &str, i: usize) {
-    //     if out {
-    //         write!(self.out, "    {} = ", Self::format_arg_d(i)).unwrap();
-    //     } else if new_var {
-    //         write!(
-    //             self.out,
-    //             "    {} {}{} = ",
-    //             self.config.final_type_name, prefix, i
-    //         )
-    //         .unwrap();
-    //     } else {
-    //         write!(self.out, "    {}{} = ", prefix, i).unwrap();
-    //     }
-    // }
-
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
         // definition
         // TODO: Add passing out prepare to lower bits_log before main routine
@@ -513,18 +503,25 @@ impl<'a> CLangTransform<'a> {
         //     }
         // }
         let mut prev_type = INPUT_TYPE;
-        let mut prev_pass = (0..bits).collect::<Vec<_>>();
+        let mut bit_usage = vec![u32::try_from((1usize << bits) - 1).unwrap(); 32];
+        let mut prev_pass = (0..32).collect::<Vec<_>>();
         for i in (0..bits_log).rev() {
-            let mut new_pass = vec![None; bits];
+            let mut new_pass = vec![0; 32];
             for j in 0..16 {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
-                if fj >= bits {
+                if i == 0 && fj >= bits {
                     continue;
                 }
                 let sj = fj | (1 << i);
+                let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0;
+                let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0;
                 if prev_type < OUTPUT_TYPE {
-                    mvars.use_var(prev_type, prev_pass[fj]);
-                    mvars.use_var(prev_type, prev_pass[sj]);
+                    if bit_usage_f {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                    }
+                    if bit_usage_s {
+                        mvars.use_var(prev_type, prev_pass[sj]);
+                    }
                 }
                 let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                 let t1 = mvars.format_var(prev_type, prev_pass[sj]);
@@ -533,57 +530,100 @@ impl<'a> CLangTransform<'a> {
                 } else {
                     (OUTPUT_TYPE, fj)
                 };
-                write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
-                let p0 =
-                    Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]]);
-                let expr = if !t1.is_empty() {
+
+                let p0 = if bit_usage_f {
+                    Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]])
+                } else {
+                    String::new()
+                };
+                let p1 = if bit_usage_s {
                     let p1 = Self::format_op(
                         self.config.and_op,
                         &[&t1, self.config.constant_defs[2 * i]],
                     );
-                    let p1 = Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()]);
-                    Self::format_op(self.config.or_op, &[&p0, &p1])
+                    Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
                 } else {
-                    p0
+                    String::new()
                 };
-                writeln!(mvars, "{};\\", expr).unwrap();
-                if i != 0 {
-                    new_pass[fj] = Some(ns0);
+                let expr = if !p0.is_empty() {
+                    if !p1.is_empty() {
+                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                    } else {
+                        p0
+                    }
+                } else {
+                    p1
+                };
+                if !expr.is_empty() {
+                    write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
+                    writeln!(mvars, "{};\\", expr).unwrap();
                 }
-                if sj < bits {
+                if i != 0 {
+                    new_pass[fj] = ns0;
+                }
+
+                // second expression
+                if i != 0 || sj < bits {
+                    let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
+                    let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
                     if prev_type < OUTPUT_TYPE {
-                        mvars.use_var(prev_type, prev_pass[fj]);
-                        mvars.use_var(prev_type, prev_pass[sj]);
+                        if bit_usage_f {
+                            mvars.use_var(prev_type, prev_pass[fj]);
+                        }
+                        if bit_usage_s {
+                            mvars.use_var(prev_type, prev_pass[sj]);
+                        }
                     }
                     let (nt, ns1) = if i != 0 {
                         (0, mvars.new_var(0))
                     } else {
                         (OUTPUT_TYPE, sj)
                     };
-                    write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
-                    let p0 = Self::format_op(
-                        self.config.and_op,
-                        &[&t0, self.config.constant_defs[2 * i + 1]],
-                    );
-                    let p0 = Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()]);
-                    let expr = if !t1.is_empty() {
-                        let p1 = Self::format_op(
+                    let p0 = if bit_usage_f {
+                        let p0 = Self::format_op(
+                            self.config.and_op,
+                            &[&t0, self.config.constant_defs[2 * i + 1]],
+                        );
+                        Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
+                    } else {
+                        String::new()
+                    };
+                    let p1 = if bit_usage_s {
+                        Self::format_op(
                             self.config.and_op,
                             &[&t1, self.config.constant_defs[2 * i + 1]],
-                        );
-                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                        )
                     } else {
-                        p0
+                        String::new()
                     };
-                    writeln!(mvars, "{};\\", expr).unwrap();
+                    let expr = if !p0.is_empty() {
+                        if !p1.is_empty() {
+                            Self::format_op(self.config.or_op, &[&p0, &p1])
+                        } else {
+                            p0
+                        }
+                    } else {
+                        p1
+                    };
+                    if !expr.is_empty() {
+                        write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
+                        writeln!(mvars, "{};\\", expr).unwrap();
+                    }
                     if i != 0 {
-                        new_pass[sj] = Some(ns1);
+                        new_pass[sj] = ns1;
                     }
                 }
+                // update bit usage
+                let bit_fj = (bit_usage[fj] & BIT_MASK_TBL[2 * i])
+                    | ((bit_usage[sj] & BIT_MASK_TBL[2 * i]) << (1 << i));
+                let bit_sj = ((bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) >> (1 << i))
+                    | (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]);
+                bit_usage[fj] = bit_fj;
+                bit_usage[sj] = bit_sj;
             }
             prev_type = 0;
             if i != 0 {
-                prev_pass = new_pass.into_iter().map(|i| i.unwrap()).collect::<Vec<_>>();
+                prev_pass = new_pass;
             }
         }
     }
@@ -591,7 +631,7 @@ impl<'a> CLangTransform<'a> {
     pub fn gen_input_transform(&mut self, bits: usize) {
         let mut mvars = CLangMacroVars::new(
             [self.config.final_type_name],
-            (0..bits).map(|i| Self::format_arg_s(i)),
+            (0..32).map(|i| Self::format_arg_s(i)),
             (0..bits).map(|i| Self::format_arg_d(i)),
         );
         self.gen_input_transform_int(&mut mvars, bits);
