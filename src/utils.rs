@@ -99,6 +99,15 @@ pub(crate) fn get_timestamp() -> u128 {
     old
 }
 
+pub(crate) const fn calc_log_bits(n: usize) -> usize {
+    let nbits = usize::BITS - n.leading_zeros();
+    if (1 << (nbits - 1)) == n {
+        (nbits - 1) as usize
+    } else {
+        nbits as usize
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -130,14 +139,5 @@ mod tests {
         assert_eq!(2, vacc.alloc());
         assert_eq!(4, vacc.alloc());
         assert_eq!(6, vacc.alloc());
-    }
-}
-
-pub(crate) const fn calc_log_bits(n: usize) -> usize {
-    let nbits = usize::BITS - n.leading_zeros();
-    if (1 << (nbits - 1)) == n {
-        (nbits - 1) as usize
-    } else {
-        nbits as usize
     }
 }

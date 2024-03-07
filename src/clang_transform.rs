@@ -432,6 +432,20 @@ impl<'a> CLangTransform<'a> {
         self.out.push_str("{ \\\n");
         // TODO: Add passing out prepare to lower bits_log before main routine
         let bits_log = calc_log_bits(bits);
+        // if bits_log < 5 {
+        //     writeln!(
+        //         "    {} temp[{}];\\",
+        //         self.config.final_type_name,
+        //         1 << bits_log
+        //     )
+        //     .unwrap();
+        //     for i in 0..32 {
+        //         write!(self.out, "    temp[{}] = ", i);
+        //         for j in 0..1 << (5 - bits_log) {
+        //
+        //         }
+        //     }
+        // }
         for i in (0..bits_log).rev() {
             for j in 0..16 {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
