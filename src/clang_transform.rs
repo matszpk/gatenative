@@ -368,8 +368,7 @@ pub struct CLangTransform<'a> {
 const INPUT_TYPE: usize = usize::MAX;
 const OUTPUT_TYPE: usize = usize::MAX - 1;
 
-struct CLangMacroVars<'a> {
-    transform: &'a mut CLangTransform<'a>,
+struct CLangMacroVars {
     var_types: Vec<String>,
     mvartool: MultiVarAllocTool<usize>,
     inputs: Vec<String>,
@@ -377,12 +376,11 @@ struct CLangMacroVars<'a> {
     out: String,
 }
 
-impl<'a> CLangMacroVars<'a> {
-    fn new(
-        transform: &'a mut CLangTransform<'a>,
+impl CLangMacroVars {
+    fn new<'a>(
         var_types: impl IntoIterator<Item = &'a str>,
-        inputs: impl IntoIterator<Item = &'a str>,
-        outputs: impl IntoIterator<Item = &'a str>,
+        inputs: impl IntoIterator<Item = String>,
+        outputs: impl IntoIterator<Item = String>,
     ) -> Self {
         let var_types = var_types
             .into_iter()
@@ -391,23 +389,25 @@ impl<'a> CLangMacroVars<'a> {
         let var_type_num = var_types.len();
         assert!(var_type_num < OUTPUT_TYPE);
         Self {
-            transform,
             var_types,
             mvartool: MultiVarAllocTool::new(var_type_num),
-            inputs: inputs
-                .into_iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>(),
-            outputs: outputs
-                .into_iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>(),
+            inputs: inputs.into_iter().collect::<Vec<_>>(),
+            outputs: outputs.into_iter().collect::<Vec<_>>(),
             out: String::new(),
         }
     }
 
+    // go to next pass
     fn set_usage_mode(&mut self) {
         self.mvartool.set_usage_mode();
+    }
+
+    fn write_var_defs(&mut self, out: &mut String) {
+        for i in 0..self.var_types.len() {
+            for j in 0..self.mvartool.alloc_var_num(i) {
+                writeln!(out, "    {} t{}v{};\\", self.var_types[i], i, j).unwrap();
+            }
+        }
     }
 
     fn new_var(&mut self, var_type: usize) -> usize {
@@ -418,15 +418,23 @@ impl<'a> CLangMacroVars<'a> {
         self.mvartool.use_var(var_type, v);
     }
 
-    fn write_var(&mut self, var_type: usize, v: usize) {
+    fn format_var(&self, var_type: usize, v: usize) -> String {
+        if var_type == INPUT_TYPE {
+            self.inputs[v].clone()
+        } else if var_type == OUTPUT_TYPE {
+            self.outputs[v].clone()
+        } else {
+            format!("t{}v{}", var_type, v)
+        }
+    }
+}
+
+impl Write for CLangMacroVars {
+    fn write_str(&mut self, s: &str) -> Result<(), std::fmt::Error> {
         if self.mvartool.usage_mode() {
-            if var_type == INPUT_TYPE {
-                self.out.push_str(&self.inputs[v]);
-            } else if var_type == OUTPUT_TYPE {
-                self.out.push_str(&self.outputs[v]);
-            } else {
-                write!(&mut self.out, "t{}v{}", var_type, v).unwrap();
-            }
+            self.out.write_str(s)
+        } else {
+            Ok(())
         }
     }
 }
@@ -471,32 +479,23 @@ impl<'a> CLangTransform<'a> {
         format!("(D{})", arg)
     }
 
-    pub fn write_left_side_assign(&mut self, new_var: bool, out: bool, prefix: &str, i: usize) {
-        if out {
-            write!(self.out, "    {} = ", Self::format_arg_d(i)).unwrap();
-        } else if new_var {
-            write!(
-                self.out,
-                "    {} {}{} = ",
-                self.config.final_type_name, prefix, i
-            )
-            .unwrap();
-        } else {
-            write!(self.out, "    {}{} = ", prefix, i).unwrap();
-        }
-    }
+    // pub fn write_left_side_assign(&mut self, new_var: bool, out: bool, prefix: &str, i: usize) {
+    //     if out {
+    //         write!(self.out, "    {} = ", Self::format_arg_d(i)).unwrap();
+    //     } else if new_var {
+    //         write!(
+    //             self.out,
+    //             "    {} {}{} = ",
+    //             self.config.final_type_name, prefix, i
+    //         )
+    //         .unwrap();
+    //     } else {
+    //         write!(self.out, "    {}{} = ", prefix, i).unwrap();
+    //     }
+    // }
 
-    pub fn gen_input_transform(&mut self, bits: usize) {
+    fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
         // definition
-        writeln!(
-            self.out,
-            "#define IN_TRANSFORM_B{}({}, {}) \\",
-            bits,
-            &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
-            "S",
-        )
-        .unwrap();
-        self.out.push_str("{ \\\n");
         // TODO: Add passing out prepare to lower bits_log before main routine
         let bits_log = calc_log_bits(bits);
         // if bits_log < 5 {
@@ -513,41 +512,28 @@ impl<'a> CLangTransform<'a> {
         //         }
         //     }
         // }
+        let mut prev_type = INPUT_TYPE;
+        let mut prev_pass = (0..bits).collect::<Vec<_>>();
         for i in (0..bits_log).rev() {
+            let mut new_pass = vec![None; bits];
             for j in 0..16 {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
                 if fj >= bits {
                     continue;
                 }
                 let sj = fj | (1 << i);
-                let t0 = if i == bits_log - 1 {
-                    Self::format_arg_s(fj)
-                } else if (i & 1) ^ (bits_log & 1) == 0 {
-                    format!("t{}", fj)
+                if prev_type < OUTPUT_TYPE {
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                    mvars.use_var(prev_type, prev_pass[sj]);
+                }
+                let t0 = mvars.format_var(prev_type, prev_pass[fj]);
+                let t1 = mvars.format_var(prev_type, prev_pass[sj]);
+                let (nt, ns0) = if i != 0 {
+                    (0, mvars.new_var(0))
                 } else {
-                    format!("s{}", fj)
+                    (OUTPUT_TYPE, fj)
                 };
-                let t1 = if sj < bits {
-                    if i == bits_log - 1 {
-                        Self::format_arg_s(sj)
-                    } else if (i & 1) ^ (bits_log & 1) == 0 {
-                        format!("t{}", sj)
-                    } else {
-                        format!("s{}", sj)
-                    }
-                } else {
-                    String::new()
-                };
-                self.write_left_side_assign(
-                    i >= (bits_log - 2),
-                    i == 0,
-                    if (i & 1) ^ (bits_log & 1) != 0 {
-                        "t"
-                    } else {
-                        "s"
-                    },
-                    fj,
-                );
+                write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                 let p0 =
                     Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]]);
                 let expr = if !t1.is_empty() {
@@ -560,18 +546,21 @@ impl<'a> CLangTransform<'a> {
                 } else {
                     p0
                 };
-                writeln!(self.out, "{};\\", expr).unwrap();
+                writeln!(mvars, "{};\\", expr).unwrap();
+                if i != 0 {
+                    new_pass[fj] = Some(ns0);
+                }
                 if sj < bits {
-                    self.write_left_side_assign(
-                        i >= (bits_log - 2),
-                        i == 0,
-                        if (i & 1) ^ (bits_log & 1) != 0 {
-                            "t"
-                        } else {
-                            "s"
-                        },
-                        sj,
-                    );
+                    if prev_type < OUTPUT_TYPE {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                        mvars.use_var(prev_type, prev_pass[sj]);
+                    }
+                    let (nt, ns1) = if i != 0 {
+                        (0, mvars.new_var(0))
+                    } else {
+                        (OUTPUT_TYPE, sj)
+                    };
+                    write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
                     let p0 = Self::format_op(
                         self.config.and_op,
                         &[&t0, self.config.constant_defs[2 * i + 1]],
@@ -586,11 +575,40 @@ impl<'a> CLangTransform<'a> {
                     } else {
                         p0
                     };
-                    writeln!(self.out, "{};\\", expr).unwrap();
+                    writeln!(mvars, "{};\\", expr).unwrap();
+                    if i != 0 {
+                        new_pass[sj] = Some(ns1);
+                    }
                 }
             }
+            prev_type = 0;
+            if i != 0 {
+                prev_pass = new_pass.into_iter().map(|i| i.unwrap()).collect::<Vec<_>>();
+            }
         }
-        self.out.push_str("}\n");
+    }
+
+    pub fn gen_input_transform(&mut self, bits: usize) {
+        let mut mvars = CLangMacroVars::new(
+            [self.config.final_type_name],
+            (0..bits).map(|i| Self::format_arg_s(i)),
+            (0..bits).map(|i| Self::format_arg_d(i)),
+        );
+        self.gen_input_transform_int(&mut mvars, bits);
+        mvars.set_usage_mode();
+        writeln!(
+            &mut self.out,
+            "#define IN_TRANSFORM_B{}({}, {}) \\",
+            bits,
+            &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
+            "S",
+        )
+        .unwrap();
+        self.out.write_str("{\\\n").unwrap();
+        self.gen_input_transform_int(&mut mvars, bits);
+        mvars.write_var_defs(&mut self.out);
+        self.out.push_str(&mvars.out);
+        self.out.write_str("}\n").unwrap();
     }
 
     pub fn out(self) -> String {
