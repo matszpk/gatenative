@@ -19,7 +19,10 @@ pub struct CLangTransformConfig<'a> {
     shr32_op: &'a str,
     unpack_ops: [Option<&'a str>; 5 * 2],
     init_defs: &'a str,
+    // masks for transposition operations (unpackings)
     constant_defs: [&'a str; 2 * 5],
+    // masks for first 2^n bits
+    constant2_defs: [&'a str; 5],
 }
 
 pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -44,6 +47,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
         "0x0000ffffU",
         "0xffff0000U",
     ],
+    constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
 };
 
 pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -67,6 +71,13 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         "0xff00ff00ff00ff00ULL",
         "0x0000ffff0000ffffULL",
         "0xffff0000ffff0000ULL",
+    ],
+    constant2_defs: [
+        "0x0000000100000001ULL",
+        "0x0000000300000003ULL",
+        "0x0000000f0000000fULL",
+        "0x000000ff000000ffULL",
+        "0x0000ffff0000ffffULL",
     ],
 };
 
@@ -101,7 +112,15 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     0xff00ff00U, 0xff00ff00U,
     0x0000ffffU, 0x0000ffffU,
     0xffff0000U, 0xffff0000U
-};"##,
+};
+static const unsigned int transform_const2_tbl[5*2] = {
+    0x00000001U, 0x00000001U,
+    0x00000003U, 0x00000003U,
+    0x0000000fU, 0x0000000fU,
+    0x000000ffU, 0x000000ffU,
+    0x0000ffffU, 0x0000ffffU
+};
+"##,
     constant_defs: [
         "(*(const __m64*)(transform_const_tbl + 2*0))",
         "(*(const __m64*)(transform_const_tbl + 2*1))",
@@ -113,6 +132,13 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
         "(*(const __m64*)(transform_const_tbl + 2*7))",
         "(*(const __m64*)(transform_const_tbl + 2*8))",
         "(*(const __m64*)(transform_const_tbl + 2*9))",
+    ],
+    constant2_defs: [
+        "(*(const __m64*)(transform_const2_tbl + 2*0))",
+        "(*(const __m64*)(transform_const2_tbl + 2*1))",
+        "(*(const __m64*)(transform_const2_tbl + 2*2))",
+        "(*(const __m64*)(transform_const2_tbl + 2*3))",
+        "(*(const __m64*)(transform_const2_tbl + 2*4))",
     ],
 };
 
@@ -147,7 +173,15 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     0xff00ff00U, 0xff00ff00U, 0xff00ff00U, 0xff00ff00U,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
-};"##,
+};
+static const unsigned int transform_const2_tbl[5*4] = {
+    0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U,
+    0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
+    0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
+    0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
+};
+"##,
     constant_defs: [
         "(*(const __m128i*)(transform_const_tbl + 4*0))",
         "(*(const __m128i*)(transform_const_tbl + 4*1))",
@@ -159,6 +193,13 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         "(*(const __m128i*)(transform_const_tbl + 4*7))",
         "(*(const __m128i*)(transform_const_tbl + 4*8))",
         "(*(const __m128i*)(transform_const_tbl + 4*9))",
+    ],
+    constant2_defs: [
+        "(*(const __m128i*)(transform_const2_tbl + 4*0))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*1))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*2))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*3))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*4))",
     ],
 };
 
@@ -182,7 +223,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         Some("_mm256_unpacklo_epi16({}, {})"),
         Some("_mm256_unpackhi_epi16({}, {})"),
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*8] = {
+    init_defs: r##"static const unsigned int transform_const_tbl[5*2*8]
+__attribute__((aligned(32))) = {
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU,
@@ -203,7 +245,21 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
-};"##,
+};
+static const unsigned int transform_const2_tbl[5*8]
+__attribute__((aligned(32))) = {
+    0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U,
+    0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U,
+    0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
+    0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
+    0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
+    0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
+    0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
+    0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
+};
+"##,
     constant_defs: [
         "(*(const __m256i*)(transform_const_tbl + 8*0))",
         "(*(const __m256i*)(transform_const_tbl + 8*1))",
@@ -215,6 +271,13 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         "(*(const __m256i*)(transform_const_tbl + 8*7))",
         "(*(const __m256i*)(transform_const_tbl + 8*8))",
         "(*(const __m256i*)(transform_const_tbl + 8*9))",
+    ],
+    constant2_defs: [
+        "(*(const __m256i*)(transform_const2_tbl + 8*0))",
+        "(*(const __m256i*)(transform_const2_tbl + 8*1))",
+        "(*(const __m256i*)(transform_const2_tbl + 8*2))",
+        "(*(const __m256i*)(transform_const2_tbl + 8*3))",
+        "(*(const __m256i*)(transform_const2_tbl + 8*4))",
     ],
 };
 
@@ -251,6 +314,13 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         "{ 0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU }",
         "{ 0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U }",
     ],
+    constant2_defs: [
+        "{ 0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U }",
+        "{ 0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U }",
+        "{ 0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU }",
+        "{ 0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU }",
+        "{ 0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU }",
+    ],
 };
 
 pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -275,6 +345,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
         "0x0000ffffU",
         "0xffff0000U",
     ],
+    constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
 };
 
 impl<'a> CLangTransformConfig<'a> {
@@ -325,7 +396,7 @@ impl<'a> CLangTransform<'a> {
     }
 
     pub fn format_arg_s(arg: usize) -> String {
-        format!("(S{})", arg)
+        format!("(S[{}])", arg)
     }
     pub fn format_arg_d(arg: usize) -> String {
         format!("(D{})", arg)
@@ -353,7 +424,7 @@ impl<'a> CLangTransform<'a> {
             "#define IN_TRANSFORM_B{}({}, {}) \\",
             bits,
             &((0..32).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
-            &((0..32).map(|i| format!("S{}", i)).collect::<Vec<_>>()).join(", "),
+            "S",
         )
         .unwrap();
         self.out.push_str("{ \\\n");
