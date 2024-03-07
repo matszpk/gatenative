@@ -173,16 +173,16 @@ fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
 // shared library object
 
 #[dynamic]
-static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
+pub static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
 
-struct SharedLib {
+pub struct SharedLib {
     cpu_ext: CPUExtension,
     source_path: PathBuf,
     shared_library_path: PathBuf,
 }
 
 impl SharedLib {
-    fn new_with_cpu_ext(cpu_ext: CPUExtension) -> Self {
+    pub fn new_with_cpu_ext(cpu_ext: CPUExtension) -> Self {
         let temp_dir_path = temp_dir();
         let unix_time = get_timestamp();
         Self {
@@ -192,7 +192,7 @@ impl SharedLib {
         }
     }
 
-    fn build(self, source: &[u8]) -> Result<Library, BuildError> {
+    pub fn build(self, source: &[u8]) -> Result<Library, BuildError> {
         fs::write(&self.source_path, source)?;
         let extra_flags = get_build_config(self.cpu_ext).extra_flags;
         let args = {

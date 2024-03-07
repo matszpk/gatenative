@@ -134,6 +134,10 @@ where
         }
     }
 
+    pub fn set_usage_mode(&mut self) {
+        self.usage_mode = true;
+    }
+
     pub fn var_type_num(&self) -> usize {
         self.var_allocs.len()
     }

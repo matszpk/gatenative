@@ -33,7 +33,7 @@ pub mod opencl_build_exec;
 pub mod opencl_data_transform;
 pub mod opencl_machine;
 pub mod parseq_mapper;
-mod utils;
+pub mod utils;
 mod vbinopcircuit;
 mod vcircuit;
 
