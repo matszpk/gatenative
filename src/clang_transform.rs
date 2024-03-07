@@ -485,8 +485,6 @@ impl<'a> CLangTransform<'a> {
     }
 
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
-        // definition
-        // TODO: Add passing out prepare to lower bits_log before main routine
         let bits_log = calc_log_bits(bits);
         // if bits_log < 5 {
         //     writeln!(
