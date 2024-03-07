@@ -260,37 +260,51 @@ mod tests {
             assert_eq!(t8, 3);
             let t9 = mvar_alloc_tool.new_var(0);
             assert_eq!(t9, 4);
+            let t10 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t10, 4);
+            let t11 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t11, 5);
+            mvar_alloc_tool.use_var(1, t8);
+            mvar_alloc_tool.use_var(1, t10);
+            mvar_alloc_tool.use_var(0, t6);
         }
         mvar_alloc_tool.set_usage_mode();
         {
-            let t1 = mvar_alloc_tool.new_var(0);
+            let t1 = mvar_alloc_tool.new_var(0); // *.., ...
             assert_eq!(t1, 0);
             mvar_alloc_tool.use_var(0, t1);
-            let t2 = mvar_alloc_tool.new_var(0);
+            let t2 = mvar_alloc_tool.new_var(0); // **., ...
             assert_eq!(t2, 1);
             mvar_alloc_tool.use_var(0, t2);
-            let t3 = mvar_alloc_tool.new_var(1);
+            let t3 = mvar_alloc_tool.new_var(1); // **., *..
             assert_eq!(t3, 0);
             mvar_alloc_tool.use_var(1, t3);
             mvar_alloc_tool.use_var(0, t1);
-            let t4 = mvar_alloc_tool.new_var(0);
+            let t4 = mvar_alloc_tool.new_var(0); // ***, *..
             assert_eq!(t4, 2);
             mvar_alloc_tool.use_var(0, t4);
-            mvar_alloc_tool.use_var(1, t3);
-            let t5 = mvar_alloc_tool.new_var(1);
+            mvar_alloc_tool.use_var(1, t3); // ***, ...
+            let t5 = mvar_alloc_tool.new_var(1); // ***, *..
             assert_eq!(t5, 0);
-            mvar_alloc_tool.use_var(1, t5);
-            mvar_alloc_tool.use_var(0, t2);
-            let t6 = mvar_alloc_tool.new_var(0);
+            mvar_alloc_tool.use_var(1, t5); // ***, ...
+            mvar_alloc_tool.use_var(0, t2); // *.*, ...
+            let t6 = mvar_alloc_tool.new_var(0); // ***, ...
             assert_eq!(t6, 1);
-            mvar_alloc_tool.use_var(0, t1);
-            let t7 = mvar_alloc_tool.new_var(1);
+            mvar_alloc_tool.use_var(0, t1); // .**, ...
+            let t7 = mvar_alloc_tool.new_var(1); // .**, *..
             assert_eq!(t7, 0);
-            mvar_alloc_tool.use_var(0, t4);
-            let t8 = mvar_alloc_tool.new_var(1);
+            mvar_alloc_tool.use_var(0, t4); // .*., ...
+            let t8 = mvar_alloc_tool.new_var(1); // .*., *..
             assert_eq!(t8, 0);
-            let t9 = mvar_alloc_tool.new_var(0);
+            let t9 = mvar_alloc_tool.new_var(0); // **., *..
             assert_eq!(t9, 0);
+            let t10 = mvar_alloc_tool.new_var(1); // **., **.
+            assert_eq!(t10, 1);
+            let t11 = mvar_alloc_tool.new_var(1); // **., ***
+            assert_eq!(t11, 2);
+            mvar_alloc_tool.use_var(1, t8); // **., .**
+            mvar_alloc_tool.use_var(1, t10); // **., ..*
+            mvar_alloc_tool.use_var(0, t6); // *.., ..*
         }
     }
 }
