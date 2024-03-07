@@ -77,10 +77,12 @@ void gate_sys_testcirc(const void* input,
         r##"#include <xmmintrin.h>
 #include <stddef.h>
 #include <stdint.h>
-static const unsigned int zero_value[4] = { 0, 0, 0, 0 };
-static const unsigned int one_value[4] = {
+static const unsigned int zero_value[4] __attribute__((aligned(16))) =
+    { 0, 0, 0, 0 };
+static const unsigned int one_value[4] __attribute__((aligned(16))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
-static const unsigned int elem_index_low_tbl[7*4] = {
+static const unsigned int elem_index_low_tbl[7*4]
+__attribute__((aligned(16))) = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,

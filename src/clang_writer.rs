@@ -315,16 +315,18 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
     not_op: None,
     zero_value: (
-        r##"static const unsigned int zero_value[4] = { 0, 0, 0, 0 };"##,
+        r##"static const unsigned int zero_value[4] __attribute__((aligned(16))) =
+    { 0, 0, 0, 0 };"##,
         "*((const __m128*)zero_value)",
     ),
     one_value: (
-        r##"static const unsigned int one_value[4] = {
+        r##"static const unsigned int one_value[4] __attribute__((aligned(16))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((const __m128*)one_value)",
     ),
     elem_index: ElemIndexConfig {
-        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4] = {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4]
+__attribute__((aligned(16))) = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
@@ -385,16 +387,18 @@ pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
     nimpl_op: Some("_mm_andnot_si128({1}, {0})"),
     not_op: None,
     zero_value: (
-        r##"static const unsigned int zero_value[4] = { 0, 0, 0, 0 };"##,
+        r##"static const unsigned int zero_value[4] __attribute__((aligned(16))) =
+    { 0, 0, 0, 0 };"##,
         "*((const __m128i*)zero_value)",
     ),
     one_value: (
-        r##"static const unsigned int one_value[4] = {
+        r##"static const unsigned int one_value[4] __attribute__((aligned(16))) = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };"##,
         "*((const __m128i*)one_value)",
     ),
     elem_index: ElemIndexConfig {
-        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4] = {
+        low_bits_init: r##"static const unsigned int elem_index_low_tbl[7*4]
+__attribute__((aligned(16))) = {
     0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa, 0xaaaaaaaa,
     0xcccccccc, 0xcccccccc, 0xcccccccc, 0xcccccccc,
     0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0, 0xf0f0f0f0,
