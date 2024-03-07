@@ -1,3 +1,5 @@
+use crate::utils::calc_log_bits;
+
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
@@ -423,62 +425,91 @@ impl<'a> CLangTransform<'a> {
             self.out,
             "#define IN_TRANSFORM_B{}({}, {}) \\",
             bits,
-            &((0..32).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
+            &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
             "S",
         )
         .unwrap();
         self.out.push_str("{ \\\n");
-        for i in (0..5).rev() {
+        // TODO: Add passing out prepare to lower bits_log before main routine
+        let bits_log = calc_log_bits(bits);
+        for i in (0..bits_log).rev() {
             for j in 0..16 {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
+                if fj >= bits {
+                    continue;
+                }
                 let sj = fj | (1 << i);
-                let t0 = if i == 4 {
+                let t0 = if i == bits_log - 1 {
                     Self::format_arg_s(fj)
-                } else if (i & 1) != 0 {
+                } else if (i & 1) ^ (bits_log & 1) == 0 {
                     format!("t{}", fj)
                 } else {
                     format!("s{}", fj)
                 };
-                let t1 = if i == 4 {
-                    Self::format_arg_s(sj)
-                } else if (i & 1) != 0 {
-                    format!("t{}", sj)
+                let t1 = if sj < bits {
+                    if i == bits_log - 1 {
+                        Self::format_arg_s(sj)
+                    } else if (i & 1) ^ (bits_log & 1) == 0 {
+                        format!("t{}", sj)
+                    } else {
+                        format!("s{}", sj)
+                    }
                 } else {
-                    format!("s{}", sj)
+                    String::new()
                 };
                 self.write_left_side_assign(
-                    i >= 3,
+                    i >= (bits_log - 2),
                     i == 0,
-                    if (i & 1) == 0 { "t" } else { "s" },
+                    if (i & 1) ^ (bits_log & 1) != 0 {
+                        "t"
+                    } else {
+                        "s"
+                    },
                     fj,
                 );
                 let p0 =
                     Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]]);
-                let p1 =
-                    Self::format_op(self.config.and_op, &[&t1, self.config.constant_defs[2 * i]]);
-                let p1 = Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()]);
-                let expr = Self::format_op(self.config.or_op, &[&p0, &p1]);
+                let expr = if !t1.is_empty() {
+                    let p1 = Self::format_op(
+                        self.config.and_op,
+                        &[&t1, self.config.constant_defs[2 * i]],
+                    );
+                    let p1 = Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()]);
+                    Self::format_op(self.config.or_op, &[&p0, &p1])
+                } else {
+                    p0
+                };
                 writeln!(self.out, "{};\\", expr).unwrap();
-                self.write_left_side_assign(
-                    i >= 3,
-                    i == 0,
-                    if (i & 1) == 0 { "t" } else { "s" },
-                    sj,
-                );
-                let p0 = Self::format_op(
-                    self.config.and_op,
-                    &[&t0, self.config.constant_defs[2 * i + 1]],
-                );
-                let p0 = Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()]);
-                let p1 = Self::format_op(
-                    self.config.and_op,
-                    &[&t1, self.config.constant_defs[2 * i + 1]],
-                );
-                let expr = Self::format_op(self.config.or_op, &[&p0, &p1]);
-                writeln!(self.out, "{};\\", expr).unwrap();
+                if sj < bits {
+                    self.write_left_side_assign(
+                        i >= (bits_log - 2),
+                        i == 0,
+                        if (i & 1) ^ (bits_log & 1) != 0 {
+                            "t"
+                        } else {
+                            "s"
+                        },
+                        sj,
+                    );
+                    let p0 = Self::format_op(
+                        self.config.and_op,
+                        &[&t0, self.config.constant_defs[2 * i + 1]],
+                    );
+                    let p0 = Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()]);
+                    let expr = if !t1.is_empty() {
+                        let p1 = Self::format_op(
+                            self.config.and_op,
+                            &[&t1, self.config.constant_defs[2 * i + 1]],
+                        );
+                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                    } else {
+                        p0
+                    };
+                    writeln!(self.out, "{};\\", expr).unwrap();
+                }
             }
         }
-        self.out.push_str("}");
+        self.out.push_str("}\n");
     }
 
     pub fn out(self) -> String {
