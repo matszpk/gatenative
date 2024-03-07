@@ -444,6 +444,8 @@ const BIT_MASK_TBL: [u32; 5 * 2] = [
     0x0000ffff, 0xffff0000,
 ];
 
+const SINGLE_BIT_MASK_TBL: [u32; 5] = [0x1, 0x3, 0xf, 0xff, 0xffff];
+
 impl<'a> CLangTransform<'a> {
     fn write_op(out: &mut String, op: &str, args: &[&str]) {
         let mut rest = op;
@@ -486,26 +488,47 @@ impl<'a> CLangTransform<'a> {
 
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
         let bits_log = calc_log_bits(bits);
-        // if bits_log < 5 {
-        //     writeln!(
-        //         "    {} temp[{}];\\",
-        //         self.config.final_type_name,
-        //         1 << bits_log
-        //     )
-        //     .unwrap();
-        //     for i in 0..32 {
-        //         write!(self.out, "    temp[{}] = ", i);
-        //         for j in 0..1 << (5 - bits_log) {
-        //
-        //         }
-        //     }
-        // }
         let mut prev_type = INPUT_TYPE;
         let mut bit_usage = vec![u32::try_from((1usize << bits) - 1).unwrap(); 32];
         let mut prev_pass = (0..32).collect::<Vec<_>>();
+        if bits_log < 5 {
+            for i in 0..1 << bits_log {
+                let v = mvars.new_var(0);
+                write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+                let mut final_expr = String::new();
+                let mut bit_usg = 0;
+                for j in 0..1 << (5 - bits_log) {
+                    let idx = i | (j << bits_log);
+                    let tv = mvars.format_var(prev_type, prev_pass[idx]);
+                    let expr = Self::format_op(
+                        self.config.and_op,
+                        &[&tv, self.config.constant2_defs[bits_log]],
+                    );
+                    let expr = if j != 0 {
+                        Self::format_op(
+                            self.config.shl32_op,
+                            &[&expr, &(j << bits_log).to_string()],
+                        )
+                    } else {
+                        expr
+                    };
+                    final_expr = if !final_expr.is_empty() {
+                        Self::format_op(self.config.or_op, &[&final_expr, &expr])
+                    } else {
+                        expr
+                    };
+                    bit_usg |= (bit_usage[idx] & SINGLE_BIT_MASK_TBL[bits_log]) << (j << bits_log);
+                    bit_usage[idx] = 0;
+                }
+                bit_usage[i] = bit_usg;
+                write!(mvars, "{};\\\n", final_expr).unwrap();
+                prev_pass[i] = v;
+            }
+            prev_type = 0;
+        }
         for i in (0..bits_log).rev() {
-            let mut new_pass = vec![0; 32];
-            for j in 0..16 {
+            let mut new_pass = vec![0; 1 << bits_log];
+            for j in 0..1 << (bits_log - 1) {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
                 if i == 0 && fj >= bits {
                     continue;
