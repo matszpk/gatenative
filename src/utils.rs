@@ -1,6 +1,6 @@
 use gatesim::*;
 
-use std::collections::VecDeque;
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 use static_init::dynamic;
@@ -113,13 +113,14 @@ pub const fn calc_log_bits(n: usize) -> usize {
 pub struct MultiVarAllocTool<T> {
     var_allocs: Vec<VarAllocator<T>>,
     var_usages: Vec<Vec<T>>,
-    var_new_history: Vec<VecDeque<T>>,
+    var_maps: Vec<HashMap<T, T>>,
+    var_new_history: Vec<T>,
     usage_mode: bool, // if true then use variables, if false then allocates variables
 }
 
 impl<T> MultiVarAllocTool<T>
 where
-    T: Default + Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + Clone + Copy + Ord + PartialEq + Eq + std::hash::Hash,
     T: TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -129,7 +130,8 @@ where
         Self {
             var_allocs: vec![VarAllocator::new(); var_type_num],
             var_usages: vec![Vec::new(); var_type_num],
-            var_new_history: vec![VecDeque::new(); var_type_num],
+            var_maps: vec![HashMap::new(); var_type_num],
+            var_new_history: vec![T::default(); var_type_num],
             usage_mode: false,
         }
     }
@@ -142,44 +144,54 @@ where
         self.var_allocs.len()
     }
 
-    fn use_or_remove_var(&mut self, var_type: usize, v: T) {
-        let vt = usize::try_from(v).unwrap();
-        let var_usage = self.var_usages[var_type][vt];
+    fn use_or_remove_var(&mut self, var_type: usize, vv: T) {
+        let vt = self.var_maps[var_type][&vv];
+        let v = usize::try_from(vt).unwrap();
+        let var_usage = self.var_usages[var_type][v];
         let mut var_usage = usize::try_from(var_usage).unwrap();
         assert_ne!(var_usage, 0);
         var_usage -= 1;
-        self.var_usages[var_type][vt] = T::try_from(var_usage).unwrap();
+        self.var_usages[var_type][v] = T::try_from(var_usage).unwrap();
         if var_usage == 0 {
-            self.var_allocs[var_type].free(v);
+            self.var_allocs[var_type].free(vv);
+            self.var_maps[var_type].remove(&vv);
         }
     }
 
     pub fn new_var(&mut self, var_type: usize) -> T {
         if !self.usage_mode {
-            let v = self.var_allocs[var_type].alloc();
-            let vt = usize::try_from(v).unwrap();
-            if vt >= self.var_usages[var_type].len() {
-                self.var_usages[var_type].resize(vt + 1, T::default());
-            }
-            self.var_usages[var_type][vt] = T::try_from(1).unwrap();
-            self.var_new_history[var_type].push_back(v);
-            v
+            // returned value is variable original index
+            let v = self.var_usages[var_type].len();
+            self.var_usages[var_type].resize(v + 1, T::default());
+            self.var_usages[var_type][v] = T::try_from(1).unwrap();
+            T::try_from(v).unwrap()
         } else {
-            let v = self.var_new_history[var_type].pop_front().unwrap();
-            self.use_or_remove_var(var_type, v);
-            v
+            // returned value is allocated variable index
+            let vt = self.var_new_history[var_type];
+            let v = usize::try_from(vt).unwrap();
+            self.var_new_history[var_type] = T::try_from(v + 1).unwrap();
+            let vv = self.var_allocs[var_type].alloc();
+            self.var_maps[var_type].insert(vv, vt);
+            self.use_or_remove_var(var_type, vv);
+            vv
         }
     }
 
-    pub fn use_var(&mut self, var_type: usize, v: T) {
+    pub fn use_var(&mut self, var_type: usize, vt: T) {
         if !self.usage_mode {
-            let vt = usize::try_from(v).unwrap();
-            let var_usage = self.var_usages[var_type][vt];
+            // vt is original variable index
+            let v = usize::try_from(vt).unwrap();
+            let var_usage = self.var_usages[var_type][v];
             let var_usage = usize::try_from(var_usage).unwrap();
-            self.var_usages[var_type][vt] = T::try_from(var_usage + 1).unwrap();
+            self.var_usages[var_type][v] = T::try_from(var_usage + 1).unwrap();
         } else {
-            self.use_or_remove_var(var_type, v);
+            // vt is allocated variable index
+            self.use_or_remove_var(var_type, vt);
         }
+    }
+
+    pub fn alloc_var_num(&self, var_type: usize) -> usize {
+        self.var_allocs[var_type].len()
     }
 }
 
@@ -214,5 +226,71 @@ mod tests {
         assert_eq!(2, vacc.alloc());
         assert_eq!(4, vacc.alloc());
         assert_eq!(6, vacc.alloc());
+    }
+
+    #[test]
+    fn test_multi_var_alloc_tool() {
+        let mut mvar_alloc_tool = MultiVarAllocTool::<usize>::new(2);
+        {
+            let t1 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t1, 0);
+            mvar_alloc_tool.use_var(0, t1);
+            let t2 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t2, 1);
+            mvar_alloc_tool.use_var(0, t2);
+            let t3 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t3, 0);
+            mvar_alloc_tool.use_var(1, t3);
+            mvar_alloc_tool.use_var(0, t1);
+            let t4 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t4, 2);
+            mvar_alloc_tool.use_var(0, t4);
+            mvar_alloc_tool.use_var(1, t3);
+            let t5 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t5, 1);
+            mvar_alloc_tool.use_var(1, t5);
+            mvar_alloc_tool.use_var(0, t2);
+            let t6 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t6, 3);
+            mvar_alloc_tool.use_var(0, t1);
+            let t7 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t7, 2);
+            mvar_alloc_tool.use_var(0, t4);
+            let t8 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t8, 3);
+            let t9 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t9, 4);
+        }
+        mvar_alloc_tool.set_usage_mode();
+        {
+            let t1 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t1, 0);
+            mvar_alloc_tool.use_var(0, t1);
+            let t2 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t2, 1);
+            mvar_alloc_tool.use_var(0, t2);
+            let t3 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t3, 0);
+            mvar_alloc_tool.use_var(1, t3);
+            mvar_alloc_tool.use_var(0, t1);
+            let t4 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t4, 2);
+            mvar_alloc_tool.use_var(0, t4);
+            mvar_alloc_tool.use_var(1, t3);
+            let t5 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t5, 0);
+            mvar_alloc_tool.use_var(1, t5);
+            mvar_alloc_tool.use_var(0, t2);
+            let t6 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t6, 1);
+            mvar_alloc_tool.use_var(0, t1);
+            let t7 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t7, 0);
+            mvar_alloc_tool.use_var(0, t4);
+            let t8 = mvar_alloc_tool.new_var(1);
+            assert_eq!(t8, 0);
+            let t9 = mvar_alloc_tool.new_var(0);
+            assert_eq!(t9, 0);
+        }
     }
 }
