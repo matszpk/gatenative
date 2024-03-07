@@ -140,6 +140,10 @@ where
         self.usage_mode = true;
     }
 
+    pub fn usage_mode(&self) -> bool {
+        self.usage_mode
+    }
+
     pub fn var_type_num(&self) -> usize {
         self.var_allocs.len()
     }

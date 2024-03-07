@@ -1,5 +1,6 @@
-use crate::utils::calc_log_bits;
+use crate::utils::*;
 
+use std::collections::HashMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
@@ -362,6 +363,72 @@ impl<'a> CLangTransformConfig<'a> {
 pub struct CLangTransform<'a> {
     config: &'a CLangTransformConfig<'a>,
     out: String,
+}
+
+const INPUT_TYPE: usize = usize::MAX;
+const OUTPUT_TYPE: usize = usize::MAX - 1;
+
+struct CLangMacroVars<'a> {
+    transform: &'a mut CLangTransform<'a>,
+    var_types: Vec<String>,
+    mvartool: MultiVarAllocTool<usize>,
+    inputs: Vec<String>,
+    outputs: Vec<String>,
+    out: String,
+}
+
+impl<'a> CLangMacroVars<'a> {
+    fn new(
+        transform: &'a mut CLangTransform<'a>,
+        var_types: impl IntoIterator<Item = &'a str>,
+        inputs: impl IntoIterator<Item = &'a str>,
+        outputs: impl IntoIterator<Item = &'a str>,
+    ) -> Self {
+        let var_types = var_types
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>();
+        let var_type_num = var_types.len();
+        assert!(var_type_num < OUTPUT_TYPE);
+        Self {
+            transform,
+            var_types,
+            mvartool: MultiVarAllocTool::new(var_type_num),
+            inputs: inputs
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            outputs: outputs
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            out: String::new(),
+        }
+    }
+
+    fn set_usage_mode(&mut self) {
+        self.mvartool.set_usage_mode();
+    }
+
+    fn new_var(&mut self, var_type: usize) -> usize {
+        self.mvartool.new_var(var_type)
+    }
+
+    fn use_var(&mut self, var_type: usize, v: usize) {
+        self.mvartool.use_var(var_type, v);
+    }
+
+    fn write_var(&mut self, var_type: usize, v: usize) {
+        if self.mvartool.usage_mode() {
+            if var_type == INPUT_TYPE {
+                self.out.push_str(&self.inputs[v]);
+            } else if var_type == OUTPUT_TYPE {
+                self.out.push_str(&self.outputs[v]);
+            } else {
+                write!(&mut self.out, "t{}v{}", var_type, v).unwrap();
+            }
+        }
+    }
 }
 
 impl<'a> CLangTransform<'a> {
