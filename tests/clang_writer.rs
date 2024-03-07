@@ -667,20 +667,20 @@ void gate_sys_func1(const __m128* input,
     __m128 v2;
     __m128 v3;
     __m128 v4;
-    v2 = input[0];
-    v1 = input[1];
-    v0 = input[2];
+    v2 = _mm_loadu_ps((const float*)&input[0]);
+    v1 = _mm_loadu_ps((const float*)&input[1]);
+    v0 = _mm_loadu_ps((const float*)&input[2]);
     v2 = _mm_and_ps(v0, v1);
     v1 = _mm_or_ps(v2, v1);
     v3 = _mm_xor_ps(v0, v1);
     v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
-    output[1] = _mm_xor_ps(v3, one);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v3, one));
     v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
     v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
     v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_xor_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_andnot_ps(v4, v2);
-    output[0] = v4;
+    _mm_storeu_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE, false, false)
@@ -722,20 +722,20 @@ void gate_sys_func1(const __m128i* input,
     __m128i v2;
     __m128i v3;
     __m128i v4;
-    v2 = input[0];
-    v1 = input[1];
-    v0 = input[2];
+    v2 = _mm_loadu_si128((const __m128i*)&input[0]);
+    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
+    v0 = _mm_loadu_si128((const __m128i*)&input[2]);
     v2 = _mm_and_si128(v0, v1);
     v1 = _mm_or_si128(v2, v1);
     v3 = _mm_xor_si128(v0, v1);
     v3 = _mm_xor_si128(_mm_and_si128(v0, v1), one);
-    output[1] = _mm_xor_si128(v3, one);
+    _mm_storeu_si128((__m128i*)&output[1], _mm_xor_si128(v3, one));
     v2 = _mm_xor_si128(_mm_or_si128(v2, v3), one);
     v4 = _mm_xor_si128(_mm_xor_si128(v1, v3), one);
     v4 = _mm_and_si128(v4, _mm_xor_si128(v1, one));
     v4 = _mm_xor_si128(v4, _mm_xor_si128(v1, one));
     v4 = _mm_andnot_si128(v4, v2);
-    output[0] = v4;
+    _mm_storeu_si128((__m128i*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE2, false, false)
@@ -778,20 +778,20 @@ void gate_sys_func1(const __m128* input,
     __m128 v2;
     __m128 v3;
     __m128 v4;
-    v2 = input[0];
-    v1 = input[1];
-    v0 = input[2];
+    v2 = _mm_loadu_ps((const float*)&input[0]);
+    v1 = _mm_loadu_ps((const float*)&input[1]);
+    v0 = _mm_loadu_ps((const float*)&input[2]);
     v2 = _mm_and_ps(v0, v1);
     v1 = _mm_or_ps(v2, v1);
     v3 = _mm_xor_ps(v0, v1);
     v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
-    output[1] = _mm_xor_ps(v3, one);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v3, one));
     v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
     v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
     v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_xor_ps(v1, one);
     v4 = _mm_andnot_ps(v4, v2);
-    output[0] = v4;
+    _mm_storeu_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code_with_not(&CLANG_WRITER_INTEL_SSE, false, false)

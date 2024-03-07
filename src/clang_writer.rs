@@ -352,8 +352,8 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
     },
-    load_op: None,
-    store_op: None,
+    load_op: Some("_mm_loadu_ps((const float*)&{})"),
+    store_op: Some("_mm_storeu_ps((float*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[4]; \
     _mm_storeu_ps((float*)temp, (X)); \
     (D) = temp[(I)]; \
@@ -422,8 +422,8 @@ pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
             "",
         ],
     },
-    load_op: None,
-    store_op: None,
+    load_op: Some("_mm_loadu_si128((const __m128i*)&{})"),
+    store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[4]; \
     _mm_storeu_si128((__m128i*)temp, (X)); \
     (D) = temp[(I)]; \

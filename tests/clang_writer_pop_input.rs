@@ -119,11 +119,11 @@ void gate_sys_testcirc(const void* input,
 #define i2
     v3 = _mm_xor_ps(v0, v1);
     v4 = _mm_xor_ps(v2, v3);
-    output[0] = v4;
+    _mm_storeu_ps((float*)&output[0], v4);
     v2 = _mm_and_ps(v2, v3);
     v0 = _mm_and_ps(v0, v1);
     v0 = _mm_or_ps(v2, v0);
-    output[1] = v0;
+    _mm_storeu_ps((float*)&output[1], v0);
 }
 "##
     );
@@ -263,17 +263,17 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i2
 #define i3
     v4 = _mm_and_ps(v0, v2);
-    output[0] = v4;
+    _mm_storeu_ps((float*)&output[0], v4);
     v2 = _mm_and_ps(v1, v2);
     v0 = _mm_and_ps(v0, v3);
     v4 = _mm_xor_ps(v2, v0);
-    output[1] = _mm_xor_ps(v4, one);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v4, one));
     v1 = _mm_and_ps(v1, v3);
     v0 = _mm_and_ps(v2, v0);
     v2 = _mm_xor_ps(v1, v0);
-    output[2] = v2;
+    _mm_storeu_ps((float*)&output[2], v2);
     v0 = _mm_and_ps(v1, v0);
-    output[3] = _mm_xor_ps(v0, one);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
 }
 "##
     );
@@ -398,18 +398,18 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i3
     v2 = ((arg & 2) != 0) ? one : zero;
     v3 = _mm_and_ps(v0, v2);
-    output[0] = v3;
+    _mm_storeu_ps((float*)&output[0], v3);
     v3 = ((arg & 1) != 0) ? one : zero;
     v2 = _mm_and_ps(v3, v2);
     v0 = _mm_and_ps(v0, v1);
     v4 = _mm_xor_ps(v2, v0);
-    output[1] = _mm_xor_ps(v4, one);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v4, one));
     v1 = _mm_and_ps(v3, v1);
     v0 = _mm_and_ps(v2, v0);
     v2 = _mm_xor_ps(v1, v0);
-    output[2] = v2;
+    _mm_storeu_ps((float*)&output[2], v2);
     v0 = _mm_and_ps(v1, v0);
-    output[3] = _mm_xor_ps(v0, one);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
 }
 "##
     );
@@ -566,11 +566,11 @@ kernel void gate_sys_testcirc(unsigned long n,
     v3 = _mm_and_ps(v6, v2);
     v2 = _mm_xor_ps(v2, v3);
     v0 = _mm_xor_ps(v0, v2);
-    output[2] = v0;
+    _mm_storeu_ps((float*)&output[2], v0);
     v0 = _mm_andnot_ps(v1, v2);
-    output[3] = _mm_xor_ps(v0, one);
-    output[0] = v4;
-    output[1] = _mm_xor_ps(v5, one);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
+    _mm_storeu_ps((float*)&output[0], v4);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v5, one));
 }
 "##
     );
@@ -681,11 +681,11 @@ kernel void gate_sys_testcirc(unsigned long n,
     v4 = _mm_and_ps(v5, v1);
     v1 = _mm_xor_ps(v1, v4);
     v4 = _mm_xor_ps(v6, v1);
-    output[2] = v4;
+    _mm_storeu_ps((float*)&output[2], v4);
     v0 = _mm_andnot_ps(v0, v1);
-    output[3] = _mm_xor_ps(v0, one);
-    output[0] = v2;
-    output[1] = _mm_xor_ps(v3, one);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
+    _mm_storeu_ps((float*)&output[0], v2);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v3, one));
 }
 "##
     );
