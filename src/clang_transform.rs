@@ -1,5 +1,6 @@
 use crate::utils::*;
 
+use std::collections::HashMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
@@ -28,6 +29,7 @@ pub struct CLangTransformConfig<'a> {
     constant_defs: [&'a str; 2 * 5],
     // masks for first 2^n bits
     constant2_defs: [&'a str; 5],
+    collect_constants: bool,
 }
 
 pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -59,6 +61,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
         "0xffff0000U",
     ],
     constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
+    collect_constants: false,
 };
 
 pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -114,6 +117,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         "0x000000ff000000ffULL",
         "0x0000ffff0000ffffULL",
     ],
+    collect_constants: false,
 };
 
 pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -188,6 +192,7 @@ static const unsigned int transform_const2_tbl[5*2] = {
         "(*(const __m64*)(transform_const2_tbl + 2*3))",
         "(*(const __m64*)(transform_const2_tbl + 2*4))",
     ],
+    collect_constants: true,
 };
 
 pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -264,6 +269,7 @@ __attribute__((aligned(16))) = {
         "(*(const __m128i*)(transform_const2_tbl + 4*3))",
         "(*(const __m128i*)(transform_const2_tbl + 4*4))",
     ],
+    collect_constants: true,
 };
 
 pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -355,6 +361,7 @@ __attribute__((aligned(32))) = {
         "(*(const __m256i*)(transform_const2_tbl + 8*3))",
         "(*(const __m256i*)(transform_const2_tbl + 8*4))",
     ],
+    collect_constants: true,
 };
 
 pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -481,6 +488,7 @@ __attribute__((aligned(64))) = {
         "(*(const __m512i*)(transform_const2_tbl + 16*3))",
         "(*(const __m512i*)(transform_const2_tbl + 16*4))",
     ],
+    collect_constants: true,
 };
 
 pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -548,6 +556,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         "{ 0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU }",
         "{ 0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU }",
     ],
+    collect_constants: false,
 };
 
 pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
@@ -579,6 +588,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
         "0xffff0000U",
     ],
     constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
+    collect_constants: false,
 };
 
 impl<'a> CLangTransformConfig<'a> {
@@ -601,9 +611,11 @@ const OUTPUT_TYPE: usize = usize::MAX - 1;
 struct CLangMacroVars {
     var_types: Vec<String>,
     mvartool: MultiVarAllocTool<usize>,
+    constants: HashMap<String, String>,
     inputs: Vec<String>,
     outputs: Vec<String>,
     out: String,
+    collect_constants: bool,
 }
 
 impl CLangMacroVars {
@@ -611,6 +623,7 @@ impl CLangMacroVars {
         var_types: impl IntoIterator<Item = &'a str>,
         inputs: impl IntoIterator<Item = String>,
         outputs: impl IntoIterator<Item = String>,
+        collect_constants: bool,
     ) -> Self {
         let var_types = var_types
             .into_iter()
@@ -621,9 +634,11 @@ impl CLangMacroVars {
         Self {
             var_types,
             mvartool: MultiVarAllocTool::new(var_type_num),
+            constants: HashMap::new(),
             inputs: inputs.into_iter().collect::<Vec<_>>(),
             outputs: outputs.into_iter().collect::<Vec<_>>(),
             out: String::new(),
+            collect_constants,
         }
     }
 
@@ -655,6 +670,28 @@ impl CLangMacroVars {
             self.outputs[v].clone()
         } else {
             format!("t{}v{}", var_type, v)
+        }
+    }
+
+    fn write_constant_defs(&mut self, out: &mut String) {
+        for (c, v) in &self.constants {
+            writeln!(out, "    {} {} = {};\\", self.var_types[0], c, v).unwrap();
+        }
+    }
+
+    fn get_constant<'a>(&'a mut self, constant: &'a str) -> &'a str {
+        if self.mvartool.usage_mode() {
+            if self.collect_constants {
+                &self.constants[constant]
+            } else {
+                constant
+            }
+        } else {
+            if self.collect_constants {
+                let c1 = format!("c{}", self.constants.len());
+                self.constants.insert(constant.to_string(), c1);
+            }
+            constant
         }
     }
 }
@@ -746,7 +783,10 @@ impl<'a> CLangTransform<'a> {
                     let expr = if self.config.failed_shl32_op || j != ((1 << (5 - bits_log)) - 1) {
                         Self::format_op(
                             self.config.and_op,
-                            &[&tv, self.config.constant2_defs[bits_log]],
+                            &[
+                                &tv,
+                                mvars.get_constant(self.config.constant2_defs[bits_log]),
+                            ],
                         )
                     } else {
                         tv
@@ -802,14 +842,17 @@ impl<'a> CLangTransform<'a> {
                 };
 
                 let p0 = if bit_usage_f {
-                    Self::format_op(self.config.and_op, &[&t0, self.config.constant_defs[2 * i]])
+                    Self::format_op(
+                        self.config.and_op,
+                        &[&t0, mvars.get_constant(self.config.constant_defs[2 * i])],
+                    )
                 } else {
                     String::new()
                 };
                 let p1 = if bit_usage_s {
                     let p1 = Self::format_op(
                         self.config.and_op,
-                        &[&t1, self.config.constant_defs[2 * i]],
+                        &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
                     );
                     Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
                 } else {
@@ -903,6 +946,7 @@ impl<'a> CLangTransform<'a> {
             [self.config.final_type_name],
             (0..32).map(|i| self.format_load_input(i)),
             (0..bits).map(|i| Self::format_arg_d(i)),
+            self.config.collect_constants,
         );
         self.gen_input_transform_int(&mut mvars, bits);
         mvars.set_usage_mode();
@@ -916,6 +960,7 @@ impl<'a> CLangTransform<'a> {
         .unwrap();
         self.out.write_str("{\\\n").unwrap();
         self.gen_input_transform_int(&mut mvars, bits);
+        mvars.write_constant_defs(&mut self.out);
         mvars.write_var_defs(&mut self.out);
         self.out.push_str(&mvars.out);
         self.out.write_str("}\n").unwrap();
