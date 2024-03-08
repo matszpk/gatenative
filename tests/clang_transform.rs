@@ -684,8 +684,543 @@ fn test_clang_transform_gen_in_transform() {
     );
 
     let mut transform = CLANG_TRANSFORM_U64.transform();
-    for i in (1..=32).rev() {
-        transform.gen_input_transform(i);
-    }
-    println!("Code: {}", transform.out());
+    transform.gen_input_transform(32);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B32(D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31, S) \
+{\
+    uint64_t t0v0;\
+    uint64_t t0v1;\
+    uint64_t t0v2;\
+    uint64_t t0v3;\
+    uint64_t t0v4;\
+    uint64_t t0v5;\
+    uint64_t t0v6;\
+    uint64_t t0v7;\
+    uint64_t t0v8;\
+    uint64_t t0v9;\
+    uint64_t t0v10;\
+    uint64_t t0v11;\
+    uint64_t t0v12;\
+    uint64_t t0v13;\
+    uint64_t t0v14;\
+    uint64_t t0v15;\
+    uint64_t t0v16;\
+    uint64_t t0v17;\
+    uint64_t t0v18;\
+    uint64_t t0v19;\
+    uint64_t t0v20;\
+    uint64_t t0v21;\
+    uint64_t t0v22;\
+    uint64_t t0v23;\
+    uint64_t t0v24;\
+    uint64_t t0v25;\
+    uint64_t t0v26;\
+    uint64_t t0v27;\
+    uint64_t t0v28;\
+    uint64_t t0v29;\
+    uint64_t t0v30;\
+    uint64_t t0v31;\
+    uint64_t t0v32;\
+    t0v0 = ((*((const uint64_t*)(((S) + 0)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 32)))) & 0xffffffffULL) << 32);\
+    t0v1 = (((*((const uint64_t*)(((S) + 0)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 32)))) & 0xffffffff00000000ULL);\
+    t0v2 = ((*((const uint64_t*)(((S) + 2)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 34)))) & 0xffffffffULL) << 32);\
+    t0v3 = (((*((const uint64_t*)(((S) + 2)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 34)))) & 0xffffffff00000000ULL);\
+    t0v4 = ((*((const uint64_t*)(((S) + 4)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 36)))) & 0xffffffffULL) << 32);\
+    t0v5 = (((*((const uint64_t*)(((S) + 4)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 36)))) & 0xffffffff00000000ULL);\
+    t0v6 = ((*((const uint64_t*)(((S) + 6)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 38)))) & 0xffffffffULL) << 32);\
+    t0v7 = (((*((const uint64_t*)(((S) + 6)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 38)))) & 0xffffffff00000000ULL);\
+    t0v8 = ((*((const uint64_t*)(((S) + 8)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 40)))) & 0xffffffffULL) << 32);\
+    t0v9 = (((*((const uint64_t*)(((S) + 8)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 40)))) & 0xffffffff00000000ULL);\
+    t0v10 = ((*((const uint64_t*)(((S) + 10)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 42)))) & 0xffffffffULL) << 32);\
+    t0v11 = (((*((const uint64_t*)(((S) + 10)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 42)))) & 0xffffffff00000000ULL);\
+    t0v12 = ((*((const uint64_t*)(((S) + 12)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 44)))) & 0xffffffffULL) << 32);\
+    t0v13 = (((*((const uint64_t*)(((S) + 12)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 44)))) & 0xffffffff00000000ULL);\
+    t0v14 = ((*((const uint64_t*)(((S) + 14)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 46)))) & 0xffffffffULL) << 32);\
+    t0v15 = (((*((const uint64_t*)(((S) + 14)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 46)))) & 0xffffffff00000000ULL);\
+    t0v16 = ((*((const uint64_t*)(((S) + 16)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 48)))) & 0xffffffffULL) << 32);\
+    t0v17 = (((*((const uint64_t*)(((S) + 16)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 48)))) & 0xffffffff00000000ULL);\
+    t0v18 = ((*((const uint64_t*)(((S) + 18)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 50)))) & 0xffffffffULL) << 32);\
+    t0v19 = (((*((const uint64_t*)(((S) + 18)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 50)))) & 0xffffffff00000000ULL);\
+    t0v20 = ((*((const uint64_t*)(((S) + 20)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 52)))) & 0xffffffffULL) << 32);\
+    t0v21 = (((*((const uint64_t*)(((S) + 20)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 52)))) & 0xffffffff00000000ULL);\
+    t0v22 = ((*((const uint64_t*)(((S) + 22)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 54)))) & 0xffffffffULL) << 32);\
+    t0v23 = (((*((const uint64_t*)(((S) + 22)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 54)))) & 0xffffffff00000000ULL);\
+    t0v24 = ((*((const uint64_t*)(((S) + 24)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 56)))) & 0xffffffffULL) << 32);\
+    t0v25 = (((*((const uint64_t*)(((S) + 24)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 56)))) & 0xffffffff00000000ULL);\
+    t0v26 = ((*((const uint64_t*)(((S) + 26)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 58)))) & 0xffffffffULL) << 32);\
+    t0v27 = (((*((const uint64_t*)(((S) + 26)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 58)))) & 0xffffffff00000000ULL);\
+    t0v28 = ((*((const uint64_t*)(((S) + 28)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 60)))) & 0xffffffffULL) << 32);\
+    t0v29 = (((*((const uint64_t*)(((S) + 28)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 60)))) & 0xffffffff00000000ULL);\
+    t0v30 = ((*((const uint64_t*)(((S) + 30)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 62)))) & 0xffffffffULL) << 32);\
+    t0v31 = (((*((const uint64_t*)(((S) + 30)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 62)))) & 0xffffffff00000000ULL);\
+    t0v32 = ((t0v0 & 0x0000ffff0000ffffULL) | ((t0v16 & 0x0000ffff0000ffffULL) << 16));\
+    t0v0 = (((t0v0 & 0xffff0000ffff0000ULL) >> 16) | (t0v16 & 0xffff0000ffff0000ULL));\
+    t0v16 = ((t0v1 & 0x0000ffff0000ffffULL) | ((t0v17 & 0x0000ffff0000ffffULL) << 16));\
+    t0v1 = (((t0v1 & 0xffff0000ffff0000ULL) >> 16) | (t0v17 & 0xffff0000ffff0000ULL));\
+    t0v17 = ((t0v2 & 0x0000ffff0000ffffULL) | ((t0v18 & 0x0000ffff0000ffffULL) << 16));\
+    t0v2 = (((t0v2 & 0xffff0000ffff0000ULL) >> 16) | (t0v18 & 0xffff0000ffff0000ULL));\
+    t0v18 = ((t0v3 & 0x0000ffff0000ffffULL) | ((t0v19 & 0x0000ffff0000ffffULL) << 16));\
+    t0v3 = (((t0v3 & 0xffff0000ffff0000ULL) >> 16) | (t0v19 & 0xffff0000ffff0000ULL));\
+    t0v19 = ((t0v4 & 0x0000ffff0000ffffULL) | ((t0v20 & 0x0000ffff0000ffffULL) << 16));\
+    t0v4 = (((t0v4 & 0xffff0000ffff0000ULL) >> 16) | (t0v20 & 0xffff0000ffff0000ULL));\
+    t0v20 = ((t0v5 & 0x0000ffff0000ffffULL) | ((t0v21 & 0x0000ffff0000ffffULL) << 16));\
+    t0v5 = (((t0v5 & 0xffff0000ffff0000ULL) >> 16) | (t0v21 & 0xffff0000ffff0000ULL));\
+    t0v21 = ((t0v6 & 0x0000ffff0000ffffULL) | ((t0v22 & 0x0000ffff0000ffffULL) << 16));\
+    t0v6 = (((t0v6 & 0xffff0000ffff0000ULL) >> 16) | (t0v22 & 0xffff0000ffff0000ULL));\
+    t0v22 = ((t0v7 & 0x0000ffff0000ffffULL) | ((t0v23 & 0x0000ffff0000ffffULL) << 16));\
+    t0v7 = (((t0v7 & 0xffff0000ffff0000ULL) >> 16) | (t0v23 & 0xffff0000ffff0000ULL));\
+    t0v23 = ((t0v8 & 0x0000ffff0000ffffULL) | ((t0v24 & 0x0000ffff0000ffffULL) << 16));\
+    t0v8 = (((t0v8 & 0xffff0000ffff0000ULL) >> 16) | (t0v24 & 0xffff0000ffff0000ULL));\
+    t0v24 = ((t0v9 & 0x0000ffff0000ffffULL) | ((t0v25 & 0x0000ffff0000ffffULL) << 16));\
+    t0v9 = (((t0v9 & 0xffff0000ffff0000ULL) >> 16) | (t0v25 & 0xffff0000ffff0000ULL));\
+    t0v25 = ((t0v10 & 0x0000ffff0000ffffULL) | ((t0v26 & 0x0000ffff0000ffffULL) << 16));\
+    t0v10 = (((t0v10 & 0xffff0000ffff0000ULL) >> 16) | (t0v26 & 0xffff0000ffff0000ULL));\
+    t0v26 = ((t0v11 & 0x0000ffff0000ffffULL) | ((t0v27 & 0x0000ffff0000ffffULL) << 16));\
+    t0v11 = (((t0v11 & 0xffff0000ffff0000ULL) >> 16) | (t0v27 & 0xffff0000ffff0000ULL));\
+    t0v27 = ((t0v12 & 0x0000ffff0000ffffULL) | ((t0v28 & 0x0000ffff0000ffffULL) << 16));\
+    t0v12 = (((t0v12 & 0xffff0000ffff0000ULL) >> 16) | (t0v28 & 0xffff0000ffff0000ULL));\
+    t0v28 = ((t0v13 & 0x0000ffff0000ffffULL) | ((t0v29 & 0x0000ffff0000ffffULL) << 16));\
+    t0v13 = (((t0v13 & 0xffff0000ffff0000ULL) >> 16) | (t0v29 & 0xffff0000ffff0000ULL));\
+    t0v29 = ((t0v14 & 0x0000ffff0000ffffULL) | ((t0v30 & 0x0000ffff0000ffffULL) << 16));\
+    t0v14 = (((t0v14 & 0xffff0000ffff0000ULL) >> 16) | (t0v30 & 0xffff0000ffff0000ULL));\
+    t0v30 = ((t0v15 & 0x0000ffff0000ffffULL) | ((t0v31 & 0x0000ffff0000ffffULL) << 16));\
+    t0v15 = (((t0v15 & 0xffff0000ffff0000ULL) >> 16) | (t0v31 & 0xffff0000ffff0000ULL));\
+    t0v31 = ((t0v32 & 0x00ff00ff00ff00ffULL) | ((t0v23 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v23 = (((t0v32 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v23 & 0xff00ff00ff00ff00ULL));\
+    t0v32 = ((t0v16 & 0x00ff00ff00ff00ffULL) | ((t0v24 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v16 = (((t0v16 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v24 & 0xff00ff00ff00ff00ULL));\
+    t0v24 = ((t0v17 & 0x00ff00ff00ff00ffULL) | ((t0v25 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v17 = (((t0v17 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v25 & 0xff00ff00ff00ff00ULL));\
+    t0v25 = ((t0v18 & 0x00ff00ff00ff00ffULL) | ((t0v26 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v18 = (((t0v18 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v26 & 0xff00ff00ff00ff00ULL));\
+    t0v26 = ((t0v19 & 0x00ff00ff00ff00ffULL) | ((t0v27 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v19 = (((t0v19 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v27 & 0xff00ff00ff00ff00ULL));\
+    t0v27 = ((t0v20 & 0x00ff00ff00ff00ffULL) | ((t0v28 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v20 = (((t0v20 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v28 & 0xff00ff00ff00ff00ULL));\
+    t0v28 = ((t0v21 & 0x00ff00ff00ff00ffULL) | ((t0v29 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v21 = (((t0v21 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v29 & 0xff00ff00ff00ff00ULL));\
+    t0v29 = ((t0v22 & 0x00ff00ff00ff00ffULL) | ((t0v30 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v22 = (((t0v22 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v30 & 0xff00ff00ff00ff00ULL));\
+    t0v30 = ((t0v0 & 0x00ff00ff00ff00ffULL) | ((t0v8 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v0 = (((t0v0 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v8 & 0xff00ff00ff00ff00ULL));\
+    t0v8 = ((t0v1 & 0x00ff00ff00ff00ffULL) | ((t0v9 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v1 = (((t0v1 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v9 & 0xff00ff00ff00ff00ULL));\
+    t0v9 = ((t0v2 & 0x00ff00ff00ff00ffULL) | ((t0v10 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v2 = (((t0v2 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v10 & 0xff00ff00ff00ff00ULL));\
+    t0v10 = ((t0v3 & 0x00ff00ff00ff00ffULL) | ((t0v11 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v3 = (((t0v3 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v11 & 0xff00ff00ff00ff00ULL));\
+    t0v11 = ((t0v4 & 0x00ff00ff00ff00ffULL) | ((t0v12 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v4 = (((t0v4 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v12 & 0xff00ff00ff00ff00ULL));\
+    t0v12 = ((t0v5 & 0x00ff00ff00ff00ffULL) | ((t0v13 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v5 = (((t0v5 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v13 & 0xff00ff00ff00ff00ULL));\
+    t0v13 = ((t0v6 & 0x00ff00ff00ff00ffULL) | ((t0v14 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v6 = (((t0v6 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v14 & 0xff00ff00ff00ff00ULL));\
+    t0v14 = ((t0v7 & 0x00ff00ff00ff00ffULL) | ((t0v15 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v7 = (((t0v7 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v15 & 0xff00ff00ff00ff00ULL));\
+    t0v15 = ((t0v31 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v26 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v26 = (((t0v31 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v26 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v31 = ((t0v32 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v27 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v27 = (((t0v32 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v27 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v32 = ((t0v24 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v28 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v24 = (((t0v24 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v28 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v28 = ((t0v25 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v29 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v25 = (((t0v25 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v29 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v29 = ((t0v23 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v19 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v19 = (((t0v23 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v19 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v23 = ((t0v16 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v20 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v16 = (((t0v16 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v20 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v20 = ((t0v17 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v21 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v17 = (((t0v17 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v21 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v21 = ((t0v18 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v22 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v18 = (((t0v18 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v22 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v22 = ((t0v30 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v11 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v11 = (((t0v30 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v11 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v30 = ((t0v8 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v12 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v8 = (((t0v8 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v12 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v12 = ((t0v9 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v13 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v9 = (((t0v9 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v13 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v13 = ((t0v10 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v14 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v10 = (((t0v10 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v14 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v14 = ((t0v0 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v4 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v4 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v4 = ((t0v1 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v5 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v5 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v5 = ((t0v2 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v6 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v6 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v6 = ((t0v3 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v7 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v3 = (((t0v3 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v7 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v7 = ((t0v15 & 0x3333333333333333ULL) | ((t0v32 & 0x3333333333333333ULL) << 2));\
+    t0v15 = (((t0v15 & 0xccccccccccccccccULL) >> 2) | (t0v32 & 0xccccccccccccccccULL));\
+    t0v32 = ((t0v31 & 0x3333333333333333ULL) | ((t0v28 & 0x3333333333333333ULL) << 2));\
+    t0v28 = (((t0v31 & 0xccccccccccccccccULL) >> 2) | (t0v28 & 0xccccccccccccccccULL));\
+    t0v31 = ((t0v26 & 0x3333333333333333ULL) | ((t0v24 & 0x3333333333333333ULL) << 2));\
+    t0v24 = (((t0v26 & 0xccccccccccccccccULL) >> 2) | (t0v24 & 0xccccccccccccccccULL));\
+    t0v26 = ((t0v27 & 0x3333333333333333ULL) | ((t0v25 & 0x3333333333333333ULL) << 2));\
+    t0v25 = (((t0v27 & 0xccccccccccccccccULL) >> 2) | (t0v25 & 0xccccccccccccccccULL));\
+    t0v27 = ((t0v29 & 0x3333333333333333ULL) | ((t0v20 & 0x3333333333333333ULL) << 2));\
+    t0v20 = (((t0v29 & 0xccccccccccccccccULL) >> 2) | (t0v20 & 0xccccccccccccccccULL));\
+    t0v29 = ((t0v23 & 0x3333333333333333ULL) | ((t0v21 & 0x3333333333333333ULL) << 2));\
+    t0v21 = (((t0v23 & 0xccccccccccccccccULL) >> 2) | (t0v21 & 0xccccccccccccccccULL));\
+    t0v23 = ((t0v19 & 0x3333333333333333ULL) | ((t0v17 & 0x3333333333333333ULL) << 2));\
+    t0v17 = (((t0v19 & 0xccccccccccccccccULL) >> 2) | (t0v17 & 0xccccccccccccccccULL));\
+    t0v19 = ((t0v16 & 0x3333333333333333ULL) | ((t0v18 & 0x3333333333333333ULL) << 2));\
+    t0v16 = (((t0v16 & 0xccccccccccccccccULL) >> 2) | (t0v18 & 0xccccccccccccccccULL));\
+    t0v18 = ((t0v22 & 0x3333333333333333ULL) | ((t0v12 & 0x3333333333333333ULL) << 2));\
+    t0v12 = (((t0v22 & 0xccccccccccccccccULL) >> 2) | (t0v12 & 0xccccccccccccccccULL));\
+    t0v22 = ((t0v30 & 0x3333333333333333ULL) | ((t0v13 & 0x3333333333333333ULL) << 2));\
+    t0v13 = (((t0v30 & 0xccccccccccccccccULL) >> 2) | (t0v13 & 0xccccccccccccccccULL));\
+    t0v30 = ((t0v11 & 0x3333333333333333ULL) | ((t0v9 & 0x3333333333333333ULL) << 2));\
+    t0v9 = (((t0v11 & 0xccccccccccccccccULL) >> 2) | (t0v9 & 0xccccccccccccccccULL));\
+    t0v11 = ((t0v8 & 0x3333333333333333ULL) | ((t0v10 & 0x3333333333333333ULL) << 2));\
+    t0v8 = (((t0v8 & 0xccccccccccccccccULL) >> 2) | (t0v10 & 0xccccccccccccccccULL));\
+    t0v10 = ((t0v14 & 0x3333333333333333ULL) | ((t0v5 & 0x3333333333333333ULL) << 2));\
+    t0v5 = (((t0v14 & 0xccccccccccccccccULL) >> 2) | (t0v5 & 0xccccccccccccccccULL));\
+    t0v14 = ((t0v4 & 0x3333333333333333ULL) | ((t0v6 & 0x3333333333333333ULL) << 2));\
+    t0v4 = (((t0v4 & 0xccccccccccccccccULL) >> 2) | (t0v6 & 0xccccccccccccccccULL));\
+    t0v6 = ((t0v0 & 0x3333333333333333ULL) | ((t0v2 & 0x3333333333333333ULL) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccccccccccULL) >> 2) | (t0v2 & 0xccccccccccccccccULL));\
+    t0v2 = ((t0v1 & 0x3333333333333333ULL) | ((t0v3 & 0x3333333333333333ULL) << 2));\
+    t0v1 = (((t0v1 & 0xccccccccccccccccULL) >> 2) | (t0v3 & 0xccccccccccccccccULL));\
+    (D0) = ((t0v7 & 0x5555555555555555ULL) | ((t0v32 & 0x5555555555555555ULL) << 1));\
+    (D1) = (((t0v7 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v32 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D2) = ((t0v15 & 0x5555555555555555ULL) | ((t0v28 & 0x5555555555555555ULL) << 1));\
+    (D3) = (((t0v15 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v28 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D4) = ((t0v31 & 0x5555555555555555ULL) | ((t0v26 & 0x5555555555555555ULL) << 1));\
+    (D5) = (((t0v31 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v26 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D6) = ((t0v24 & 0x5555555555555555ULL) | ((t0v25 & 0x5555555555555555ULL) << 1));\
+    (D7) = (((t0v24 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v25 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D8) = ((t0v27 & 0x5555555555555555ULL) | ((t0v29 & 0x5555555555555555ULL) << 1));\
+    (D9) = (((t0v27 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v29 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D10) = ((t0v20 & 0x5555555555555555ULL) | ((t0v21 & 0x5555555555555555ULL) << 1));\
+    (D11) = (((t0v20 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v21 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D12) = ((t0v23 & 0x5555555555555555ULL) | ((t0v19 & 0x5555555555555555ULL) << 1));\
+    (D13) = (((t0v23 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v19 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D14) = ((t0v17 & 0x5555555555555555ULL) | ((t0v16 & 0x5555555555555555ULL) << 1));\
+    (D15) = (((t0v17 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v16 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D16) = ((t0v18 & 0x5555555555555555ULL) | ((t0v22 & 0x5555555555555555ULL) << 1));\
+    (D17) = (((t0v18 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v22 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D18) = ((t0v12 & 0x5555555555555555ULL) | ((t0v13 & 0x5555555555555555ULL) << 1));\
+    (D19) = (((t0v12 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v13 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D20) = ((t0v30 & 0x5555555555555555ULL) | ((t0v11 & 0x5555555555555555ULL) << 1));\
+    (D21) = (((t0v30 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v11 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D22) = ((t0v9 & 0x5555555555555555ULL) | ((t0v8 & 0x5555555555555555ULL) << 1));\
+    (D23) = (((t0v9 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v8 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D24) = ((t0v10 & 0x5555555555555555ULL) | ((t0v14 & 0x5555555555555555ULL) << 1));\
+    (D25) = (((t0v10 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v14 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D26) = ((t0v5 & 0x5555555555555555ULL) | ((t0v4 & 0x5555555555555555ULL) << 1));\
+    (D27) = (((t0v5 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v4 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D28) = ((t0v6 & 0x5555555555555555ULL) | ((t0v2 & 0x5555555555555555ULL) << 1));\
+    (D29) = (((t0v6 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v2 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D30) = ((t0v0 & 0x5555555555555555ULL) | ((t0v1 & 0x5555555555555555ULL) << 1));\
+    (D31) = (((t0v0 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v1 & 0xaaaaaaaaaaaaaaaaULL));\
+}
+"##,
+        transform.out(),
+    );
+    let mut transform = CLANG_TRANSFORM_U64.transform();
+    transform.gen_input_transform(23);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B23(D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, S) \
+{\
+    uint64_t t0v0;\
+    uint64_t t0v1;\
+    uint64_t t0v2;\
+    uint64_t t0v3;\
+    uint64_t t0v4;\
+    uint64_t t0v5;\
+    uint64_t t0v6;\
+    uint64_t t0v7;\
+    uint64_t t0v8;\
+    uint64_t t0v9;\
+    uint64_t t0v10;\
+    uint64_t t0v11;\
+    uint64_t t0v12;\
+    uint64_t t0v13;\
+    uint64_t t0v14;\
+    uint64_t t0v15;\
+    uint64_t t0v16;\
+    uint64_t t0v17;\
+    uint64_t t0v18;\
+    uint64_t t0v19;\
+    uint64_t t0v20;\
+    uint64_t t0v21;\
+    uint64_t t0v22;\
+    uint64_t t0v23;\
+    uint64_t t0v24;\
+    uint64_t t0v25;\
+    uint64_t t0v26;\
+    uint64_t t0v27;\
+    uint64_t t0v28;\
+    uint64_t t0v29;\
+    uint64_t t0v30;\
+    uint64_t t0v31;\
+    uint64_t t0v32;\
+    t0v0 = ((*((const uint64_t*)(((S) + 0)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 32)))) & 0xffffffffULL) << 32);\
+    t0v1 = (((*((const uint64_t*)(((S) + 0)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 32)))) & 0xffffffff00000000ULL);\
+    t0v2 = ((*((const uint64_t*)(((S) + 2)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 34)))) & 0xffffffffULL) << 32);\
+    t0v3 = (((*((const uint64_t*)(((S) + 2)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 34)))) & 0xffffffff00000000ULL);\
+    t0v4 = ((*((const uint64_t*)(((S) + 4)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 36)))) & 0xffffffffULL) << 32);\
+    t0v5 = (((*((const uint64_t*)(((S) + 4)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 36)))) & 0xffffffff00000000ULL);\
+    t0v6 = ((*((const uint64_t*)(((S) + 6)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 38)))) & 0xffffffffULL) << 32);\
+    t0v7 = (((*((const uint64_t*)(((S) + 6)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 38)))) & 0xffffffff00000000ULL);\
+    t0v8 = ((*((const uint64_t*)(((S) + 8)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 40)))) & 0xffffffffULL) << 32);\
+    t0v9 = (((*((const uint64_t*)(((S) + 8)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 40)))) & 0xffffffff00000000ULL);\
+    t0v10 = ((*((const uint64_t*)(((S) + 10)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 42)))) & 0xffffffffULL) << 32);\
+    t0v11 = (((*((const uint64_t*)(((S) + 10)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 42)))) & 0xffffffff00000000ULL);\
+    t0v12 = ((*((const uint64_t*)(((S) + 12)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 44)))) & 0xffffffffULL) << 32);\
+    t0v13 = (((*((const uint64_t*)(((S) + 12)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 44)))) & 0xffffffff00000000ULL);\
+    t0v14 = ((*((const uint64_t*)(((S) + 14)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 46)))) & 0xffffffffULL) << 32);\
+    t0v15 = (((*((const uint64_t*)(((S) + 14)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 46)))) & 0xffffffff00000000ULL);\
+    t0v16 = ((*((const uint64_t*)(((S) + 16)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 48)))) & 0xffffffffULL) << 32);\
+    t0v17 = (((*((const uint64_t*)(((S) + 16)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 48)))) & 0xffffffff00000000ULL);\
+    t0v18 = ((*((const uint64_t*)(((S) + 18)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 50)))) & 0xffffffffULL) << 32);\
+    t0v19 = (((*((const uint64_t*)(((S) + 18)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 50)))) & 0xffffffff00000000ULL);\
+    t0v20 = ((*((const uint64_t*)(((S) + 20)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 52)))) & 0xffffffffULL) << 32);\
+    t0v21 = (((*((const uint64_t*)(((S) + 20)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 52)))) & 0xffffffff00000000ULL);\
+    t0v22 = ((*((const uint64_t*)(((S) + 22)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 54)))) & 0xffffffffULL) << 32);\
+    t0v23 = (((*((const uint64_t*)(((S) + 22)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 54)))) & 0xffffffff00000000ULL);\
+    t0v24 = ((*((const uint64_t*)(((S) + 24)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 56)))) & 0xffffffffULL) << 32);\
+    t0v25 = (((*((const uint64_t*)(((S) + 24)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 56)))) & 0xffffffff00000000ULL);\
+    t0v26 = ((*((const uint64_t*)(((S) + 26)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 58)))) & 0xffffffffULL) << 32);\
+    t0v27 = (((*((const uint64_t*)(((S) + 26)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 58)))) & 0xffffffff00000000ULL);\
+    t0v28 = ((*((const uint64_t*)(((S) + 28)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 60)))) & 0xffffffffULL) << 32);\
+    t0v29 = (((*((const uint64_t*)(((S) + 28)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 60)))) & 0xffffffff00000000ULL);\
+    t0v30 = ((*((const uint64_t*)(((S) + 30)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 62)))) & 0xffffffffULL) << 32);\
+    t0v31 = (((*((const uint64_t*)(((S) + 30)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 62)))) & 0xffffffff00000000ULL);\
+    t0v32 = ((t0v0 & 0x0000ffff0000ffffULL) | ((t0v16 & 0x0000ffff0000ffffULL) << 16));\
+    t0v0 = (((t0v0 & 0xffff0000ffff0000ULL) >> 16) | (t0v16 & 0xffff0000ffff0000ULL));\
+    t0v16 = ((t0v1 & 0x0000ffff0000ffffULL) | ((t0v17 & 0x0000ffff0000ffffULL) << 16));\
+    t0v1 = (((t0v1 & 0xffff0000ffff0000ULL) >> 16) | (t0v17 & 0xffff0000ffff0000ULL));\
+    t0v17 = ((t0v2 & 0x0000ffff0000ffffULL) | ((t0v18 & 0x0000ffff0000ffffULL) << 16));\
+    t0v2 = (((t0v2 & 0xffff0000ffff0000ULL) >> 16) | (t0v18 & 0xffff0000ffff0000ULL));\
+    t0v18 = ((t0v3 & 0x0000ffff0000ffffULL) | ((t0v19 & 0x0000ffff0000ffffULL) << 16));\
+    t0v3 = (((t0v3 & 0xffff0000ffff0000ULL) >> 16) | (t0v19 & 0xffff0000ffff0000ULL));\
+    t0v19 = ((t0v4 & 0x0000ffff0000ffffULL) | ((t0v20 & 0x0000ffff0000ffffULL) << 16));\
+    t0v4 = (((t0v4 & 0xffff0000ffff0000ULL) >> 16) | (t0v20 & 0xffff0000ffff0000ULL));\
+    t0v20 = ((t0v5 & 0x0000ffff0000ffffULL) | ((t0v21 & 0x0000ffff0000ffffULL) << 16));\
+    t0v5 = (((t0v5 & 0xffff0000ffff0000ULL) >> 16) | (t0v21 & 0xffff0000ffff0000ULL));\
+    t0v21 = ((t0v6 & 0x0000ffff0000ffffULL) | ((t0v22 & 0x0000ffff0000ffffULL) << 16));\
+    t0v6 = (((t0v6 & 0xffff0000ffff0000ULL) >> 16) | (t0v22 & 0xffff0000ffff0000ULL));\
+    t0v22 = ((t0v7 & 0x0000ffff0000ffffULL) | ((t0v23 & 0x0000ffff0000ffffULL) << 16));\
+    t0v7 = (((t0v7 & 0xffff0000ffff0000ULL) >> 16) | (t0v23 & 0xffff0000ffff0000ULL));\
+    t0v23 = ((t0v8 & 0x0000ffff0000ffffULL) | ((t0v24 & 0x0000ffff0000ffffULL) << 16));\
+    t0v8 = (((t0v8 & 0xffff0000ffff0000ULL) >> 16) | (t0v24 & 0xffff0000ffff0000ULL));\
+    t0v24 = ((t0v9 & 0x0000ffff0000ffffULL) | ((t0v25 & 0x0000ffff0000ffffULL) << 16));\
+    t0v9 = (((t0v9 & 0xffff0000ffff0000ULL) >> 16) | (t0v25 & 0xffff0000ffff0000ULL));\
+    t0v25 = ((t0v10 & 0x0000ffff0000ffffULL) | ((t0v26 & 0x0000ffff0000ffffULL) << 16));\
+    t0v10 = (((t0v10 & 0xffff0000ffff0000ULL) >> 16) | (t0v26 & 0xffff0000ffff0000ULL));\
+    t0v26 = ((t0v11 & 0x0000ffff0000ffffULL) | ((t0v27 & 0x0000ffff0000ffffULL) << 16));\
+    t0v11 = (((t0v11 & 0xffff0000ffff0000ULL) >> 16) | (t0v27 & 0xffff0000ffff0000ULL));\
+    t0v27 = ((t0v12 & 0x0000ffff0000ffffULL) | ((t0v28 & 0x0000ffff0000ffffULL) << 16));\
+    t0v12 = (((t0v12 & 0xffff0000ffff0000ULL) >> 16) | (t0v28 & 0xffff0000ffff0000ULL));\
+    t0v28 = ((t0v13 & 0x0000ffff0000ffffULL) | ((t0v29 & 0x0000ffff0000ffffULL) << 16));\
+    t0v13 = (((t0v13 & 0xffff0000ffff0000ULL) >> 16) | (t0v29 & 0xffff0000ffff0000ULL));\
+    t0v29 = ((t0v14 & 0x0000ffff0000ffffULL) | ((t0v30 & 0x0000ffff0000ffffULL) << 16));\
+    t0v14 = (((t0v14 & 0xffff0000ffff0000ULL) >> 16) | (t0v30 & 0xffff0000ffff0000ULL));\
+    t0v30 = ((t0v15 & 0x0000ffff0000ffffULL) | ((t0v31 & 0x0000ffff0000ffffULL) << 16));\
+    t0v15 = (((t0v15 & 0xffff0000ffff0000ULL) >> 16) | (t0v31 & 0xffff0000ffff0000ULL));\
+    t0v31 = ((t0v32 & 0x00ff00ff00ff00ffULL) | ((t0v23 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v23 = (((t0v32 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v23 & 0xff00ff00ff00ff00ULL));\
+    t0v32 = ((t0v16 & 0x00ff00ff00ff00ffULL) | ((t0v24 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v16 = (((t0v16 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v24 & 0xff00ff00ff00ff00ULL));\
+    t0v24 = ((t0v17 & 0x00ff00ff00ff00ffULL) | ((t0v25 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v17 = (((t0v17 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v25 & 0xff00ff00ff00ff00ULL));\
+    t0v25 = ((t0v18 & 0x00ff00ff00ff00ffULL) | ((t0v26 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v18 = (((t0v18 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v26 & 0xff00ff00ff00ff00ULL));\
+    t0v26 = ((t0v19 & 0x00ff00ff00ff00ffULL) | ((t0v27 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v19 = (((t0v19 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v27 & 0xff00ff00ff00ff00ULL));\
+    t0v27 = ((t0v20 & 0x00ff00ff00ff00ffULL) | ((t0v28 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v20 = (((t0v20 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v28 & 0xff00ff00ff00ff00ULL));\
+    t0v28 = ((t0v21 & 0x00ff00ff00ff00ffULL) | ((t0v29 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v21 = (((t0v21 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v29 & 0xff00ff00ff00ff00ULL));\
+    t0v29 = ((t0v22 & 0x00ff00ff00ff00ffULL) | ((t0v30 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v22 = (((t0v22 & 0xff00ff00ff00ff00ULL) >> 8) | (t0v30 & 0xff00ff00ff00ff00ULL));\
+    t0v0 = ((t0v0 & 0x00ff00ff00ff00ffULL) | ((t0v8 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v1 = ((t0v1 & 0x00ff00ff00ff00ffULL) | ((t0v9 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v2 = ((t0v2 & 0x00ff00ff00ff00ffULL) | ((t0v10 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v3 = ((t0v3 & 0x00ff00ff00ff00ffULL) | ((t0v11 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v4 = ((t0v4 & 0x00ff00ff00ff00ffULL) | ((t0v12 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v5 = ((t0v5 & 0x00ff00ff00ff00ffULL) | ((t0v13 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v6 = ((t0v6 & 0x00ff00ff00ff00ffULL) | ((t0v14 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v7 = ((t0v7 & 0x00ff00ff00ff00ffULL) | ((t0v15 & 0x00ff00ff00ff00ffULL) << 8));\
+    t0v8 = ((t0v31 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v26 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v9 = (((t0v31 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v26 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v10 = ((t0v32 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v27 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v11 = (((t0v32 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v27 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v12 = ((t0v24 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v28 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v13 = (((t0v24 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v28 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v14 = ((t0v25 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v29 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v15 = (((t0v25 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v29 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v24 = ((t0v23 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v19 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v19 = (((t0v23 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v19 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v23 = ((t0v16 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v20 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v16 = (((t0v16 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v20 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v20 = ((t0v17 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v21 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v17 = (((t0v17 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v21 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v21 = ((t0v18 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v22 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v18 = (((t0v18 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v22 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v22 = ((t0v0 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v4 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v4 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v4 = ((t0v1 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v5 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v5 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v5 = ((t0v2 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v6 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v6 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v6 = ((t0v3 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v7 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v3 = (((t0v3 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v7 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v7 = ((t0v8 & 0x3333333333333333ULL) | ((t0v12 & 0x3333333333333333ULL) << 2));\
+    t0v8 = (((t0v8 & 0xccccccccccccccccULL) >> 2) | (t0v12 & 0xccccccccccccccccULL));\
+    t0v12 = ((t0v10 & 0x3333333333333333ULL) | ((t0v14 & 0x3333333333333333ULL) << 2));\
+    t0v10 = (((t0v10 & 0xccccccccccccccccULL) >> 2) | (t0v14 & 0xccccccccccccccccULL));\
+    t0v14 = ((t0v9 & 0x3333333333333333ULL) | ((t0v13 & 0x3333333333333333ULL) << 2));\
+    t0v9 = (((t0v9 & 0xccccccccccccccccULL) >> 2) | (t0v13 & 0xccccccccccccccccULL));\
+    t0v13 = ((t0v11 & 0x3333333333333333ULL) | ((t0v15 & 0x3333333333333333ULL) << 2));\
+    t0v11 = (((t0v11 & 0xccccccccccccccccULL) >> 2) | (t0v15 & 0xccccccccccccccccULL));\
+    t0v15 = ((t0v24 & 0x3333333333333333ULL) | ((t0v20 & 0x3333333333333333ULL) << 2));\
+    t0v20 = (((t0v24 & 0xccccccccccccccccULL) >> 2) | (t0v20 & 0xccccccccccccccccULL));\
+    t0v24 = ((t0v23 & 0x3333333333333333ULL) | ((t0v21 & 0x3333333333333333ULL) << 2));\
+    t0v21 = (((t0v23 & 0xccccccccccccccccULL) >> 2) | (t0v21 & 0xccccccccccccccccULL));\
+    t0v23 = ((t0v19 & 0x3333333333333333ULL) | ((t0v17 & 0x3333333333333333ULL) << 2));\
+    t0v17 = (((t0v19 & 0xccccccccccccccccULL) >> 2) | (t0v17 & 0xccccccccccccccccULL));\
+    t0v19 = ((t0v16 & 0x3333333333333333ULL) | ((t0v18 & 0x3333333333333333ULL) << 2));\
+    t0v16 = (((t0v16 & 0xccccccccccccccccULL) >> 2) | (t0v18 & 0xccccccccccccccccULL));\
+    t0v18 = ((t0v22 & 0x3333333333333333ULL) | ((t0v5 & 0x3333333333333333ULL) << 2));\
+    t0v5 = (((t0v22 & 0xccccccccccccccccULL) >> 2) | (t0v5 & 0xccccccccccccccccULL));\
+    t0v22 = ((t0v4 & 0x3333333333333333ULL) | ((t0v6 & 0x3333333333333333ULL) << 2));\
+    t0v4 = (((t0v4 & 0xccccccccccccccccULL) >> 2) | (t0v6 & 0xccccccccccccccccULL));\
+    t0v6 = ((t0v0 & 0x3333333333333333ULL) | ((t0v2 & 0x3333333333333333ULL) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccccccccccULL) >> 2) | (t0v2 & 0xccccccccccccccccULL));\
+    t0v2 = ((t0v1 & 0x3333333333333333ULL) | ((t0v3 & 0x3333333333333333ULL) << 2));\
+    t0v1 = (((t0v1 & 0xccccccccccccccccULL) >> 2) | (t0v3 & 0xccccccccccccccccULL));\
+    (D0) = ((t0v7 & 0x5555555555555555ULL) | ((t0v12 & 0x5555555555555555ULL) << 1));\
+    (D1) = (((t0v7 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v12 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D2) = ((t0v8 & 0x5555555555555555ULL) | ((t0v10 & 0x5555555555555555ULL) << 1));\
+    (D3) = (((t0v8 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v10 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D4) = ((t0v14 & 0x5555555555555555ULL) | ((t0v13 & 0x5555555555555555ULL) << 1));\
+    (D5) = (((t0v14 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v13 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D6) = ((t0v9 & 0x5555555555555555ULL) | ((t0v11 & 0x5555555555555555ULL) << 1));\
+    (D7) = (((t0v9 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v11 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D8) = ((t0v15 & 0x5555555555555555ULL) | ((t0v24 & 0x5555555555555555ULL) << 1));\
+    (D9) = (((t0v15 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v24 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D10) = ((t0v20 & 0x5555555555555555ULL) | ((t0v21 & 0x5555555555555555ULL) << 1));\
+    (D11) = (((t0v20 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v21 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D12) = ((t0v23 & 0x5555555555555555ULL) | ((t0v19 & 0x5555555555555555ULL) << 1));\
+    (D13) = (((t0v23 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v19 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D14) = ((t0v17 & 0x5555555555555555ULL) | ((t0v16 & 0x5555555555555555ULL) << 1));\
+    (D15) = (((t0v17 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v16 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D16) = ((t0v18 & 0x5555555555555555ULL) | ((t0v22 & 0x5555555555555555ULL) << 1));\
+    (D17) = (((t0v18 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v22 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D18) = ((t0v5 & 0x5555555555555555ULL) | ((t0v4 & 0x5555555555555555ULL) << 1));\
+    (D19) = (((t0v5 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v4 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D20) = ((t0v6 & 0x5555555555555555ULL) | ((t0v2 & 0x5555555555555555ULL) << 1));\
+    (D21) = (((t0v6 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v2 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D22) = ((t0v0 & 0x5555555555555555ULL) | ((t0v1 & 0x5555555555555555ULL) << 1));\
+}
+"##,
+        transform.out()
+    );
+    let mut transform = CLANG_TRANSFORM_U64.transform();
+    transform.gen_input_transform(7);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B7(D0, D1, D2, D3, D4, D5, D6, S) \
+{\
+    uint64_t t0v0;\
+    uint64_t t0v1;\
+    uint64_t t0v2;\
+    uint64_t t0v3;\
+    uint64_t t0v4;\
+    uint64_t t0v5;\
+    uint64_t t0v6;\
+    uint64_t t0v7;\
+    uint64_t t0v8;\
+    uint64_t t0v9;\
+    uint64_t t0v10;\
+    uint64_t t0v11;\
+    uint64_t t0v12;\
+    uint64_t t0v13;\
+    uint64_t t0v14;\
+    uint64_t t0v15;\
+    uint64_t t0v16;\
+    uint64_t t0v17;\
+    uint64_t t0v18;\
+    uint64_t t0v19;\
+    uint64_t t0v20;\
+    uint64_t t0v21;\
+    uint64_t t0v22;\
+    uint64_t t0v23;\
+    uint64_t t0v24;\
+    uint64_t t0v25;\
+    uint64_t t0v26;\
+    uint64_t t0v27;\
+    uint64_t t0v28;\
+    uint64_t t0v29;\
+    uint64_t t0v30;\
+    uint64_t t0v31;\
+    uint64_t t0v32;\
+    t0v0 = ((*((const uint64_t*)(((S) + 0)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 32)))) & 0xffffffffULL) << 32);\
+    t0v1 = (((*((const uint64_t*)(((S) + 0)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 32)))) & 0xffffffff00000000ULL);\
+    t0v2 = ((*((const uint64_t*)(((S) + 2)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 34)))) & 0xffffffffULL) << 32);\
+    t0v3 = (((*((const uint64_t*)(((S) + 2)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 34)))) & 0xffffffff00000000ULL);\
+    t0v4 = ((*((const uint64_t*)(((S) + 4)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 36)))) & 0xffffffffULL) << 32);\
+    t0v5 = (((*((const uint64_t*)(((S) + 4)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 36)))) & 0xffffffff00000000ULL);\
+    t0v6 = ((*((const uint64_t*)(((S) + 6)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 38)))) & 0xffffffffULL) << 32);\
+    t0v7 = (((*((const uint64_t*)(((S) + 6)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 38)))) & 0xffffffff00000000ULL);\
+    t0v8 = ((*((const uint64_t*)(((S) + 8)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 40)))) & 0xffffffffULL) << 32);\
+    t0v9 = (((*((const uint64_t*)(((S) + 8)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 40)))) & 0xffffffff00000000ULL);\
+    t0v10 = ((*((const uint64_t*)(((S) + 10)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 42)))) & 0xffffffffULL) << 32);\
+    t0v11 = (((*((const uint64_t*)(((S) + 10)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 42)))) & 0xffffffff00000000ULL);\
+    t0v12 = ((*((const uint64_t*)(((S) + 12)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 44)))) & 0xffffffffULL) << 32);\
+    t0v13 = (((*((const uint64_t*)(((S) + 12)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 44)))) & 0xffffffff00000000ULL);\
+    t0v14 = ((*((const uint64_t*)(((S) + 14)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 46)))) & 0xffffffffULL) << 32);\
+    t0v15 = (((*((const uint64_t*)(((S) + 14)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 46)))) & 0xffffffff00000000ULL);\
+    t0v16 = ((*((const uint64_t*)(((S) + 16)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 48)))) & 0xffffffffULL) << 32);\
+    t0v17 = (((*((const uint64_t*)(((S) + 16)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 48)))) & 0xffffffff00000000ULL);\
+    t0v18 = ((*((const uint64_t*)(((S) + 18)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 50)))) & 0xffffffffULL) << 32);\
+    t0v19 = (((*((const uint64_t*)(((S) + 18)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 50)))) & 0xffffffff00000000ULL);\
+    t0v20 = ((*((const uint64_t*)(((S) + 20)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 52)))) & 0xffffffffULL) << 32);\
+    t0v21 = (((*((const uint64_t*)(((S) + 20)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 52)))) & 0xffffffff00000000ULL);\
+    t0v22 = ((*((const uint64_t*)(((S) + 22)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 54)))) & 0xffffffffULL) << 32);\
+    t0v23 = (((*((const uint64_t*)(((S) + 22)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 54)))) & 0xffffffff00000000ULL);\
+    t0v24 = ((*((const uint64_t*)(((S) + 24)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 56)))) & 0xffffffffULL) << 32);\
+    t0v25 = (((*((const uint64_t*)(((S) + 24)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 56)))) & 0xffffffff00000000ULL);\
+    t0v26 = ((*((const uint64_t*)(((S) + 26)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 58)))) & 0xffffffffULL) << 32);\
+    t0v27 = (((*((const uint64_t*)(((S) + 26)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 58)))) & 0xffffffff00000000ULL);\
+    t0v28 = ((*((const uint64_t*)(((S) + 28)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 60)))) & 0xffffffffULL) << 32);\
+    t0v29 = (((*((const uint64_t*)(((S) + 28)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 60)))) & 0xffffffff00000000ULL);\
+    t0v30 = ((*((const uint64_t*)(((S) + 30)))) & 0xffffffffULL) | (((*((const uint64_t*)(((S) + 62)))) & 0xffffffffULL) << 32);\
+    t0v31 = (((*((const uint64_t*)(((S) + 30)))) & 0xffffffff00000000ULL) >> 32) | ((*((const uint64_t*)(((S) + 62)))) & 0xffffffff00000000ULL);\
+    t0v32 = ((((t0v0 & 0x000000ff000000ffULL) | ((t0v8 & 0x000000ff000000ffULL) << 8)) | ((t0v16 & 0x000000ff000000ffULL) << 16)) | ((t0v24 & 0x000000ff000000ffULL) << 24));\
+    t0v0 = ((((t0v1 & 0x000000ff000000ffULL) | ((t0v9 & 0x000000ff000000ffULL) << 8)) | ((t0v17 & 0x000000ff000000ffULL) << 16)) | ((t0v25 & 0x000000ff000000ffULL) << 24));\
+    t0v1 = ((((t0v2 & 0x000000ff000000ffULL) | ((t0v10 & 0x000000ff000000ffULL) << 8)) | ((t0v18 & 0x000000ff000000ffULL) << 16)) | ((t0v26 & 0x000000ff000000ffULL) << 24));\
+    t0v2 = ((((t0v3 & 0x000000ff000000ffULL) | ((t0v11 & 0x000000ff000000ffULL) << 8)) | ((t0v19 & 0x000000ff000000ffULL) << 16)) | ((t0v27 & 0x000000ff000000ffULL) << 24));\
+    t0v3 = ((((t0v4 & 0x000000ff000000ffULL) | ((t0v12 & 0x000000ff000000ffULL) << 8)) | ((t0v20 & 0x000000ff000000ffULL) << 16)) | ((t0v28 & 0x000000ff000000ffULL) << 24));\
+    t0v4 = ((((t0v5 & 0x000000ff000000ffULL) | ((t0v13 & 0x000000ff000000ffULL) << 8)) | ((t0v21 & 0x000000ff000000ffULL) << 16)) | ((t0v29 & 0x000000ff000000ffULL) << 24));\
+    t0v5 = ((((t0v6 & 0x000000ff000000ffULL) | ((t0v14 & 0x000000ff000000ffULL) << 8)) | ((t0v22 & 0x000000ff000000ffULL) << 16)) | ((t0v30 & 0x000000ff000000ffULL) << 24));\
+    t0v6 = ((((t0v7 & 0x000000ff000000ffULL) | ((t0v15 & 0x000000ff000000ffULL) << 8)) | ((t0v23 & 0x000000ff000000ffULL) << 16)) | ((t0v31 & 0x000000ff000000ffULL) << 24));\
+    t0v7 = ((t0v32 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v3 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v3 = (((t0v32 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v3 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v8 = ((t0v0 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v4 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v4 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v4 = ((t0v1 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v5 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v5 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v5 = ((t0v2 & 0x0f0f0f0f0f0f0f0fULL) | ((t0v6 & 0x0f0f0f0f0f0f0f0fULL) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | (t0v6 & 0xf0f0f0f0f0f0f0f0ULL));\
+    t0v6 = ((t0v7 & 0x3333333333333333ULL) | ((t0v4 & 0x3333333333333333ULL) << 2));\
+    t0v4 = (((t0v7 & 0xccccccccccccccccULL) >> 2) | (t0v4 & 0xccccccccccccccccULL));\
+    t0v7 = ((t0v8 & 0x3333333333333333ULL) | ((t0v5 & 0x3333333333333333ULL) << 2));\
+    t0v5 = (((t0v8 & 0xccccccccccccccccULL) >> 2) | (t0v5 & 0xccccccccccccccccULL));\
+    t0v8 = ((t0v3 & 0x3333333333333333ULL) | ((t0v1 & 0x3333333333333333ULL) << 2));\
+    t0v1 = (((t0v3 & 0xccccccccccccccccULL) >> 2) | (t0v1 & 0xccccccccccccccccULL));\
+    t0v3 = ((t0v0 & 0x3333333333333333ULL) | ((t0v2 & 0x3333333333333333ULL) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccccccccccULL) >> 2) | (t0v2 & 0xccccccccccccccccULL));\
+    (D0) = ((t0v6 & 0x5555555555555555ULL) | ((t0v7 & 0x5555555555555555ULL) << 1));\
+    (D1) = (((t0v6 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v7 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D2) = ((t0v4 & 0x5555555555555555ULL) | ((t0v5 & 0x5555555555555555ULL) << 1));\
+    (D3) = (((t0v4 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v5 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D4) = ((t0v8 & 0x5555555555555555ULL) | ((t0v3 & 0x5555555555555555ULL) << 1));\
+    (D5) = (((t0v8 & 0xaaaaaaaaaaaaaaaaULL) >> 1) | (t0v3 & 0xaaaaaaaaaaaaaaaaULL));\
+    (D6) = ((t0v1 & 0x5555555555555555ULL) | ((t0v0 & 0x5555555555555555ULL) << 1));\
+}
+"##,
+        transform.out()
+    );
 }
