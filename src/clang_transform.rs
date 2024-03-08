@@ -715,6 +715,13 @@ impl<'a> CLangTransform<'a> {
     pub fn format_arg_d(arg: usize) -> String {
         format!("(D{})", arg)
     }
+    pub fn format_load_input(&self, arg: usize) -> String {
+        if let Some(load_op) = self.config.load_op {
+            Self::format_op(load_op, &[&Self::format_arg_s(arg)])
+        } else {
+            Self::format_arg_s(arg)
+        }
+    }
 
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
         let bits_log = calc_log_bits(bits);
@@ -894,7 +901,7 @@ impl<'a> CLangTransform<'a> {
     pub fn gen_input_transform(&mut self, bits: usize) {
         let mut mvars = CLangMacroVars::new(
             [self.config.final_type_name],
-            (0..32).map(|i| Self::format_arg_s(i)),
+            (0..32).map(|i| self.format_load_input(i)),
             (0..bits).map(|i| Self::format_arg_d(i)),
         );
         self.gen_input_transform_int(&mut mvars, bits);
