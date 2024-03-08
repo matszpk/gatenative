@@ -675,7 +675,7 @@ impl CLangMacroVars {
 
     fn write_constant_defs(&mut self, out: &mut String) {
         for (c, v) in &self.constants {
-            writeln!(out, "    {} {} = {};\\", self.var_types[0], c, v).unwrap();
+            writeln!(out, "    const {} {} = {};\\", self.var_types[0], c, v).unwrap();
         }
     }
 
