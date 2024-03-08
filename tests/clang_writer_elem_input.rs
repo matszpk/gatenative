@@ -271,6 +271,7 @@ fn test_clang_writer_elem_input() {
     v1 = input[16];
     v0 = _m_pxor(v0, v1);
     output[14] = v0;
+    _m_empty();
 }
 "##
     );

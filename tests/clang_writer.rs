@@ -574,6 +574,7 @@ void gate_sys_func1(const __m64* input,
     v4 = _m_pxor(v4, _m_pxor(v1, one));
     v4 = _m_pandn(v4, v2);
     output[0] = v4;
+    _m_empty();
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_MMX, false, false)
@@ -625,6 +626,7 @@ void gate_sys_func1(const __m64* input,
     v4 = _m_pxor(v1, one);
     v4 = _m_pandn(v4, v2);
     output[0] = v4;
+    _m_empty();
 }
 "##,
         write_test_code_with_not(&CLANG_WRITER_INTEL_MMX, false, false)
@@ -1987,6 +1989,7 @@ fn test_clang_writer_extra() {
     output[1] = _m_pxor(v1, one);
     v0 = _m_por(v0, v2);
     output[0] = v0;
+    _m_empty();
 }
 "##
     );
@@ -2086,6 +2089,7 @@ fn test_clang_writer_extra() {
     output[3] = v0;
     v0 = output[3];
     output[2] = _m_pxor(v0, one);
+    _m_empty();
 }
 "##
     );
