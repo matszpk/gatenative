@@ -70,8 +70,8 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     final_type_name: "uint64_t",
     final_type_bit_len: 64,
     inter_type: None,
-    load_op: None,
-    store_op: None,
+    load_op: Some("(*((const uint64_t*)({})))"),
+    store_op: Some("*((uint64_t*)({})) = "),
     and_op: "({} & {})",
     or_op: "({} | {})",
     shl32_op: "({} << {})",
@@ -780,16 +780,20 @@ impl<'a> CLangTransform<'a> {
             for i in (0..type_len_log - 5).rev() {
                 let mut new_pass = vec![0; 32];
                 for j in 0..16 {
-                    let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
-                    let sj = fj | (1 << i);
+                    let fj = j & ((1 << 4) - 1);
+                    let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                     let t1 = mvars.format_var(prev_type, prev_pass[sj]);
+                    if prev_type < INPUT_TYPE {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                        mvars.use_var(prev_type, prev_pass[sj]);
+                    }
                     let (nt, ns0) = (0, mvars.new_var(0));
                     let expr =
                         Self::format_op(self.config.unpack_ops[2 * (i + 5)].unwrap(), &[&t0, &t1]);
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
-                    new_pass[fj] = ns0;
+                    new_pass[2 * j] = ns0;
                     let (nt, ns1) = (0, mvars.new_var(0));
                     let expr = Self::format_op(
                         self.config.unpack_ops[2 * (i + 5) + 1].unwrap(),
@@ -797,7 +801,7 @@ impl<'a> CLangTransform<'a> {
                     );
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
-                    new_pass[sj] = ns1;
+                    new_pass[2 * j + 1] = ns1;
                 }
                 prev_pass = new_pass;
                 prev_type = 0;
@@ -828,6 +832,9 @@ impl<'a> CLangTransform<'a> {
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
+                    if prev_type < OUTPUT_TYPE {
+                        mvars.use_var(prev_type, prev_pass[idx]);
+                    }
                     let expr = if self.config.failed_shl32_op || j != ((1 << (5 - bits_log)) - 1) {
                         Self::format_op(
                             self.config.and_op,
