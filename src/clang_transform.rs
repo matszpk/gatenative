@@ -126,26 +126,8 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         None,
     ],
     unpack_ops: [
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        Some("({} & 0xffffffffULL) | (({} & 0xffffffffULL) << 32)"),
-        Some("(({} & 0xffffffff00000000ULL) >> 32) | ({} & 0xffffffff00000000ULL)"),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+        None, None, None, None, None,
     ],
     init_defs: "",
     zero: "0ULL",
@@ -1059,16 +1041,71 @@ impl<'a> CLangTransform<'a> {
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
                     let (nt, ns0) = (0, mvars.new_var(0));
-                    let expr =
-                        Self::format_op(self.config.unpack_ops[2 * (i + 5)].unwrap(), &[&t0, &t1]);
+                    let i = i + 5;
+                    let expr = if let Some(unpack) = self.config.unpack_ops[2 * i] {
+                        Self::format_op(unpack, &[&t0, &t1])
+                    } else {
+                        // construct from shift and maskings
+                        let (shl, failed) = {
+                            let (shl, idx) = (i..10)
+                                .filter_map(|x| self.config.shift_op[2 * x].map(|s| (s, x)))
+                                .next()
+                                .unwrap();
+                            (shl, idx != i)
+                        };
+                        // normal expression (bitwise logic and shifts)
+                        let p0 = Self::format_op(
+                            self.config.and_op,
+                            &[&t0, mvars.get_constant(self.config.constant_defs[2 * i])],
+                        );
+                        let p1 = if failed {
+                            Self::format_op(
+                                self.config.and_op,
+                                &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
+                            )
+                        } else {
+                            t1.to_string()
+                        };
+                        let p1 = Self::format_op(shl, &[&p1, &(1 << i).to_string()]);
+                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                    };
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
                     new_pass[2 * j] = ns0;
                     let (nt, ns1) = (0, mvars.new_var(0));
-                    let expr = Self::format_op(
-                        self.config.unpack_ops[2 * (i + 5) + 1].unwrap(),
-                        &[&t0, &t1],
-                    );
+                    let expr = if let Some(unpack) = self.config.unpack_ops[2 * i + 1] {
+                        Self::format_op(unpack, &[&t0, &t1])
+                    } else {
+                        // construct from shift and maskings
+                        let (shr, failed) = {
+                            let (shr, idx) = (i..10)
+                                .filter_map(|x| self.config.shift_op[2 * x + 1].map(|s| (s, x)))
+                                .next()
+                                .unwrap();
+                            (shr, idx != i)
+                        };
+                        // normal expression (bitwise logic and shifts)
+                        let p0 = if failed {
+                            Self::format_op(
+                                self.config.and_op,
+                                &[
+                                    &t0,
+                                    mvars.get_constant(self.config.constant_defs[2 * i + 1]),
+                                ],
+                            )
+                        } else {
+                            t0.to_string()
+                        };
+                        let p0 = Self::format_op(shr, &[&p0, &(1 << i).to_string()]);
+                        let p1 = Self::format_op(
+                            self.config.and_op,
+                            &[
+                                &t1,
+                                mvars.get_constant(self.config.constant_defs[2 * i + 1]),
+                            ],
+                        );
+                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                    };
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
                     new_pass[2 * j + 1] = ns1;
