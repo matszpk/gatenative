@@ -1224,9 +1224,572 @@ fn test_clang_transform_gen_in_transform() {
         transform.out()
     );
 
+    // Intel MMX
     let mut transform = CLANG_TRANSFORM_INTEL_MMX.transform();
-    for i in (1..=32).rev() {
-        transform.gen_input_transform(i);
-    }
-    println!("Code: {}", transform.out());
+    transform.gen_input_transform(32);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B32(D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31, S) \
+{\
+    const __m64 c8 = (*(const __m64*)(transform_const_tbl + 2*0));\
+    const __m64 c9 = (*(const __m64*)(transform_const_tbl + 2*1));\
+    const __m64 c6 = (*(const __m64*)(transform_const_tbl + 2*2));\
+    const __m64 c7 = (*(const __m64*)(transform_const_tbl + 2*3));\
+    const __m64 c4 = (*(const __m64*)(transform_const_tbl + 2*4));\
+    const __m64 c5 = (*(const __m64*)(transform_const_tbl + 2*5));\
+    const __m64 c2 = (*(const __m64*)(transform_const_tbl + 2*6));\
+    const __m64 c3 = (*(const __m64*)(transform_const_tbl + 2*7));\
+    const __m64 c0 = (*(const __m64*)(transform_const_tbl + 2*8));\
+    const __m64 c1 = (*(const __m64*)(transform_const_tbl + 2*9));\
+    __m64 t0v0;\
+    __m64 t0v1;\
+    __m64 t0v2;\
+    __m64 t0v3;\
+    __m64 t0v4;\
+    __m64 t0v5;\
+    __m64 t0v6;\
+    __m64 t0v7;\
+    __m64 t0v8;\
+    __m64 t0v9;\
+    __m64 t0v10;\
+    __m64 t0v11;\
+    __m64 t0v12;\
+    __m64 t0v13;\
+    __m64 t0v14;\
+    __m64 t0v15;\
+    __m64 t0v16;\
+    __m64 t0v17;\
+    __m64 t0v18;\
+    __m64 t0v19;\
+    __m64 t0v20;\
+    __m64 t0v21;\
+    __m64 t0v22;\
+    __m64 t0v23;\
+    __m64 t0v24;\
+    __m64 t0v25;\
+    __m64 t0v26;\
+    __m64 t0v27;\
+    __m64 t0v28;\
+    __m64 t0v29;\
+    __m64 t0v30;\
+    __m64 t0v31;\
+    __m64 t0v32;\
+    t0v0 = _m_punpckldq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v1 = _m_punpckhdq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v2 = _m_punpckldq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v3 = _m_punpckhdq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v4 = _m_punpckldq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v5 = _m_punpckhdq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v6 = _m_punpckldq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v7 = _m_punpckhdq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v8 = _m_punpckldq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v9 = _m_punpckhdq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v10 = _m_punpckldq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v11 = _m_punpckhdq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v12 = _m_punpckldq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v13 = _m_punpckhdq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v14 = _m_punpckldq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v15 = _m_punpckhdq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v16 = _m_punpckldq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v17 = _m_punpckhdq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v18 = _m_punpckldq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v19 = _m_punpckhdq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v20 = _m_punpckldq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v21 = _m_punpckhdq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v22 = _m_punpckldq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v23 = _m_punpckhdq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v24 = _m_punpckldq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v25 = _m_punpckhdq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v26 = _m_punpckldq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v27 = _m_punpckhdq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v28 = _m_punpckldq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v29 = _m_punpckhdq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v30 = _m_punpckldq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v31 = _m_punpckhdq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v32 = _m_por(_m_pand(t0v0, c0), _m_pslldi(_m_pand(t0v16, c0), 16));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c1), 16), _m_pand(t0v16, c1));\
+    t0v16 = _m_por(_m_pand(t0v1, c0), _m_pslldi(_m_pand(t0v17, c0), 16));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c1), 16), _m_pand(t0v17, c1));\
+    t0v17 = _m_por(_m_pand(t0v2, c0), _m_pslldi(_m_pand(t0v18, c0), 16));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c1), 16), _m_pand(t0v18, c1));\
+    t0v18 = _m_por(_m_pand(t0v3, c0), _m_pslldi(_m_pand(t0v19, c0), 16));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v3, c1), 16), _m_pand(t0v19, c1));\
+    t0v19 = _m_por(_m_pand(t0v4, c0), _m_pslldi(_m_pand(t0v20, c0), 16));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v4, c1), 16), _m_pand(t0v20, c1));\
+    t0v20 = _m_por(_m_pand(t0v5, c0), _m_pslldi(_m_pand(t0v21, c0), 16));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v5, c1), 16), _m_pand(t0v21, c1));\
+    t0v21 = _m_por(_m_pand(t0v6, c0), _m_pslldi(_m_pand(t0v22, c0), 16));\
+    t0v6 = _m_por(_m_psrldi(_m_pand(t0v6, c1), 16), _m_pand(t0v22, c1));\
+    t0v22 = _m_por(_m_pand(t0v7, c0), _m_pslldi(_m_pand(t0v23, c0), 16));\
+    t0v7 = _m_por(_m_psrldi(_m_pand(t0v7, c1), 16), _m_pand(t0v23, c1));\
+    t0v23 = _m_por(_m_pand(t0v8, c0), _m_pslldi(_m_pand(t0v24, c0), 16));\
+    t0v8 = _m_por(_m_psrldi(_m_pand(t0v8, c1), 16), _m_pand(t0v24, c1));\
+    t0v24 = _m_por(_m_pand(t0v9, c0), _m_pslldi(_m_pand(t0v25, c0), 16));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v9, c1), 16), _m_pand(t0v25, c1));\
+    t0v25 = _m_por(_m_pand(t0v10, c0), _m_pslldi(_m_pand(t0v26, c0), 16));\
+    t0v10 = _m_por(_m_psrldi(_m_pand(t0v10, c1), 16), _m_pand(t0v26, c1));\
+    t0v26 = _m_por(_m_pand(t0v11, c0), _m_pslldi(_m_pand(t0v27, c0), 16));\
+    t0v11 = _m_por(_m_psrldi(_m_pand(t0v11, c1), 16), _m_pand(t0v27, c1));\
+    t0v27 = _m_por(_m_pand(t0v12, c0), _m_pslldi(_m_pand(t0v28, c0), 16));\
+    t0v12 = _m_por(_m_psrldi(_m_pand(t0v12, c1), 16), _m_pand(t0v28, c1));\
+    t0v28 = _m_por(_m_pand(t0v13, c0), _m_pslldi(_m_pand(t0v29, c0), 16));\
+    t0v13 = _m_por(_m_psrldi(_m_pand(t0v13, c1), 16), _m_pand(t0v29, c1));\
+    t0v29 = _m_por(_m_pand(t0v14, c0), _m_pslldi(_m_pand(t0v30, c0), 16));\
+    t0v14 = _m_por(_m_psrldi(_m_pand(t0v14, c1), 16), _m_pand(t0v30, c1));\
+    t0v30 = _m_por(_m_pand(t0v15, c0), _m_pslldi(_m_pand(t0v31, c0), 16));\
+    t0v15 = _m_por(_m_psrldi(_m_pand(t0v15, c1), 16), _m_pand(t0v31, c1));\
+    t0v31 = _m_por(_m_pand(t0v32, c2), _m_pslldi(_m_pand(t0v23, c2), 8));\
+    t0v23 = _m_por(_m_psrldi(_m_pand(t0v32, c3), 8), _m_pand(t0v23, c3));\
+    t0v32 = _m_por(_m_pand(t0v16, c2), _m_pslldi(_m_pand(t0v24, c2), 8));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c3), 8), _m_pand(t0v24, c3));\
+    t0v24 = _m_por(_m_pand(t0v17, c2), _m_pslldi(_m_pand(t0v25, c2), 8));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v17, c3), 8), _m_pand(t0v25, c3));\
+    t0v25 = _m_por(_m_pand(t0v18, c2), _m_pslldi(_m_pand(t0v26, c2), 8));\
+    t0v18 = _m_por(_m_psrldi(_m_pand(t0v18, c3), 8), _m_pand(t0v26, c3));\
+    t0v26 = _m_por(_m_pand(t0v19, c2), _m_pslldi(_m_pand(t0v27, c2), 8));\
+    t0v19 = _m_por(_m_psrldi(_m_pand(t0v19, c3), 8), _m_pand(t0v27, c3));\
+    t0v27 = _m_por(_m_pand(t0v20, c2), _m_pslldi(_m_pand(t0v28, c2), 8));\
+    t0v20 = _m_por(_m_psrldi(_m_pand(t0v20, c3), 8), _m_pand(t0v28, c3));\
+    t0v28 = _m_por(_m_pand(t0v21, c2), _m_pslldi(_m_pand(t0v29, c2), 8));\
+    t0v21 = _m_por(_m_psrldi(_m_pand(t0v21, c3), 8), _m_pand(t0v29, c3));\
+    t0v29 = _m_por(_m_pand(t0v22, c2), _m_pslldi(_m_pand(t0v30, c2), 8));\
+    t0v22 = _m_por(_m_psrldi(_m_pand(t0v22, c3), 8), _m_pand(t0v30, c3));\
+    t0v30 = _m_por(_m_pand(t0v0, c2), _m_pslldi(_m_pand(t0v8, c2), 8));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c3), 8), _m_pand(t0v8, c3));\
+    t0v8 = _m_por(_m_pand(t0v1, c2), _m_pslldi(_m_pand(t0v9, c2), 8));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c3), 8), _m_pand(t0v9, c3));\
+    t0v9 = _m_por(_m_pand(t0v2, c2), _m_pslldi(_m_pand(t0v10, c2), 8));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c3), 8), _m_pand(t0v10, c3));\
+    t0v10 = _m_por(_m_pand(t0v3, c2), _m_pslldi(_m_pand(t0v11, c2), 8));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v3, c3), 8), _m_pand(t0v11, c3));\
+    t0v11 = _m_por(_m_pand(t0v4, c2), _m_pslldi(_m_pand(t0v12, c2), 8));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v4, c3), 8), _m_pand(t0v12, c3));\
+    t0v12 = _m_por(_m_pand(t0v5, c2), _m_pslldi(_m_pand(t0v13, c2), 8));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v5, c3), 8), _m_pand(t0v13, c3));\
+    t0v13 = _m_por(_m_pand(t0v6, c2), _m_pslldi(_m_pand(t0v14, c2), 8));\
+    t0v6 = _m_por(_m_psrldi(_m_pand(t0v6, c3), 8), _m_pand(t0v14, c3));\
+    t0v14 = _m_por(_m_pand(t0v7, c2), _m_pslldi(_m_pand(t0v15, c2), 8));\
+    t0v7 = _m_por(_m_psrldi(_m_pand(t0v7, c3), 8), _m_pand(t0v15, c3));\
+    t0v15 = _m_por(_m_pand(t0v31, c4), _m_pslldi(_m_pand(t0v26, c4), 4));\
+    t0v26 = _m_por(_m_psrldi(_m_pand(t0v31, c5), 4), _m_pand(t0v26, c5));\
+    t0v31 = _m_por(_m_pand(t0v32, c4), _m_pslldi(_m_pand(t0v27, c4), 4));\
+    t0v27 = _m_por(_m_psrldi(_m_pand(t0v32, c5), 4), _m_pand(t0v27, c5));\
+    t0v32 = _m_por(_m_pand(t0v24, c4), _m_pslldi(_m_pand(t0v28, c4), 4));\
+    t0v24 = _m_por(_m_psrldi(_m_pand(t0v24, c5), 4), _m_pand(t0v28, c5));\
+    t0v28 = _m_por(_m_pand(t0v25, c4), _m_pslldi(_m_pand(t0v29, c4), 4));\
+    t0v25 = _m_por(_m_psrldi(_m_pand(t0v25, c5), 4), _m_pand(t0v29, c5));\
+    t0v29 = _m_por(_m_pand(t0v23, c4), _m_pslldi(_m_pand(t0v19, c4), 4));\
+    t0v19 = _m_por(_m_psrldi(_m_pand(t0v23, c5), 4), _m_pand(t0v19, c5));\
+    t0v23 = _m_por(_m_pand(t0v16, c4), _m_pslldi(_m_pand(t0v20, c4), 4));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c5), 4), _m_pand(t0v20, c5));\
+    t0v20 = _m_por(_m_pand(t0v17, c4), _m_pslldi(_m_pand(t0v21, c4), 4));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v17, c5), 4), _m_pand(t0v21, c5));\
+    t0v21 = _m_por(_m_pand(t0v18, c4), _m_pslldi(_m_pand(t0v22, c4), 4));\
+    t0v18 = _m_por(_m_psrldi(_m_pand(t0v18, c5), 4), _m_pand(t0v22, c5));\
+    t0v22 = _m_por(_m_pand(t0v30, c4), _m_pslldi(_m_pand(t0v11, c4), 4));\
+    t0v11 = _m_por(_m_psrldi(_m_pand(t0v30, c5), 4), _m_pand(t0v11, c5));\
+    t0v30 = _m_por(_m_pand(t0v8, c4), _m_pslldi(_m_pand(t0v12, c4), 4));\
+    t0v8 = _m_por(_m_psrldi(_m_pand(t0v8, c5), 4), _m_pand(t0v12, c5));\
+    t0v12 = _m_por(_m_pand(t0v9, c4), _m_pslldi(_m_pand(t0v13, c4), 4));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v9, c5), 4), _m_pand(t0v13, c5));\
+    t0v13 = _m_por(_m_pand(t0v10, c4), _m_pslldi(_m_pand(t0v14, c4), 4));\
+    t0v10 = _m_por(_m_psrldi(_m_pand(t0v10, c5), 4), _m_pand(t0v14, c5));\
+    t0v14 = _m_por(_m_pand(t0v0, c4), _m_pslldi(_m_pand(t0v4, c4), 4));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c5), 4), _m_pand(t0v4, c5));\
+    t0v4 = _m_por(_m_pand(t0v1, c4), _m_pslldi(_m_pand(t0v5, c4), 4));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c5), 4), _m_pand(t0v5, c5));\
+    t0v5 = _m_por(_m_pand(t0v2, c4), _m_pslldi(_m_pand(t0v6, c4), 4));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c5), 4), _m_pand(t0v6, c5));\
+    t0v6 = _m_por(_m_pand(t0v3, c4), _m_pslldi(_m_pand(t0v7, c4), 4));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v3, c5), 4), _m_pand(t0v7, c5));\
+    t0v7 = _m_por(_m_pand(t0v15, c6), _m_pslldi(_m_pand(t0v32, c6), 2));\
+    t0v15 = _m_por(_m_psrldi(_m_pand(t0v15, c7), 2), _m_pand(t0v32, c7));\
+    t0v32 = _m_por(_m_pand(t0v31, c6), _m_pslldi(_m_pand(t0v28, c6), 2));\
+    t0v28 = _m_por(_m_psrldi(_m_pand(t0v31, c7), 2), _m_pand(t0v28, c7));\
+    t0v31 = _m_por(_m_pand(t0v26, c6), _m_pslldi(_m_pand(t0v24, c6), 2));\
+    t0v24 = _m_por(_m_psrldi(_m_pand(t0v26, c7), 2), _m_pand(t0v24, c7));\
+    t0v26 = _m_por(_m_pand(t0v27, c6), _m_pslldi(_m_pand(t0v25, c6), 2));\
+    t0v25 = _m_por(_m_psrldi(_m_pand(t0v27, c7), 2), _m_pand(t0v25, c7));\
+    t0v27 = _m_por(_m_pand(t0v29, c6), _m_pslldi(_m_pand(t0v20, c6), 2));\
+    t0v20 = _m_por(_m_psrldi(_m_pand(t0v29, c7), 2), _m_pand(t0v20, c7));\
+    t0v29 = _m_por(_m_pand(t0v23, c6), _m_pslldi(_m_pand(t0v21, c6), 2));\
+    t0v21 = _m_por(_m_psrldi(_m_pand(t0v23, c7), 2), _m_pand(t0v21, c7));\
+    t0v23 = _m_por(_m_pand(t0v19, c6), _m_pslldi(_m_pand(t0v17, c6), 2));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v19, c7), 2), _m_pand(t0v17, c7));\
+    t0v19 = _m_por(_m_pand(t0v16, c6), _m_pslldi(_m_pand(t0v18, c6), 2));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c7), 2), _m_pand(t0v18, c7));\
+    t0v18 = _m_por(_m_pand(t0v22, c6), _m_pslldi(_m_pand(t0v12, c6), 2));\
+    t0v12 = _m_por(_m_psrldi(_m_pand(t0v22, c7), 2), _m_pand(t0v12, c7));\
+    t0v22 = _m_por(_m_pand(t0v30, c6), _m_pslldi(_m_pand(t0v13, c6), 2));\
+    t0v13 = _m_por(_m_psrldi(_m_pand(t0v30, c7), 2), _m_pand(t0v13, c7));\
+    t0v30 = _m_por(_m_pand(t0v11, c6), _m_pslldi(_m_pand(t0v9, c6), 2));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v11, c7), 2), _m_pand(t0v9, c7));\
+    t0v11 = _m_por(_m_pand(t0v8, c6), _m_pslldi(_m_pand(t0v10, c6), 2));\
+    t0v8 = _m_por(_m_psrldi(_m_pand(t0v8, c7), 2), _m_pand(t0v10, c7));\
+    t0v10 = _m_por(_m_pand(t0v14, c6), _m_pslldi(_m_pand(t0v5, c6), 2));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v14, c7), 2), _m_pand(t0v5, c7));\
+    t0v14 = _m_por(_m_pand(t0v4, c6), _m_pslldi(_m_pand(t0v6, c6), 2));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v4, c7), 2), _m_pand(t0v6, c7));\
+    t0v6 = _m_por(_m_pand(t0v0, c6), _m_pslldi(_m_pand(t0v2, c6), 2));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c7), 2), _m_pand(t0v2, c7));\
+    t0v2 = _m_por(_m_pand(t0v1, c6), _m_pslldi(_m_pand(t0v3, c6), 2));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c7), 2), _m_pand(t0v3, c7));\
+    (D0) = _m_por(_m_pand(t0v7, c8), _m_pslldi(_m_pand(t0v32, c8), 1));\
+    (D1) = _m_por(_m_psrldi(_m_pand(t0v7, c9), 1), _m_pand(t0v32, c9));\
+    (D2) = _m_por(_m_pand(t0v15, c8), _m_pslldi(_m_pand(t0v28, c8), 1));\
+    (D3) = _m_por(_m_psrldi(_m_pand(t0v15, c9), 1), _m_pand(t0v28, c9));\
+    (D4) = _m_por(_m_pand(t0v31, c8), _m_pslldi(_m_pand(t0v26, c8), 1));\
+    (D5) = _m_por(_m_psrldi(_m_pand(t0v31, c9), 1), _m_pand(t0v26, c9));\
+    (D6) = _m_por(_m_pand(t0v24, c8), _m_pslldi(_m_pand(t0v25, c8), 1));\
+    (D7) = _m_por(_m_psrldi(_m_pand(t0v24, c9), 1), _m_pand(t0v25, c9));\
+    (D8) = _m_por(_m_pand(t0v27, c8), _m_pslldi(_m_pand(t0v29, c8), 1));\
+    (D9) = _m_por(_m_psrldi(_m_pand(t0v27, c9), 1), _m_pand(t0v29, c9));\
+    (D10) = _m_por(_m_pand(t0v20, c8), _m_pslldi(_m_pand(t0v21, c8), 1));\
+    (D11) = _m_por(_m_psrldi(_m_pand(t0v20, c9), 1), _m_pand(t0v21, c9));\
+    (D12) = _m_por(_m_pand(t0v23, c8), _m_pslldi(_m_pand(t0v19, c8), 1));\
+    (D13) = _m_por(_m_psrldi(_m_pand(t0v23, c9), 1), _m_pand(t0v19, c9));\
+    (D14) = _m_por(_m_pand(t0v17, c8), _m_pslldi(_m_pand(t0v16, c8), 1));\
+    (D15) = _m_por(_m_psrldi(_m_pand(t0v17, c9), 1), _m_pand(t0v16, c9));\
+    (D16) = _m_por(_m_pand(t0v18, c8), _m_pslldi(_m_pand(t0v22, c8), 1));\
+    (D17) = _m_por(_m_psrldi(_m_pand(t0v18, c9), 1), _m_pand(t0v22, c9));\
+    (D18) = _m_por(_m_pand(t0v12, c8), _m_pslldi(_m_pand(t0v13, c8), 1));\
+    (D19) = _m_por(_m_psrldi(_m_pand(t0v12, c9), 1), _m_pand(t0v13, c9));\
+    (D20) = _m_por(_m_pand(t0v30, c8), _m_pslldi(_m_pand(t0v11, c8), 1));\
+    (D21) = _m_por(_m_psrldi(_m_pand(t0v30, c9), 1), _m_pand(t0v11, c9));\
+    (D22) = _m_por(_m_pand(t0v9, c8), _m_pslldi(_m_pand(t0v8, c8), 1));\
+    (D23) = _m_por(_m_psrldi(_m_pand(t0v9, c9), 1), _m_pand(t0v8, c9));\
+    (D24) = _m_por(_m_pand(t0v10, c8), _m_pslldi(_m_pand(t0v14, c8), 1));\
+    (D25) = _m_por(_m_psrldi(_m_pand(t0v10, c9), 1), _m_pand(t0v14, c9));\
+    (D26) = _m_por(_m_pand(t0v5, c8), _m_pslldi(_m_pand(t0v4, c8), 1));\
+    (D27) = _m_por(_m_psrldi(_m_pand(t0v5, c9), 1), _m_pand(t0v4, c9));\
+    (D28) = _m_por(_m_pand(t0v6, c8), _m_pslldi(_m_pand(t0v2, c8), 1));\
+    (D29) = _m_por(_m_psrldi(_m_pand(t0v6, c9), 1), _m_pand(t0v2, c9));\
+    (D30) = _m_por(_m_pand(t0v0, c8), _m_pslldi(_m_pand(t0v1, c8), 1));\
+    (D31) = _m_por(_m_psrldi(_m_pand(t0v0, c9), 1), _m_pand(t0v1, c9));\
+}
+"##,
+        transform.out(),
+    );
+    let mut transform = CLANG_TRANSFORM_INTEL_MMX.transform();
+    transform.gen_input_transform(23);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B23(D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15, D16, D17, D18, D19, D20, D21, D22, S) \
+{\
+    const __m64 c8 = (*(const __m64*)(transform_const_tbl + 2*0));\
+    const __m64 c9 = (*(const __m64*)(transform_const_tbl + 2*1));\
+    const __m64 c6 = (*(const __m64*)(transform_const_tbl + 2*2));\
+    const __m64 c7 = (*(const __m64*)(transform_const_tbl + 2*3));\
+    const __m64 c4 = (*(const __m64*)(transform_const_tbl + 2*4));\
+    const __m64 c5 = (*(const __m64*)(transform_const_tbl + 2*5));\
+    const __m64 c2 = (*(const __m64*)(transform_const_tbl + 2*6));\
+    const __m64 c3 = (*(const __m64*)(transform_const_tbl + 2*7));\
+    const __m64 c0 = (*(const __m64*)(transform_const_tbl + 2*8));\
+    const __m64 c1 = (*(const __m64*)(transform_const_tbl + 2*9));\
+    __m64 t0v0;\
+    __m64 t0v1;\
+    __m64 t0v2;\
+    __m64 t0v3;\
+    __m64 t0v4;\
+    __m64 t0v5;\
+    __m64 t0v6;\
+    __m64 t0v7;\
+    __m64 t0v8;\
+    __m64 t0v9;\
+    __m64 t0v10;\
+    __m64 t0v11;\
+    __m64 t0v12;\
+    __m64 t0v13;\
+    __m64 t0v14;\
+    __m64 t0v15;\
+    __m64 t0v16;\
+    __m64 t0v17;\
+    __m64 t0v18;\
+    __m64 t0v19;\
+    __m64 t0v20;\
+    __m64 t0v21;\
+    __m64 t0v22;\
+    __m64 t0v23;\
+    __m64 t0v24;\
+    __m64 t0v25;\
+    __m64 t0v26;\
+    __m64 t0v27;\
+    __m64 t0v28;\
+    __m64 t0v29;\
+    __m64 t0v30;\
+    __m64 t0v31;\
+    __m64 t0v32;\
+    t0v0 = _m_punpckldq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v1 = _m_punpckhdq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v2 = _m_punpckldq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v3 = _m_punpckhdq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v4 = _m_punpckldq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v5 = _m_punpckhdq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v6 = _m_punpckldq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v7 = _m_punpckhdq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v8 = _m_punpckldq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v9 = _m_punpckhdq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v10 = _m_punpckldq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v11 = _m_punpckhdq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v12 = _m_punpckldq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v13 = _m_punpckhdq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v14 = _m_punpckldq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v15 = _m_punpckhdq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v16 = _m_punpckldq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v17 = _m_punpckhdq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v18 = _m_punpckldq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v19 = _m_punpckhdq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v20 = _m_punpckldq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v21 = _m_punpckhdq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v22 = _m_punpckldq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v23 = _m_punpckhdq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v24 = _m_punpckldq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v25 = _m_punpckhdq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v26 = _m_punpckldq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v27 = _m_punpckhdq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v28 = _m_punpckldq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v29 = _m_punpckhdq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v30 = _m_punpckldq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v31 = _m_punpckhdq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v32 = _m_por(_m_pand(t0v0, c0), _m_pslldi(_m_pand(t0v16, c0), 16));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c1), 16), _m_pand(t0v16, c1));\
+    t0v16 = _m_por(_m_pand(t0v1, c0), _m_pslldi(_m_pand(t0v17, c0), 16));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c1), 16), _m_pand(t0v17, c1));\
+    t0v17 = _m_por(_m_pand(t0v2, c0), _m_pslldi(_m_pand(t0v18, c0), 16));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c1), 16), _m_pand(t0v18, c1));\
+    t0v18 = _m_por(_m_pand(t0v3, c0), _m_pslldi(_m_pand(t0v19, c0), 16));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v3, c1), 16), _m_pand(t0v19, c1));\
+    t0v19 = _m_por(_m_pand(t0v4, c0), _m_pslldi(_m_pand(t0v20, c0), 16));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v4, c1), 16), _m_pand(t0v20, c1));\
+    t0v20 = _m_por(_m_pand(t0v5, c0), _m_pslldi(_m_pand(t0v21, c0), 16));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v5, c1), 16), _m_pand(t0v21, c1));\
+    t0v21 = _m_por(_m_pand(t0v6, c0), _m_pslldi(_m_pand(t0v22, c0), 16));\
+    t0v6 = _m_por(_m_psrldi(_m_pand(t0v6, c1), 16), _m_pand(t0v22, c1));\
+    t0v22 = _m_por(_m_pand(t0v7, c0), _m_pslldi(_m_pand(t0v23, c0), 16));\
+    t0v7 = _m_por(_m_psrldi(_m_pand(t0v7, c1), 16), _m_pand(t0v23, c1));\
+    t0v23 = _m_por(_m_pand(t0v8, c0), _m_pslldi(_m_pand(t0v24, c0), 16));\
+    t0v8 = _m_por(_m_psrldi(_m_pand(t0v8, c1), 16), _m_pand(t0v24, c1));\
+    t0v24 = _m_por(_m_pand(t0v9, c0), _m_pslldi(_m_pand(t0v25, c0), 16));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v9, c1), 16), _m_pand(t0v25, c1));\
+    t0v25 = _m_por(_m_pand(t0v10, c0), _m_pslldi(_m_pand(t0v26, c0), 16));\
+    t0v10 = _m_por(_m_psrldi(_m_pand(t0v10, c1), 16), _m_pand(t0v26, c1));\
+    t0v26 = _m_por(_m_pand(t0v11, c0), _m_pslldi(_m_pand(t0v27, c0), 16));\
+    t0v11 = _m_por(_m_psrldi(_m_pand(t0v11, c1), 16), _m_pand(t0v27, c1));\
+    t0v27 = _m_por(_m_pand(t0v12, c0), _m_pslldi(_m_pand(t0v28, c0), 16));\
+    t0v12 = _m_por(_m_psrldi(_m_pand(t0v12, c1), 16), _m_pand(t0v28, c1));\
+    t0v28 = _m_por(_m_pand(t0v13, c0), _m_pslldi(_m_pand(t0v29, c0), 16));\
+    t0v13 = _m_por(_m_psrldi(_m_pand(t0v13, c1), 16), _m_pand(t0v29, c1));\
+    t0v29 = _m_por(_m_pand(t0v14, c0), _m_pslldi(_m_pand(t0v30, c0), 16));\
+    t0v14 = _m_por(_m_psrldi(_m_pand(t0v14, c1), 16), _m_pand(t0v30, c1));\
+    t0v30 = _m_por(_m_pand(t0v15, c0), _m_pslldi(_m_pand(t0v31, c0), 16));\
+    t0v15 = _m_por(_m_psrldi(_m_pand(t0v15, c1), 16), _m_pand(t0v31, c1));\
+    t0v31 = _m_por(_m_pand(t0v32, c2), _m_pslldi(_m_pand(t0v23, c2), 8));\
+    t0v23 = _m_por(_m_psrldi(_m_pand(t0v32, c3), 8), _m_pand(t0v23, c3));\
+    t0v32 = _m_por(_m_pand(t0v16, c2), _m_pslldi(_m_pand(t0v24, c2), 8));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c3), 8), _m_pand(t0v24, c3));\
+    t0v24 = _m_por(_m_pand(t0v17, c2), _m_pslldi(_m_pand(t0v25, c2), 8));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v17, c3), 8), _m_pand(t0v25, c3));\
+    t0v25 = _m_por(_m_pand(t0v18, c2), _m_pslldi(_m_pand(t0v26, c2), 8));\
+    t0v18 = _m_por(_m_psrldi(_m_pand(t0v18, c3), 8), _m_pand(t0v26, c3));\
+    t0v26 = _m_por(_m_pand(t0v19, c2), _m_pslldi(_m_pand(t0v27, c2), 8));\
+    t0v19 = _m_por(_m_psrldi(_m_pand(t0v19, c3), 8), _m_pand(t0v27, c3));\
+    t0v27 = _m_por(_m_pand(t0v20, c2), _m_pslldi(_m_pand(t0v28, c2), 8));\
+    t0v20 = _m_por(_m_psrldi(_m_pand(t0v20, c3), 8), _m_pand(t0v28, c3));\
+    t0v28 = _m_por(_m_pand(t0v21, c2), _m_pslldi(_m_pand(t0v29, c2), 8));\
+    t0v21 = _m_por(_m_psrldi(_m_pand(t0v21, c3), 8), _m_pand(t0v29, c3));\
+    t0v29 = _m_por(_m_pand(t0v22, c2), _m_pslldi(_m_pand(t0v30, c2), 8));\
+    t0v22 = _m_por(_m_psrldi(_m_pand(t0v22, c3), 8), _m_pand(t0v30, c3));\
+    t0v0 = _m_por(_m_pand(t0v0, c2), _m_pslldi(_m_pand(t0v8, c2), 8));\
+    t0v1 = _m_por(_m_pand(t0v1, c2), _m_pslldi(_m_pand(t0v9, c2), 8));\
+    t0v2 = _m_por(_m_pand(t0v2, c2), _m_pslldi(_m_pand(t0v10, c2), 8));\
+    t0v3 = _m_por(_m_pand(t0v3, c2), _m_pslldi(_m_pand(t0v11, c2), 8));\
+    t0v4 = _m_por(_m_pand(t0v4, c2), _m_pslldi(_m_pand(t0v12, c2), 8));\
+    t0v5 = _m_por(_m_pand(t0v5, c2), _m_pslldi(_m_pand(t0v13, c2), 8));\
+    t0v6 = _m_por(_m_pand(t0v6, c2), _m_pslldi(_m_pand(t0v14, c2), 8));\
+    t0v7 = _m_por(_m_pand(t0v7, c2), _m_pslldi(_m_pand(t0v15, c2), 8));\
+    t0v8 = _m_por(_m_pand(t0v31, c4), _m_pslldi(_m_pand(t0v26, c4), 4));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v31, c5), 4), _m_pand(t0v26, c5));\
+    t0v10 = _m_por(_m_pand(t0v32, c4), _m_pslldi(_m_pand(t0v27, c4), 4));\
+    t0v11 = _m_por(_m_psrldi(_m_pand(t0v32, c5), 4), _m_pand(t0v27, c5));\
+    t0v12 = _m_por(_m_pand(t0v24, c4), _m_pslldi(_m_pand(t0v28, c4), 4));\
+    t0v13 = _m_por(_m_psrldi(_m_pand(t0v24, c5), 4), _m_pand(t0v28, c5));\
+    t0v14 = _m_por(_m_pand(t0v25, c4), _m_pslldi(_m_pand(t0v29, c4), 4));\
+    t0v15 = _m_por(_m_psrldi(_m_pand(t0v25, c5), 4), _m_pand(t0v29, c5));\
+    t0v24 = _m_por(_m_pand(t0v23, c4), _m_pslldi(_m_pand(t0v19, c4), 4));\
+    t0v19 = _m_por(_m_psrldi(_m_pand(t0v23, c5), 4), _m_pand(t0v19, c5));\
+    t0v23 = _m_por(_m_pand(t0v16, c4), _m_pslldi(_m_pand(t0v20, c4), 4));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c5), 4), _m_pand(t0v20, c5));\
+    t0v20 = _m_por(_m_pand(t0v17, c4), _m_pslldi(_m_pand(t0v21, c4), 4));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v17, c5), 4), _m_pand(t0v21, c5));\
+    t0v21 = _m_por(_m_pand(t0v18, c4), _m_pslldi(_m_pand(t0v22, c4), 4));\
+    t0v18 = _m_por(_m_psrldi(_m_pand(t0v18, c5), 4), _m_pand(t0v22, c5));\
+    t0v22 = _m_por(_m_pand(t0v0, c4), _m_pslldi(_m_pand(t0v4, c4), 4));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c5), 4), _m_pand(t0v4, c5));\
+    t0v4 = _m_por(_m_pand(t0v1, c4), _m_pslldi(_m_pand(t0v5, c4), 4));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c5), 4), _m_pand(t0v5, c5));\
+    t0v5 = _m_por(_m_pand(t0v2, c4), _m_pslldi(_m_pand(t0v6, c4), 4));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c5), 4), _m_pand(t0v6, c5));\
+    t0v6 = _m_por(_m_pand(t0v3, c4), _m_pslldi(_m_pand(t0v7, c4), 4));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v3, c5), 4), _m_pand(t0v7, c5));\
+    t0v7 = _m_por(_m_pand(t0v8, c6), _m_pslldi(_m_pand(t0v12, c6), 2));\
+    t0v8 = _m_por(_m_psrldi(_m_pand(t0v8, c7), 2), _m_pand(t0v12, c7));\
+    t0v12 = _m_por(_m_pand(t0v10, c6), _m_pslldi(_m_pand(t0v14, c6), 2));\
+    t0v10 = _m_por(_m_psrldi(_m_pand(t0v10, c7), 2), _m_pand(t0v14, c7));\
+    t0v14 = _m_por(_m_pand(t0v9, c6), _m_pslldi(_m_pand(t0v13, c6), 2));\
+    t0v9 = _m_por(_m_psrldi(_m_pand(t0v9, c7), 2), _m_pand(t0v13, c7));\
+    t0v13 = _m_por(_m_pand(t0v11, c6), _m_pslldi(_m_pand(t0v15, c6), 2));\
+    t0v11 = _m_por(_m_psrldi(_m_pand(t0v11, c7), 2), _m_pand(t0v15, c7));\
+    t0v15 = _m_por(_m_pand(t0v24, c6), _m_pslldi(_m_pand(t0v20, c6), 2));\
+    t0v20 = _m_por(_m_psrldi(_m_pand(t0v24, c7), 2), _m_pand(t0v20, c7));\
+    t0v24 = _m_por(_m_pand(t0v23, c6), _m_pslldi(_m_pand(t0v21, c6), 2));\
+    t0v21 = _m_por(_m_psrldi(_m_pand(t0v23, c7), 2), _m_pand(t0v21, c7));\
+    t0v23 = _m_por(_m_pand(t0v19, c6), _m_pslldi(_m_pand(t0v17, c6), 2));\
+    t0v17 = _m_por(_m_psrldi(_m_pand(t0v19, c7), 2), _m_pand(t0v17, c7));\
+    t0v19 = _m_por(_m_pand(t0v16, c6), _m_pslldi(_m_pand(t0v18, c6), 2));\
+    t0v16 = _m_por(_m_psrldi(_m_pand(t0v16, c7), 2), _m_pand(t0v18, c7));\
+    t0v18 = _m_por(_m_pand(t0v22, c6), _m_pslldi(_m_pand(t0v5, c6), 2));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v22, c7), 2), _m_pand(t0v5, c7));\
+    t0v22 = _m_por(_m_pand(t0v4, c6), _m_pslldi(_m_pand(t0v6, c6), 2));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v4, c7), 2), _m_pand(t0v6, c7));\
+    t0v6 = _m_por(_m_pand(t0v0, c6), _m_pslldi(_m_pand(t0v2, c6), 2));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c7), 2), _m_pand(t0v2, c7));\
+    t0v2 = _m_por(_m_pand(t0v1, c6), _m_pslldi(_m_pand(t0v3, c6), 2));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c7), 2), _m_pand(t0v3, c7));\
+    (D0) = _m_por(_m_pand(t0v7, c8), _m_pslldi(_m_pand(t0v12, c8), 1));\
+    (D1) = _m_por(_m_psrldi(_m_pand(t0v7, c9), 1), _m_pand(t0v12, c9));\
+    (D2) = _m_por(_m_pand(t0v8, c8), _m_pslldi(_m_pand(t0v10, c8), 1));\
+    (D3) = _m_por(_m_psrldi(_m_pand(t0v8, c9), 1), _m_pand(t0v10, c9));\
+    (D4) = _m_por(_m_pand(t0v14, c8), _m_pslldi(_m_pand(t0v13, c8), 1));\
+    (D5) = _m_por(_m_psrldi(_m_pand(t0v14, c9), 1), _m_pand(t0v13, c9));\
+    (D6) = _m_por(_m_pand(t0v9, c8), _m_pslldi(_m_pand(t0v11, c8), 1));\
+    (D7) = _m_por(_m_psrldi(_m_pand(t0v9, c9), 1), _m_pand(t0v11, c9));\
+    (D8) = _m_por(_m_pand(t0v15, c8), _m_pslldi(_m_pand(t0v24, c8), 1));\
+    (D9) = _m_por(_m_psrldi(_m_pand(t0v15, c9), 1), _m_pand(t0v24, c9));\
+    (D10) = _m_por(_m_pand(t0v20, c8), _m_pslldi(_m_pand(t0v21, c8), 1));\
+    (D11) = _m_por(_m_psrldi(_m_pand(t0v20, c9), 1), _m_pand(t0v21, c9));\
+    (D12) = _m_por(_m_pand(t0v23, c8), _m_pslldi(_m_pand(t0v19, c8), 1));\
+    (D13) = _m_por(_m_psrldi(_m_pand(t0v23, c9), 1), _m_pand(t0v19, c9));\
+    (D14) = _m_por(_m_pand(t0v17, c8), _m_pslldi(_m_pand(t0v16, c8), 1));\
+    (D15) = _m_por(_m_psrldi(_m_pand(t0v17, c9), 1), _m_pand(t0v16, c9));\
+    (D16) = _m_por(_m_pand(t0v18, c8), _m_pslldi(_m_pand(t0v22, c8), 1));\
+    (D17) = _m_por(_m_psrldi(_m_pand(t0v18, c9), 1), _m_pand(t0v22, c9));\
+    (D18) = _m_por(_m_pand(t0v5, c8), _m_pslldi(_m_pand(t0v4, c8), 1));\
+    (D19) = _m_por(_m_psrldi(_m_pand(t0v5, c9), 1), _m_pand(t0v4, c9));\
+    (D20) = _m_por(_m_pand(t0v6, c8), _m_pslldi(_m_pand(t0v2, c8), 1));\
+    (D21) = _m_por(_m_psrldi(_m_pand(t0v6, c9), 1), _m_pand(t0v2, c9));\
+    (D22) = _m_por(_m_pand(t0v0, c8), _m_pslldi(_m_pand(t0v1, c8), 1));\
+}
+"##,
+        transform.out()
+    );
+    let mut transform = CLANG_TRANSFORM_INTEL_MMX.transform();
+    transform.gen_input_transform(7);
+    assert_eq!(
+        r##"#define IN_TRANSFORM_B7(D0, D1, D2, D3, D4, D5, D6, S) \
+{\
+    const __m64 c0 = (*(const __m64*)(transform_const2_tbl + 2*3));\
+    const __m64 c5 = (*(const __m64*)(transform_const_tbl + 2*0));\
+    const __m64 c6 = (*(const __m64*)(transform_const_tbl + 2*1));\
+    const __m64 c3 = (*(const __m64*)(transform_const_tbl + 2*2));\
+    const __m64 c4 = (*(const __m64*)(transform_const_tbl + 2*3));\
+    const __m64 c1 = (*(const __m64*)(transform_const_tbl + 2*4));\
+    const __m64 c2 = (*(const __m64*)(transform_const_tbl + 2*5));\
+    __m64 t0v0;\
+    __m64 t0v1;\
+    __m64 t0v2;\
+    __m64 t0v3;\
+    __m64 t0v4;\
+    __m64 t0v5;\
+    __m64 t0v6;\
+    __m64 t0v7;\
+    __m64 t0v8;\
+    __m64 t0v9;\
+    __m64 t0v10;\
+    __m64 t0v11;\
+    __m64 t0v12;\
+    __m64 t0v13;\
+    __m64 t0v14;\
+    __m64 t0v15;\
+    __m64 t0v16;\
+    __m64 t0v17;\
+    __m64 t0v18;\
+    __m64 t0v19;\
+    __m64 t0v20;\
+    __m64 t0v21;\
+    __m64 t0v22;\
+    __m64 t0v23;\
+    __m64 t0v24;\
+    __m64 t0v25;\
+    __m64 t0v26;\
+    __m64 t0v27;\
+    __m64 t0v28;\
+    __m64 t0v29;\
+    __m64 t0v30;\
+    __m64 t0v31;\
+    __m64 t0v32;\
+    t0v0 = _m_punpckldq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v1 = _m_punpckhdq((*((const __m64*)(((S) + 0)))), (*((const __m64*)(((S) + 32)))));\
+    t0v2 = _m_punpckldq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v3 = _m_punpckhdq((*((const __m64*)(((S) + 2)))), (*((const __m64*)(((S) + 34)))));\
+    t0v4 = _m_punpckldq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v5 = _m_punpckhdq((*((const __m64*)(((S) + 4)))), (*((const __m64*)(((S) + 36)))));\
+    t0v6 = _m_punpckldq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v7 = _m_punpckhdq((*((const __m64*)(((S) + 6)))), (*((const __m64*)(((S) + 38)))));\
+    t0v8 = _m_punpckldq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v9 = _m_punpckhdq((*((const __m64*)(((S) + 8)))), (*((const __m64*)(((S) + 40)))));\
+    t0v10 = _m_punpckldq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v11 = _m_punpckhdq((*((const __m64*)(((S) + 10)))), (*((const __m64*)(((S) + 42)))));\
+    t0v12 = _m_punpckldq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v13 = _m_punpckhdq((*((const __m64*)(((S) + 12)))), (*((const __m64*)(((S) + 44)))));\
+    t0v14 = _m_punpckldq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v15 = _m_punpckhdq((*((const __m64*)(((S) + 14)))), (*((const __m64*)(((S) + 46)))));\
+    t0v16 = _m_punpckldq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v17 = _m_punpckhdq((*((const __m64*)(((S) + 16)))), (*((const __m64*)(((S) + 48)))));\
+    t0v18 = _m_punpckldq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v19 = _m_punpckhdq((*((const __m64*)(((S) + 18)))), (*((const __m64*)(((S) + 50)))));\
+    t0v20 = _m_punpckldq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v21 = _m_punpckhdq((*((const __m64*)(((S) + 20)))), (*((const __m64*)(((S) + 52)))));\
+    t0v22 = _m_punpckldq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v23 = _m_punpckhdq((*((const __m64*)(((S) + 22)))), (*((const __m64*)(((S) + 54)))));\
+    t0v24 = _m_punpckldq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v25 = _m_punpckhdq((*((const __m64*)(((S) + 24)))), (*((const __m64*)(((S) + 56)))));\
+    t0v26 = _m_punpckldq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v27 = _m_punpckhdq((*((const __m64*)(((S) + 26)))), (*((const __m64*)(((S) + 58)))));\
+    t0v28 = _m_punpckldq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v29 = _m_punpckhdq((*((const __m64*)(((S) + 28)))), (*((const __m64*)(((S) + 60)))));\
+    t0v30 = _m_punpckldq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v31 = _m_punpckhdq((*((const __m64*)(((S) + 30)))), (*((const __m64*)(((S) + 62)))));\
+    t0v32 = _m_por(_m_por(_m_por(_m_pand(t0v0, c0), _m_pslldi(_m_pand(t0v8, c0), 8)), _m_pslldi(_m_pand(t0v16, c0), 16)), _m_pslldi(t0v24, 24));\
+    t0v0 = _m_por(_m_por(_m_por(_m_pand(t0v1, c0), _m_pslldi(_m_pand(t0v9, c0), 8)), _m_pslldi(_m_pand(t0v17, c0), 16)), _m_pslldi(t0v25, 24));\
+    t0v1 = _m_por(_m_por(_m_por(_m_pand(t0v2, c0), _m_pslldi(_m_pand(t0v10, c0), 8)), _m_pslldi(_m_pand(t0v18, c0), 16)), _m_pslldi(t0v26, 24));\
+    t0v2 = _m_por(_m_por(_m_por(_m_pand(t0v3, c0), _m_pslldi(_m_pand(t0v11, c0), 8)), _m_pslldi(_m_pand(t0v19, c0), 16)), _m_pslldi(t0v27, 24));\
+    t0v3 = _m_por(_m_por(_m_por(_m_pand(t0v4, c0), _m_pslldi(_m_pand(t0v12, c0), 8)), _m_pslldi(_m_pand(t0v20, c0), 16)), _m_pslldi(t0v28, 24));\
+    t0v4 = _m_por(_m_por(_m_por(_m_pand(t0v5, c0), _m_pslldi(_m_pand(t0v13, c0), 8)), _m_pslldi(_m_pand(t0v21, c0), 16)), _m_pslldi(t0v29, 24));\
+    t0v5 = _m_por(_m_por(_m_por(_m_pand(t0v6, c0), _m_pslldi(_m_pand(t0v14, c0), 8)), _m_pslldi(_m_pand(t0v22, c0), 16)), _m_pslldi(t0v30, 24));\
+    t0v6 = _m_por(_m_por(_m_por(_m_pand(t0v7, c0), _m_pslldi(_m_pand(t0v15, c0), 8)), _m_pslldi(_m_pand(t0v23, c0), 16)), _m_pslldi(t0v31, 24));\
+    t0v7 = _m_por(_m_pand(t0v32, c1), _m_pslldi(_m_pand(t0v3, c1), 4));\
+    t0v3 = _m_por(_m_psrldi(_m_pand(t0v32, c2), 4), _m_pand(t0v3, c2));\
+    t0v8 = _m_por(_m_pand(t0v0, c1), _m_pslldi(_m_pand(t0v4, c1), 4));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c2), 4), _m_pand(t0v4, c2));\
+    t0v4 = _m_por(_m_pand(t0v1, c1), _m_pslldi(_m_pand(t0v5, c1), 4));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v1, c2), 4), _m_pand(t0v5, c2));\
+    t0v5 = _m_por(_m_pand(t0v2, c1), _m_pslldi(_m_pand(t0v6, c1), 4));\
+    t0v2 = _m_por(_m_psrldi(_m_pand(t0v2, c2), 4), _m_pand(t0v6, c2));\
+    t0v6 = _m_por(_m_pand(t0v7, c3), _m_pslldi(_m_pand(t0v4, c3), 2));\
+    t0v4 = _m_por(_m_psrldi(_m_pand(t0v7, c4), 2), _m_pand(t0v4, c4));\
+    t0v7 = _m_por(_m_pand(t0v8, c3), _m_pslldi(_m_pand(t0v5, c3), 2));\
+    t0v5 = _m_por(_m_psrldi(_m_pand(t0v8, c4), 2), _m_pand(t0v5, c4));\
+    t0v8 = _m_por(_m_pand(t0v3, c3), _m_pslldi(_m_pand(t0v1, c3), 2));\
+    t0v1 = _m_por(_m_psrldi(_m_pand(t0v3, c4), 2), _m_pand(t0v1, c4));\
+    t0v3 = _m_por(_m_pand(t0v0, c3), _m_pslldi(_m_pand(t0v2, c3), 2));\
+    t0v0 = _m_por(_m_psrldi(_m_pand(t0v0, c4), 2), _m_pand(t0v2, c4));\
+    (D0) = _m_por(_m_pand(t0v6, c5), _m_pslldi(_m_pand(t0v7, c5), 1));\
+    (D1) = _m_por(_m_psrldi(_m_pand(t0v6, c6), 1), _m_pand(t0v7, c6));\
+    (D2) = _m_por(_m_pand(t0v4, c5), _m_pslldi(_m_pand(t0v5, c5), 1));\
+    (D3) = _m_por(_m_psrldi(_m_pand(t0v4, c6), 1), _m_pand(t0v5, c6));\
+    (D4) = _m_por(_m_pand(t0v8, c5), _m_pslldi(_m_pand(t0v3, c5), 1));\
+    (D5) = _m_por(_m_psrldi(_m_pand(t0v8, c6), 1), _m_pand(t0v3, c6));\
+    (D6) = _m_por(_m_pand(t0v1, c5), _m_pslldi(_m_pand(t0v0, c5), 1));\
+}
+"##,
+        transform.out()
+    );
 }
