@@ -772,8 +772,38 @@ impl<'a> CLangTransform<'a> {
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
         let bits_log = calc_log_bits(bits);
         let mut prev_type = INPUT_TYPE;
-        let mut bit_usage = vec![u32::try_from((1usize << bits) - 1).unwrap(); 32];
         let mut prev_pass = (0..32).collect::<Vec<_>>();
+        if self.config.final_type_bit_len > 32 {
+            // use unpacking to transpose 32-bit words from sequential to form:
+            // { TBL[0],TBL[32],TBL[64],TBL[96],TBL[1],TBL[33],TBL[65],TBL[97],...
+            let type_len_log = calc_log_bits(self.config.final_type_bit_len as usize);
+            for i in (0..type_len_log - 5).rev() {
+                let mut new_pass = vec![0; 32];
+                for j in 0..16 {
+                    let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
+                    let sj = fj | (1 << i);
+                    let t0 = mvars.format_var(prev_type, prev_pass[fj]);
+                    let t1 = mvars.format_var(prev_type, prev_pass[sj]);
+                    let (nt, ns0) = (0, mvars.new_var(0));
+                    let expr =
+                        Self::format_op(self.config.unpack_ops[2 * (i + 5)].unwrap(), &[&t0, &t1]);
+                    write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
+                    writeln!(mvars, "{};\\", expr).unwrap();
+                    new_pass[fj] = ns0;
+                    let (nt, ns1) = (0, mvars.new_var(0));
+                    let expr = Self::format_op(
+                        self.config.unpack_ops[2 * (i + 5) + 1].unwrap(),
+                        &[&t0, &t1],
+                    );
+                    write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
+                    writeln!(mvars, "{};\\", expr).unwrap();
+                    new_pass[sj] = ns1;
+                }
+                prev_pass = new_pass;
+                prev_type = 0;
+            }
+        }
+        let mut bit_usage = vec![u32::try_from((1usize << bits) - 1).unwrap(); 32];
         if bits_log < 5 {
             // if bits < 16 then just join lower bits once:
             // example: { [TBL[0][0:3],TBL[8][0:3],TBL[16][0:3],TBL[24][0:3]],
