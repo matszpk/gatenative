@@ -274,8 +274,8 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "__m128i",
     final_type_bit_len: 128,
     inter_type: None,
-    load_op: Some("_mm_loadu_si128((const __m128i*)&{})"),
-    store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
+    load_op: Some("_mm_loadu_si128((const __m128i*){})"),
+    store_op: Some("_mm_storeu_si128((__m128i*){}, {})"),
     and_op: "_mm_and_si128({}, {})",
     or_op: "_mm_or_si128({}, {})",
     shift_op: [
@@ -385,8 +385,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "__m256i",
     final_type_bit_len: 256,
     inter_type: None,
-    load_op: Some("_mm256_loadu_si256((const float*)&{})"),
-    store_op: Some("_mm256_storeu_si256((float*)&{}, {})"),
+    load_op: Some("_mm256_loadu_si256((const float*){})"),
+    store_op: Some("_mm256_storeu_si256((float*){}, {})"),
     and_op: "_mm256_and_si256({}, {})",
     or_op: "_mm256_or_si256({}, {})",
     shift_op: [
@@ -519,8 +519,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
     final_type_name: "__m512i",
     final_type_bit_len: 512,
     inter_type: None,
-    load_op: Some("_mm512_loadu_epi64(&{})"),
-    store_op: Some("_mm512_storeu_epi64(&{}, {})"),
+    load_op: Some("_mm512_loadu_epi64({})"),
+    store_op: Some("_mm512_storeu_epi64({}, {})"),
     and_op: "_mm512_and_epi64({}, {})",
     or_op: "_mm512_or_epi64({}, {})",
     shift_op: [
@@ -1036,11 +1036,11 @@ impl<'a> CLangTransform<'a> {
                     let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                     let t1 = mvars.format_var(prev_type, prev_pass[sj]);
-                    if prev_type < INPUT_TYPE {
+                    let (nt, ns0) = (0, mvars.new_var(0));
+                    if prev_type < OUTPUT_TYPE {
                         mvars.use_var(prev_type, prev_pass[fj]);
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
-                    let (nt, ns0) = (0, mvars.new_var(0));
                     let i = i + 5;
                     let expr = if let Some(unpack) = self.config.unpack_ops[2 * i] {
                         Self::format_op(unpack, &[&t0, &t1])
@@ -1195,6 +1195,11 @@ impl<'a> CLangTransform<'a> {
                 let sj = fj | (1 << i);
                 let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0;
                 let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0;
+                let (nt, ns0) = if i != 0 {
+                    (0, mvars.new_var(0))
+                } else {
+                    (OUTPUT_TYPE, fj)
+                };
                 if prev_type < OUTPUT_TYPE {
                     if bit_usage_f {
                         mvars.use_var(prev_type, prev_pass[fj]);
@@ -1205,11 +1210,6 @@ impl<'a> CLangTransform<'a> {
                 }
                 let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                 let t1 = mvars.format_var(prev_type, prev_pass[sj]);
-                let (nt, ns0) = if i != 0 {
-                    (0, mvars.new_var(0))
-                } else {
-                    (OUTPUT_TYPE, fj)
-                };
 
                 let expr = if let Some(unpack) = self.config.unpack_ops[2 * i] {
                     if bit_usage_f {
