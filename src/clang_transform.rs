@@ -1,6 +1,5 @@
 use crate::utils::*;
 
-use std::collections::HashMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
@@ -121,8 +120,8 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
         Some("_m_punpckhbw({}, {})"),
         Some("_m_punpcklwd({}, {})"),
         Some("_m_punpckhwd({}, {})"),
-        None,
-        None,
+        Some("_m_punpckldq({}, {})"),
+        Some("_m_punpckhdq({}, {})"),
         None,
         None,
         None,
@@ -195,10 +194,10 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         Some("_mm_unpackhi_epi8({}, {})"),
         Some("_mm_unpacklo_epi16({}, {})"),
         Some("_mm_unpackhi_epi16({}, {})"),
-        None,
-        None,
-        None,
-        None,
+        Some("_mm_unpacklo_epi32({}, {})"),
+        Some("_mm_unpackhi_epi32({}, {})"),
+        Some("_mm_unpacklo_epi64({}, {})"),
+        Some("_mm_unpackhi_epi64({}, {})"),
         None,
         None,
         None,
@@ -225,7 +224,7 @@ __attribute__((aligned(16))) = {
     0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
     0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
     0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
-    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
 };
 "##,
     constant_defs: [
@@ -271,12 +270,12 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         Some("_mm256_unpackhi_epi8({}, {})"),
         Some("_mm256_unpacklo_epi16({}, {})"),
         Some("_mm256_unpackhi_epi16({}, {})"),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        Some("_mm256_unpacklo_epi32({}, {})"),
+        Some("_mm256_unpackhi_epi32({}, {})"),
+        Some("_mm256_unpacklo_epi64({}, {})"),
+        Some("_mm256_unpackhi_epi64({}, {})"),
+        Some("_mm256_permute2x128_si256({}, {}, 0x20)"),
+        Some("_mm256_permute2x128_si256({}, {}, 0x31)"),
         None,
         None,
         None,
@@ -358,14 +357,26 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         None,
         None,
         None,
-        Some("vzip1q_u8({}, {})"),
-        Some("vzip2q_u8({}, {})"),
-        Some("vzip1q_u16({}, {})"),
-        Some("vzip2q_u16({}, {})"),
-        None,
-        None,
-        None,
-        None,
+        Some("vreinterpretq_u32_u8(vzip1q_u8(vreinterpretq_u8_u32({}), vreinterpretq_u8_u32({})))"),
+        Some("vreinterpretq_u32_u8(vzip2q_u8(vreinterpretq_u8_u32({}), vreinterpretq_u8_u32({})))"),
+        Some(
+            r##"vreinterpretq_u32_u16(vzip1q_u16(
+            vreinterpretq_u16_u32({}), vreinterpretq_u16_u32({})))"##,
+        ),
+        Some(
+            r##"vreinterpretq_u32_u16(vzip2q_u16(
+            vreinterpretq_u16_u32({}), vreinterpretq_u16_u32({})))"##,
+        ),
+        Some("vzip1q_u32({}, {})"),
+        Some("vzip2q_u32({}, {})"),
+        Some(
+            r##"vreinterpretq_u32_u64(vzip1q_u64(
+            vreinterpretq_u64_u32({}), vreinterpretq_u64_u32({})))"##,
+        ),
+        Some(
+            r##"vreinterpretq_u32_u64(vzip2q_u64(
+            vreinterpretq_u64_u32({}), vreinterpretq_u64_u32({})))"##,
+        ),
         None,
         None,
         None,
