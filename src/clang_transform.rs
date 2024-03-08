@@ -1036,11 +1036,11 @@ impl<'a> CLangTransform<'a> {
                     let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                     let t1 = mvars.format_var(prev_type, prev_pass[sj]);
-                    let (nt, ns0) = (0, mvars.new_var(0));
                     if prev_type < OUTPUT_TYPE {
                         mvars.use_var(prev_type, prev_pass[fj]);
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
+                    let (nt, ns0) = (0, mvars.new_var(0));
                     let i = i + 5;
                     let expr = if let Some(unpack) = self.config.unpack_ops[2 * i] {
                         Self::format_op(unpack, &[&t0, &t1])
@@ -1072,6 +1072,10 @@ impl<'a> CLangTransform<'a> {
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
                     new_pass[2 * j] = ns0;
+                    if prev_type < OUTPUT_TYPE {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                        mvars.use_var(prev_type, prev_pass[sj]);
+                    }
                     let (nt, ns1) = (0, mvars.new_var(0));
                     let expr = if let Some(unpack) = self.config.unpack_ops[2 * i + 1] {
                         Self::format_op(unpack, &[&t0, &t1])
@@ -1126,14 +1130,6 @@ impl<'a> CLangTransform<'a> {
             // After that we have operates on n-bits (where n is power of two) inside
             // 32-bit word.
             for i in 0..1 << bits_log {
-                let v = if bits_log != 0 {
-                    let v = mvars.new_var(0);
-                    write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
-                    v
-                } else {
-                    write!(mvars, "    {} = ", mvars.format_var(OUTPUT_TYPE, 0)).unwrap();
-                    0
-                };
                 let mut final_expr = String::new();
                 let mut bit_usg = 0;
                 for j in 0..1 << (5 - bits_log) {
@@ -1175,6 +1171,14 @@ impl<'a> CLangTransform<'a> {
                     bit_usage[idx] = 0;
                 }
                 bit_usage[i] = bit_usg;
+                let v = if bits_log != 0 {
+                    let v = mvars.new_var(0);
+                    write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+                    v
+                } else {
+                    write!(mvars, "    {} = ", mvars.format_var(OUTPUT_TYPE, 0)).unwrap();
+                    0
+                };
                 write!(mvars, "{};\\\n", final_expr).unwrap();
                 if bits_log != 0 {
                     prev_pass[i] = v;
@@ -1195,11 +1199,6 @@ impl<'a> CLangTransform<'a> {
                 let sj = fj | (1 << i);
                 let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0;
                 let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0;
-                let (nt, ns0) = if i != 0 {
-                    (0, mvars.new_var(0))
-                } else {
-                    (OUTPUT_TYPE, fj)
-                };
                 if prev_type < OUTPUT_TYPE {
                     if bit_usage_f {
                         mvars.use_var(prev_type, prev_pass[fj]);
@@ -1208,6 +1207,11 @@ impl<'a> CLangTransform<'a> {
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
                 }
+                let (nt, ns0) = if i != 0 {
+                    (0, mvars.new_var(0))
+                } else {
+                    (OUTPUT_TYPE, fj)
+                };
                 let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                 let t1 = mvars.format_var(prev_type, prev_pass[sj]);
 
