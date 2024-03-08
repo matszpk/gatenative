@@ -20,14 +20,14 @@ pub struct CLangTransformConfig<'a> {
     store_op: Option<&'a str>,
     and_op: &'a str,
     or_op: &'a str,
-    shl32_op: &'a str,
-    shr32_op: &'a str,
-    failed_shl32_op: bool,
+    // shift_op: index - 2*i, value - operation of shift left for 2^(i+1) bit elements vector.
+    // shift_op: index - 2*i+1, value - operation of shift right for 2^(i+1) bit elements vector.
+    shift_op: [Option<&'a str>; 10 * 2],
     unpack_ops: [Option<&'a str>; 10 * 2],
     init_defs: &'a str,
     zero: &'a str,
     // masks for transposition operations (unpackings)
-    constant_defs: [&'a str; 2 * 5],
+    constant_defs: [&'a str; 2 * 10],
     // masks for first 2^n bits
     constant2_defs: [&'a str; 5],
     collect_constants: bool,
@@ -41,9 +41,28 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     store_op: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
-    shl32_op: "({} << {})",
-    shr32_op: "({} >> {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("({} << {})"),
+        Some("({} >> {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
@@ -61,6 +80,16 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
         "0xff00ff00U",
         "0x0000ffffU",
         "0xffff0000U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
     ],
     constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
     collect_constants: false,
@@ -74,9 +103,28 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     store_op: Some("*((uint64_t*)({})) = {}"),
     and_op: "({} & {})",
     or_op: "({} | {})",
-    shl32_op: "({} << {})",
-    shr32_op: "({} >> {})",
-    failed_shl32_op: true,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("({} << {})"),
+        Some("({} >> {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -112,6 +160,16 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         "0xff00ff00ff00ff00ULL",
         "0x0000ffff0000ffffULL",
         "0xffff0000ffff0000ULL",
+        "0x00000000ffffffffULL",
+        "0xffffffff00000000ULL",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
+        "0U",
     ],
     constant2_defs: [
         "0x0000000100000001ULL",
@@ -131,9 +189,28 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     store_op: Some("*((__m64*)({})) = {}"),
     and_op: "_m_pand({}, {})",
     or_op: "_m_por({}, {})",
-    shl32_op: "_m_pslldi({}, {})",
-    shr32_op: "_m_psrldi({}, {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_m_psllwi({}, {})"),
+        Some("_m_psrlwi({}, {})"),
+        Some("_m_pslldi({}, {})"),
+        Some("_m_psrldi({}, {})"),
+        Some("_m_psllqi({}, {})"),
+        Some("_m_psrlqi({}, {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -156,7 +233,7 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
         None,
         None,
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*2] = {
+    init_defs: r##"static const unsigned int transform_const_tbl[6*2*2] = {
     0x55555555U, 0x55555555U,
     0xaaaaaaaaU, 0xaaaaaaaaU,
     0x33333333U, 0x33333333U,
@@ -166,7 +243,9 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     0x00ff00ffU, 0x00ff00ffU,
     0xff00ff00U, 0xff00ff00U,
     0x0000ffffU, 0x0000ffffU,
-    0xffff0000U, 0xffff0000U
+    0xffff0000U, 0xffff0000U,
+    0xffffffffU, 0x00000000U,
+    0x00000000U, 0xffffffffU
 };
 static const unsigned int transform_const2_tbl[5*2] = {
     0x00000001U, 0x00000001U,
@@ -188,6 +267,16 @@ static const unsigned int transform_const2_tbl[5*2] = {
         "(*(const __m64*)(transform_const_tbl + 2*7))",
         "(*(const __m64*)(transform_const_tbl + 2*8))",
         "(*(const __m64*)(transform_const_tbl + 2*9))",
+        "(*(const __m64*)(transform_const_tbl + 2*10))",
+        "(*(const __m64*)(transform_const_tbl + 2*11))",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: [
         "(*(const __m64*)(transform_const2_tbl + 2*0))",
@@ -207,9 +296,28 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
     store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
     and_op: "_mm_and_si128({}, {})",
     or_op: "_mm_or_si128({}, {})",
-    shl32_op: "_mm_slli_epi32({}, {})",
-    shr32_op: "_mm_srli_epi32({}, {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_mm_slli_epi16({}, {})"),
+        Some("_mm_srli_epi16({}, {})"),
+        Some("_mm_slli_epi32({}, {})"),
+        Some("_mm_srli_epi32({}, {})"),
+        Some("_mm_slli_epi64({}, {})"),
+        Some("_mm_srli_epi64({}, {})"),
+        Some("_mm_slli_si128({}, ({})>>3)"),
+        Some("_mm_srli_si128({}, ({})>>3)"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -221,8 +329,8 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
         None,
-        Some("_mm_unpacklo_epi32({}, {})"),
-        Some("_mm_unpackhi_epi32({}, {})"),
+        None,
+        None,
         Some("_mm_unpacklo_epi64({}, {})"),
         Some("_mm_unpackhi_epi64({}, {})"),
         None,
@@ -232,7 +340,7 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*4]
+    init_defs: r##"static const unsigned int transform_const_tbl[7*2*4]
 __attribute__((aligned(16))) = {
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU,
@@ -243,7 +351,11 @@ __attribute__((aligned(16))) = {
     0x00ff00ffU, 0x00ff00ffU, 0x00ff00ffU, 0x00ff00ffU,
     0xff00ff00U, 0xff00ff00U, 0xff00ff00U, 0xff00ff00U,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
-    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
+    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
 };
 static const unsigned int transform_const2_tbl[5*4]
 __attribute__((aligned(16))) = {
@@ -266,6 +378,16 @@ __attribute__((aligned(16))) = {
         "(*(const __m128i*)(transform_const_tbl + 4*7))",
         "(*(const __m128i*)(transform_const_tbl + 4*8))",
         "(*(const __m128i*)(transform_const_tbl + 4*9))",
+        "(*(const __m128i*)(transform_const_tbl + 4*10))",
+        "(*(const __m128i*)(transform_const_tbl + 4*11))",
+        "(*(const __m128i*)(transform_const_tbl + 4*12))",
+        "(*(const __m128i*)(transform_const_tbl + 4*13))",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: [
         "(*(const __m128i*)(transform_const2_tbl + 4*0))",
@@ -285,9 +407,28 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     store_op: Some("_mm256_storeu_si256((float*)&{}, {})"),
     and_op: "_mm256_and_si256({}, {})",
     or_op: "_mm256_or_si256({}, {})",
-    shl32_op: "_mm256_slli_epi32({}, {})",
-    shr32_op: "_mm256_srli_epi32({}, {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_mm256_slli_epi16({}, {})"),
+        Some("_mm256_srli_epi16({}, {})"),
+        Some("_mm256_slli_epi32({}, {})"),
+        Some("_mm256_srli_epi32({}, {})"),
+        Some("_mm256_slli_epi64({}, {})"),
+        Some("_mm256_srli_epi64({}, {})"),
+        Some("_mm256_slli_si256({}, ({})>>3)"),
+        Some("_mm256_srli_si256({}, ({})>>3)"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -299,10 +440,10 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
         None,
-        Some("_mm256_unpacklo_epi32({}, {})"),
-        Some("_mm256_unpackhi_epi32({}, {})"),
-        Some("_mm256_unpacklo_epi64({}, {})"),
-        Some("_mm256_unpackhi_epi64({}, {})"),
+        None,
+        None,
+        None,
+        None,
         Some("_mm256_permute2x128_si256({}, {}, 0x20)"),
         Some("_mm256_permute2x128_si256({}, {}, 0x31)"),
         None,
@@ -310,7 +451,7 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*8]
+    init_defs: r##"static const unsigned int transform_const_tbl[8*2*8]
 __attribute__((aligned(32))) = {
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
@@ -331,7 +472,19 @@ __attribute__((aligned(32))) = {
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
-    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
+    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU
 };
 static const unsigned int transform_const2_tbl[5*8]
 __attribute__((aligned(32))) = {
@@ -359,6 +512,16 @@ __attribute__((aligned(32))) = {
         "(*(const __m256i*)(transform_const_tbl + 8*7))",
         "(*(const __m256i*)(transform_const_tbl + 8*8))",
         "(*(const __m256i*)(transform_const_tbl + 8*9))",
+        "(*(const __m256i*)(transform_const_tbl + 8*10))",
+        "(*(const __m256i*)(transform_const_tbl + 8*11))",
+        "(*(const __m256i*)(transform_const_tbl + 8*12))",
+        "(*(const __m256i*)(transform_const_tbl + 8*13))",
+        "(*(const __m256i*)(transform_const_tbl + 8*14))",
+        "(*(const __m256i*)(transform_const_tbl + 8*15))",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: [
         "(*(const __m256i*)(transform_const2_tbl + 8*0))",
@@ -378,9 +541,28 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
     store_op: Some("_mm512_storeu_epi64(&{}, {})"),
     and_op: "_mm512_and_epi64({}, {})",
     or_op: "_mm512_or_epi64({}, {})",
-    shl32_op: "_mm512_slli_epi32({}, {})",
-    shr32_op: "_mm512_srli_epi32({}, {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_mm512_slli_epi32({}, {})"),
+        Some("_mm512_srli_epi32({}, {})"),
+        Some("_mm512_slli_epi64({}, {})"),
+        Some("_mm512_srli_epi64({}, {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -392,10 +574,10 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
         None,
         None,
         None,
-        Some("_mm512_unpacklo_epi32({}, {})"),
-        Some("_mm512_unpackhi_epi32({}, {})"),
-        Some("_mm512_unpacklo_epi64({}, {})"),
-        Some("_mm512_unpackhi_epi64({}, {})"),
+        None,
+        None,
+        None,
+        None,
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*0)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*1)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*2)), {}))"),
@@ -403,7 +585,7 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
         None,
         None,
     ],
-    init_defs: r##"static const unsigned int transform_const_tbl[5*2*16]
+    init_defs: r##"static const unsigned int transform_const_tbl[8*2*16]
 __attribute__((aligned(64))) = {
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
     0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
@@ -444,7 +626,31 @@ __attribute__((aligned(64))) = {
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
     0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
-    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U
+    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU,
+    0x00000000U, 0x00000000U, 0x00000000U, 0x00000000U,
+    0xffffffffU, 0xffffffffU, 0xffffffffU, 0xffffffffU
 };
 static const unsigned int transform_const2_tbl[5*16]
 __attribute__((aligned(64))) = {
@@ -487,6 +693,16 @@ __attribute__((aligned(64))) = {
         "(*(const __m512i*)(transform_const_tbl + 16*7))",
         "(*(const __m512i*)(transform_const_tbl + 16*8))",
         "(*(const __m512i*)(transform_const_tbl + 16*9))",
+        "(*(const __m512i*)(transform_const_tbl + 16*10))",
+        "(*(const __m512i*)(transform_const_tbl + 16*11))",
+        "(*(const __m512i*)(transform_const_tbl + 16*12))",
+        "(*(const __m512i*)(transform_const_tbl + 16*13))",
+        "(*(const __m512i*)(transform_const_tbl + 16*14))",
+        "(*(const __m512i*)(transform_const_tbl + 16*15))",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: [
         "(*(const __m512i*)(transform_const2_tbl + 16*0))",
@@ -506,9 +722,28 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
     store_op: None,
     and_op: "vandq_u32({}, {})",
     or_op: "vorrq_u32({}, {})",
-    shl32_op: "vshlq_n_u32({}, {})",
-    shr32_op: " vshrq_n_u32({}, {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        Some("vreinterpretq_u32_u8(vshlq_n_u8(vreinterpretq_u8_u32({}), {}))"),
+        Some("vreinterpretq_u32_u8(vshrq_n_u8(vreinterpretq_u8_u32({}), {}))"),
+        Some("vreinterpretq_u32_u16(vshlq_n_u16(vreinterpretq_u16_u32({}), {}))"),
+        Some("vreinterpretq_u32_u16(vshrq_n_u16(vreinterpretq_u16_u32({}), {}))"),
+        Some("vshlq_n_u32({}, {})"),
+        Some("vshrq_n_u32({}, {})"),
+        Some("vreinterpretq_u32_u64(vshlq_n_u64(vreinterpretq_u64_u32({}), {}))"),
+        Some("vreinterpretq_u32_u64(vshrq_n_u64(vreinterpretq_u64_u32({}), {}))"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None,
         None,
@@ -520,8 +755,8 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         None,
         None,
         None,
-        Some("vzip1q_u32({}, {})"),
-        Some("vzip2q_u32({}, {})"),
+        None,
+        None,
         Some(
             r##"vreinterpretq_u32_u64(vzip1q_u64(
             vreinterpretq_u64_u32({}), vreinterpretq_u64_u32({})))"##,
@@ -550,6 +785,16 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         "{ 0xff00ff00U, 0xff00ff00U, 0xff00ff00U, 0xff00ff00U }",
         "{ 0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU }",
         "{ 0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U }",
+        "{ 0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U }",
+        "{ 0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU }",
+        "{ 0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U }",
+        "{ 0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU }",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: [
         "{ 0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U }",
@@ -569,9 +814,28 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
     store_op: None,
     and_op: "({} & {})",
     or_op: "({} | {})",
-    shl32_op: "({} << {})",
-    shr32_op: "({} >> {})",
-    failed_shl32_op: false,
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("({} << {})"),
+        Some("({} >> {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
     unpack_ops: [
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
@@ -589,6 +853,16 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
         "0xff00ff00U",
         "0x0000ffffU",
         "0xffff0000U",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
     ],
     constant2_defs: ["0x1U", "0x3U", "0xfU", "0xffU", "0xffffU"],
     collect_constants: false,
@@ -831,7 +1105,15 @@ impl<'a> CLangTransform<'a> {
                     if prev_type < OUTPUT_TYPE {
                         mvars.use_var(prev_type, prev_pass[idx]);
                     }
-                    let expr = if self.config.failed_shl32_op || j != ((1 << (5 - bits_log)) - 1) {
+                    let (shl, failed) = {
+                        let (shl, idx) = (4..10)
+                            .filter_map(|x| self.config.shift_op[2 * x].map(|s| (s, x)))
+                            .next()
+                            .unwrap();
+                        (shl, idx != 4)
+                    };
+
+                    let expr = if failed || j != ((1 << (5 - bits_log)) - 1) {
                         Self::format_op(
                             self.config.and_op,
                             &[
@@ -843,10 +1125,7 @@ impl<'a> CLangTransform<'a> {
                         tv
                     };
                     let expr = if j != 0 {
-                        Self::format_op(
-                            self.config.shl32_op,
-                            &[&expr, &(j << bits_log).to_string()],
-                        )
+                        Self::format_op(shl, &[&expr, &(j << bits_log).to_string()])
                     } else {
                         expr
                     };
@@ -910,6 +1189,13 @@ impl<'a> CLangTransform<'a> {
                         }
                     }
                 } else {
+                    let (shl, failed) = {
+                        let (shl, idx) = (i..10)
+                            .filter_map(|x| self.config.shift_op[2 * x].map(|s| (s, x)))
+                            .next()
+                            .unwrap();
+                        (shl, idx != i)
+                    };
                     // normal expression (bitwise logic and shifts)
                     let p0 = if bit_usage_f {
                         Self::format_op(
@@ -920,7 +1206,7 @@ impl<'a> CLangTransform<'a> {
                         String::new()
                     };
                     let p1 = if bit_usage_s {
-                        let p1 = if (1 << i) != 16 || self.config.failed_shl32_op {
+                        let p1 = if failed {
                             Self::format_op(
                                 self.config.and_op,
                                 &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
@@ -928,7 +1214,7 @@ impl<'a> CLangTransform<'a> {
                         } else {
                             t1.to_string()
                         };
-                        Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
+                        Self::format_op(shl, &[&p1, &(1 << i).to_string()])
                     } else {
                         String::new()
                     };
@@ -982,8 +1268,15 @@ impl<'a> CLangTransform<'a> {
                             }
                         }
                     } else {
+                        let (shr, failed) = {
+                            let (shr, idx) = (i..10)
+                                .filter_map(|x| self.config.shift_op[2 * x + 1].map(|s| (s, x)))
+                                .next()
+                                .unwrap();
+                            (shr, idx != i)
+                        };
                         let p0 = if bit_usage_f {
-                            let p0 = if (1 << i) != 16 || self.config.failed_shl32_op {
+                            let p0 = if failed {
                                 Self::format_op(
                                     self.config.and_op,
                                     &[
@@ -994,7 +1287,7 @@ impl<'a> CLangTransform<'a> {
                             } else {
                                 t0.to_string()
                             };
-                            Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
+                            Self::format_op(shr, &[&p0, &(1 << i).to_string()])
                         } else {
                             String::new()
                         };
