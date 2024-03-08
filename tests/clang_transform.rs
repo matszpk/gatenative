@@ -1223,4 +1223,10 @@ fn test_clang_transform_gen_in_transform() {
 "##,
         transform.out()
     );
+
+    let mut transform = CLANG_TRANSFORM_INTEL_MMX.transform();
+    for i in (1..=32).rev() {
+        transform.gen_input_transform(i);
+    }
+    println!("Code: {}", transform.out());
 }

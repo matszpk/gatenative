@@ -1,6 +1,6 @@
 use crate::utils::*;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
@@ -71,7 +71,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     final_type_bit_len: 64,
     inter_type: None,
     load_op: Some("(*((const uint64_t*)({})))"),
-    store_op: Some("*((uint64_t*)({})) = "),
+    store_op: Some("*((uint64_t*)({})) = {}"),
     and_op: "({} & {})",
     or_op: "({} | {})",
     shl32_op: "({} << {})",
@@ -127,8 +127,8 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
     final_type_name: "__m64",
     final_type_bit_len: 64,
     inter_type: None,
-    load_op: None,
-    store_op: None,
+    load_op: Some("(*((const __m64*)({})))"),
+    store_op: Some("*((__m64*)({})) = {}"),
     and_op: "_m_pand({}, {})",
     or_op: "_m_por({}, {})",
     shl32_op: "_m_pslldi({}, {})",
@@ -141,10 +141,10 @@ pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformCo
         None,
         None,
         None,
-        Some("_m_punpcklbw({}, {})"),
-        Some("_m_punpckhbw({}, {})"),
-        Some("_m_punpcklwd({}, {})"),
-        Some("_m_punpckhwd({}, {})"),
+        None,
+        None,
+        None,
+        None,
         Some("_m_punpckldq({}, {})"),
         Some("_m_punpckhdq({}, {})"),
         None,
@@ -217,10 +217,10 @@ pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
         None,
-        Some("_mm_unpacklo_epi8({}, {})"),
-        Some("_mm_unpackhi_epi8({}, {})"),
-        Some("_mm_unpacklo_epi16({}, {})"),
-        Some("_mm_unpackhi_epi16({}, {})"),
+        None,
+        None,
+        None,
+        None,
         Some("_mm_unpacklo_epi32({}, {})"),
         Some("_mm_unpackhi_epi32({}, {})"),
         Some("_mm_unpacklo_epi64({}, {})"),
@@ -295,10 +295,10 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
         None,
         None,
         None,
-        Some("_mm256_unpacklo_epi8({}, {})"),
-        Some("_mm256_unpackhi_epi8({}, {})"),
-        Some("_mm256_unpacklo_epi16({}, {})"),
-        Some("_mm256_unpackhi_epi16({}, {})"),
+        None,
+        None,
+        None,
+        None,
         Some("_mm256_unpacklo_epi32({}, {})"),
         Some("_mm256_unpackhi_epi32({}, {})"),
         Some("_mm256_unpacklo_epi64({}, {})"),
@@ -516,16 +516,10 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         None,
         None,
         None,
-        Some("vreinterpretq_u32_u8(vzip1q_u8(vreinterpretq_u8_u32({}), vreinterpretq_u8_u32({})))"),
-        Some("vreinterpretq_u32_u8(vzip2q_u8(vreinterpretq_u8_u32({}), vreinterpretq_u8_u32({})))"),
-        Some(
-            r##"vreinterpretq_u32_u16(vzip1q_u16(
-            vreinterpretq_u16_u32({}), vreinterpretq_u16_u32({})))"##,
-        ),
-        Some(
-            r##"vreinterpretq_u32_u16(vzip2q_u16(
-            vreinterpretq_u16_u32({}), vreinterpretq_u16_u32({})))"##,
-        ),
+        None,
+        None,
+        None,
+        None,
         Some("vzip1q_u32({}, {})"),
         Some("vzip2q_u32({}, {})"),
         Some(
@@ -620,7 +614,7 @@ const OUTPUT_TYPE: usize = usize::MAX - 1;
 struct CLangMacroVars {
     var_types: Vec<String>,
     mvartool: MultiVarAllocTool<usize>,
-    constants: HashMap<String, String>,
+    constants: BTreeMap<String, String>,
     inputs: Vec<String>,
     outputs: Vec<String>,
     out: String,
@@ -643,7 +637,7 @@ impl CLangMacroVars {
         Self {
             var_types,
             mvartool: MultiVarAllocTool::new(var_type_num),
-            constants: HashMap::new(),
+            constants: BTreeMap::new(),
             inputs: inputs.into_iter().collect::<Vec<_>>(),
             outputs: outputs.into_iter().collect::<Vec<_>>(),
             out: String::new(),
@@ -683,7 +677,7 @@ impl CLangMacroVars {
     }
 
     fn write_constant_defs(&mut self, out: &mut String) {
-        for (c, v) in &self.constants {
+        for (v, c) in &self.constants {
             writeln!(out, "    const {} {} = {};\\", self.var_types[0], c, v).unwrap();
         }
     }
@@ -697,8 +691,10 @@ impl CLangMacroVars {
             }
         } else {
             if self.collect_constants {
-                let c1 = format!("c{}", self.constants.len());
-                self.constants.insert(constant.to_string(), c1);
+                if !self.constants.contains_key(&constant.to_string()) {
+                    let c1 = format!("c{}", self.constants.len());
+                    self.constants.insert(constant.to_string(), c1);
+                }
             }
             constant
         }
@@ -985,7 +981,10 @@ impl<'a> CLangTransform<'a> {
                         let p0 = if bit_usage_f {
                             let p0 = Self::format_op(
                                 self.config.and_op,
-                                &[&t0, self.config.constant_defs[2 * i + 1]],
+                                &[
+                                    &t0,
+                                    mvars.get_constant(self.config.constant_defs[2 * i + 1]),
+                                ],
                             );
                             Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
                         } else {
@@ -994,7 +993,10 @@ impl<'a> CLangTransform<'a> {
                         let p1 = if bit_usage_s {
                             Self::format_op(
                                 self.config.and_op,
-                                &[&t1, self.config.constant_defs[2 * i + 1]],
+                                &[
+                                    &t1,
+                                    mvars.get_constant(self.config.constant_defs[2 * i + 1]),
+                                ],
                             )
                         } else {
                             String::new()
