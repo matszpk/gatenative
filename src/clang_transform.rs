@@ -25,6 +25,7 @@ pub struct CLangTransformConfig<'a> {
     failed_shl32_op: bool,
     unpack_ops: [Option<&'a str>; 10 * 2],
     init_defs: &'a str,
+    zero: &'a str,
     // masks for transposition operations (unpackings)
     constant_defs: [&'a str; 2 * 5],
     // masks for first 2^n bits
@@ -48,6 +49,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
         None, None, None, None, None,
     ],
     init_defs: "",
+    zero: "0U",
     constant_defs: [
         "0x55555555U",
         "0xaaaaaaaaU",
@@ -98,6 +100,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         None,
     ],
     init_defs: "",
+    zero: "0ULL",
     constant_defs: [
         "0x5555555555555555ULL",
         "0xaaaaaaaaaaaaaaaaULL",
@@ -173,6 +176,7 @@ static const unsigned int transform_const2_tbl[5*2] = {
     0x0000ffffU, 0x0000ffffU
 };
 "##,
+    zero: "_mm_setzero_si64()",
     constant_defs: [
         "(*(const __m64*)(transform_const_tbl + 2*0))",
         "(*(const __m64*)(transform_const_tbl + 2*1))",
@@ -250,6 +254,7 @@ __attribute__((aligned(16))) = {
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
 };
 "##,
+    zero: "_mm_setzero_si128()",
     constant_defs: [
         "(*(const __m128i*)(transform_const_tbl + 4*0))",
         "(*(const __m128i*)(transform_const_tbl + 4*1))",
@@ -342,6 +347,7 @@ __attribute__((aligned(32))) = {
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
 };
 "##,
+    zero: "_mm256_setzero_si256()",
     constant_defs: [
         "(*(const __m256i*)(transform_const_tbl + 8*0))",
         "(*(const __m256i*)(transform_const_tbl + 8*1))",
@@ -469,6 +475,7 @@ __attribute__((aligned(64))) = {
     0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
 }
 "##,
+    zero: "_mm512_setzero_si512()",
     constant_defs: [
         "(*(const __m512i*)(transform_const_tbl + 16*0))",
         "(*(const __m512i*)(transform_const_tbl + 16*1))",
@@ -537,6 +544,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         None,
     ],
     init_defs: "",
+    zero: "{ 0U, 0U, 0U, 0U }",
     constant_defs: [
         "{ 0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U }",
         "{ 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU }",
@@ -575,6 +583,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
         None, None, None, None, None,
     ],
     init_defs: "",
+    zero: "0U",
     constant_defs: [
         "0x55555555U",
         "0xaaaaaaaaU",
@@ -754,7 +763,7 @@ impl<'a> CLangTransform<'a> {
     }
     pub fn format_load_input(&self, arg: usize) -> String {
         if let Some(load_op) = self.config.load_op {
-            Self::format_op(load_op, &[&Self::format_arg_s(arg)])
+            Self::format_op(load_op, &[&format!("((S) + {})", arg)])
         } else {
             Self::format_arg_s(arg)
         }
@@ -766,6 +775,15 @@ impl<'a> CLangTransform<'a> {
         let mut bit_usage = vec![u32::try_from((1usize << bits) - 1).unwrap(); 32];
         let mut prev_pass = (0..32).collect::<Vec<_>>();
         if bits_log < 5 {
+            // if bits < 16 then just join lower bits once:
+            // example: { [TBL[0][0:3],TBL[8][0:3],TBL[16][0:3],TBL[24][0:3]],
+            //            [TBL[0][4:7],TBL[8][4:7],TBL[16][4:7],TBL[24][4:7]],
+            //            [TBL[0][8:11],TBL[8][8:11],TBL[16][8:11],TBL[24][8:11]],
+            //            [TBL[0][12:15],TBL[8][12:15],TBL[16][12:15],TBL[24][12:15]], ... }
+            // where [A,B,....] - number with joined bits A,B,... .
+            //       TBL[x][a:b] - bits from a to b from value from table under index x.
+            // After that we have operates on n-bits (where n is power of two) inside
+            // 32-bit word.
             for i in 0..1 << bits_log {
                 let v = if bits_log != 0 {
                     let v = mvars.new_var(0);
@@ -816,6 +834,9 @@ impl<'a> CLangTransform<'a> {
             prev_type = 0;
         }
         for i in (0..bits_log).rev() {
+            // main routine of transposing bits
+            // using interleaving instructions or operations to quickly
+            // transpose bit matrix where rows are words and columns are bits.
             let mut new_pass = vec![0; 1 << bits_log];
             for j in 0..1 << (bits_log - 1) {
                 let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
@@ -841,31 +862,48 @@ impl<'a> CLangTransform<'a> {
                     (OUTPUT_TYPE, fj)
                 };
 
-                let p0 = if bit_usage_f {
-                    Self::format_op(
-                        self.config.and_op,
-                        &[&t0, mvars.get_constant(self.config.constant_defs[2 * i])],
-                    )
-                } else {
-                    String::new()
-                };
-                let p1 = if bit_usage_s {
-                    let p1 = Self::format_op(
-                        self.config.and_op,
-                        &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
-                    );
-                    Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
-                } else {
-                    String::new()
-                };
-                let expr = if !p0.is_empty() {
-                    if !p1.is_empty() {
-                        Self::format_op(self.config.or_op, &[&p0, &p1])
+                let expr = if let Some(unpack) = self.config.unpack_ops[2 * i] {
+                    if bit_usage_f {
+                        if bit_usage_s {
+                            Self::format_op(unpack, &[&t0, &t1])
+                        } else {
+                            Self::format_op(unpack, &[&t0, &self.config.zero])
+                        }
                     } else {
-                        p0
+                        if bit_usage_s {
+                            Self::format_op(unpack, &[&self.config.zero, &t1])
+                        } else {
+                            String::new()
+                        }
                     }
                 } else {
-                    p1
+                    // normal expression (bitwise logic and shifts)
+                    let p0 = if bit_usage_f {
+                        Self::format_op(
+                            self.config.and_op,
+                            &[&t0, mvars.get_constant(self.config.constant_defs[2 * i])],
+                        )
+                    } else {
+                        String::new()
+                    };
+                    let p1 = if bit_usage_s {
+                        let p1 = Self::format_op(
+                            self.config.and_op,
+                            &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
+                        );
+                        Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
+                    } else {
+                        String::new()
+                    };
+                    if !p0.is_empty() {
+                        if !p1.is_empty() {
+                            Self::format_op(self.config.or_op, &[&p0, &p1])
+                        } else {
+                            p0
+                        }
+                    } else {
+                        p1
+                    }
                 };
                 if !expr.is_empty() {
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
@@ -892,31 +930,47 @@ impl<'a> CLangTransform<'a> {
                     } else {
                         (OUTPUT_TYPE, sj)
                     };
-                    let p0 = if bit_usage_f {
-                        let p0 = Self::format_op(
-                            self.config.and_op,
-                            &[&t0, self.config.constant_defs[2 * i + 1]],
-                        );
-                        Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
-                    } else {
-                        String::new()
-                    };
-                    let p1 = if bit_usage_s {
-                        Self::format_op(
-                            self.config.and_op,
-                            &[&t1, self.config.constant_defs[2 * i + 1]],
-                        )
-                    } else {
-                        String::new()
-                    };
-                    let expr = if !p0.is_empty() {
-                        if !p1.is_empty() {
-                            Self::format_op(self.config.or_op, &[&p0, &p1])
+                    let expr = if let Some(unpack) = self.config.unpack_ops[2 * i + 1] {
+                        if bit_usage_f {
+                            if bit_usage_s {
+                                Self::format_op(unpack, &[&t0, &t1])
+                            } else {
+                                Self::format_op(unpack, &[&t0, &self.config.zero])
+                            }
                         } else {
-                            p0
+                            if bit_usage_s {
+                                Self::format_op(unpack, &[&self.config.zero, &t1])
+                            } else {
+                                String::new()
+                            }
                         }
                     } else {
-                        p1
+                        let p0 = if bit_usage_f {
+                            let p0 = Self::format_op(
+                                self.config.and_op,
+                                &[&t0, self.config.constant_defs[2 * i + 1]],
+                            );
+                            Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
+                        } else {
+                            String::new()
+                        };
+                        let p1 = if bit_usage_s {
+                            Self::format_op(
+                                self.config.and_op,
+                                &[&t1, self.config.constant_defs[2 * i + 1]],
+                            )
+                        } else {
+                            String::new()
+                        };
+                        if !p0.is_empty() {
+                            if !p1.is_empty() {
+                                Self::format_op(self.config.or_op, &[&p0, &p1])
+                            } else {
+                                p0
+                            }
+                        } else {
+                            p1
+                        }
                     };
                     if !expr.is_empty() {
                         write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
