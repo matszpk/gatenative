@@ -920,10 +920,14 @@ impl<'a> CLangTransform<'a> {
                         String::new()
                     };
                     let p1 = if bit_usage_s {
-                        let p1 = Self::format_op(
-                            self.config.and_op,
-                            &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
-                        );
+                        let p1 = if (1 << i) != 16 || self.config.failed_shl32_op {
+                            Self::format_op(
+                                self.config.and_op,
+                                &[&t1, mvars.get_constant(self.config.constant_defs[2 * i])],
+                            )
+                        } else {
+                            t1.to_string()
+                        };
                         Self::format_op(self.config.shl32_op, &[&p1, &(1 << i).to_string()])
                     } else {
                         String::new()
@@ -979,13 +983,17 @@ impl<'a> CLangTransform<'a> {
                         }
                     } else {
                         let p0 = if bit_usage_f {
-                            let p0 = Self::format_op(
-                                self.config.and_op,
-                                &[
-                                    &t0,
-                                    mvars.get_constant(self.config.constant_defs[2 * i + 1]),
-                                ],
-                            );
+                            let p0 = if (1 << i) != 16 || self.config.failed_shl32_op {
+                                Self::format_op(
+                                    self.config.and_op,
+                                    &[
+                                        &t0,
+                                        mvars.get_constant(self.config.constant_defs[2 * i + 1]),
+                                    ],
+                                )
+                            } else {
+                                t0.to_string()
+                            };
                             Self::format_op(self.config.shr32_op, &[&p0, &(1 << i).to_string()])
                         } else {
                             String::new()
