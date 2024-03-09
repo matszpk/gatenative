@@ -556,8 +556,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
         None,
         None,
         None,
-        None,
-        None,
+        Some("_mm512_permutex2var_epi32({}, (*(const __m512i*)(transform_const4_tbl + 0)), {}))"),
+        Some("_mm512_permutex2var_epi32({}, (*(const __m512i*)(transform_const4_tbl + 16)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*0)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*1)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*2)), {}))"),
@@ -662,7 +662,12 @@ __attribute__((aligned(64))) = {
     0, 8, 2, 10, 4, 12, 6, 14, 1, 9, 3, 11, 5, 13, 7, 15,
     0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15,
     0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
-}
+};
+static const uint32_t transform_const4_tbl[32]
+__attribute__((aligned(64))) = {
+    0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30,
+    1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31
+};
 "##,
     zero: "_mm512_setzero_si512()",
     constant_defs: [
