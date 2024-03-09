@@ -941,8 +941,8 @@ pub struct CLangTransform<'a> {
 
 const INPUT_TYPE: usize = usize::MAX;
 const OUTPUT_TYPE: usize = INPUT_TYPE - 1;
-const TEMP_TABLE: usize = OUTPUT_TYPE - 1;
-const MIN_SPECIAL_TYPE: usize = TEMP_TABLE;
+const TEMPS_TYPE: usize = OUTPUT_TYPE - 1;
+const MIN_SPECIAL_TYPE: usize = TEMPS_TYPE;
 
 #[inline]
 const fn is_normal_type(t: usize) -> bool {
@@ -955,6 +955,7 @@ struct CLangMacroVars {
     constants: BTreeMap<String, String>,
     inputs: Vec<String>,
     outputs: Vec<String>,
+    temps: Vec<String>,
     out: String,
     collect_constants: bool,
 }
@@ -964,6 +965,7 @@ impl CLangMacroVars {
         var_types: impl IntoIterator<Item = &'a str>,
         inputs: impl IntoIterator<Item = String>,
         outputs: impl IntoIterator<Item = String>,
+        temps: impl IntoIterator<Item = String>,
         collect_constants: bool,
     ) -> Self {
         let var_types = var_types
@@ -978,6 +980,7 @@ impl CLangMacroVars {
             constants: BTreeMap::new(),
             inputs: inputs.into_iter().collect::<Vec<_>>(),
             outputs: outputs.into_iter().collect::<Vec<_>>(),
+            temps: temps.into_iter().collect::<Vec<_>>(),
             out: String::new(),
             collect_constants,
         }
@@ -1007,12 +1010,11 @@ impl CLangMacroVars {
     }
 
     fn format_var(&self, var_type: usize, v: usize) -> String {
-        if var_type == INPUT_TYPE {
-            self.inputs[v].clone()
-        } else if var_type == OUTPUT_TYPE {
-            self.outputs[v].clone()
-        } else {
-            format!("t{}v{}", var_type, v)
+        match var_type {
+            INPUT_TYPE => self.inputs[v].clone(),
+            OUTPUT_TYPE => self.outputs[v].clone(),
+            TEMPS_TYPE => self.temps[v].clone(),
+            _ => format!("t{}v{}", var_type, v),
         }
     }
 
@@ -1415,6 +1417,7 @@ impl<'a> CLangTransform<'a> {
             [self.config.comp_type_name],
             (0..32).map(|i| self.format_load_input((self.config.comp_type_bit_len >> 5) * i)),
             (0..bits as u32).map(|i| Self::format_arg_d(i)),
+            [],
             self.config.collect_constants,
         );
         self.gen_input_transform_int(&mut mvars, bits);
