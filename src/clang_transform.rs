@@ -1107,6 +1107,22 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
+    fn format_store_op(
+        &self,
+        mvars: &mut CLangMacroVars,
+        output_type: usize,
+        dest: usize,
+        src: String,
+    ) -> String {
+        let dest = mvars.format_var(output_type, dest);
+        if output_type == TEMPS_TYPE {
+            let store_op = self.config.store_op.unwrap_or("{} = {}");
+            Self::format_op(store_op, &[&dest, &src])
+        } else {
+            format!("{} = {}", dest, src)
+        }
+    }
+
     fn gen_unpack_low(
         &mut self,
         mvars: &mut CLangMacroVars,
@@ -1330,12 +1346,14 @@ impl<'a> CLangTransform<'a> {
                 let v = if bits_log != 0 {
                     let v = mvars.new_var(0);
                     write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+                    writeln!(mvars, "{};\\", final_expr).unwrap();
                     v
                 } else {
-                    write!(mvars, "    {} = ", mvars.format_var(output_type, 0)).unwrap();
+                    // if only single destination bit
+                    let store_op = self.format_store_op(mvars, output_type, 0, final_expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
                     0
                 };
-                write!(mvars, "{};\\\n", final_expr).unwrap();
                 if bits_log != 0 {
                     prev_pass[i] = v;
                 }
@@ -1371,8 +1389,8 @@ impl<'a> CLangTransform<'a> {
 
                 let expr = self.gen_unpack_low(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
                 if !expr.is_empty() {
-                    write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
-                    writeln!(mvars, "{};\\", expr).unwrap();
+                    let store_op = self.format_store_op(mvars, nt, ns0, expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
                 }
                 if i != 0 {
                     new_pass[fj] = ns0;
@@ -1395,8 +1413,8 @@ impl<'a> CLangTransform<'a> {
                     };
                     let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
                     if !expr.is_empty() {
-                        write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
-                        writeln!(mvars, "{};\\", expr).unwrap();
+                        let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                        writeln!(mvars, "    {};\\", store_op).unwrap();
                     }
                     if i != 0 {
                         new_pass[sj] = ns1;
