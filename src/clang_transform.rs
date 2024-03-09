@@ -450,6 +450,122 @@ __attribute__((aligned(16))) = {
     collect_constants: true,
 };
 
+pub const CLANG_TRANSFORM_INTEL_AVX: CLangTransformConfig<'_> = CLangTransformConfig {
+    comp_type_name: "__m128i",
+    comp_type_bit_len: 128,
+    final_type: Some(FinalType {
+        final_type_name: "__m256",
+        final_type_bit_len: 256,
+        load_op: Some("_mm256_loadu_ps((const float*){})"),
+        store_op: Some("_mm256_storeu_ps((float*){}, {})"),
+    }),
+    load_op: Some("_mm_loadu_si128((const __m128i*){})"),
+    store_op: Some("_mm_storeu_si128((__m128i*){}, {})"),
+    and_op: "_mm_and_si128({}, {})",
+    or_op: "_mm_or_si128({}, {})",
+    shift_op: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_mm_slli_epi16({}, {})"),
+        Some("_mm_srli_epi16({}, {})"),
+        Some("_mm_slli_epi32({}, {})"),
+        Some("_mm_srli_epi32({}, {})"),
+        Some("_mm_slli_epi64({}, {})"),
+        Some("_mm_srli_epi64({}, {})"),
+        Some("_mm_slli_si128({}, ({})>>3)"),
+        Some("_mm_srli_si128({}, ({})>>3)"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
+    unpack_ops: [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("_mm_unpacklo_epi64({}, {})"),
+        Some("_mm_unpackhi_epi64({}, {})"),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ],
+    init_defs: r##"static const unsigned int transform_const_tbl[7*2*4]
+__attribute__((aligned(16))) = {
+    0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U,
+    0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU, 0xaaaaaaaaU,
+    0x33333333U, 0x33333333U, 0x33333333U, 0x33333333U,
+    0xccccccccU, 0xccccccccU, 0xccccccccU, 0xccccccccU,
+    0x0f0f0f0fU, 0x0f0f0f0fU, 0x0f0f0f0fU, 0x0f0f0f0fU,
+    0xf0f0f0f0U, 0xf0f0f0f0U, 0xf0f0f0f0U, 0xf0f0f0f0U,
+    0x00ff00ffU, 0x00ff00ffU, 0x00ff00ffU, 0x00ff00ffU,
+    0xff00ff00U, 0xff00ff00U, 0xff00ff00U, 0xff00ff00U,
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
+    0xffff0000U, 0xffff0000U, 0xffff0000U, 0xffff0000U,
+    0xffffffffU, 0x00000000U, 0xffffffffU, 0x00000000U,
+    0x00000000U, 0xffffffffU, 0x00000000U, 0xffffffffU,
+    0xffffffffU, 0xffffffffU, 0x00000000U, 0x00000000U,
+    0x00000000U, 0x00000000U, 0xffffffffU, 0xffffffffU,
+};
+static const unsigned int transform_const2_tbl[5*4]
+__attribute__((aligned(16))) = {
+    0x00000001U, 0x00000001U, 0x00000001U, 0x00000001U,
+    0x00000003U, 0x00000003U, 0x00000003U, 0x00000003U,
+    0x0000000fU, 0x0000000fU, 0x0000000fU, 0x0000000fU,
+    0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
+    0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
+};
+"##,
+    zero: "_mm_setzero_si128()",
+    constant_defs: [
+        "(*(const __m128i*)(transform_const_tbl + 4*0))",
+        "(*(const __m128i*)(transform_const_tbl + 4*1))",
+        "(*(const __m128i*)(transform_const_tbl + 4*2))",
+        "(*(const __m128i*)(transform_const_tbl + 4*3))",
+        "(*(const __m128i*)(transform_const_tbl + 4*4))",
+        "(*(const __m128i*)(transform_const_tbl + 4*5))",
+        "(*(const __m128i*)(transform_const_tbl + 4*6))",
+        "(*(const __m128i*)(transform_const_tbl + 4*7))",
+        "(*(const __m128i*)(transform_const_tbl + 4*8))",
+        "(*(const __m128i*)(transform_const_tbl + 4*9))",
+        "(*(const __m128i*)(transform_const_tbl + 4*10))",
+        "(*(const __m128i*)(transform_const_tbl + 4*11))",
+        "(*(const __m128i*)(transform_const_tbl + 4*12))",
+        "(*(const __m128i*)(transform_const_tbl + 4*13))",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ],
+    constant2_defs: [
+        "(*(const __m128i*)(transform_const2_tbl + 4*0))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*1))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*2))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*3))",
+        "(*(const __m128i*)(transform_const2_tbl + 4*4))",
+    ],
+    collect_constants: true,
+};
+
 pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m256i",
     comp_type_bit_len: 256,
@@ -1116,8 +1232,12 @@ impl<'a> CLangTransform<'a> {
     ) -> String {
         let dest = mvars.format_var(output_type, dest);
         if output_type == TEMPS_TYPE {
-            let store_op = self.config.store_op.unwrap_or("{} = {}");
-            Self::format_op(store_op, &[&dest, &src])
+            if let Some(store_op) = self.config.store_op {
+                let dest = "&".to_string() + &dest;
+                Self::format_op(store_op, &[&dest, &src])
+            } else {
+                format!("{} = {}", dest, src)
+            }
         } else {
             format!("{} = {}", dest, src)
         }
@@ -1497,8 +1617,9 @@ impl<'a> CLangTransform<'a> {
             self.out.write_str("    unsigned int i;\\\n").unwrap();
             writeln!(
                 &mut self.out,
-                "    for (i = 0; i < {}; i++) {{\\\n    const unsigned int ib = i << 5;\\",
-                (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+                "    for (i = 0; i < {}; i++) {{\\\n    const unsigned int ib = i * {};\\",
+                (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize,
+                self.config.comp_type_bit_len
             )
             .unwrap();
         }
