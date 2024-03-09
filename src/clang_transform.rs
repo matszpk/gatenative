@@ -1237,6 +1237,11 @@ impl<'a> CLangTransform<'a> {
     }
 
     fn gen_input_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
+        let output_type = if self.config.final_type.is_some() {
+            TEMPS_TYPE
+        } else {
+            OUTPUT_TYPE
+        };
         let bits_log = calc_log_bits(bits);
         let mut prev_type = INPUT_TYPE;
         let mut prev_pass = (0..32).collect::<Vec<_>>();
@@ -1327,7 +1332,7 @@ impl<'a> CLangTransform<'a> {
                     write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
                     v
                 } else {
-                    write!(mvars, "    {} = ", mvars.format_var(OUTPUT_TYPE, 0)).unwrap();
+                    write!(mvars, "    {} = ", mvars.format_var(output_type, 0)).unwrap();
                     0
                 };
                 write!(mvars, "{};\\\n", final_expr).unwrap();
@@ -1359,7 +1364,7 @@ impl<'a> CLangTransform<'a> {
                 let (nt, ns0) = if i != 0 {
                     (0, mvars.new_var(0))
                 } else {
-                    (OUTPUT_TYPE, fj)
+                    (output_type, fj)
                 };
                 let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                 let t1 = mvars.format_var(prev_type, prev_pass[sj]);
@@ -1386,7 +1391,7 @@ impl<'a> CLangTransform<'a> {
                     let (nt, ns1) = if i != 0 {
                         (0, mvars.new_var(0))
                     } else {
-                        (OUTPUT_TYPE, sj)
+                        (output_type, sj)
                     };
                     let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
                     if !expr.is_empty() {
@@ -1413,11 +1418,24 @@ impl<'a> CLangTransform<'a> {
     }
 
     pub fn gen_input_transform(&mut self, bits: usize) {
+        let temps = if let Some(final_type) = self.config.final_type.as_ref() {
+            (0..bits)
+                .map(|i| {
+                    format!(
+                        "temps[{} + i]",
+                        i * (final_type.final_type_bit_len / self.config.comp_type_bit_len)
+                            as usize
+                    )
+                })
+                .collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
         let mut mvars = CLangMacroVars::new(
             [self.config.comp_type_name],
             (0..32).map(|i| self.format_load_input((self.config.comp_type_bit_len >> 5) * i)),
             (0..bits as u32).map(|i| Self::format_arg_d(i)),
-            [],
+            temps,
             self.config.collect_constants,
         );
         self.gen_input_transform_int(&mut mvars, bits);
@@ -1431,10 +1449,42 @@ impl<'a> CLangTransform<'a> {
         )
         .unwrap();
         self.out.write_str("{\\\n").unwrap();
+        if let Some(final_type) = self.config.final_type.as_ref() {
+            writeln!(
+                &mut self.out,
+                "    {} temps[{}];\\",
+                final_type.final_type_name,
+                bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+            )
+            .unwrap();
+            self.out.write_str("    unsigned int i\\\n").unwrap();
+            writeln!(
+                &mut self.out,
+                "    for (i = 0; i < {}; i++) {{\\",
+                (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+            )
+            .unwrap();
+        }
         self.gen_input_transform_int(&mut mvars, bits);
         mvars.write_constant_defs(&mut self.out);
         mvars.write_var_defs(&mut self.out);
         self.out.push_str(&mvars.out);
+        if let Some(final_type) = self.config.final_type.as_ref() {
+            self.out.write_str("    }\\\n").unwrap();
+            for i in 0..bits {
+                writeln!(&mut self.out, "    {} = ", Self::format_arg_d(i as u32)).unwrap();
+                let arg = format!(
+                    "temp + {}",
+                    i * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+                );
+                if let Some(load_op) = final_type.load_op {
+                    Self::write_op(&mut self.out, load_op, &[&arg]);
+                } else {
+                    write!(&mut self.out, "&({})", arg).unwrap();
+                }
+                self.out.write_str("\\\n").unwrap();
+            }
+        }
         self.out.write_str("}\n").unwrap();
     }
 
