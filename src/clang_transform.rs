@@ -558,12 +558,12 @@ pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransfor
         None,
         None,
         None,
-        None,
-        None,
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*0)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*1)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*2)), {}))"),
         Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*3)), {}))"),
+        Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*4)), {}))"),
+        Some("_mm512_permutex2var_epi64({}, (*(const __m512i*)(transform_const3_tbl + 8*5)), {}))"),
         None,
         None,
     ],
@@ -657,9 +657,10 @@ __attribute__((aligned(64))) = {
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
 };
-static const uint64_t transform_const3_tbl[2*16]
+static const uint64_t transform_const3_tbl[3*16]
 __attribute__((aligned(64))) = {
-    0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15,
+    0, 8, 2, 10, 4, 12, 6, 14, 1, 9, 3, 11, 5, 13, 7, 15,
+    0, 1, 8, 9, 4, 5, 12, 13, 2, 3, 10, 11, 6, 7, 14, 15,
     0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15
 }
 "##,
