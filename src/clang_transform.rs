@@ -4,18 +4,20 @@ use std::collections::BTreeMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
-pub struct InterType<'a> {
-    inter_type_name: &'a str,
-    inter_type_bit_len: u32,
+pub struct FinalType<'a> {
+    final_type_name: &'a str,
+    final_type_bit_len: u32,
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
 }
 
 #[derive(Clone, Debug)]
 pub struct CLangTransformConfig<'a> {
-    final_type_name: &'a str,
-    final_type_bit_len: u32,
-    inter_type: Option<InterType<'a>>,
+    comp_type_name: &'a str,
+    comp_type_bit_len: u32,
+    // if final_type is not supplied then final type is comp_type.
+    final_type: Option<FinalType<'a>>,
+    // all operations defined for comp_type
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
     and_op: &'a str,
@@ -34,9 +36,9 @@ pub struct CLangTransformConfig<'a> {
 }
 
 pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "uint32_t",
-    final_type_bit_len: 32,
-    inter_type: None,
+    comp_type_name: "uint32_t",
+    comp_type_bit_len: 32,
+    final_type: None,
     load_op: None,
     store_op: None,
     and_op: "({} & {})",
@@ -96,9 +98,9 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
 };
 
 pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "uint64_t",
-    final_type_bit_len: 64,
-    inter_type: None,
+    comp_type_name: "uint64_t",
+    comp_type_bit_len: 64,
+    final_type: None,
     load_op: Some("(*((const uint64_t*)({})))"),
     store_op: Some("*((uint64_t*)({})) = {}"),
     and_op: "({} & {})",
@@ -164,9 +166,9 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
 };
 
 pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "__m64",
-    final_type_bit_len: 64,
-    inter_type: None,
+    comp_type_name: "__m64",
+    comp_type_bit_len: 64,
+    final_type: None,
     load_op: Some("(*((const __m64*)({})))"),
     store_op: Some("*((__m64*)({})) = {}"),
     and_op: "_m_pand({}, {})",
@@ -271,9 +273,9 @@ static const unsigned int transform_const2_tbl[5*2] = {
 };
 
 pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "__m128i",
-    final_type_bit_len: 128,
-    inter_type: None,
+    comp_type_name: "__m128i",
+    comp_type_bit_len: 128,
+    final_type: None,
     load_op: Some("_mm_loadu_si128((const __m128i*){})"),
     store_op: Some("_mm_storeu_si128((__m128i*){}, {})"),
     and_op: "_mm_and_si128({}, {})",
@@ -382,9 +384,9 @@ __attribute__((aligned(16))) = {
 };
 
 pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "__m256i",
-    final_type_bit_len: 256,
-    inter_type: None,
+    comp_type_name: "__m256i",
+    comp_type_bit_len: 256,
+    final_type: None,
     load_op: Some("_mm256_loadu_si256((const __m256i*){})"),
     store_op: Some("_mm256_storeu_si256((__m256i*){}, {})"),
     and_op: "_mm256_and_si256({}, {})",
@@ -516,9 +518,9 @@ __attribute__((aligned(32))) = {
 };
 
 pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "__m512i",
-    final_type_bit_len: 512,
-    inter_type: None,
+    comp_type_name: "__m512i",
+    comp_type_bit_len: 512,
+    final_type: None,
     load_op: Some("_mm512_loadu_epi64({})"),
     store_op: Some("_mm512_storeu_epi64({}, {})"),
     and_op: "_mm512_and_epi64({}, {})",
@@ -703,9 +705,9 @@ __attribute__((aligned(64))) = {
 };
 
 pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "uint32x4_t",
-    final_type_bit_len: 128,
-    inter_type: None,
+    comp_type_name: "uint32x4_t",
+    comp_type_bit_len: 128,
+    final_type: None,
     load_op: None,
     store_op: None,
     and_op: "vandq_u32({}, {})",
@@ -795,9 +797,9 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
 };
 
 pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
-    final_type_name: "uint",
-    final_type_bit_len: 32,
-    inter_type: None,
+    comp_type_name: "uint",
+    comp_type_bit_len: 32,
+    final_type: None,
     load_op: None,
     store_op: None,
     and_op: "({} & {})",
@@ -1160,10 +1162,10 @@ impl<'a> CLangTransform<'a> {
         let bits_log = calc_log_bits(bits);
         let mut prev_type = INPUT_TYPE;
         let mut prev_pass = (0..32).collect::<Vec<_>>();
-        if self.config.final_type_bit_len > 32 {
+        if self.config.comp_type_bit_len > 32 {
             // use unpacking to transpose 32-bit words from sequential to form:
             // { TBL[0],TBL[32],TBL[64],TBL[96],TBL[1],TBL[33],TBL[65],TBL[97],...
-            let type_len_log = calc_log_bits(self.config.final_type_bit_len as usize);
+            let type_len_log = calc_log_bits(self.config.comp_type_bit_len as usize);
             for i in (0..type_len_log - 5).rev() {
                 let mut new_pass = vec![0; 32];
                 for j in 0..16 {
@@ -1344,8 +1346,8 @@ impl<'a> CLangTransform<'a> {
 
     pub fn gen_input_transform(&mut self, bits: usize) {
         let mut mvars = CLangMacroVars::new(
-            [self.config.final_type_name],
-            (0..32).map(|i| self.format_load_input((self.config.final_type_bit_len >> 5) * i)),
+            [self.config.comp_type_name],
+            (0..32).map(|i| self.format_load_input((self.config.comp_type_bit_len >> 5) * i)),
             (0..bits as u32).map(|i| Self::format_arg_d(i)),
             self.config.collect_constants,
         );
