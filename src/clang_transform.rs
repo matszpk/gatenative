@@ -1353,7 +1353,7 @@ impl<'a> CLangTransform<'a> {
         mvars.set_usage_mode();
         writeln!(
             &mut self.out,
-            "#define IN_TRANSFORM_B{}({}, {}) \\",
+            "#define INPUT_TRANSFORM_B{}({}, {}) \\",
             bits,
             &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
             "S",
