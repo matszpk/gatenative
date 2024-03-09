@@ -875,6 +875,11 @@ pub struct CLangTransform<'a> {
 const INPUT_TYPE: usize = usize::MAX;
 const OUTPUT_TYPE: usize = usize::MAX - 1;
 
+#[inline]
+const fn is_normal_type(t: usize) -> bool {
+    t < OUTPUT_TYPE
+}
+
 struct CLangMacroVars {
     var_types: Vec<String>,
     mvartool: MultiVarAllocTool<usize>,
@@ -897,7 +902,7 @@ impl CLangMacroVars {
             .map(|s| s.to_string())
             .collect::<Vec<_>>();
         let var_type_num = var_types.len();
-        assert!(var_type_num < OUTPUT_TYPE);
+        assert!(is_normal_type(var_type_num));
         Self {
             var_types,
             mvartool: MultiVarAllocTool::new(var_type_num),
@@ -1173,7 +1178,7 @@ impl<'a> CLangTransform<'a> {
                     let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                     let t1 = mvars.format_var(prev_type, prev_pass[sj]);
-                    if prev_type < OUTPUT_TYPE {
+                    if is_normal_type(prev_type) {
                         mvars.use_var(prev_type, prev_pass[fj]);
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
@@ -1183,7 +1188,7 @@ impl<'a> CLangTransform<'a> {
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
                     new_pass[2 * j] = ns0;
-                    if prev_type < OUTPUT_TYPE {
+                    if is_normal_type(prev_type) {
                         mvars.use_var(prev_type, prev_pass[fj]);
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
@@ -1214,7 +1219,7 @@ impl<'a> CLangTransform<'a> {
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
-                    if prev_type < OUTPUT_TYPE {
+                    if is_normal_type(prev_type) {
                         mvars.use_var(prev_type, prev_pass[idx]);
                     }
                     let (shl, failed) = {
@@ -1278,7 +1283,7 @@ impl<'a> CLangTransform<'a> {
                 let sj = fj | (1 << i);
                 let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0;
                 let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0;
-                if prev_type < OUTPUT_TYPE {
+                if is_normal_type(prev_type) {
                     if bit_usage_f {
                         mvars.use_var(prev_type, prev_pass[fj]);
                     }
@@ -1307,7 +1312,7 @@ impl<'a> CLangTransform<'a> {
                 if i != 0 || sj < bits {
                     let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
                     let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
-                    if prev_type < OUTPUT_TYPE {
+                    if is_normal_type(prev_type) {
                         if bit_usage_f {
                             mvars.use_var(prev_type, prev_pass[fj]);
                         }
