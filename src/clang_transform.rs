@@ -385,8 +385,8 @@ pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformC
     final_type_name: "__m256i",
     final_type_bit_len: 256,
     inter_type: None,
-    load_op: Some("_mm256_loadu_si256((const float*){})"),
-    store_op: Some("_mm256_storeu_si256((float*){}, {})"),
+    load_op: Some("_mm256_loadu_si256((const __m256i*){})"),
+    store_op: Some("_mm256_storeu_si256((__m256i*){}, {})"),
     and_op: "_mm256_and_si256({}, {})",
     or_op: "_mm256_or_si256({}, {})",
     shift_op: [
