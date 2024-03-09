@@ -7,8 +7,8 @@ use std::fmt::Write;
 pub struct InterType<'a> {
     inter_type_name: &'a str,
     inter_type_bit_len: u32,
-    inter_to_final: &'a str,
-    final_to_inter: &'a str,
+    load_op: Option<&'a str>,
+    store_op: Option<&'a str>,
 }
 
 #[derive(Clone, Debug)]
