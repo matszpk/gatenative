@@ -940,11 +940,13 @@ pub struct CLangTransform<'a> {
 }
 
 const INPUT_TYPE: usize = usize::MAX;
-const OUTPUT_TYPE: usize = usize::MAX - 1;
+const OUTPUT_TYPE: usize = INPUT_TYPE - 1;
+const TEMP_TABLE: usize = OUTPUT_TYPE - 1;
+const MIN_SPECIAL_TYPE: usize = TEMP_TABLE;
 
 #[inline]
 const fn is_normal_type(t: usize) -> bool {
-    t < OUTPUT_TYPE
+    t < MIN_SPECIAL_TYPE
 }
 
 struct CLangMacroVars {
@@ -999,7 +1001,9 @@ impl CLangMacroVars {
     }
 
     fn use_var(&mut self, var_type: usize, v: usize) {
-        self.mvartool.use_var(var_type, v);
+        if is_normal_type(var_type) {
+            self.mvartool.use_var(var_type, v);
+        }
     }
 
     fn format_var(&self, var_type: usize, v: usize) -> String {
@@ -1245,20 +1249,16 @@ impl<'a> CLangTransform<'a> {
                     let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[fj]);
                     let t1 = mvars.format_var(prev_type, prev_pass[sj]);
-                    if is_normal_type(prev_type) {
-                        mvars.use_var(prev_type, prev_pass[fj]);
-                        mvars.use_var(prev_type, prev_pass[sj]);
-                    }
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                    mvars.use_var(prev_type, prev_pass[sj]);
                     let (nt, ns0) = (0, mvars.new_var(0));
                     let i = i + 5;
                     let expr = self.gen_unpack_low(mvars, i, true, true, &t0, &t1);
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns0)).unwrap();
                     writeln!(mvars, "{};\\", expr).unwrap();
                     new_pass[2 * j] = ns0;
-                    if is_normal_type(prev_type) {
-                        mvars.use_var(prev_type, prev_pass[fj]);
-                        mvars.use_var(prev_type, prev_pass[sj]);
-                    }
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                    mvars.use_var(prev_type, prev_pass[sj]);
                     let (nt, ns1) = (0, mvars.new_var(0));
                     let expr = self.gen_unpack_high(mvars, i, true, true, &t0, &t1);
                     write!(mvars, "    {} = ", mvars.format_var(nt, ns1)).unwrap();
@@ -1286,9 +1286,7 @@ impl<'a> CLangTransform<'a> {
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
-                    if is_normal_type(prev_type) {
-                        mvars.use_var(prev_type, prev_pass[idx]);
-                    }
+                    mvars.use_var(prev_type, prev_pass[idx]);
                     let (shl, failed) = {
                         let (shl, idx) = (4..10)
                             .filter_map(|x| self.config.shift_op[2 * x].map(|s| (s, x)))
@@ -1350,13 +1348,11 @@ impl<'a> CLangTransform<'a> {
                 let sj = fj | (1 << i);
                 let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0;
                 let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0;
-                if is_normal_type(prev_type) {
-                    if bit_usage_f {
-                        mvars.use_var(prev_type, prev_pass[fj]);
-                    }
-                    if bit_usage_s {
-                        mvars.use_var(prev_type, prev_pass[sj]);
-                    }
+                if bit_usage_f {
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                }
+                if bit_usage_s {
+                    mvars.use_var(prev_type, prev_pass[sj]);
                 }
                 let (nt, ns0) = if i != 0 {
                     (0, mvars.new_var(0))
@@ -1379,13 +1375,11 @@ impl<'a> CLangTransform<'a> {
                 if i != 0 || sj < bits {
                     let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
                     let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
-                    if is_normal_type(prev_type) {
-                        if bit_usage_f {
-                            mvars.use_var(prev_type, prev_pass[fj]);
-                        }
-                        if bit_usage_s {
-                            mvars.use_var(prev_type, prev_pass[sj]);
-                        }
+                    if bit_usage_f {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                    }
+                    if bit_usage_s {
+                        mvars.use_var(prev_type, prev_pass[sj]);
                     }
                     let (nt, ns1) = if i != 0 {
                         (0, mvars.new_var(0))
