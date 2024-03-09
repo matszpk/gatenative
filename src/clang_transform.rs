@@ -1093,13 +1093,13 @@ impl<'a> CLangTransform<'a> {
         out
     }
 
-    pub fn format_arg_s(arg: u32) -> String {
+    pub fn format_arg_s(arg: String) -> String {
         format!("((S)[{}])", arg)
     }
     pub fn format_arg_d(arg: u32) -> String {
         format!("(D{})", arg)
     }
-    pub fn format_load_input(&self, arg: u32) -> String {
+    pub fn format_load_input(&self, arg: String) -> String {
         if let Some(load_op) = self.config.load_op {
             Self::format_op(load_op, &[&format!("((S) + {})", arg)])
         } else {
@@ -1418,22 +1418,41 @@ impl<'a> CLangTransform<'a> {
     }
 
     pub fn gen_input_transform(&mut self, bits: usize) {
-        let temps = if let Some(final_type) = self.config.final_type.as_ref() {
-            (0..bits)
-                .map(|i| {
-                    format!(
-                        "temps[{} + i]",
-                        i * (final_type.final_type_bit_len / self.config.comp_type_bit_len)
-                            as usize
-                    )
-                })
-                .collect::<Vec<_>>()
+        let (inputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
+            (
+                (0..32)
+                    .map(|i| {
+                        self.format_load_input(format!(
+                            "{} + ib",
+                            (self.config.comp_type_bit_len >> 5) * i
+                        ))
+                    })
+                    .collect::<Vec<_>>(),
+                (0..bits)
+                    .map(|i| {
+                        format!(
+                            "temps[{} + i]",
+                            i * (final_type.final_type_bit_len / self.config.comp_type_bit_len)
+                                as usize
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            )
         } else {
-            vec![]
+            (
+                (0..32)
+                    .map(|i| {
+                        self.format_load_input(
+                            ((self.config.comp_type_bit_len >> 5) * i).to_string(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+                vec![],
+            )
         };
         let mut mvars = CLangMacroVars::new(
             [self.config.comp_type_name],
-            (0..32).map(|i| self.format_load_input((self.config.comp_type_bit_len >> 5) * i)),
+            inputs,
             (0..bits as u32).map(|i| Self::format_arg_d(i)),
             temps,
             self.config.collect_constants,
@@ -1453,14 +1472,14 @@ impl<'a> CLangTransform<'a> {
             writeln!(
                 &mut self.out,
                 "    {} temps[{}];\\",
-                final_type.final_type_name,
+                self.config.comp_type_name,
                 bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
             )
             .unwrap();
-            self.out.write_str("    unsigned int i\\\n").unwrap();
+            self.out.write_str("    unsigned int i;\\\n").unwrap();
             writeln!(
                 &mut self.out,
-                "    for (i = 0; i < {}; i++) {{\\",
+                "    for (i = 0; i < {}; i++) {{\\\n    const unsigned int ib = i << 5;\\",
                 (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
             )
             .unwrap();
@@ -1472,9 +1491,9 @@ impl<'a> CLangTransform<'a> {
         if let Some(final_type) = self.config.final_type.as_ref() {
             self.out.write_str("    }\\\n").unwrap();
             for i in 0..bits {
-                writeln!(&mut self.out, "    {} = ", Self::format_arg_d(i as u32)).unwrap();
+                write!(&mut self.out, "    {} = ", Self::format_arg_d(i as u32)).unwrap();
                 let arg = format!(
-                    "temp + {}",
+                    "(temps + {})",
                     i * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
                 );
                 if let Some(load_op) = final_type.load_op {
@@ -1482,7 +1501,7 @@ impl<'a> CLangTransform<'a> {
                 } else {
                     write!(&mut self.out, "&({})", arg).unwrap();
                 }
-                self.out.write_str("\\\n").unwrap();
+                self.out.write_str(";\\\n").unwrap();
             }
         }
         self.out.write_str("}\n").unwrap();
