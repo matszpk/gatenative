@@ -1707,34 +1707,31 @@ impl<'a> CLangTransform<'a> {
                     let store_op = self.format_store_op(mvars, nt, ns0, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                 }
-                if i != 0 {
+                if i != 4 {
                     new_pass[fj] = ns0;
                 }
 
                 // second expression
-                //if i != 0 || sj < bits {
-                if true {
-                    let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
-                    let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
-                    if bit_usage_f {
-                        mvars.use_var(prev_type, prev_pass[fj]);
-                    }
-                    if bit_usage_s {
-                        mvars.use_var(prev_type, prev_pass[sj]);
-                    }
-                    let (nt, ns1) = if i != 4 {
-                        (0, mvars.new_var(0))
-                    } else {
-                        (output_type, sj)
-                    };
-                    let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
-                    if !expr.is_empty() {
-                        let store_op = self.format_store_op(mvars, nt, ns1, expr);
-                        writeln!(mvars, "    {};\\", store_op).unwrap();
-                    }
-                    if i != 4 {
-                        new_pass[sj] = ns1;
-                    }
+                let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
+                let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
+                if bit_usage_f {
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                }
+                if bit_usage_s {
+                    mvars.use_var(prev_type, prev_pass[sj]);
+                }
+                let (nt, ns1) = if i != 4 {
+                    (0, mvars.new_var(0))
+                } else {
+                    (output_type, sj)
+                };
+                let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
+                if !expr.is_empty() {
+                    let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
+                }
+                if i != 4 {
+                    new_pass[sj] = ns1;
                 }
                 // update bit usage
                 let bit_fj = (bit_usage[fj] & BIT_MASK_TBL[2 * i])
@@ -1745,7 +1742,7 @@ impl<'a> CLangTransform<'a> {
                 bit_usage[sj] = bit_sj;
             }
             prev_type = 0;
-            if i != 0 {
+            if i != 4 {
                 prev_pass = new_pass;
             }
         }
