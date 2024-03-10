@@ -1755,6 +1755,7 @@ impl<'a> CLangTransform<'a> {
             // where [A,B,....] - number with joined bits A,B,... .
             //       TBL[x][a:b] - bits from a to b from value from table under index x.
             // to 32-bit dwords.
+            let mut new_pass = vec![0; 1 << bits_log];
             for i in 0..1 << bits_log {
                 //let mut final_expr = String::new();
                 let tv = mvars.format_var(prev_type, prev_pass[i]);
@@ -1785,9 +1786,61 @@ impl<'a> CLangTransform<'a> {
                     } else {
                         expr
                     };
-                    let store_op = self.format_store_op(mvars, OUTPUT_TYPE, idx, expr);
+                    let (nt, ns) = if self.config.comp_type_bit_len <= 32 {
+                        (output_type, idx)
+                    } else {
+                        let ns0 = mvars.new_var(0);
+                        (ns0, 0)
+                    };
+                    let store_op = self.format_store_op(mvars, nt, ns, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
+                    if self.config.comp_type_bit_len > 32 {
+                        new_pass[idx] = ns;
+                    }
                 }
+            }
+            if self.config.comp_type_bit_len > 32 {
+                prev_pass = new_pass;
+                prev_type = 0;
+            }
+        }
+        if self.config.comp_type_bit_len > 32 {
+            // use unpacking to transpose 32-bit words from sequential to form:
+            // { TBL[0],TBL[32],TBL[64],TBL[96],TBL[1],TBL[33],TBL[65],TBL[97],...
+            let type_len_log = calc_log_bits(self.config.comp_type_bit_len as usize);
+            for i in 0..type_len_log - 5 {
+                let mut new_pass = vec![0; 32];
+                for j in 0..16 {
+                    let fj = j & ((1 << 4) - 1);
+                    let sj = fj | (1 << 4);
+                    let t0 = mvars.format_var(prev_type, prev_pass[2 * j]);
+                    let t1 = mvars.format_var(prev_type, prev_pass[2 * j + 1]);
+                    mvars.use_var(prev_type, prev_pass[2 * j]);
+                    mvars.use_var(prev_type, prev_pass[2 * j + 1]);
+                    let (nt, ns0) = if i < type_len_log - 5 {
+                        (0, mvars.new_var(0))
+                    } else {
+                        (output_type, fj)
+                    };
+                    let i = i + 5;
+                    let expr = self.gen_unpack_low(mvars, i, true, true, &t0, &t1);
+                    let store_op = self.format_store_op(mvars, nt, ns0, expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
+                    new_pass[fj] = ns0;
+                    mvars.use_var(prev_type, prev_pass[2 * j]);
+                    mvars.use_var(prev_type, prev_pass[2 * j + 1]);
+                    let (nt, ns1) = if i < type_len_log - 5 {
+                        (0, mvars.new_var(0))
+                    } else {
+                        (output_type, sj)
+                    };
+                    let expr = self.gen_unpack_high(mvars, i, true, true, &t0, &t1);
+                    let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
+                    new_pass[sj] = ns1;
+                }
+                prev_pass = new_pass;
+                prev_type = 0;
             }
         }
     }
