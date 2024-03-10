@@ -1218,8 +1218,12 @@ impl<'a> CLangTransform<'a> {
     pub fn format_arg_s_out(arg: String) -> String {
         format!("(S{})", arg)
     }
-    pub fn format_arg_d_out(arg: u32) -> String {
-        format!("((D)[{}])", arg)
+    pub fn format_arg_d_out(&self, arg: u32) -> String {
+        if self.config.comp_type_bit_len <= 32 {
+            format!("((D)[{}])", arg)
+        } else {
+            format!("(dest[{}])", arg)
+        }
     }
     pub fn format_load_input(&self, arg: String) -> String {
         if let Some(load_op) = self.config.load_op {
@@ -1241,6 +1245,30 @@ impl<'a> CLangTransform<'a> {
             if let Some(store_op) = self.config.store_op {
                 let dest = format!("&({})", &dest);
                 Self::format_op(store_op, &[&dest, &src])
+            } else {
+                format!("{} = {}", dest, src)
+            }
+        } else {
+            format!("{} = {}", dest, src)
+        }
+    }
+
+    fn format_store_op_out(
+        &self,
+        mvars: &mut CLangMacroVars,
+        output_type: usize,
+        dest: usize,
+        src: String,
+    ) -> String {
+        let dest = mvars.format_var(output_type, dest);
+        if output_type == OUTPUT_TYPE {
+            if let Some(store_op) = self.config.store_op {
+                if self.config.comp_type_bit_len <= 32 {
+                    let dest = format!("&({})", &dest);
+                    Self::format_op(store_op, &[&dest, &src])
+                } else {
+                    format!("{} = {}", dest, src)
+                }
             } else {
                 format!("{} = {}", dest, src)
             }
@@ -1686,7 +1714,7 @@ impl<'a> CLangTransform<'a> {
                 if bit_usage_s {
                     mvars.use_var(prev_type, prev_pass[sj]);
                 }
-                let (nt, ns0) = if i != 4 {
+                let (nt, ns0) = if self.config.comp_type_bit_len > 32 || i != 4 {
                     (0, mvars.new_var(0))
                 } else {
                     (output_type, fj)
@@ -1704,10 +1732,10 @@ impl<'a> CLangTransform<'a> {
 
                 let expr = self.gen_unpack_low(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
                 if !expr.is_empty() {
-                    let store_op = self.format_store_op(mvars, nt, ns0, expr);
+                    let store_op = self.format_store_op_out(mvars, nt, ns0, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                 }
-                if i != 4 {
+                if self.config.comp_type_bit_len > 32 || i != 4 {
                     new_pass[fj] = ns0;
                 }
 
@@ -1720,17 +1748,17 @@ impl<'a> CLangTransform<'a> {
                 if bit_usage_s {
                     mvars.use_var(prev_type, prev_pass[sj]);
                 }
-                let (nt, ns1) = if i != 4 {
+                let (nt, ns1) = if self.config.comp_type_bit_len > 32 || i != 4 {
                     (0, mvars.new_var(0))
                 } else {
                     (output_type, sj)
                 };
                 let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
                 if !expr.is_empty() {
-                    let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                    let store_op = self.format_store_op_out(mvars, nt, ns1, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                 }
-                if i != 4 {
+                if self.config.comp_type_bit_len > 32 || i != 4 {
                     new_pass[sj] = ns1;
                 }
                 // update bit usage
@@ -1742,7 +1770,7 @@ impl<'a> CLangTransform<'a> {
                 bit_usage[sj] = bit_sj;
             }
             prev_type = 0;
-            if i != 4 {
+            if self.config.comp_type_bit_len > 32 || i != 4 {
                 prev_pass = new_pass;
             }
         }
@@ -1759,7 +1787,6 @@ impl<'a> CLangTransform<'a> {
             for i in 0..1 << bits_log {
                 //let mut final_expr = String::new();
                 let tv = mvars.format_var(prev_type, prev_pass[i]);
-                mvars.use_var(prev_type, prev_pass[i]);
                 for j in 0..1 << (5 - bits_log) {
                     let idx = i | (j << bits_log);
                     let (shr, failed) = {
@@ -1770,6 +1797,7 @@ impl<'a> CLangTransform<'a> {
                         (shr, idx != 4)
                     };
 
+                    mvars.use_var(prev_type, prev_pass[i]);
                     let expr = if j != 0 {
                         Self::format_op(shr, &[&tv, &(j << bits_log).to_string()])
                     } else {
@@ -1792,7 +1820,7 @@ impl<'a> CLangTransform<'a> {
                         let ns0 = mvars.new_var(0);
                         (0, ns0)
                     };
-                    let store_op = self.format_store_op(mvars, nt, ns, expr);
+                    let store_op = self.format_store_op_out(mvars, nt, ns, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                     if self.config.comp_type_bit_len > 32 {
                         new_pass[idx] = ns;
@@ -1811,31 +1839,32 @@ impl<'a> CLangTransform<'a> {
             for i in 0..type_len_log - 5 {
                 let mut new_pass = vec![0; 32];
                 for j in 0..16 {
+                    let orig_i = i;
                     let fj = j & ((1 << 4) - 1);
                     let sj = fj | (1 << 4);
                     let t0 = mvars.format_var(prev_type, prev_pass[2 * j]);
                     let t1 = mvars.format_var(prev_type, prev_pass[2 * j + 1]);
                     mvars.use_var(prev_type, prev_pass[2 * j]);
                     mvars.use_var(prev_type, prev_pass[2 * j + 1]);
-                    let (nt, ns0) = if i < type_len_log - 5 {
+                    let (nt, ns0) = if orig_i < type_len_log - 5 - 1 {
                         (0, mvars.new_var(0))
                     } else {
                         (output_type, fj)
                     };
                     let i = i + 5;
                     let expr = self.gen_unpack_low(mvars, i, true, true, &t0, &t1);
-                    let store_op = self.format_store_op(mvars, nt, ns0, expr);
+                    let store_op = self.format_store_op_out(mvars, nt, ns0, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                     new_pass[fj] = ns0;
                     mvars.use_var(prev_type, prev_pass[2 * j]);
                     mvars.use_var(prev_type, prev_pass[2 * j + 1]);
-                    let (nt, ns1) = if i < type_len_log - 5 {
+                    let (nt, ns1) = if orig_i < type_len_log - 5 - 1 {
                         (0, mvars.new_var(0))
                     } else {
                         (output_type, sj)
                     };
                     let expr = self.gen_unpack_high(mvars, i, true, true, &t0, &t1);
-                    let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                    let store_op = self.format_store_op_out(mvars, nt, ns1, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
                     new_pass[sj] = ns1;
                 }
@@ -1849,7 +1878,7 @@ impl<'a> CLangTransform<'a> {
         let mut mvars = CLangMacroVars::new(
             [self.config.comp_type_name],
             (0..bits as u32).map(|i| Self::format_arg_s_out(i.to_string())),
-            (0..32).map(|i| Self::format_arg_d_out(i)),
+            (0..32).map(|i| self.format_arg_d_out(i)),
             [],
             self.config.collect_constants,
         );
@@ -1864,6 +1893,14 @@ impl<'a> CLangTransform<'a> {
         )
         .unwrap();
         self.out.write_str("{\\\n").unwrap();
+        if self.config.comp_type_bit_len > 32 {
+            writeln!(
+                &mut self.out,
+                "    {0}* dest = ({0}*)(D);\\",
+                self.config.comp_type_name
+            )
+            .unwrap();
+        }
         self.gen_output_transform_int(&mut mvars, bits);
         mvars.write_constant_defs(&mut self.out);
         mvars.write_var_defs(&mut self.out);
