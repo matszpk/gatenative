@@ -1755,7 +1755,7 @@ impl<'a> CLangTransform<'a> {
             // where [A,B,....] - number with joined bits A,B,... .
             //       TBL[x][a:b] - bits from a to b from value from table under index x.
             // to 32-bit dwords.
-            let mut new_pass = vec![0; 1 << bits_log];
+            let mut new_pass = vec![0; 32];
             for i in 0..1 << bits_log {
                 //let mut final_expr = String::new();
                 let tv = mvars.format_var(prev_type, prev_pass[i]);
@@ -1790,7 +1790,7 @@ impl<'a> CLangTransform<'a> {
                         (output_type, idx)
                     } else {
                         let ns0 = mvars.new_var(0);
-                        (ns0, 0)
+                        (0, ns0)
                     };
                     let store_op = self.format_store_op(mvars, nt, ns, expr);
                     writeln!(mvars, "    {};\\", store_op).unwrap();
