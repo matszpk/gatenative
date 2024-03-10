@@ -1215,6 +1215,12 @@ impl<'a> CLangTransform<'a> {
     pub fn format_arg_d(arg: u32) -> String {
         format!("(D{})", arg)
     }
+    pub fn format_arg_s_out(arg: String) -> String {
+        format!("(S{})", arg)
+    }
+    pub fn format_arg_d_out(arg: u32) -> String {
+        format!("((D)[{}])", arg)
+    }
     pub fn format_load_input(&self, arg: String) -> String {
         if let Some(load_op) = self.config.load_op {
             Self::format_op(load_op, &[&format!("((S) + {})", arg)])
@@ -1646,13 +1652,110 @@ impl<'a> CLangTransform<'a> {
         self.out.write_str("}\n").unwrap();
     }
 
-    fn gen_output_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {}
+    fn gen_output_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
+        let output_type = if self.config.final_type.is_some() {
+            TEMPS_TYPE
+        } else {
+            OUTPUT_TYPE
+        };
+        let bits_log = calc_log_bits(bits);
+        let mut prev_type = INPUT_TYPE;
+        let mut prev_pass = (0..32).collect::<Vec<_>>();
+        let mut bit_usage = std::iter::repeat(u32::MAX)
+            .take(bits)
+            .chain(std::iter::repeat(0).take(32 - bits))
+            .collect::<Vec<_>>();
+        for i in 0..bits_log {
+            // main routine of transposing bits
+            // using interleaving instructions or operations to quickly
+            // transpose bit matrix where rows are words and columns are bits.
+            let mut new_pass = vec![0; 1 << bits_log];
+            for j in 0..1 << (bits_log - 1) {
+                let fj = ((j >> i) << (i + 1)) | (j & ((1 << i) - 1));
+                // if i == 0 && fj >= bits {
+                //     continue;
+                // }
+                let sj = fj | (1 << i);
+                let bit_usage_f =
+                    (bit_usage[fj] & BIT_MASK_TBL[2 * i]) != 0 && (i != 0 || fj < bits);
+                let bit_usage_s =
+                    (bit_usage[sj] & BIT_MASK_TBL[2 * i]) != 0 && (i != 0 || sj < bits);
+                if bit_usage_f {
+                    mvars.use_var(prev_type, prev_pass[fj]);
+                }
+                if bit_usage_s {
+                    mvars.use_var(prev_type, prev_pass[sj]);
+                }
+                let (nt, ns0) = if i != bits_log - 1 {
+                    (0, mvars.new_var(0))
+                } else {
+                    (output_type, fj)
+                };
+                let t0 = if i != 0 || fj < bits {
+                    mvars.format_var(prev_type, prev_pass[fj])
+                } else {
+                    String::new()
+                };
+                let t1 = if i != 0 || sj < bits {
+                    mvars.format_var(prev_type, prev_pass[sj])
+                } else {
+                    String::new()
+                };
+
+                let expr = self.gen_unpack_low(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
+                if !expr.is_empty() {
+                    let store_op = self.format_store_op(mvars, nt, ns0, expr);
+                    writeln!(mvars, "    {};\\", store_op).unwrap();
+                }
+                if i != 0 {
+                    new_pass[fj] = ns0;
+                }
+
+                // second expression
+                //if i != 0 || sj < bits {
+                if true {
+                    let bit_usage_f = (bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) != 0;
+                    let bit_usage_s = (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]) != 0;
+                    if bit_usage_f {
+                        mvars.use_var(prev_type, prev_pass[fj]);
+                    }
+                    if bit_usage_s {
+                        mvars.use_var(prev_type, prev_pass[sj]);
+                    }
+                    let (nt, ns1) = if i != bits_log - 1 {
+                        (0, mvars.new_var(0))
+                    } else {
+                        (output_type, sj)
+                    };
+                    let expr = self.gen_unpack_high(mvars, i, bit_usage_f, bit_usage_s, &t0, &t1);
+                    if !expr.is_empty() {
+                        let store_op = self.format_store_op(mvars, nt, ns1, expr);
+                        writeln!(mvars, "    {};\\", store_op).unwrap();
+                    }
+                    if i != 0 {
+                        new_pass[sj] = ns1;
+                    }
+                }
+                // update bit usage
+                let bit_fj = (bit_usage[fj] & BIT_MASK_TBL[2 * i])
+                    | ((bit_usage[sj] & BIT_MASK_TBL[2 * i]) << (1 << i));
+                let bit_sj = ((bit_usage[fj] & BIT_MASK_TBL[2 * i + 1]) >> (1 << i))
+                    | (bit_usage[sj] & BIT_MASK_TBL[2 * i + 1]);
+                bit_usage[fj] = bit_fj;
+                bit_usage[sj] = bit_sj;
+            }
+            prev_type = 0;
+            if i != 0 {
+                prev_pass = new_pass;
+            }
+        }
+    }
 
     pub fn gen_output_transform(&mut self, bits: usize) {
         let mut mvars = CLangMacroVars::new(
             [self.config.comp_type_name],
-            [],
-            (0..bits as u32).map(|i| Self::format_arg_d(i)),
+            (0..bits as u32).map(|i| Self::format_arg_s_out(i.to_string())),
+            (0..32).map(|i| Self::format_arg_d_out(i)),
             [],
             self.config.collect_constants,
         );
