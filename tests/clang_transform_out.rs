@@ -1697,7 +1697,8 @@ fn test_clang_transform_gen_output_transform() {
     (dest[31]) = _m_punpckhdq(t0v30, t0v31);\
 }
 "##,
-        transform.out());
+        transform.out()
+    );
     let mut transform = CLANG_TRANSFORM_INTEL_SSE2.transform();
     transform.gen_output_transform(32);
     transform.gen_output_transform(16);
@@ -2486,8 +2487,925 @@ fn test_clang_transform_gen_output_transform() {
     (dest[31]) = _mm_unpackhi_epi64(t0v28, t0v30);\
 }
 "##,
-        transform.out());
-    // let mut transform = CLANG_TRANSFORM_INTEL_SSE2.transform();
+        transform.out()
+    );
+    let mut transform = CLANG_TRANSFORM_INTEL_AVX2.transform();
+    transform.gen_output_transform(32);
+    transform.gen_output_transform(16);
+    transform.gen_output_transform(6);
+    transform.gen_output_transform(1);
+    assert_eq!(
+        r##"#define OUTPUT_TRANSFORM_B32(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31) \
+{\
+    __m256i* dest = (__m256i*)(D);\
+    const __m256i c0 = (*(const __m256i*)(transform_const_tbl + 8*0));\
+    const __m256i c1 = (*(const __m256i*)(transform_const_tbl + 8*1));\
+    const __m256i c8 = (*(const __m256i*)(transform_const_tbl + 8*12));\
+    const __m256i c9 = (*(const __m256i*)(transform_const_tbl + 8*13));\
+    const __m256i c2 = (*(const __m256i*)(transform_const_tbl + 8*2));\
+    const __m256i c3 = (*(const __m256i*)(transform_const_tbl + 8*3));\
+    const __m256i c4 = (*(const __m256i*)(transform_const_tbl + 8*4));\
+    const __m256i c5 = (*(const __m256i*)(transform_const_tbl + 8*5));\
+    const __m256i c6 = (*(const __m256i*)(transform_const_tbl + 8*6));\
+    const __m256i c7 = (*(const __m256i*)(transform_const_tbl + 8*7));\
+    __m256i t0v0;\
+    __m256i t0v1;\
+    __m256i t0v2;\
+    __m256i t0v3;\
+    __m256i t0v4;\
+    __m256i t0v5;\
+    __m256i t0v6;\
+    __m256i t0v7;\
+    __m256i t0v8;\
+    __m256i t0v9;\
+    __m256i t0v10;\
+    __m256i t0v11;\
+    __m256i t0v12;\
+    __m256i t0v13;\
+    __m256i t0v14;\
+    __m256i t0v15;\
+    __m256i t0v16;\
+    __m256i t0v17;\
+    __m256i t0v18;\
+    __m256i t0v19;\
+    __m256i t0v20;\
+    __m256i t0v21;\
+    __m256i t0v22;\
+    __m256i t0v23;\
+    __m256i t0v24;\
+    __m256i t0v25;\
+    __m256i t0v26;\
+    __m256i t0v27;\
+    __m256i t0v28;\
+    __m256i t0v29;\
+    __m256i t0v30;\
+    __m256i t0v31;\
+    __m256i t0v32;\
+    t0v0 = _mm256_or_si256(_mm256_and_si256((S0), c0), _mm256_slli_epi16(_mm256_and_si256((S1), c0), 1));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S0), c1), 1), _mm256_and_si256((S1), c1));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256((S2), c0), _mm256_slli_epi16(_mm256_and_si256((S3), c0), 1));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S2), c1), 1), _mm256_and_si256((S3), c1));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256((S4), c0), _mm256_slli_epi16(_mm256_and_si256((S5), c0), 1));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S4), c1), 1), _mm256_and_si256((S5), c1));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256((S6), c0), _mm256_slli_epi16(_mm256_and_si256((S7), c0), 1));\
+    t0v7 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S6), c1), 1), _mm256_and_si256((S7), c1));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256((S8), c0), _mm256_slli_epi16(_mm256_and_si256((S9), c0), 1));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S8), c1), 1), _mm256_and_si256((S9), c1));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256((S10), c0), _mm256_slli_epi16(_mm256_and_si256((S11), c0), 1));\
+    t0v11 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S10), c1), 1), _mm256_and_si256((S11), c1));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256((S12), c0), _mm256_slli_epi16(_mm256_and_si256((S13), c0), 1));\
+    t0v13 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S12), c1), 1), _mm256_and_si256((S13), c1));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256((S14), c0), _mm256_slli_epi16(_mm256_and_si256((S15), c0), 1));\
+    t0v15 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S14), c1), 1), _mm256_and_si256((S15), c1));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256((S16), c0), _mm256_slli_epi16(_mm256_and_si256((S17), c0), 1));\
+    t0v17 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S16), c1), 1), _mm256_and_si256((S17), c1));\
+    t0v18 = _mm256_or_si256(_mm256_and_si256((S18), c0), _mm256_slli_epi16(_mm256_and_si256((S19), c0), 1));\
+    t0v19 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S18), c1), 1), _mm256_and_si256((S19), c1));\
+    t0v20 = _mm256_or_si256(_mm256_and_si256((S20), c0), _mm256_slli_epi16(_mm256_and_si256((S21), c0), 1));\
+    t0v21 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S20), c1), 1), _mm256_and_si256((S21), c1));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256((S22), c0), _mm256_slli_epi16(_mm256_and_si256((S23), c0), 1));\
+    t0v23 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S22), c1), 1), _mm256_and_si256((S23), c1));\
+    t0v24 = _mm256_or_si256(_mm256_and_si256((S24), c0), _mm256_slli_epi16(_mm256_and_si256((S25), c0), 1));\
+    t0v25 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S24), c1), 1), _mm256_and_si256((S25), c1));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256((S26), c0), _mm256_slli_epi16(_mm256_and_si256((S27), c0), 1));\
+    t0v27 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S26), c1), 1), _mm256_and_si256((S27), c1));\
+    t0v28 = _mm256_or_si256(_mm256_and_si256((S28), c0), _mm256_slli_epi16(_mm256_and_si256((S29), c0), 1));\
+    t0v29 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S28), c1), 1), _mm256_and_si256((S29), c1));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256((S30), c0), _mm256_slli_epi16(_mm256_and_si256((S31), c0), 1));\
+    t0v31 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S30), c1), 1), _mm256_and_si256((S31), c1));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v0, c2), _mm256_slli_epi16(_mm256_and_si256(t0v2, c2), 2));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c3), 2), _mm256_and_si256(t0v2, c3));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256(t0v1, c2), _mm256_slli_epi16(_mm256_and_si256(t0v3, c2), 2));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c3), 2), _mm256_and_si256(t0v3, c3));\
+    t0v3 = _mm256_or_si256(_mm256_and_si256(t0v4, c2), _mm256_slli_epi16(_mm256_and_si256(t0v6, c2), 2));\
+    t0v4 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v4, c3), 2), _mm256_and_si256(t0v6, c3));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v5, c2), _mm256_slli_epi16(_mm256_and_si256(t0v7, c2), 2));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v5, c3), 2), _mm256_and_si256(t0v7, c3));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v8, c2), _mm256_slli_epi16(_mm256_and_si256(t0v10, c2), 2));\
+    t0v8 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v8, c3), 2), _mm256_and_si256(t0v10, c3));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256(t0v9, c2), _mm256_slli_epi16(_mm256_and_si256(t0v11, c2), 2));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v9, c3), 2), _mm256_and_si256(t0v11, c3));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v12, c2), _mm256_slli_epi16(_mm256_and_si256(t0v14, c2), 2));\
+    t0v12 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v12, c3), 2), _mm256_and_si256(t0v14, c3));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v13, c2), _mm256_slli_epi16(_mm256_and_si256(t0v15, c2), 2));\
+    t0v13 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v13, c3), 2), _mm256_and_si256(t0v15, c3));\
+    t0v15 = _mm256_or_si256(_mm256_and_si256(t0v16, c2), _mm256_slli_epi16(_mm256_and_si256(t0v18, c2), 2));\
+    t0v16 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v16, c3), 2), _mm256_and_si256(t0v18, c3));\
+    t0v18 = _mm256_or_si256(_mm256_and_si256(t0v17, c2), _mm256_slli_epi16(_mm256_and_si256(t0v19, c2), 2));\
+    t0v17 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v17, c3), 2), _mm256_and_si256(t0v19, c3));\
+    t0v19 = _mm256_or_si256(_mm256_and_si256(t0v20, c2), _mm256_slli_epi16(_mm256_and_si256(t0v22, c2), 2));\
+    t0v20 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v20, c3), 2), _mm256_and_si256(t0v22, c3));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256(t0v21, c2), _mm256_slli_epi16(_mm256_and_si256(t0v23, c2), 2));\
+    t0v21 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v21, c3), 2), _mm256_and_si256(t0v23, c3));\
+    t0v23 = _mm256_or_si256(_mm256_and_si256(t0v24, c2), _mm256_slli_epi16(_mm256_and_si256(t0v26, c2), 2));\
+    t0v24 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v24, c3), 2), _mm256_and_si256(t0v26, c3));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v25, c2), _mm256_slli_epi16(_mm256_and_si256(t0v27, c2), 2));\
+    t0v25 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v25, c3), 2), _mm256_and_si256(t0v27, c3));\
+    t0v27 = _mm256_or_si256(_mm256_and_si256(t0v28, c2), _mm256_slli_epi16(_mm256_and_si256(t0v30, c2), 2));\
+    t0v28 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v28, c3), 2), _mm256_and_si256(t0v30, c3));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256(t0v29, c2), _mm256_slli_epi16(_mm256_and_si256(t0v31, c2), 2));\
+    t0v29 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v29, c3), 2), _mm256_and_si256(t0v31, c3));\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v32, c4), _mm256_slli_epi16(_mm256_and_si256(t0v3, c4), 4));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v32, c5), 4), _mm256_and_si256(t0v3, c5));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v2, c4), _mm256_slli_epi16(_mm256_and_si256(t0v6, c4), 4));\
+    t0v2 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v2, c5), 4), _mm256_and_si256(t0v6, c5));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v0, c4), _mm256_slli_epi16(_mm256_and_si256(t0v4, c4), 4));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c5), 4), _mm256_and_si256(t0v4, c5));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256(t0v1, c4), _mm256_slli_epi16(_mm256_and_si256(t0v5, c4), 4));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c5), 4), _mm256_and_si256(t0v5, c5));\
+    t0v5 = _mm256_or_si256(_mm256_and_si256(t0v7, c4), _mm256_slli_epi16(_mm256_and_si256(t0v11, c4), 4));\
+    t0v7 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v7, c5), 4), _mm256_and_si256(t0v11, c5));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v10, c4), _mm256_slli_epi16(_mm256_and_si256(t0v14, c4), 4));\
+    t0v10 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v10, c5), 4), _mm256_and_si256(t0v14, c5));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v8, c4), _mm256_slli_epi16(_mm256_and_si256(t0v12, c4), 4));\
+    t0v8 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v8, c5), 4), _mm256_and_si256(t0v12, c5));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256(t0v9, c4), _mm256_slli_epi16(_mm256_and_si256(t0v13, c4), 4));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v9, c5), 4), _mm256_and_si256(t0v13, c5));\
+    t0v13 = _mm256_or_si256(_mm256_and_si256(t0v15, c4), _mm256_slli_epi16(_mm256_and_si256(t0v19, c4), 4));\
+    t0v15 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v15, c5), 4), _mm256_and_si256(t0v19, c5));\
+    t0v19 = _mm256_or_si256(_mm256_and_si256(t0v18, c4), _mm256_slli_epi16(_mm256_and_si256(t0v22, c4), 4));\
+    t0v18 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v18, c5), 4), _mm256_and_si256(t0v22, c5));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256(t0v16, c4), _mm256_slli_epi16(_mm256_and_si256(t0v20, c4), 4));\
+    t0v16 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v16, c5), 4), _mm256_and_si256(t0v20, c5));\
+    t0v20 = _mm256_or_si256(_mm256_and_si256(t0v17, c4), _mm256_slli_epi16(_mm256_and_si256(t0v21, c4), 4));\
+    t0v17 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v17, c5), 4), _mm256_and_si256(t0v21, c5));\
+    t0v21 = _mm256_or_si256(_mm256_and_si256(t0v23, c4), _mm256_slli_epi16(_mm256_and_si256(t0v27, c4), 4));\
+    t0v23 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v23, c5), 4), _mm256_and_si256(t0v27, c5));\
+    t0v27 = _mm256_or_si256(_mm256_and_si256(t0v26, c4), _mm256_slli_epi16(_mm256_and_si256(t0v30, c4), 4));\
+    t0v26 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v26, c5), 4), _mm256_and_si256(t0v30, c5));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256(t0v24, c4), _mm256_slli_epi16(_mm256_and_si256(t0v28, c4), 4));\
+    t0v24 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v24, c5), 4), _mm256_and_si256(t0v28, c5));\
+    t0v28 = _mm256_or_si256(_mm256_and_si256(t0v25, c4), _mm256_slli_epi16(_mm256_and_si256(t0v29, c4), 4));\
+    t0v25 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v25, c5), 4), _mm256_and_si256(t0v29, c5));\
+    t0v29 = _mm256_or_si256(_mm256_and_si256(t0v31, c6), _mm256_slli_epi16(t0v5, 8));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(t0v31, 8), _mm256_and_si256(t0v5, c7));\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v32, c6), _mm256_slli_epi16(t0v11, 8));\
+    t0v11 = _mm256_or_si256(_mm256_srli_epi16(t0v32, 8), _mm256_and_si256(t0v11, c7));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v6, c6), _mm256_slli_epi16(t0v14, 8));\
+    t0v6 = _mm256_or_si256(_mm256_srli_epi16(t0v6, 8), _mm256_and_si256(t0v14, c7));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v4, c6), _mm256_slli_epi16(t0v12, 8));\
+    t0v4 = _mm256_or_si256(_mm256_srli_epi16(t0v4, 8), _mm256_and_si256(t0v12, c7));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256(t0v3, c6), _mm256_slli_epi16(t0v7, 8));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(t0v3, 8), _mm256_and_si256(t0v7, c7));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v2, c6), _mm256_slli_epi16(t0v10, 8));\
+    t0v2 = _mm256_or_si256(_mm256_srli_epi16(t0v2, 8), _mm256_and_si256(t0v10, c7));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256(t0v0, c6), _mm256_slli_epi16(t0v8, 8));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(t0v0, 8), _mm256_and_si256(t0v8, c7));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256(t0v1, c6), _mm256_slli_epi16(t0v9, 8));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(t0v1, 8), _mm256_and_si256(t0v9, c7));\
+    t0v9 = _mm256_or_si256(_mm256_and_si256(t0v13, c6), _mm256_slli_epi16(t0v21, 8));\
+    t0v13 = _mm256_or_si256(_mm256_srli_epi16(t0v13, 8), _mm256_and_si256(t0v21, c7));\
+    t0v21 = _mm256_or_si256(_mm256_and_si256(t0v19, c6), _mm256_slli_epi16(t0v27, 8));\
+    t0v19 = _mm256_or_si256(_mm256_srli_epi16(t0v19, 8), _mm256_and_si256(t0v27, c7));\
+    t0v27 = _mm256_or_si256(_mm256_and_si256(t0v22, c6), _mm256_slli_epi16(t0v30, 8));\
+    t0v22 = _mm256_or_si256(_mm256_srli_epi16(t0v22, 8), _mm256_and_si256(t0v30, c7));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256(t0v20, c6), _mm256_slli_epi16(t0v28, 8));\
+    t0v20 = _mm256_or_si256(_mm256_srli_epi16(t0v20, 8), _mm256_and_si256(t0v28, c7));\
+    t0v28 = _mm256_or_si256(_mm256_and_si256(t0v15, c6), _mm256_slli_epi16(t0v23, 8));\
+    t0v15 = _mm256_or_si256(_mm256_srli_epi16(t0v15, 8), _mm256_and_si256(t0v23, c7));\
+    t0v23 = _mm256_or_si256(_mm256_and_si256(t0v18, c6), _mm256_slli_epi16(t0v26, 8));\
+    t0v18 = _mm256_or_si256(_mm256_srli_epi16(t0v18, 8), _mm256_and_si256(t0v26, c7));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v16, c6), _mm256_slli_epi16(t0v24, 8));\
+    t0v16 = _mm256_or_si256(_mm256_srli_epi16(t0v16, 8), _mm256_and_si256(t0v24, c7));\
+    t0v24 = _mm256_or_si256(_mm256_and_si256(t0v17, c6), _mm256_slli_epi16(t0v25, 8));\
+    t0v17 = _mm256_or_si256(_mm256_srli_epi16(t0v17, 8), _mm256_and_si256(t0v25, c7));\
+    t0v25 = _mm256_blend_epi16(t0v29, _mm256_slli_epi32(t0v9, 16), 0xaa);\
+    t0v9 = _mm256_blend_epi16(_mm256_srli_epi32(t0v29, 16), t0v9, 0xaa);\
+    t0v29 = _mm256_blend_epi16(t0v31, _mm256_slli_epi32(t0v21, 16), 0xaa);\
+    t0v21 = _mm256_blend_epi16(_mm256_srli_epi32(t0v31, 16), t0v21, 0xaa);\
+    t0v31 = _mm256_blend_epi16(t0v32, _mm256_slli_epi32(t0v27, 16), 0xaa);\
+    t0v27 = _mm256_blend_epi16(_mm256_srli_epi32(t0v32, 16), t0v27, 0xaa);\
+    t0v32 = _mm256_blend_epi16(t0v14, _mm256_slli_epi32(t0v30, 16), 0xaa);\
+    t0v14 = _mm256_blend_epi16(_mm256_srli_epi32(t0v14, 16), t0v30, 0xaa);\
+    t0v30 = _mm256_blend_epi16(t0v12, _mm256_slli_epi32(t0v28, 16), 0xaa);\
+    t0v12 = _mm256_blend_epi16(_mm256_srli_epi32(t0v12, 16), t0v28, 0xaa);\
+    t0v28 = _mm256_blend_epi16(t0v7, _mm256_slli_epi32(t0v23, 16), 0xaa);\
+    t0v7 = _mm256_blend_epi16(_mm256_srli_epi32(t0v7, 16), t0v23, 0xaa);\
+    t0v23 = _mm256_blend_epi16(t0v10, _mm256_slli_epi32(t0v26, 16), 0xaa);\
+    t0v10 = _mm256_blend_epi16(_mm256_srli_epi32(t0v10, 16), t0v26, 0xaa);\
+    t0v26 = _mm256_blend_epi16(t0v8, _mm256_slli_epi32(t0v24, 16), 0xaa);\
+    t0v8 = _mm256_blend_epi16(_mm256_srli_epi32(t0v8, 16), t0v24, 0xaa);\
+    t0v24 = _mm256_blend_epi16(t0v5, _mm256_slli_epi32(t0v13, 16), 0xaa);\
+    t0v5 = _mm256_blend_epi16(_mm256_srli_epi32(t0v5, 16), t0v13, 0xaa);\
+    t0v13 = _mm256_blend_epi16(t0v11, _mm256_slli_epi32(t0v19, 16), 0xaa);\
+    t0v11 = _mm256_blend_epi16(_mm256_srli_epi32(t0v11, 16), t0v19, 0xaa);\
+    t0v19 = _mm256_blend_epi16(t0v6, _mm256_slli_epi32(t0v22, 16), 0xaa);\
+    t0v6 = _mm256_blend_epi16(_mm256_srli_epi32(t0v6, 16), t0v22, 0xaa);\
+    t0v22 = _mm256_blend_epi16(t0v4, _mm256_slli_epi32(t0v20, 16), 0xaa);\
+    t0v4 = _mm256_blend_epi16(_mm256_srli_epi32(t0v4, 16), t0v20, 0xaa);\
+    t0v20 = _mm256_blend_epi16(t0v3, _mm256_slli_epi32(t0v15, 16), 0xaa);\
+    t0v3 = _mm256_blend_epi16(_mm256_srli_epi32(t0v3, 16), t0v15, 0xaa);\
+    t0v15 = _mm256_blend_epi16(t0v2, _mm256_slli_epi32(t0v18, 16), 0xaa);\
+    t0v2 = _mm256_blend_epi16(_mm256_srli_epi32(t0v2, 16), t0v18, 0xaa);\
+    t0v18 = _mm256_blend_epi16(t0v0, _mm256_slli_epi32(t0v16, 16), 0xaa);\
+    t0v0 = _mm256_blend_epi16(_mm256_srli_epi32(t0v0, 16), t0v16, 0xaa);\
+    t0v16 = _mm256_blend_epi16(t0v1, _mm256_slli_epi32(t0v17, 16), 0xaa);\
+    t0v1 = _mm256_blend_epi16(_mm256_srli_epi32(t0v1, 16), t0v17, 0xaa);\
+    t0v17 = _mm256_blend_epi32(t0v25, _mm256_slli_epi64(t0v29, 32), 0xaa);\
+    t0v25 = _mm256_blend_epi32(_mm256_srli_epi64(t0v25, 32), t0v29, 0xaa);\
+    t0v29 = _mm256_blend_epi32(t0v31, _mm256_slli_epi64(t0v32, 32), 0xaa);\
+    t0v31 = _mm256_blend_epi32(_mm256_srli_epi64(t0v31, 32), t0v32, 0xaa);\
+    t0v32 = _mm256_blend_epi32(t0v30, _mm256_slli_epi64(t0v28, 32), 0xaa);\
+    t0v28 = _mm256_blend_epi32(_mm256_srli_epi64(t0v30, 32), t0v28, 0xaa);\
+    t0v30 = _mm256_blend_epi32(t0v23, _mm256_slli_epi64(t0v26, 32), 0xaa);\
+    t0v23 = _mm256_blend_epi32(_mm256_srli_epi64(t0v23, 32), t0v26, 0xaa);\
+    t0v26 = _mm256_blend_epi32(t0v24, _mm256_slli_epi64(t0v13, 32), 0xaa);\
+    t0v13 = _mm256_blend_epi32(_mm256_srli_epi64(t0v24, 32), t0v13, 0xaa);\
+    t0v24 = _mm256_blend_epi32(t0v19, _mm256_slli_epi64(t0v22, 32), 0xaa);\
+    t0v19 = _mm256_blend_epi32(_mm256_srli_epi64(t0v19, 32), t0v22, 0xaa);\
+    t0v22 = _mm256_blend_epi32(t0v20, _mm256_slli_epi64(t0v15, 32), 0xaa);\
+    t0v15 = _mm256_blend_epi32(_mm256_srli_epi64(t0v20, 32), t0v15, 0xaa);\
+    t0v20 = _mm256_blend_epi32(t0v18, _mm256_slli_epi64(t0v16, 32), 0xaa);\
+    t0v16 = _mm256_blend_epi32(_mm256_srli_epi64(t0v18, 32), t0v16, 0xaa);\
+    t0v18 = _mm256_blend_epi32(t0v9, _mm256_slli_epi64(t0v21, 32), 0xaa);\
+    t0v9 = _mm256_blend_epi32(_mm256_srli_epi64(t0v9, 32), t0v21, 0xaa);\
+    t0v21 = _mm256_blend_epi32(t0v27, _mm256_slli_epi64(t0v14, 32), 0xaa);\
+    t0v14 = _mm256_blend_epi32(_mm256_srli_epi64(t0v27, 32), t0v14, 0xaa);\
+    t0v27 = _mm256_blend_epi32(t0v12, _mm256_slli_epi64(t0v7, 32), 0xaa);\
+    t0v7 = _mm256_blend_epi32(_mm256_srli_epi64(t0v12, 32), t0v7, 0xaa);\
+    t0v12 = _mm256_blend_epi32(t0v10, _mm256_slli_epi64(t0v8, 32), 0xaa);\
+    t0v8 = _mm256_blend_epi32(_mm256_srli_epi64(t0v10, 32), t0v8, 0xaa);\
+    t0v10 = _mm256_blend_epi32(t0v5, _mm256_slli_epi64(t0v11, 32), 0xaa);\
+    t0v5 = _mm256_blend_epi32(_mm256_srli_epi64(t0v5, 32), t0v11, 0xaa);\
+    t0v11 = _mm256_blend_epi32(t0v6, _mm256_slli_epi64(t0v4, 32), 0xaa);\
+    t0v4 = _mm256_blend_epi32(_mm256_srli_epi64(t0v6, 32), t0v4, 0xaa);\
+    t0v6 = _mm256_blend_epi32(t0v3, _mm256_slli_epi64(t0v2, 32), 0xaa);\
+    t0v2 = _mm256_blend_epi32(_mm256_srli_epi64(t0v3, 32), t0v2, 0xaa);\
+    t0v3 = _mm256_blend_epi32(t0v0, _mm256_slli_epi64(t0v1, 32), 0xaa);\
+    t0v0 = _mm256_blend_epi32(_mm256_srli_epi64(t0v0, 32), t0v1, 0xaa);\
+    t0v1 = _mm256_or_si256(_mm256_and_si256(t0v17, c8), _mm256_slli_si256(t0v29, (64)>>3));\
+    t0v17 = _mm256_or_si256(_mm256_srli_si256(t0v17, (64)>>3), _mm256_and_si256(t0v29, c9));\
+    t0v29 = _mm256_or_si256(_mm256_and_si256(t0v32, c8), _mm256_slli_si256(t0v30, (64)>>3));\
+    t0v30 = _mm256_or_si256(_mm256_srli_si256(t0v32, (64)>>3), _mm256_and_si256(t0v30, c9));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v26, c8), _mm256_slli_si256(t0v24, (64)>>3));\
+    t0v24 = _mm256_or_si256(_mm256_srli_si256(t0v26, (64)>>3), _mm256_and_si256(t0v24, c9));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v22, c8), _mm256_slli_si256(t0v20, (64)>>3));\
+    t0v20 = _mm256_or_si256(_mm256_srli_si256(t0v22, (64)>>3), _mm256_and_si256(t0v20, c9));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256(t0v18, c8), _mm256_slli_si256(t0v21, (64)>>3));\
+    t0v18 = _mm256_or_si256(_mm256_srli_si256(t0v18, (64)>>3), _mm256_and_si256(t0v21, c9));\
+    t0v21 = _mm256_or_si256(_mm256_and_si256(t0v27, c8), _mm256_slli_si256(t0v12, (64)>>3));\
+    t0v12 = _mm256_or_si256(_mm256_srli_si256(t0v27, (64)>>3), _mm256_and_si256(t0v12, c9));\
+    t0v27 = _mm256_or_si256(_mm256_and_si256(t0v10, c8), _mm256_slli_si256(t0v11, (64)>>3));\
+    t0v10 = _mm256_or_si256(_mm256_srli_si256(t0v10, (64)>>3), _mm256_and_si256(t0v11, c9));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v6, c8), _mm256_slli_si256(t0v3, (64)>>3));\
+    t0v3 = _mm256_or_si256(_mm256_srli_si256(t0v6, (64)>>3), _mm256_and_si256(t0v3, c9));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v25, c8), _mm256_slli_si256(t0v31, (64)>>3));\
+    t0v25 = _mm256_or_si256(_mm256_srli_si256(t0v25, (64)>>3), _mm256_and_si256(t0v31, c9));\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v28, c8), _mm256_slli_si256(t0v23, (64)>>3));\
+    t0v23 = _mm256_or_si256(_mm256_srli_si256(t0v28, (64)>>3), _mm256_and_si256(t0v23, c9));\
+    t0v28 = _mm256_or_si256(_mm256_and_si256(t0v13, c8), _mm256_slli_si256(t0v19, (64)>>3));\
+    t0v13 = _mm256_or_si256(_mm256_srli_si256(t0v13, (64)>>3), _mm256_and_si256(t0v19, c9));\
+    t0v19 = _mm256_or_si256(_mm256_and_si256(t0v15, c8), _mm256_slli_si256(t0v16, (64)>>3));\
+    t0v15 = _mm256_or_si256(_mm256_srli_si256(t0v15, (64)>>3), _mm256_and_si256(t0v16, c9));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v9, c8), _mm256_slli_si256(t0v14, (64)>>3));\
+    t0v9 = _mm256_or_si256(_mm256_srli_si256(t0v9, (64)>>3), _mm256_and_si256(t0v14, c9));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v7, c8), _mm256_slli_si256(t0v8, (64)>>3));\
+    t0v7 = _mm256_or_si256(_mm256_srli_si256(t0v7, (64)>>3), _mm256_and_si256(t0v8, c9));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256(t0v5, c8), _mm256_slli_si256(t0v4, (64)>>3));\
+    t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c9));\
+    t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c8), _mm256_slli_si256(t0v0, (64)>>3));\
+    t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c9));\
+    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v29, 0x20);\
+    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v29, 0x31);\
+    (dest[1]) = _mm256_permute2x128_si256(t0v32, t0v26, 0x20);\
+    (dest[17]) = _mm256_permute2x128_si256(t0v32, t0v26, 0x31);\
+    (dest[2]) = _mm256_permute2x128_si256(t0v22, t0v21, 0x20);\
+    (dest[18]) = _mm256_permute2x128_si256(t0v22, t0v21, 0x31);\
+    (dest[3]) = _mm256_permute2x128_si256(t0v27, t0v11, 0x20);\
+    (dest[19]) = _mm256_permute2x128_si256(t0v27, t0v11, 0x31);\
+    (dest[4]) = _mm256_permute2x128_si256(t0v6, t0v31, 0x20);\
+    (dest[20]) = _mm256_permute2x128_si256(t0v6, t0v31, 0x31);\
+    (dest[5]) = _mm256_permute2x128_si256(t0v28, t0v19, 0x20);\
+    (dest[21]) = _mm256_permute2x128_si256(t0v28, t0v19, 0x31);\
+    (dest[6]) = _mm256_permute2x128_si256(t0v16, t0v14, 0x20);\
+    (dest[22]) = _mm256_permute2x128_si256(t0v16, t0v14, 0x31);\
+    (dest[7]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x20);\
+    (dest[23]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x31);\
+    (dest[8]) = _mm256_permute2x128_si256(t0v17, t0v30, 0x20);\
+    (dest[24]) = _mm256_permute2x128_si256(t0v17, t0v30, 0x31);\
+    (dest[9]) = _mm256_permute2x128_si256(t0v24, t0v20, 0x20);\
+    (dest[25]) = _mm256_permute2x128_si256(t0v24, t0v20, 0x31);\
+    (dest[10]) = _mm256_permute2x128_si256(t0v18, t0v12, 0x20);\
+    (dest[26]) = _mm256_permute2x128_si256(t0v18, t0v12, 0x31);\
+    (dest[11]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x20);\
+    (dest[27]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x31);\
+    (dest[12]) = _mm256_permute2x128_si256(t0v25, t0v23, 0x20);\
+    (dest[28]) = _mm256_permute2x128_si256(t0v25, t0v23, 0x31);\
+    (dest[13]) = _mm256_permute2x128_si256(t0v13, t0v15, 0x20);\
+    (dest[29]) = _mm256_permute2x128_si256(t0v13, t0v15, 0x31);\
+    (dest[14]) = _mm256_permute2x128_si256(t0v9, t0v7, 0x20);\
+    (dest[30]) = _mm256_permute2x128_si256(t0v9, t0v7, 0x31);\
+    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
+    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+}
+#define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
+{\
+    __m256i* dest = (__m256i*)(D);\
+    const __m256i c8 = (*(const __m256i*)(transform_const2_tbl + 8*4));\
+    const __m256i c0 = (*(const __m256i*)(transform_const_tbl + 8*0));\
+    const __m256i c1 = (*(const __m256i*)(transform_const_tbl + 8*1));\
+    const __m256i c9 = (*(const __m256i*)(transform_const_tbl + 8*12));\
+    const __m256i c10 = (*(const __m256i*)(transform_const_tbl + 8*13));\
+    const __m256i c2 = (*(const __m256i*)(transform_const_tbl + 8*2));\
+    const __m256i c3 = (*(const __m256i*)(transform_const_tbl + 8*3));\
+    const __m256i c4 = (*(const __m256i*)(transform_const_tbl + 8*4));\
+    const __m256i c5 = (*(const __m256i*)(transform_const_tbl + 8*5));\
+    const __m256i c6 = (*(const __m256i*)(transform_const_tbl + 8*6));\
+    const __m256i c7 = (*(const __m256i*)(transform_const_tbl + 8*7));\
+    __m256i t0v0;\
+    __m256i t0v1;\
+    __m256i t0v2;\
+    __m256i t0v3;\
+    __m256i t0v4;\
+    __m256i t0v5;\
+    __m256i t0v6;\
+    __m256i t0v7;\
+    __m256i t0v8;\
+    __m256i t0v9;\
+    __m256i t0v10;\
+    __m256i t0v11;\
+    __m256i t0v12;\
+    __m256i t0v13;\
+    __m256i t0v14;\
+    __m256i t0v15;\
+    __m256i t0v16;\
+    __m256i t0v17;\
+    __m256i t0v18;\
+    __m256i t0v19;\
+    __m256i t0v20;\
+    __m256i t0v21;\
+    __m256i t0v22;\
+    __m256i t0v23;\
+    __m256i t0v24;\
+    __m256i t0v25;\
+    __m256i t0v26;\
+    __m256i t0v27;\
+    __m256i t0v28;\
+    __m256i t0v29;\
+    __m256i t0v30;\
+    __m256i t0v31;\
+    __m256i t0v32;\
+    t0v0 = _mm256_or_si256(_mm256_and_si256((S0), c0), _mm256_slli_epi16(_mm256_and_si256((S1), c0), 1));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S0), c1), 1), _mm256_and_si256((S1), c1));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256((S2), c0), _mm256_slli_epi16(_mm256_and_si256((S3), c0), 1));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S2), c1), 1), _mm256_and_si256((S3), c1));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256((S4), c0), _mm256_slli_epi16(_mm256_and_si256((S5), c0), 1));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S4), c1), 1), _mm256_and_si256((S5), c1));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256((S6), c0), _mm256_slli_epi16(_mm256_and_si256((S7), c0), 1));\
+    t0v7 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S6), c1), 1), _mm256_and_si256((S7), c1));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256((S8), c0), _mm256_slli_epi16(_mm256_and_si256((S9), c0), 1));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S8), c1), 1), _mm256_and_si256((S9), c1));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256((S10), c0), _mm256_slli_epi16(_mm256_and_si256((S11), c0), 1));\
+    t0v11 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S10), c1), 1), _mm256_and_si256((S11), c1));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256((S12), c0), _mm256_slli_epi16(_mm256_and_si256((S13), c0), 1));\
+    t0v13 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S12), c1), 1), _mm256_and_si256((S13), c1));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256((S14), c0), _mm256_slli_epi16(_mm256_and_si256((S15), c0), 1));\
+    t0v15 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S14), c1), 1), _mm256_and_si256((S15), c1));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v0, c2), _mm256_slli_epi16(_mm256_and_si256(t0v2, c2), 2));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c3), 2), _mm256_and_si256(t0v2, c3));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256(t0v1, c2), _mm256_slli_epi16(_mm256_and_si256(t0v3, c2), 2));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c3), 2), _mm256_and_si256(t0v3, c3));\
+    t0v3 = _mm256_or_si256(_mm256_and_si256(t0v4, c2), _mm256_slli_epi16(_mm256_and_si256(t0v6, c2), 2));\
+    t0v4 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v4, c3), 2), _mm256_and_si256(t0v6, c3));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v5, c2), _mm256_slli_epi16(_mm256_and_si256(t0v7, c2), 2));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v5, c3), 2), _mm256_and_si256(t0v7, c3));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v8, c2), _mm256_slli_epi16(_mm256_and_si256(t0v10, c2), 2));\
+    t0v8 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v8, c3), 2), _mm256_and_si256(t0v10, c3));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256(t0v9, c2), _mm256_slli_epi16(_mm256_and_si256(t0v11, c2), 2));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v9, c3), 2), _mm256_and_si256(t0v11, c3));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v12, c2), _mm256_slli_epi16(_mm256_and_si256(t0v14, c2), 2));\
+    t0v12 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v12, c3), 2), _mm256_and_si256(t0v14, c3));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v13, c2), _mm256_slli_epi16(_mm256_and_si256(t0v15, c2), 2));\
+    t0v13 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v13, c3), 2), _mm256_and_si256(t0v15, c3));\
+    t0v15 = _mm256_or_si256(_mm256_and_si256(t0v16, c4), _mm256_slli_epi16(_mm256_and_si256(t0v3, c4), 4));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v16, c5), 4), _mm256_and_si256(t0v3, c5));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v2, c4), _mm256_slli_epi16(_mm256_and_si256(t0v6, c4), 4));\
+    t0v2 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v2, c5), 4), _mm256_and_si256(t0v6, c5));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v0, c4), _mm256_slli_epi16(_mm256_and_si256(t0v4, c4), 4));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c5), 4), _mm256_and_si256(t0v4, c5));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256(t0v1, c4), _mm256_slli_epi16(_mm256_and_si256(t0v5, c4), 4));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c5), 4), _mm256_and_si256(t0v5, c5));\
+    t0v5 = _mm256_or_si256(_mm256_and_si256(t0v7, c4), _mm256_slli_epi16(_mm256_and_si256(t0v11, c4), 4));\
+    t0v7 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v7, c5), 4), _mm256_and_si256(t0v11, c5));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v10, c4), _mm256_slli_epi16(_mm256_and_si256(t0v14, c4), 4));\
+    t0v10 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v10, c5), 4), _mm256_and_si256(t0v14, c5));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v8, c4), _mm256_slli_epi16(_mm256_and_si256(t0v12, c4), 4));\
+    t0v8 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v8, c5), 4), _mm256_and_si256(t0v12, c5));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256(t0v9, c4), _mm256_slli_epi16(_mm256_and_si256(t0v13, c4), 4));\
+    t0v9 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v9, c5), 4), _mm256_and_si256(t0v13, c5));\
+    t0v13 = _mm256_or_si256(_mm256_and_si256(t0v15, c6), _mm256_slli_epi16(t0v5, 8));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(t0v15, 8), _mm256_and_si256(t0v5, c7));\
+    t0v15 = _mm256_or_si256(_mm256_and_si256(t0v16, c6), _mm256_slli_epi16(t0v11, 8));\
+    t0v11 = _mm256_or_si256(_mm256_srli_epi16(t0v16, 8), _mm256_and_si256(t0v11, c7));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v6, c6), _mm256_slli_epi16(t0v14, 8));\
+    t0v6 = _mm256_or_si256(_mm256_srli_epi16(t0v6, 8), _mm256_and_si256(t0v14, c7));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v4, c6), _mm256_slli_epi16(t0v12, 8));\
+    t0v4 = _mm256_or_si256(_mm256_srli_epi16(t0v4, 8), _mm256_and_si256(t0v12, c7));\
+    t0v12 = _mm256_or_si256(_mm256_and_si256(t0v3, c6), _mm256_slli_epi16(t0v7, 8));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(t0v3, 8), _mm256_and_si256(t0v7, c7));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v2, c6), _mm256_slli_epi16(t0v10, 8));\
+    t0v2 = _mm256_or_si256(_mm256_srli_epi16(t0v2, 8), _mm256_and_si256(t0v10, c7));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256(t0v0, c6), _mm256_slli_epi16(t0v8, 8));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(t0v0, 8), _mm256_and_si256(t0v8, c7));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256(t0v1, c6), _mm256_slli_epi16(t0v9, 8));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(t0v1, 8), _mm256_and_si256(t0v9, c7));\
+    t0v9 = _mm256_and_si256(t0v13, c8);\
+    t0v13 = _mm256_srli_epi32(t0v13, 16);\
+    t0v17 = _mm256_and_si256(t0v15, c8);\
+    t0v15 = _mm256_srli_epi32(t0v15, 16);\
+    t0v18 = _mm256_and_si256(t0v16, c8);\
+    t0v16 = _mm256_srli_epi32(t0v16, 16);\
+    t0v19 = _mm256_and_si256(t0v14, c8);\
+    t0v14 = _mm256_srli_epi32(t0v14, 16);\
+    t0v20 = _mm256_and_si256(t0v12, c8);\
+    t0v12 = _mm256_srli_epi32(t0v12, 16);\
+    t0v21 = _mm256_and_si256(t0v7, c8);\
+    t0v7 = _mm256_srli_epi32(t0v7, 16);\
+    t0v22 = _mm256_and_si256(t0v10, c8);\
+    t0v10 = _mm256_srli_epi32(t0v10, 16);\
+    t0v23 = _mm256_and_si256(t0v8, c8);\
+    t0v8 = _mm256_srli_epi32(t0v8, 16);\
+    t0v24 = _mm256_and_si256(t0v5, c8);\
+    t0v5 = _mm256_srli_epi32(t0v5, 16);\
+    t0v25 = _mm256_and_si256(t0v11, c8);\
+    t0v11 = _mm256_srli_epi32(t0v11, 16);\
+    t0v26 = _mm256_and_si256(t0v6, c8);\
+    t0v6 = _mm256_srli_epi32(t0v6, 16);\
+    t0v27 = _mm256_and_si256(t0v4, c8);\
+    t0v4 = _mm256_srli_epi32(t0v4, 16);\
+    t0v28 = _mm256_and_si256(t0v3, c8);\
+    t0v3 = _mm256_srli_epi32(t0v3, 16);\
+    t0v29 = _mm256_and_si256(t0v2, c8);\
+    t0v2 = _mm256_srli_epi32(t0v2, 16);\
+    t0v30 = _mm256_and_si256(t0v0, c8);\
+    t0v0 = _mm256_srli_epi32(t0v0, 16);\
+    t0v31 = _mm256_and_si256(t0v1, c8);\
+    t0v1 = _mm256_srli_epi32(t0v1, 16);\
+    t0v32 = _mm256_blend_epi32(t0v9, _mm256_slli_epi64(t0v17, 32), 0xaa);\
+    t0v9 = _mm256_blend_epi32(_mm256_srli_epi64(t0v9, 32), t0v17, 0xaa);\
+    t0v17 = _mm256_blend_epi32(t0v18, _mm256_slli_epi64(t0v19, 32), 0xaa);\
+    t0v18 = _mm256_blend_epi32(_mm256_srli_epi64(t0v18, 32), t0v19, 0xaa);\
+    t0v19 = _mm256_blend_epi32(t0v20, _mm256_slli_epi64(t0v21, 32), 0xaa);\
+    t0v20 = _mm256_blend_epi32(_mm256_srli_epi64(t0v20, 32), t0v21, 0xaa);\
+    t0v21 = _mm256_blend_epi32(t0v22, _mm256_slli_epi64(t0v23, 32), 0xaa);\
+    t0v22 = _mm256_blend_epi32(_mm256_srli_epi64(t0v22, 32), t0v23, 0xaa);\
+    t0v23 = _mm256_blend_epi32(t0v24, _mm256_slli_epi64(t0v25, 32), 0xaa);\
+    t0v24 = _mm256_blend_epi32(_mm256_srli_epi64(t0v24, 32), t0v25, 0xaa);\
+    t0v25 = _mm256_blend_epi32(t0v26, _mm256_slli_epi64(t0v27, 32), 0xaa);\
+    t0v26 = _mm256_blend_epi32(_mm256_srli_epi64(t0v26, 32), t0v27, 0xaa);\
+    t0v27 = _mm256_blend_epi32(t0v28, _mm256_slli_epi64(t0v29, 32), 0xaa);\
+    t0v28 = _mm256_blend_epi32(_mm256_srli_epi64(t0v28, 32), t0v29, 0xaa);\
+    t0v29 = _mm256_blend_epi32(t0v30, _mm256_slli_epi64(t0v31, 32), 0xaa);\
+    t0v30 = _mm256_blend_epi32(_mm256_srli_epi64(t0v30, 32), t0v31, 0xaa);\
+    t0v31 = _mm256_blend_epi32(t0v13, _mm256_slli_epi64(t0v15, 32), 0xaa);\
+    t0v13 = _mm256_blend_epi32(_mm256_srli_epi64(t0v13, 32), t0v15, 0xaa);\
+    t0v15 = _mm256_blend_epi32(t0v16, _mm256_slli_epi64(t0v14, 32), 0xaa);\
+    t0v14 = _mm256_blend_epi32(_mm256_srli_epi64(t0v16, 32), t0v14, 0xaa);\
+    t0v16 = _mm256_blend_epi32(t0v12, _mm256_slli_epi64(t0v7, 32), 0xaa);\
+    t0v7 = _mm256_blend_epi32(_mm256_srli_epi64(t0v12, 32), t0v7, 0xaa);\
+    t0v12 = _mm256_blend_epi32(t0v10, _mm256_slli_epi64(t0v8, 32), 0xaa);\
+    t0v8 = _mm256_blend_epi32(_mm256_srli_epi64(t0v10, 32), t0v8, 0xaa);\
+    t0v10 = _mm256_blend_epi32(t0v5, _mm256_slli_epi64(t0v11, 32), 0xaa);\
+    t0v5 = _mm256_blend_epi32(_mm256_srli_epi64(t0v5, 32), t0v11, 0xaa);\
+    t0v11 = _mm256_blend_epi32(t0v6, _mm256_slli_epi64(t0v4, 32), 0xaa);\
+    t0v4 = _mm256_blend_epi32(_mm256_srli_epi64(t0v6, 32), t0v4, 0xaa);\
+    t0v6 = _mm256_blend_epi32(t0v3, _mm256_slli_epi64(t0v2, 32), 0xaa);\
+    t0v2 = _mm256_blend_epi32(_mm256_srli_epi64(t0v3, 32), t0v2, 0xaa);\
+    t0v3 = _mm256_blend_epi32(t0v0, _mm256_slli_epi64(t0v1, 32), 0xaa);\
+    t0v0 = _mm256_blend_epi32(_mm256_srli_epi64(t0v0, 32), t0v1, 0xaa);\
+    t0v1 = _mm256_or_si256(_mm256_and_si256(t0v32, c9), _mm256_slli_si256(t0v17, (64)>>3));\
+    t0v17 = _mm256_or_si256(_mm256_srli_si256(t0v32, (64)>>3), _mm256_and_si256(t0v17, c10));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v19, c9), _mm256_slli_si256(t0v21, (64)>>3));\
+    t0v19 = _mm256_or_si256(_mm256_srli_si256(t0v19, (64)>>3), _mm256_and_si256(t0v21, c10));\
+    t0v21 = _mm256_or_si256(_mm256_and_si256(t0v23, c9), _mm256_slli_si256(t0v25, (64)>>3));\
+    t0v23 = _mm256_or_si256(_mm256_srli_si256(t0v23, (64)>>3), _mm256_and_si256(t0v25, c10));\
+    t0v25 = _mm256_or_si256(_mm256_and_si256(t0v27, c9), _mm256_slli_si256(t0v29, (64)>>3));\
+    t0v27 = _mm256_or_si256(_mm256_srli_si256(t0v27, (64)>>3), _mm256_and_si256(t0v29, c10));\
+    t0v29 = _mm256_or_si256(_mm256_and_si256(t0v31, c9), _mm256_slli_si256(t0v15, (64)>>3));\
+    t0v15 = _mm256_or_si256(_mm256_srli_si256(t0v31, (64)>>3), _mm256_and_si256(t0v15, c10));\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v16, c9), _mm256_slli_si256(t0v12, (64)>>3));\
+    t0v12 = _mm256_or_si256(_mm256_srli_si256(t0v16, (64)>>3), _mm256_and_si256(t0v12, c10));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v10, c9), _mm256_slli_si256(t0v11, (64)>>3));\
+    t0v10 = _mm256_or_si256(_mm256_srli_si256(t0v10, (64)>>3), _mm256_and_si256(t0v11, c10));\
+    t0v11 = _mm256_or_si256(_mm256_and_si256(t0v6, c9), _mm256_slli_si256(t0v3, (64)>>3));\
+    t0v3 = _mm256_or_si256(_mm256_srli_si256(t0v6, (64)>>3), _mm256_and_si256(t0v3, c10));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v9, c9), _mm256_slli_si256(t0v18, (64)>>3));\
+    t0v9 = _mm256_or_si256(_mm256_srli_si256(t0v9, (64)>>3), _mm256_and_si256(t0v18, c10));\
+    t0v18 = _mm256_or_si256(_mm256_and_si256(t0v20, c9), _mm256_slli_si256(t0v22, (64)>>3));\
+    t0v20 = _mm256_or_si256(_mm256_srli_si256(t0v20, (64)>>3), _mm256_and_si256(t0v22, c10));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256(t0v24, c9), _mm256_slli_si256(t0v26, (64)>>3));\
+    t0v24 = _mm256_or_si256(_mm256_srli_si256(t0v24, (64)>>3), _mm256_and_si256(t0v26, c10));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v28, c9), _mm256_slli_si256(t0v30, (64)>>3));\
+    t0v28 = _mm256_or_si256(_mm256_srli_si256(t0v28, (64)>>3), _mm256_and_si256(t0v30, c10));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256(t0v13, c9), _mm256_slli_si256(t0v14, (64)>>3));\
+    t0v13 = _mm256_or_si256(_mm256_srli_si256(t0v13, (64)>>3), _mm256_and_si256(t0v14, c10));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v7, c9), _mm256_slli_si256(t0v8, (64)>>3));\
+    t0v7 = _mm256_or_si256(_mm256_srli_si256(t0v7, (64)>>3), _mm256_and_si256(t0v8, c10));\
+    t0v8 = _mm256_or_si256(_mm256_and_si256(t0v5, c9), _mm256_slli_si256(t0v4, (64)>>3));\
+    t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c10));\
+    t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c9), _mm256_slli_si256(t0v0, (64)>>3));\
+    t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c10));\
+    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x20);\
+    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x31);\
+    (dest[1]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x20);\
+    (dest[17]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x31);\
+    (dest[2]) = _mm256_permute2x128_si256(t0v29, t0v31, 0x20);\
+    (dest[18]) = _mm256_permute2x128_si256(t0v29, t0v31, 0x31);\
+    (dest[3]) = _mm256_permute2x128_si256(t0v16, t0v11, 0x20);\
+    (dest[19]) = _mm256_permute2x128_si256(t0v16, t0v11, 0x31);\
+    (dest[4]) = _mm256_permute2x128_si256(t0v6, t0v18, 0x20);\
+    (dest[20]) = _mm256_permute2x128_si256(t0v6, t0v18, 0x31);\
+    (dest[5]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x20);\
+    (dest[21]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x31);\
+    (dest[6]) = _mm256_permute2x128_si256(t0v30, t0v14, 0x20);\
+    (dest[22]) = _mm256_permute2x128_si256(t0v30, t0v14, 0x31);\
+    (dest[7]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x20);\
+    (dest[23]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x31);\
+    (dest[8]) = _mm256_permute2x128_si256(t0v17, t0v19, 0x20);\
+    (dest[24]) = _mm256_permute2x128_si256(t0v17, t0v19, 0x31);\
+    (dest[9]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x20);\
+    (dest[25]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x31);\
+    (dest[10]) = _mm256_permute2x128_si256(t0v15, t0v12, 0x20);\
+    (dest[26]) = _mm256_permute2x128_si256(t0v15, t0v12, 0x31);\
+    (dest[11]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x20);\
+    (dest[27]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x31);\
+    (dest[12]) = _mm256_permute2x128_si256(t0v9, t0v20, 0x20);\
+    (dest[28]) = _mm256_permute2x128_si256(t0v9, t0v20, 0x31);\
+    (dest[13]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x20);\
+    (dest[29]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x31);\
+    (dest[14]) = _mm256_permute2x128_si256(t0v13, t0v7, 0x20);\
+    (dest[30]) = _mm256_permute2x128_si256(t0v13, t0v7, 0x31);\
+    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
+    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+}
+#define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
+{\
+    __m256i* dest = (__m256i*)(D);\
+    const __m256i c6 = (*(const __m256i*)(transform_const2_tbl + 8*3));\
+    const __m256i c0 = (*(const __m256i*)(transform_const_tbl + 8*0));\
+    const __m256i c1 = (*(const __m256i*)(transform_const_tbl + 8*1));\
+    const __m256i c7 = (*(const __m256i*)(transform_const_tbl + 8*12));\
+    const __m256i c8 = (*(const __m256i*)(transform_const_tbl + 8*13));\
+    const __m256i c2 = (*(const __m256i*)(transform_const_tbl + 8*2));\
+    const __m256i c3 = (*(const __m256i*)(transform_const_tbl + 8*3));\
+    const __m256i c4 = (*(const __m256i*)(transform_const_tbl + 8*4));\
+    const __m256i c5 = (*(const __m256i*)(transform_const_tbl + 8*5));\
+    __m256i t0v0;\
+    __m256i t0v1;\
+    __m256i t0v2;\
+    __m256i t0v3;\
+    __m256i t0v4;\
+    __m256i t0v5;\
+    __m256i t0v6;\
+    __m256i t0v7;\
+    __m256i t0v8;\
+    __m256i t0v9;\
+    __m256i t0v10;\
+    __m256i t0v11;\
+    __m256i t0v12;\
+    __m256i t0v13;\
+    __m256i t0v14;\
+    __m256i t0v15;\
+    __m256i t0v16;\
+    __m256i t0v17;\
+    __m256i t0v18;\
+    __m256i t0v19;\
+    __m256i t0v20;\
+    __m256i t0v21;\
+    __m256i t0v22;\
+    __m256i t0v23;\
+    __m256i t0v24;\
+    __m256i t0v25;\
+    __m256i t0v26;\
+    __m256i t0v27;\
+    __m256i t0v28;\
+    __m256i t0v29;\
+    __m256i t0v30;\
+    __m256i t0v31;\
+    __m256i t0v32;\
+    t0v0 = _mm256_or_si256(_mm256_and_si256((S0), c0), _mm256_slli_epi16(_mm256_and_si256((S1), c0), 1));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S0), c1), 1), _mm256_and_si256((S1), c1));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256((S2), c0), _mm256_slli_epi16(_mm256_and_si256((S3), c0), 1));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S2), c1), 1), _mm256_and_si256((S3), c1));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256((S4), c0), _mm256_slli_epi16(_mm256_and_si256((S5), c0), 1));\
+    t0v5 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256((S4), c1), 1), _mm256_and_si256((S5), c1));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v0, c2), _mm256_slli_epi16(_mm256_and_si256(t0v2, c2), 2));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c3), 2), _mm256_and_si256(t0v2, c3));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256(t0v1, c2), _mm256_slli_epi16(_mm256_and_si256(t0v3, c2), 2));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c3), 2), _mm256_and_si256(t0v3, c3));\
+    t0v3 = _mm256_and_si256(t0v4, c2);\
+    t0v4 = _mm256_srli_epi16(_mm256_and_si256(t0v4, c3), 2);\
+    t0v7 = _mm256_and_si256(t0v5, c2);\
+    t0v5 = _mm256_srli_epi16(_mm256_and_si256(t0v5, c3), 2);\
+    t0v8 = _mm256_or_si256(_mm256_and_si256(t0v6, c4), _mm256_slli_epi16(_mm256_and_si256(t0v3, c4), 4));\
+    t0v3 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v6, c5), 4), _mm256_and_si256(t0v3, c5));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v2, c4), _mm256_slli_epi16(_mm256_and_si256(t0v7, c4), 4));\
+    t0v2 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v2, c5), 4), _mm256_and_si256(t0v7, c5));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v0, c4), _mm256_slli_epi16(_mm256_and_si256(t0v4, c4), 4));\
+    t0v0 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v0, c5), 4), _mm256_and_si256(t0v4, c5));\
+    t0v4 = _mm256_or_si256(_mm256_and_si256(t0v1, c4), _mm256_slli_epi16(_mm256_and_si256(t0v5, c4), 4));\
+    t0v1 = _mm256_or_si256(_mm256_srli_epi16(_mm256_and_si256(t0v1, c5), 4), _mm256_and_si256(t0v5, c5));\
+    t0v5 = _mm256_and_si256(t0v8, c6);\
+    t0v9 = _mm256_and_si256(_mm256_srli_epi32(t0v8, 8), c6);\
+    t0v10 = _mm256_and_si256(_mm256_srli_epi32(t0v8, 16), c6);\
+    t0v8 = _mm256_srli_epi32(t0v8, 24);\
+    t0v11 = _mm256_and_si256(t0v6, c6);\
+    t0v12 = _mm256_and_si256(_mm256_srli_epi32(t0v6, 8), c6);\
+    t0v13 = _mm256_and_si256(_mm256_srli_epi32(t0v6, 16), c6);\
+    t0v6 = _mm256_srli_epi32(t0v6, 24);\
+    t0v14 = _mm256_and_si256(t0v7, c6);\
+    t0v15 = _mm256_and_si256(_mm256_srli_epi32(t0v7, 8), c6);\
+    t0v16 = _mm256_and_si256(_mm256_srli_epi32(t0v7, 16), c6);\
+    t0v7 = _mm256_srli_epi32(t0v7, 24);\
+    t0v17 = _mm256_and_si256(t0v4, c6);\
+    t0v18 = _mm256_and_si256(_mm256_srli_epi32(t0v4, 8), c6);\
+    t0v19 = _mm256_and_si256(_mm256_srli_epi32(t0v4, 16), c6);\
+    t0v4 = _mm256_srli_epi32(t0v4, 24);\
+    t0v20 = _mm256_and_si256(t0v3, c6);\
+    t0v21 = _mm256_and_si256(_mm256_srli_epi32(t0v3, 8), c6);\
+    t0v22 = _mm256_and_si256(_mm256_srli_epi32(t0v3, 16), c6);\
+    t0v3 = _mm256_srli_epi32(t0v3, 24);\
+    t0v23 = _mm256_and_si256(t0v2, c6);\
+    t0v24 = _mm256_and_si256(_mm256_srli_epi32(t0v2, 8), c6);\
+    t0v25 = _mm256_and_si256(_mm256_srli_epi32(t0v2, 16), c6);\
+    t0v2 = _mm256_srli_epi32(t0v2, 24);\
+    t0v26 = _mm256_and_si256(t0v0, c6);\
+    t0v27 = _mm256_and_si256(_mm256_srli_epi32(t0v0, 8), c6);\
+    t0v28 = _mm256_and_si256(_mm256_srli_epi32(t0v0, 16), c6);\
+    t0v0 = _mm256_srli_epi32(t0v0, 24);\
+    t0v29 = _mm256_and_si256(t0v1, c6);\
+    t0v30 = _mm256_and_si256(_mm256_srli_epi32(t0v1, 8), c6);\
+    t0v31 = _mm256_and_si256(_mm256_srli_epi32(t0v1, 16), c6);\
+    t0v1 = _mm256_srli_epi32(t0v1, 24);\
+    t0v32 = _mm256_blend_epi32(t0v5, _mm256_slli_epi64(t0v11, 32), 0xaa);\
+    t0v5 = _mm256_blend_epi32(_mm256_srli_epi64(t0v5, 32), t0v11, 0xaa);\
+    t0v11 = _mm256_blend_epi32(t0v14, _mm256_slli_epi64(t0v17, 32), 0xaa);\
+    t0v14 = _mm256_blend_epi32(_mm256_srli_epi64(t0v14, 32), t0v17, 0xaa);\
+    t0v17 = _mm256_blend_epi32(t0v20, _mm256_slli_epi64(t0v23, 32), 0xaa);\
+    t0v20 = _mm256_blend_epi32(_mm256_srli_epi64(t0v20, 32), t0v23, 0xaa);\
+    t0v23 = _mm256_blend_epi32(t0v26, _mm256_slli_epi64(t0v29, 32), 0xaa);\
+    t0v26 = _mm256_blend_epi32(_mm256_srli_epi64(t0v26, 32), t0v29, 0xaa);\
+    t0v29 = _mm256_blend_epi32(t0v9, _mm256_slli_epi64(t0v12, 32), 0xaa);\
+    t0v9 = _mm256_blend_epi32(_mm256_srli_epi64(t0v9, 32), t0v12, 0xaa);\
+    t0v12 = _mm256_blend_epi32(t0v15, _mm256_slli_epi64(t0v18, 32), 0xaa);\
+    t0v15 = _mm256_blend_epi32(_mm256_srli_epi64(t0v15, 32), t0v18, 0xaa);\
+    t0v18 = _mm256_blend_epi32(t0v21, _mm256_slli_epi64(t0v24, 32), 0xaa);\
+    t0v21 = _mm256_blend_epi32(_mm256_srli_epi64(t0v21, 32), t0v24, 0xaa);\
+    t0v24 = _mm256_blend_epi32(t0v27, _mm256_slli_epi64(t0v30, 32), 0xaa);\
+    t0v27 = _mm256_blend_epi32(_mm256_srli_epi64(t0v27, 32), t0v30, 0xaa);\
+    t0v30 = _mm256_blend_epi32(t0v10, _mm256_slli_epi64(t0v13, 32), 0xaa);\
+    t0v10 = _mm256_blend_epi32(_mm256_srli_epi64(t0v10, 32), t0v13, 0xaa);\
+    t0v13 = _mm256_blend_epi32(t0v16, _mm256_slli_epi64(t0v19, 32), 0xaa);\
+    t0v16 = _mm256_blend_epi32(_mm256_srli_epi64(t0v16, 32), t0v19, 0xaa);\
+    t0v19 = _mm256_blend_epi32(t0v22, _mm256_slli_epi64(t0v25, 32), 0xaa);\
+    t0v22 = _mm256_blend_epi32(_mm256_srli_epi64(t0v22, 32), t0v25, 0xaa);\
+    t0v25 = _mm256_blend_epi32(t0v28, _mm256_slli_epi64(t0v31, 32), 0xaa);\
+    t0v28 = _mm256_blend_epi32(_mm256_srli_epi64(t0v28, 32), t0v31, 0xaa);\
+    t0v31 = _mm256_blend_epi32(t0v8, _mm256_slli_epi64(t0v6, 32), 0xaa);\
+    t0v6 = _mm256_blend_epi32(_mm256_srli_epi64(t0v8, 32), t0v6, 0xaa);\
+    t0v8 = _mm256_blend_epi32(t0v7, _mm256_slli_epi64(t0v4, 32), 0xaa);\
+    t0v4 = _mm256_blend_epi32(_mm256_srli_epi64(t0v7, 32), t0v4, 0xaa);\
+    t0v7 = _mm256_blend_epi32(t0v3, _mm256_slli_epi64(t0v2, 32), 0xaa);\
+    t0v2 = _mm256_blend_epi32(_mm256_srli_epi64(t0v3, 32), t0v2, 0xaa);\
+    t0v3 = _mm256_blend_epi32(t0v0, _mm256_slli_epi64(t0v1, 32), 0xaa);\
+    t0v0 = _mm256_blend_epi32(_mm256_srli_epi64(t0v0, 32), t0v1, 0xaa);\
+    t0v1 = _mm256_or_si256(_mm256_and_si256(t0v32, c7), _mm256_slli_si256(t0v11, (64)>>3));\
+    t0v11 = _mm256_or_si256(_mm256_srli_si256(t0v32, (64)>>3), _mm256_and_si256(t0v11, c8));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v17, c7), _mm256_slli_si256(t0v23, (64)>>3));\
+    t0v17 = _mm256_or_si256(_mm256_srli_si256(t0v17, (64)>>3), _mm256_and_si256(t0v23, c8));\
+    t0v23 = _mm256_or_si256(_mm256_and_si256(t0v29, c7), _mm256_slli_si256(t0v12, (64)>>3));\
+    t0v12 = _mm256_or_si256(_mm256_srli_si256(t0v29, (64)>>3), _mm256_and_si256(t0v12, c8));\
+    t0v29 = _mm256_or_si256(_mm256_and_si256(t0v18, c7), _mm256_slli_si256(t0v24, (64)>>3));\
+    t0v18 = _mm256_or_si256(_mm256_srli_si256(t0v18, (64)>>3), _mm256_and_si256(t0v24, c8));\
+    t0v24 = _mm256_or_si256(_mm256_and_si256(t0v30, c7), _mm256_slli_si256(t0v13, (64)>>3));\
+    t0v13 = _mm256_or_si256(_mm256_srli_si256(t0v30, (64)>>3), _mm256_and_si256(t0v13, c8));\
+    t0v30 = _mm256_or_si256(_mm256_and_si256(t0v19, c7), _mm256_slli_si256(t0v25, (64)>>3));\
+    t0v19 = _mm256_or_si256(_mm256_srli_si256(t0v19, (64)>>3), _mm256_and_si256(t0v25, c8));\
+    t0v25 = _mm256_or_si256(_mm256_and_si256(t0v31, c7), _mm256_slli_si256(t0v8, (64)>>3));\
+    t0v8 = _mm256_or_si256(_mm256_srli_si256(t0v31, (64)>>3), _mm256_and_si256(t0v8, c8));\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v7, c7), _mm256_slli_si256(t0v3, (64)>>3));\
+    t0v3 = _mm256_or_si256(_mm256_srli_si256(t0v7, (64)>>3), _mm256_and_si256(t0v3, c8));\
+    t0v7 = _mm256_or_si256(_mm256_and_si256(t0v5, c7), _mm256_slli_si256(t0v14, (64)>>3));\
+    t0v5 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v14, c8));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v20, c7), _mm256_slli_si256(t0v26, (64)>>3));\
+    t0v20 = _mm256_or_si256(_mm256_srli_si256(t0v20, (64)>>3), _mm256_and_si256(t0v26, c8));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v9, c7), _mm256_slli_si256(t0v15, (64)>>3));\
+    t0v9 = _mm256_or_si256(_mm256_srli_si256(t0v9, (64)>>3), _mm256_and_si256(t0v15, c8));\
+    t0v15 = _mm256_or_si256(_mm256_and_si256(t0v21, c7), _mm256_slli_si256(t0v27, (64)>>3));\
+    t0v21 = _mm256_or_si256(_mm256_srli_si256(t0v21, (64)>>3), _mm256_and_si256(t0v27, c8));\
+    t0v27 = _mm256_or_si256(_mm256_and_si256(t0v10, c7), _mm256_slli_si256(t0v16, (64)>>3));\
+    t0v10 = _mm256_or_si256(_mm256_srli_si256(t0v10, (64)>>3), _mm256_and_si256(t0v16, c8));\
+    t0v16 = _mm256_or_si256(_mm256_and_si256(t0v22, c7), _mm256_slli_si256(t0v28, (64)>>3));\
+    t0v22 = _mm256_or_si256(_mm256_srli_si256(t0v22, (64)>>3), _mm256_and_si256(t0v28, c8));\
+    t0v28 = _mm256_or_si256(_mm256_and_si256(t0v6, c7), _mm256_slli_si256(t0v4, (64)>>3));\
+    t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v6, (64)>>3), _mm256_and_si256(t0v4, c8));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v2, c7), _mm256_slli_si256(t0v0, (64)>>3));\
+    t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c8));\
+    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x20);\
+    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x31);\
+    (dest[1]) = _mm256_permute2x128_si256(t0v23, t0v29, 0x20);\
+    (dest[17]) = _mm256_permute2x128_si256(t0v23, t0v29, 0x31);\
+    (dest[2]) = _mm256_permute2x128_si256(t0v24, t0v30, 0x20);\
+    (dest[18]) = _mm256_permute2x128_si256(t0v24, t0v30, 0x31);\
+    (dest[3]) = _mm256_permute2x128_si256(t0v25, t0v31, 0x20);\
+    (dest[19]) = _mm256_permute2x128_si256(t0v25, t0v31, 0x31);\
+    (dest[4]) = _mm256_permute2x128_si256(t0v7, t0v14, 0x20);\
+    (dest[20]) = _mm256_permute2x128_si256(t0v7, t0v14, 0x31);\
+    (dest[5]) = _mm256_permute2x128_si256(t0v26, t0v15, 0x20);\
+    (dest[21]) = _mm256_permute2x128_si256(t0v26, t0v15, 0x31);\
+    (dest[6]) = _mm256_permute2x128_si256(t0v27, t0v16, 0x20);\
+    (dest[22]) = _mm256_permute2x128_si256(t0v27, t0v16, 0x31);\
+    (dest[7]) = _mm256_permute2x128_si256(t0v28, t0v6, 0x20);\
+    (dest[23]) = _mm256_permute2x128_si256(t0v28, t0v6, 0x31);\
+    (dest[8]) = _mm256_permute2x128_si256(t0v11, t0v17, 0x20);\
+    (dest[24]) = _mm256_permute2x128_si256(t0v11, t0v17, 0x31);\
+    (dest[9]) = _mm256_permute2x128_si256(t0v12, t0v18, 0x20);\
+    (dest[25]) = _mm256_permute2x128_si256(t0v12, t0v18, 0x31);\
+    (dest[10]) = _mm256_permute2x128_si256(t0v13, t0v19, 0x20);\
+    (dest[26]) = _mm256_permute2x128_si256(t0v13, t0v19, 0x31);\
+    (dest[11]) = _mm256_permute2x128_si256(t0v8, t0v3, 0x20);\
+    (dest[27]) = _mm256_permute2x128_si256(t0v8, t0v3, 0x31);\
+    (dest[12]) = _mm256_permute2x128_si256(t0v5, t0v20, 0x20);\
+    (dest[28]) = _mm256_permute2x128_si256(t0v5, t0v20, 0x31);\
+    (dest[13]) = _mm256_permute2x128_si256(t0v9, t0v21, 0x20);\
+    (dest[29]) = _mm256_permute2x128_si256(t0v9, t0v21, 0x31);\
+    (dest[14]) = _mm256_permute2x128_si256(t0v10, t0v22, 0x20);\
+    (dest[30]) = _mm256_permute2x128_si256(t0v10, t0v22, 0x31);\
+    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
+    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+}
+#define OUTPUT_TRANSFORM_B1(D, S0) \
+{\
+    __m256i* dest = (__m256i*)(D);\
+    const __m256i c0 = (*(const __m256i*)(transform_const2_tbl + 8*0));\
+    const __m256i c1 = (*(const __m256i*)(transform_const_tbl + 8*12));\
+    const __m256i c2 = (*(const __m256i*)(transform_const_tbl + 8*13));\
+    __m256i t0v0;\
+    __m256i t0v1;\
+    __m256i t0v2;\
+    __m256i t0v3;\
+    __m256i t0v4;\
+    __m256i t0v5;\
+    __m256i t0v6;\
+    __m256i t0v7;\
+    __m256i t0v8;\
+    __m256i t0v9;\
+    __m256i t0v10;\
+    __m256i t0v11;\
+    __m256i t0v12;\
+    __m256i t0v13;\
+    __m256i t0v14;\
+    __m256i t0v15;\
+    __m256i t0v16;\
+    __m256i t0v17;\
+    __m256i t0v18;\
+    __m256i t0v19;\
+    __m256i t0v20;\
+    __m256i t0v21;\
+    __m256i t0v22;\
+    __m256i t0v23;\
+    __m256i t0v24;\
+    __m256i t0v25;\
+    __m256i t0v26;\
+    __m256i t0v27;\
+    __m256i t0v28;\
+    __m256i t0v29;\
+    __m256i t0v30;\
+    __m256i t0v31;\
+    __m256i t0v32;\
+    t0v0 = _mm256_and_si256((S0), c0);\
+    t0v1 = _mm256_and_si256(_mm256_srli_epi32((S0), 1), c0);\
+    t0v2 = _mm256_and_si256(_mm256_srli_epi32((S0), 2), c0);\
+    t0v3 = _mm256_and_si256(_mm256_srli_epi32((S0), 3), c0);\
+    t0v4 = _mm256_and_si256(_mm256_srli_epi32((S0), 4), c0);\
+    t0v5 = _mm256_and_si256(_mm256_srli_epi32((S0), 5), c0);\
+    t0v6 = _mm256_and_si256(_mm256_srli_epi32((S0), 6), c0);\
+    t0v7 = _mm256_and_si256(_mm256_srli_epi32((S0), 7), c0);\
+    t0v8 = _mm256_and_si256(_mm256_srli_epi32((S0), 8), c0);\
+    t0v9 = _mm256_and_si256(_mm256_srli_epi32((S0), 9), c0);\
+    t0v10 = _mm256_and_si256(_mm256_srli_epi32((S0), 10), c0);\
+    t0v11 = _mm256_and_si256(_mm256_srli_epi32((S0), 11), c0);\
+    t0v12 = _mm256_and_si256(_mm256_srli_epi32((S0), 12), c0);\
+    t0v13 = _mm256_and_si256(_mm256_srli_epi32((S0), 13), c0);\
+    t0v14 = _mm256_and_si256(_mm256_srli_epi32((S0), 14), c0);\
+    t0v15 = _mm256_and_si256(_mm256_srli_epi32((S0), 15), c0);\
+    t0v16 = _mm256_and_si256(_mm256_srli_epi32((S0), 16), c0);\
+    t0v17 = _mm256_and_si256(_mm256_srli_epi32((S0), 17), c0);\
+    t0v18 = _mm256_and_si256(_mm256_srli_epi32((S0), 18), c0);\
+    t0v19 = _mm256_and_si256(_mm256_srli_epi32((S0), 19), c0);\
+    t0v20 = _mm256_and_si256(_mm256_srli_epi32((S0), 20), c0);\
+    t0v21 = _mm256_and_si256(_mm256_srli_epi32((S0), 21), c0);\
+    t0v22 = _mm256_and_si256(_mm256_srli_epi32((S0), 22), c0);\
+    t0v23 = _mm256_and_si256(_mm256_srli_epi32((S0), 23), c0);\
+    t0v24 = _mm256_and_si256(_mm256_srli_epi32((S0), 24), c0);\
+    t0v25 = _mm256_and_si256(_mm256_srli_epi32((S0), 25), c0);\
+    t0v26 = _mm256_and_si256(_mm256_srli_epi32((S0), 26), c0);\
+    t0v27 = _mm256_and_si256(_mm256_srli_epi32((S0), 27), c0);\
+    t0v28 = _mm256_and_si256(_mm256_srli_epi32((S0), 28), c0);\
+    t0v29 = _mm256_and_si256(_mm256_srli_epi32((S0), 29), c0);\
+    t0v30 = _mm256_and_si256(_mm256_srli_epi32((S0), 30), c0);\
+    t0v31 = _mm256_srli_epi32((S0), 31);\
+    t0v32 = _mm256_blend_epi32(t0v0, _mm256_slli_epi64(t0v1, 32), 0xaa);\
+    t0v0 = _mm256_blend_epi32(_mm256_srli_epi64(t0v0, 32), t0v1, 0xaa);\
+    t0v1 = _mm256_blend_epi32(t0v2, _mm256_slli_epi64(t0v3, 32), 0xaa);\
+    t0v2 = _mm256_blend_epi32(_mm256_srli_epi64(t0v2, 32), t0v3, 0xaa);\
+    t0v3 = _mm256_blend_epi32(t0v4, _mm256_slli_epi64(t0v5, 32), 0xaa);\
+    t0v4 = _mm256_blend_epi32(_mm256_srli_epi64(t0v4, 32), t0v5, 0xaa);\
+    t0v5 = _mm256_blend_epi32(t0v6, _mm256_slli_epi64(t0v7, 32), 0xaa);\
+    t0v6 = _mm256_blend_epi32(_mm256_srli_epi64(t0v6, 32), t0v7, 0xaa);\
+    t0v7 = _mm256_blend_epi32(t0v8, _mm256_slli_epi64(t0v9, 32), 0xaa);\
+    t0v8 = _mm256_blend_epi32(_mm256_srli_epi64(t0v8, 32), t0v9, 0xaa);\
+    t0v9 = _mm256_blend_epi32(t0v10, _mm256_slli_epi64(t0v11, 32), 0xaa);\
+    t0v10 = _mm256_blend_epi32(_mm256_srli_epi64(t0v10, 32), t0v11, 0xaa);\
+    t0v11 = _mm256_blend_epi32(t0v12, _mm256_slli_epi64(t0v13, 32), 0xaa);\
+    t0v12 = _mm256_blend_epi32(_mm256_srli_epi64(t0v12, 32), t0v13, 0xaa);\
+    t0v13 = _mm256_blend_epi32(t0v14, _mm256_slli_epi64(t0v15, 32), 0xaa);\
+    t0v14 = _mm256_blend_epi32(_mm256_srli_epi64(t0v14, 32), t0v15, 0xaa);\
+    t0v15 = _mm256_blend_epi32(t0v16, _mm256_slli_epi64(t0v17, 32), 0xaa);\
+    t0v16 = _mm256_blend_epi32(_mm256_srli_epi64(t0v16, 32), t0v17, 0xaa);\
+    t0v17 = _mm256_blend_epi32(t0v18, _mm256_slli_epi64(t0v19, 32), 0xaa);\
+    t0v18 = _mm256_blend_epi32(_mm256_srli_epi64(t0v18, 32), t0v19, 0xaa);\
+    t0v19 = _mm256_blend_epi32(t0v20, _mm256_slli_epi64(t0v21, 32), 0xaa);\
+    t0v20 = _mm256_blend_epi32(_mm256_srli_epi64(t0v20, 32), t0v21, 0xaa);\
+    t0v21 = _mm256_blend_epi32(t0v22, _mm256_slli_epi64(t0v23, 32), 0xaa);\
+    t0v22 = _mm256_blend_epi32(_mm256_srli_epi64(t0v22, 32), t0v23, 0xaa);\
+    t0v23 = _mm256_blend_epi32(t0v24, _mm256_slli_epi64(t0v25, 32), 0xaa);\
+    t0v24 = _mm256_blend_epi32(_mm256_srli_epi64(t0v24, 32), t0v25, 0xaa);\
+    t0v25 = _mm256_blend_epi32(t0v26, _mm256_slli_epi64(t0v27, 32), 0xaa);\
+    t0v26 = _mm256_blend_epi32(_mm256_srli_epi64(t0v26, 32), t0v27, 0xaa);\
+    t0v27 = _mm256_blend_epi32(t0v28, _mm256_slli_epi64(t0v29, 32), 0xaa);\
+    t0v28 = _mm256_blend_epi32(_mm256_srli_epi64(t0v28, 32), t0v29, 0xaa);\
+    t0v29 = _mm256_blend_epi32(t0v30, _mm256_slli_epi64(t0v31, 32), 0xaa);\
+    t0v30 = _mm256_blend_epi32(_mm256_srli_epi64(t0v30, 32), t0v31, 0xaa);\
+    t0v31 = _mm256_or_si256(_mm256_and_si256(t0v32, c1), _mm256_slli_si256(t0v1, (64)>>3));\
+    t0v1 = _mm256_or_si256(_mm256_srli_si256(t0v32, (64)>>3), _mm256_and_si256(t0v1, c2));\
+    t0v32 = _mm256_or_si256(_mm256_and_si256(t0v3, c1), _mm256_slli_si256(t0v5, (64)>>3));\
+    t0v3 = _mm256_or_si256(_mm256_srli_si256(t0v3, (64)>>3), _mm256_and_si256(t0v5, c2));\
+    t0v5 = _mm256_or_si256(_mm256_and_si256(t0v7, c1), _mm256_slli_si256(t0v9, (64)>>3));\
+    t0v7 = _mm256_or_si256(_mm256_srli_si256(t0v7, (64)>>3), _mm256_and_si256(t0v9, c2));\
+    t0v9 = _mm256_or_si256(_mm256_and_si256(t0v11, c1), _mm256_slli_si256(t0v13, (64)>>3));\
+    t0v11 = _mm256_or_si256(_mm256_srli_si256(t0v11, (64)>>3), _mm256_and_si256(t0v13, c2));\
+    t0v13 = _mm256_or_si256(_mm256_and_si256(t0v15, c1), _mm256_slli_si256(t0v17, (64)>>3));\
+    t0v15 = _mm256_or_si256(_mm256_srli_si256(t0v15, (64)>>3), _mm256_and_si256(t0v17, c2));\
+    t0v17 = _mm256_or_si256(_mm256_and_si256(t0v19, c1), _mm256_slli_si256(t0v21, (64)>>3));\
+    t0v19 = _mm256_or_si256(_mm256_srli_si256(t0v19, (64)>>3), _mm256_and_si256(t0v21, c2));\
+    t0v21 = _mm256_or_si256(_mm256_and_si256(t0v23, c1), _mm256_slli_si256(t0v25, (64)>>3));\
+    t0v23 = _mm256_or_si256(_mm256_srli_si256(t0v23, (64)>>3), _mm256_and_si256(t0v25, c2));\
+    t0v25 = _mm256_or_si256(_mm256_and_si256(t0v27, c1), _mm256_slli_si256(t0v29, (64)>>3));\
+    t0v27 = _mm256_or_si256(_mm256_srli_si256(t0v27, (64)>>3), _mm256_and_si256(t0v29, c2));\
+    t0v29 = _mm256_or_si256(_mm256_and_si256(t0v0, c1), _mm256_slli_si256(t0v2, (64)>>3));\
+    t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v0, (64)>>3), _mm256_and_si256(t0v2, c2));\
+    t0v2 = _mm256_or_si256(_mm256_and_si256(t0v4, c1), _mm256_slli_si256(t0v6, (64)>>3));\
+    t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v4, (64)>>3), _mm256_and_si256(t0v6, c2));\
+    t0v6 = _mm256_or_si256(_mm256_and_si256(t0v8, c1), _mm256_slli_si256(t0v10, (64)>>3));\
+    t0v8 = _mm256_or_si256(_mm256_srli_si256(t0v8, (64)>>3), _mm256_and_si256(t0v10, c2));\
+    t0v10 = _mm256_or_si256(_mm256_and_si256(t0v12, c1), _mm256_slli_si256(t0v14, (64)>>3));\
+    t0v12 = _mm256_or_si256(_mm256_srli_si256(t0v12, (64)>>3), _mm256_and_si256(t0v14, c2));\
+    t0v14 = _mm256_or_si256(_mm256_and_si256(t0v16, c1), _mm256_slli_si256(t0v18, (64)>>3));\
+    t0v16 = _mm256_or_si256(_mm256_srli_si256(t0v16, (64)>>3), _mm256_and_si256(t0v18, c2));\
+    t0v18 = _mm256_or_si256(_mm256_and_si256(t0v20, c1), _mm256_slli_si256(t0v22, (64)>>3));\
+    t0v20 = _mm256_or_si256(_mm256_srli_si256(t0v20, (64)>>3), _mm256_and_si256(t0v22, c2));\
+    t0v22 = _mm256_or_si256(_mm256_and_si256(t0v24, c1), _mm256_slli_si256(t0v26, (64)>>3));\
+    t0v24 = _mm256_or_si256(_mm256_srli_si256(t0v24, (64)>>3), _mm256_and_si256(t0v26, c2));\
+    t0v26 = _mm256_or_si256(_mm256_and_si256(t0v28, c1), _mm256_slli_si256(t0v30, (64)>>3));\
+    t0v28 = _mm256_or_si256(_mm256_srli_si256(t0v28, (64)>>3), _mm256_and_si256(t0v30, c2));\
+    (dest[0]) = _mm256_permute2x128_si256(t0v31, t0v32, 0x20);\
+    (dest[16]) = _mm256_permute2x128_si256(t0v31, t0v32, 0x31);\
+    (dest[1]) = _mm256_permute2x128_si256(t0v5, t0v9, 0x20);\
+    (dest[17]) = _mm256_permute2x128_si256(t0v5, t0v9, 0x31);\
+    (dest[2]) = _mm256_permute2x128_si256(t0v13, t0v17, 0x20);\
+    (dest[18]) = _mm256_permute2x128_si256(t0v13, t0v17, 0x31);\
+    (dest[3]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x20);\
+    (dest[19]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x31);\
+    (dest[4]) = _mm256_permute2x128_si256(t0v29, t0v2, 0x20);\
+    (dest[20]) = _mm256_permute2x128_si256(t0v29, t0v2, 0x31);\
+    (dest[5]) = _mm256_permute2x128_si256(t0v6, t0v10, 0x20);\
+    (dest[21]) = _mm256_permute2x128_si256(t0v6, t0v10, 0x31);\
+    (dest[6]) = _mm256_permute2x128_si256(t0v14, t0v18, 0x20);\
+    (dest[22]) = _mm256_permute2x128_si256(t0v14, t0v18, 0x31);\
+    (dest[7]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x20);\
+    (dest[23]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x31);\
+    (dest[8]) = _mm256_permute2x128_si256(t0v1, t0v3, 0x20);\
+    (dest[24]) = _mm256_permute2x128_si256(t0v1, t0v3, 0x31);\
+    (dest[9]) = _mm256_permute2x128_si256(t0v7, t0v11, 0x20);\
+    (dest[25]) = _mm256_permute2x128_si256(t0v7, t0v11, 0x31);\
+    (dest[10]) = _mm256_permute2x128_si256(t0v15, t0v19, 0x20);\
+    (dest[26]) = _mm256_permute2x128_si256(t0v15, t0v19, 0x31);\
+    (dest[11]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x20);\
+    (dest[27]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x31);\
+    (dest[12]) = _mm256_permute2x128_si256(t0v0, t0v4, 0x20);\
+    (dest[28]) = _mm256_permute2x128_si256(t0v0, t0v4, 0x31);\
+    (dest[13]) = _mm256_permute2x128_si256(t0v8, t0v12, 0x20);\
+    (dest[29]) = _mm256_permute2x128_si256(t0v8, t0v12, 0x31);\
+    (dest[14]) = _mm256_permute2x128_si256(t0v16, t0v20, 0x20);\
+    (dest[30]) = _mm256_permute2x128_si256(t0v16, t0v20, 0x31);\
+    (dest[15]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x20);\
+    (dest[31]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x31);\
+}
+"##,
+        transform.out()
+    );
+    // let mut transform = CLANG_TRANSFORM_INTEL_AVX2.transform();
     // for i in (1..=32).rev() {
     //     transform.gen_output_transform(i);
     // }
