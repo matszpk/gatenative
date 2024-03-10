@@ -1646,6 +1646,34 @@ impl<'a> CLangTransform<'a> {
         self.out.write_str("}\n").unwrap();
     }
 
+    fn gen_output_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {}
+
+    pub fn gen_output_transform(&mut self, bits: usize) {
+        let mut mvars = CLangMacroVars::new(
+            [self.config.comp_type_name],
+            [],
+            (0..bits as u32).map(|i| Self::format_arg_d(i)),
+            [],
+            self.config.collect_constants,
+        );
+        self.gen_output_transform_int(&mut mvars, bits);
+        mvars.set_usage_mode();
+        writeln!(
+            &mut self.out,
+            "#define OUTPUT_TRANSFORM_B{}({}, {}) \\",
+            bits,
+            "D",
+            &((0..bits).map(|i| format!("S{}", i)).collect::<Vec<_>>()).join(", "),
+        )
+        .unwrap();
+        self.out.write_str("{\\\n").unwrap();
+        self.gen_output_transform_int(&mut mvars, bits);
+        mvars.write_constant_defs(&mut self.out);
+        mvars.write_var_defs(&mut self.out);
+        self.out.push_str(&mvars.out);
+        self.out.write_str("}\n").unwrap();
+    }
+
     pub fn out(self) -> String {
         self.out
     }
