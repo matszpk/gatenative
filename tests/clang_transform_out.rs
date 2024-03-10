@@ -1046,7 +1046,8 @@ fn test_clang_transform_gen_output_transform() {
     (dest[31]) = ((t0v30 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
 }
 "##,
-        transform.out());
+        transform.out()
+    );
     // let mut transform = CLANG_TRANSFORM_U32.transform();
     // for i in (1..=32).rev() {
     //     transform.gen_output_transform(i);
