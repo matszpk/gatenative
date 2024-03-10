@@ -1686,7 +1686,7 @@ impl<'a> CLangTransform<'a> {
                 if bit_usage_s {
                     mvars.use_var(prev_type, prev_pass[sj]);
                 }
-                let (nt, ns0) = if i != bits_log - 1 {
+                let (nt, ns0) = if i != 4 {
                     (0, mvars.new_var(0))
                 } else {
                     (output_type, fj)
@@ -1722,7 +1722,7 @@ impl<'a> CLangTransform<'a> {
                     if bit_usage_s {
                         mvars.use_var(prev_type, prev_pass[sj]);
                     }
-                    let (nt, ns1) = if i != bits_log - 1 {
+                    let (nt, ns1) = if i != 4 {
                         (0, mvars.new_var(0))
                     } else {
                         (output_type, sj)
@@ -1732,7 +1732,7 @@ impl<'a> CLangTransform<'a> {
                         let store_op = self.format_store_op(mvars, nt, ns1, expr);
                         writeln!(mvars, "    {};\\", store_op).unwrap();
                     }
-                    if i != 0 {
+                    if i != 4 {
                         new_pass[sj] = ns1;
                     }
                 }
@@ -1749,6 +1749,69 @@ impl<'a> CLangTransform<'a> {
                 prev_pass = new_pass;
             }
         }
+//         if bits_log < 5 {
+//             // if bits < 16 then just separate lower bits once. From this form:
+//             // example: { [TBL[0][0:3],TBL[8][0:3],TBL[16][0:3],TBL[24][0:3]],
+//             //            [TBL[0][4:7],TBL[8][4:7],TBL[16][4:7],TBL[24][4:7]],
+//             //            [TBL[0][8:11],TBL[8][8:11],TBL[16][8:11],TBL[24][8:11]],
+//             //            [TBL[0][12:15],TBL[8][12:15],TBL[16][12:15],TBL[24][12:15]], ... }
+//             // where [A,B,....] - number with joined bits A,B,... .
+//             //       TBL[x][a:b] - bits from a to b from value from table under index x.
+//             // to 32-bit dwords.
+//             for i in 0..1 << bits_log {
+//                 //let mut final_expr = String::new();
+//                 let mut bit_usg = 0;
+//                 for j in 0..1 << (5 - bits_log) {
+//                     let idx = i | (j << bits_log);
+//                     let tv = mvars.format_var(prev_type, prev_pass[idx]);
+//                     mvars.use_var(prev_type, prev_pass[idx]);
+//                     let (shr, failed) = {
+//                         let (shr, idx) = (4..10)
+//                             .filter_map(|x| self.config.shift_op[2 * x].map(|s| (s, x)))
+//                             .next()
+//                             .unwrap();
+//                         (shr, idx != 4)
+//                     };
+//                     
+//                     // let expr = if failed || j != ((1 << (5 - bits_log)) - 1) {
+//                     //     Self::format_op(
+//                     //         self.config.and_op,
+//                     //         &[
+//                     //             &tv,
+//                     //             mvars.get_constant(self.config.constant2_defs[bits_log]),
+//                     //         ],
+//                     //     )
+//                     // } else {
+//                     //     tv
+//                     // };
+//                     // let expr = if j != 0 {
+//                     //     Self::format_op(shl, &[&expr, &(j << bits_log).to_string()])
+//                     // } else {
+//                     //     expr
+//                     // };
+//                     // final_expr = if !final_expr.is_empty() {
+//                     //     Self::format_op(self.config.or_op, &[&final_expr, &expr])
+//                     // } else {
+//                     //     expr
+//                     // };
+//                 }
+//                 // let v = if bits_log != 0 {
+//                 //     let v = mvars.new_var(0);
+//                 //     write!(mvars, "    {} = ", mvars.format_var(0, v)).unwrap();
+//                 //     writeln!(mvars, "{};\\", final_expr).unwrap();
+//                 //     v
+//                 // } else {
+//                 //     // if only single destination bit
+//                 //     let store_op = self.format_store_op(mvars, output_type, 0, final_expr);
+//                 //     writeln!(mvars, "    {};\\", store_op).unwrap();
+//                 //     0
+//                 // };
+//                 // if bits_log != 0 {
+//                 //     prev_pass[i] = v;
+//                 // }
+//             }
+//             //prev_type = 0;
+//         }
     }
 
     pub fn gen_output_transform(&mut self, bits: usize) {
