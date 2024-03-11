@@ -117,6 +117,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         writeln!(self.out, "Start").unwrap();
     }
     fn user_defs(&mut self, _: &str) {}
+    fn transform_helpers(&mut self) {}
     fn epilog(&mut self) {
         writeln!(self.out, "End").unwrap();
     }

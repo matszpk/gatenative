@@ -906,6 +906,31 @@ fn test_cpu_builder_and_exec_with_elem_input() {
     }
 }
 
+const COMB_CIRCUIT: &str = concat!(
+    "{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ",
+    "xor(0,7) and(16,5):0 xor(1,8) and(0,7) xor(18,19) and(20,6):1 xor(2,9) ",
+    "and(18,19) and(1,8) nor(23,24) xor(22,25) nimpl(7,26):2 xor(3,10) nimpl(22,25) ",
+    "and(2,9) nor(29,30) xor(28,31) nimpl(8,32):3 xor(4,0) xor(34,11) nimpl(28,31) ",
+    "and(3,10) nor(36,37) xor(35,38) xor(39,5) nimpl(9,40):4 xor(5,1) and(4,0) ",
+    "xor(42,43) xor(44,12) nimpl(35,38) and(34,11) nor(46,47) xor(45,48) xor(49,6) ",
+    "nimpl(5,39) xor(50,51) nimpl(10,52):5 xor(6,2) and(42,43) and(5,1) nor(55,56) ",
+    "xor(54,57) xor(58,13) nimpl(45,48) and(44,12) nor(60,61) xor(59,62) xor(63,7) ",
+    "nimpl(51,50) nimpl(6,49) nor(65,66) xor(64,67) nimpl(11,68):6 xor(7,3) ",
+    "nimpl(54,57) and(6,2) nor(71,72) xor(70,73) xor(74,14) nor(59,62) nimpl(13,58) ",
+    "nor(76,77) xor(75,78) xor(79,8) nimpl(64,67) and(63,7) nor(81,82) xor(80,83) ",
+    "nimpl(12,84):7 xor(8,4) nimpl(70,73) and(7,3) nor(87,88) xor(86,89) xor(90,15) ",
+    "nor(75,78) nimpl(14,74) nor(92,93) xor(91,94) xor(95,9) nimpl(80,83) and(79,8) ",
+    "nor(97,98) xor(96,99) nimpl(13,100):8 xor(9,5) nimpl(86,89) and(8,4) nor(103,104) ",
+    "xor(102,105) xor(106,0) nor(91,94) nimpl(15,90) nor(108,109) xor(107,110) ",
+    "xor(111,10) nimpl(96,99) and(95,9) nor(113,114) xor(112,115) nimpl(14,116):9 ",
+    "xor(10,6) nimpl(102,105) and(9,5) nor(119,120) xor(118,121) xor(122,1) ",
+    "nor(107,110) nimpl(0,106) nor(124,125) xor(123,126) xor(127,11) nimpl(112,115) ",
+    "and(111,10) nor(129,130) xor(128,131) nimpl(15,132):10 xor(11,7) nimpl(118,121) ",
+    "and(10,6) nor(135,136) xor(134,137) xor(138,2) nor(123,126) nimpl(1,122) ",
+    "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
+    "xor(144,147) nimpl(0,148):11}(16)"
+);
+
 const COMB_CIRCUIT2: &str = r##"
 {0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 xor(4,9) and(20,5):0 xor(5,0) xor(22,10)
 nimpl(4,9) nimpl(20,24) xor(23,25) and(26,6):1 xor(6,1) and(5,0) xor(28,29) xor(30,11)
@@ -964,30 +989,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         let mut builder =
             CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
-        let circuit =
-            Circuit::<u32>::from_str(concat!("{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ",
-            "xor(0,7) and(16,5):0 xor(1,8) and(0,7) xor(18,19) and(20,6):1 xor(2,9) ",
-            "and(18,19) and(1,8) nor(23,24) xor(22,25) nimpl(7,26):2 xor(3,10) nimpl(22,25) ",
-            "and(2,9) nor(29,30) xor(28,31) nimpl(8,32):3 xor(4,0) xor(34,11) nimpl(28,31) ",
-            "and(3,10) nor(36,37) xor(35,38) xor(39,5) nimpl(9,40):4 xor(5,1) and(4,0) ",
-            "xor(42,43) xor(44,12) nimpl(35,38) and(34,11) nor(46,47) xor(45,48) xor(49,6) ",
-            "nimpl(5,39) xor(50,51) nimpl(10,52):5 xor(6,2) and(42,43) and(5,1) nor(55,56) ",
-            "xor(54,57) xor(58,13) nimpl(45,48) and(44,12) nor(60,61) xor(59,62) xor(63,7) ",
-            "nimpl(51,50) nimpl(6,49) nor(65,66) xor(64,67) nimpl(11,68):6 xor(7,3) ",
-            "nimpl(54,57) and(6,2) nor(71,72) xor(70,73) xor(74,14) nor(59,62) nimpl(13,58) ",
-            "nor(76,77) xor(75,78) xor(79,8) nimpl(64,67) and(63,7) nor(81,82) xor(80,83) ",
-            "nimpl(12,84):7 xor(8,4) nimpl(70,73) and(7,3) nor(87,88) xor(86,89) xor(90,15) ",
-            "nor(75,78) nimpl(14,74) nor(92,93) xor(91,94) xor(95,9) nimpl(80,83) and(79,8) ",
-            "nor(97,98) xor(96,99) nimpl(13,100):8 xor(9,5) nimpl(86,89) and(8,4) nor(103,104) ",
-            "xor(102,105) xor(106,0) nor(91,94) nimpl(15,90) nor(108,109) xor(107,110) ",
-            "xor(111,10) nimpl(96,99) and(95,9) nor(113,114) xor(112,115) nimpl(14,116):9 ",
-            "xor(10,6) nimpl(102,105) and(9,5) nor(119,120) xor(118,121) xor(122,1) ",
-            "nor(107,110) nimpl(0,106) nor(124,125) xor(123,126) xor(127,11) nimpl(112,115) ",
-            "and(111,10) nor(129,130) xor(128,131) nimpl(15,132):10 xor(11,7) nimpl(118,121) ",
-            "and(10,6) nor(135,136) xor(134,137) xor(138,2) nor(123,126) nimpl(1,122) ",
-            "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
-            "xor(144,147) nimpl(0,148):11}(16)"))
-            .unwrap();
+        let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
         let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
 
         let aggr_output_code = COMB_AGGR_OUTPUT_CODE;
