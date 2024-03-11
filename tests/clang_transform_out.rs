@@ -626,38 +626,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v0 = (((t0v0 & 0xffff0000ffff0000ULL) >> 16) | (t0v16 & 0xffff0000ffff0000ULL));\
     t0v16 = ((t0v1 & 0x0000ffff0000ffffULL) | ((t0v17 & 0x0000ffff0000ffffULL) << 16));\
     t0v1 = (((t0v1 & 0xffff0000ffff0000ULL) >> 16) | (t0v17 & 0xffff0000ffff0000ULL));\
-    (dest[0]) = ((t0v25 & 0x00000000ffffffffULL) | (t0v29 << 32));\
-    (dest[16]) = ((t0v25 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
-    (dest[1]) = ((t0v31 & 0x00000000ffffffffULL) | (t0v32 << 32));\
-    (dest[17]) = ((t0v31 >> 32) | (t0v32 & 0xffffffff00000000ULL));\
-    (dest[2]) = ((t0v30 & 0x00000000ffffffffULL) | (t0v28 << 32));\
-    (dest[18]) = ((t0v30 >> 32) | (t0v28 & 0xffffffff00000000ULL));\
-    (dest[3]) = ((t0v23 & 0x00000000ffffffffULL) | (t0v26 << 32));\
-    (dest[19]) = ((t0v23 >> 32) | (t0v26 & 0xffffffff00000000ULL));\
-    (dest[4]) = ((t0v24 & 0x00000000ffffffffULL) | (t0v13 << 32));\
-    (dest[20]) = ((t0v24 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
-    (dest[5]) = ((t0v19 & 0x00000000ffffffffULL) | (t0v22 << 32));\
-    (dest[21]) = ((t0v19 >> 32) | (t0v22 & 0xffffffff00000000ULL));\
-    (dest[6]) = ((t0v20 & 0x00000000ffffffffULL) | (t0v15 << 32));\
-    (dest[22]) = ((t0v20 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
-    (dest[7]) = ((t0v18 & 0x00000000ffffffffULL) | (t0v16 << 32));\
-    (dest[23]) = ((t0v18 >> 32) | (t0v16 & 0xffffffff00000000ULL));\
-    (dest[8]) = ((t0v9 & 0x00000000ffffffffULL) | (t0v21 << 32));\
-    (dest[24]) = ((t0v9 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
-    (dest[9]) = ((t0v27 & 0x00000000ffffffffULL) | (t0v14 << 32));\
-    (dest[25]) = ((t0v27 >> 32) | (t0v14 & 0xffffffff00000000ULL));\
-    (dest[10]) = ((t0v12 & 0x00000000ffffffffULL) | (t0v7 << 32));\
-    (dest[26]) = ((t0v12 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
-    (dest[11]) = ((t0v10 & 0x00000000ffffffffULL) | (t0v8 << 32));\
-    (dest[27]) = ((t0v10 >> 32) | (t0v8 & 0xffffffff00000000ULL));\
-    (dest[12]) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
-    (dest[28]) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
-    (dest[13]) = ((t0v6 & 0x00000000ffffffffULL) | (t0v4 << 32));\
-    (dest[29]) = ((t0v6 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
-    (dest[14]) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
-    (dest[30]) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
-    (dest[15]) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
-    (dest[31]) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[0])))) = ((t0v25 & 0x00000000ffffffffULL) | (t0v29 << 32));\
+    *((uint64_t*)(&((dest[16])))) = ((t0v25 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[1])))) = ((t0v31 & 0x00000000ffffffffULL) | (t0v32 << 32));\
+    *((uint64_t*)(&((dest[17])))) = ((t0v31 >> 32) | (t0v32 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[2])))) = ((t0v30 & 0x00000000ffffffffULL) | (t0v28 << 32));\
+    *((uint64_t*)(&((dest[18])))) = ((t0v30 >> 32) | (t0v28 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[3])))) = ((t0v23 & 0x00000000ffffffffULL) | (t0v26 << 32));\
+    *((uint64_t*)(&((dest[19])))) = ((t0v23 >> 32) | (t0v26 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[4])))) = ((t0v24 & 0x00000000ffffffffULL) | (t0v13 << 32));\
+    *((uint64_t*)(&((dest[20])))) = ((t0v24 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[5])))) = ((t0v19 & 0x00000000ffffffffULL) | (t0v22 << 32));\
+    *((uint64_t*)(&((dest[21])))) = ((t0v19 >> 32) | (t0v22 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[6])))) = ((t0v20 & 0x00000000ffffffffULL) | (t0v15 << 32));\
+    *((uint64_t*)(&((dest[22])))) = ((t0v20 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[7])))) = ((t0v18 & 0x00000000ffffffffULL) | (t0v16 << 32));\
+    *((uint64_t*)(&((dest[23])))) = ((t0v18 >> 32) | (t0v16 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[8])))) = ((t0v9 & 0x00000000ffffffffULL) | (t0v21 << 32));\
+    *((uint64_t*)(&((dest[24])))) = ((t0v9 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[9])))) = ((t0v27 & 0x00000000ffffffffULL) | (t0v14 << 32));\
+    *((uint64_t*)(&((dest[25])))) = ((t0v27 >> 32) | (t0v14 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[10])))) = ((t0v12 & 0x00000000ffffffffULL) | (t0v7 << 32));\
+    *((uint64_t*)(&((dest[26])))) = ((t0v12 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[11])))) = ((t0v10 & 0x00000000ffffffffULL) | (t0v8 << 32));\
+    *((uint64_t*)(&((dest[27])))) = ((t0v10 >> 32) | (t0v8 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[12])))) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
+    *((uint64_t*)(&((dest[28])))) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[13])))) = ((t0v6 & 0x00000000ffffffffULL) | (t0v4 << 32));\
+    *((uint64_t*)(&((dest[29])))) = ((t0v6 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[14])))) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
+    *((uint64_t*)(&((dest[30])))) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[15])))) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
+    *((uint64_t*)(&((dest[31])))) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -790,38 +790,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v0 = ((t0v0 >> 16) & 0x0000ffff0000ffffULL);\
     t0v31 = (t0v1 & 0x0000ffff0000ffffULL);\
     t0v1 = ((t0v1 >> 16) & 0x0000ffff0000ffffULL);\
-    (dest[0]) = ((t0v9 & 0x00000000ffffffffULL) | (t0v17 << 32));\
-    (dest[16]) = ((t0v9 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
-    (dest[1]) = ((t0v18 & 0x00000000ffffffffULL) | (t0v19 << 32));\
-    (dest[17]) = ((t0v18 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
-    (dest[2]) = ((t0v20 & 0x00000000ffffffffULL) | (t0v21 << 32));\
-    (dest[18]) = ((t0v20 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
-    (dest[3]) = ((t0v22 & 0x00000000ffffffffULL) | (t0v23 << 32));\
-    (dest[19]) = ((t0v22 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
-    (dest[4]) = ((t0v24 & 0x00000000ffffffffULL) | (t0v25 << 32));\
-    (dest[20]) = ((t0v24 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
-    (dest[5]) = ((t0v26 & 0x00000000ffffffffULL) | (t0v27 << 32));\
-    (dest[21]) = ((t0v26 >> 32) | (t0v27 & 0xffffffff00000000ULL));\
-    (dest[6]) = ((t0v28 & 0x00000000ffffffffULL) | (t0v29 << 32));\
-    (dest[22]) = ((t0v28 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
-    (dest[7]) = ((t0v30 & 0x00000000ffffffffULL) | (t0v31 << 32));\
-    (dest[23]) = ((t0v30 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
-    (dest[8]) = ((t0v13 & 0x00000000ffffffffULL) | (t0v15 << 32));\
-    (dest[24]) = ((t0v13 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
-    (dest[9]) = ((t0v16 & 0x00000000ffffffffULL) | (t0v14 << 32));\
-    (dest[25]) = ((t0v16 >> 32) | (t0v14 & 0xffffffff00000000ULL));\
-    (dest[10]) = ((t0v12 & 0x00000000ffffffffULL) | (t0v7 << 32));\
-    (dest[26]) = ((t0v12 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
-    (dest[11]) = ((t0v10 & 0x00000000ffffffffULL) | (t0v8 << 32));\
-    (dest[27]) = ((t0v10 >> 32) | (t0v8 & 0xffffffff00000000ULL));\
-    (dest[12]) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
-    (dest[28]) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
-    (dest[13]) = ((t0v6 & 0x00000000ffffffffULL) | (t0v4 << 32));\
-    (dest[29]) = ((t0v6 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
-    (dest[14]) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
-    (dest[30]) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
-    (dest[15]) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
-    (dest[31]) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[0])))) = ((t0v9 & 0x00000000ffffffffULL) | (t0v17 << 32));\
+    *((uint64_t*)(&((dest[16])))) = ((t0v9 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[1])))) = ((t0v18 & 0x00000000ffffffffULL) | (t0v19 << 32));\
+    *((uint64_t*)(&((dest[17])))) = ((t0v18 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[2])))) = ((t0v20 & 0x00000000ffffffffULL) | (t0v21 << 32));\
+    *((uint64_t*)(&((dest[18])))) = ((t0v20 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[3])))) = ((t0v22 & 0x00000000ffffffffULL) | (t0v23 << 32));\
+    *((uint64_t*)(&((dest[19])))) = ((t0v22 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[4])))) = ((t0v24 & 0x00000000ffffffffULL) | (t0v25 << 32));\
+    *((uint64_t*)(&((dest[20])))) = ((t0v24 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[5])))) = ((t0v26 & 0x00000000ffffffffULL) | (t0v27 << 32));\
+    *((uint64_t*)(&((dest[21])))) = ((t0v26 >> 32) | (t0v27 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[6])))) = ((t0v28 & 0x00000000ffffffffULL) | (t0v29 << 32));\
+    *((uint64_t*)(&((dest[22])))) = ((t0v28 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[7])))) = ((t0v30 & 0x00000000ffffffffULL) | (t0v31 << 32));\
+    *((uint64_t*)(&((dest[23])))) = ((t0v30 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[8])))) = ((t0v13 & 0x00000000ffffffffULL) | (t0v15 << 32));\
+    *((uint64_t*)(&((dest[24])))) = ((t0v13 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[9])))) = ((t0v16 & 0x00000000ffffffffULL) | (t0v14 << 32));\
+    *((uint64_t*)(&((dest[25])))) = ((t0v16 >> 32) | (t0v14 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[10])))) = ((t0v12 & 0x00000000ffffffffULL) | (t0v7 << 32));\
+    *((uint64_t*)(&((dest[26])))) = ((t0v12 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[11])))) = ((t0v10 & 0x00000000ffffffffULL) | (t0v8 << 32));\
+    *((uint64_t*)(&((dest[27])))) = ((t0v10 >> 32) | (t0v8 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[12])))) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
+    *((uint64_t*)(&((dest[28])))) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[13])))) = ((t0v6 & 0x00000000ffffffffULL) | (t0v4 << 32));\
+    *((uint64_t*)(&((dest[29])))) = ((t0v6 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[14])))) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
+    *((uint64_t*)(&((dest[30])))) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[15])))) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
+    *((uint64_t*)(&((dest[31])))) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -912,38 +912,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v30 = ((t0v1 >> 8) & 0x000000ff000000ffULL);\
     t0v31 = ((t0v1 >> 16) & 0x000000ff000000ffULL);\
     t0v1 = ((t0v1 >> 24) & 0x000000ff000000ffULL);\
-    (dest[0]) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
-    (dest[16]) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
-    (dest[1]) = ((t0v14 & 0x00000000ffffffffULL) | (t0v17 << 32));\
-    (dest[17]) = ((t0v14 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
-    (dest[2]) = ((t0v20 & 0x00000000ffffffffULL) | (t0v23 << 32));\
-    (dest[18]) = ((t0v20 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
-    (dest[3]) = ((t0v26 & 0x00000000ffffffffULL) | (t0v29 << 32));\
-    (dest[19]) = ((t0v26 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
-    (dest[4]) = ((t0v9 & 0x00000000ffffffffULL) | (t0v12 << 32));\
-    (dest[20]) = ((t0v9 >> 32) | (t0v12 & 0xffffffff00000000ULL));\
-    (dest[5]) = ((t0v15 & 0x00000000ffffffffULL) | (t0v18 << 32));\
-    (dest[21]) = ((t0v15 >> 32) | (t0v18 & 0xffffffff00000000ULL));\
-    (dest[6]) = ((t0v21 & 0x00000000ffffffffULL) | (t0v24 << 32));\
-    (dest[22]) = ((t0v21 >> 32) | (t0v24 & 0xffffffff00000000ULL));\
-    (dest[7]) = ((t0v27 & 0x00000000ffffffffULL) | (t0v30 << 32));\
-    (dest[23]) = ((t0v27 >> 32) | (t0v30 & 0xffffffff00000000ULL));\
-    (dest[8]) = ((t0v10 & 0x00000000ffffffffULL) | (t0v13 << 32));\
-    (dest[24]) = ((t0v10 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
-    (dest[9]) = ((t0v16 & 0x00000000ffffffffULL) | (t0v19 << 32));\
-    (dest[25]) = ((t0v16 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
-    (dest[10]) = ((t0v22 & 0x00000000ffffffffULL) | (t0v25 << 32));\
-    (dest[26]) = ((t0v22 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
-    (dest[11]) = ((t0v28 & 0x00000000ffffffffULL) | (t0v31 << 32));\
-    (dest[27]) = ((t0v28 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
-    (dest[12]) = ((t0v8 & 0x00000000ffffffffULL) | (t0v6 << 32));\
-    (dest[28]) = ((t0v8 >> 32) | (t0v6 & 0xffffffff00000000ULL));\
-    (dest[13]) = ((t0v7 & 0x00000000ffffffffULL) | (t0v4 << 32));\
-    (dest[29]) = ((t0v7 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
-    (dest[14]) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
-    (dest[30]) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
-    (dest[15]) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
-    (dest[31]) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[0])))) = ((t0v5 & 0x00000000ffffffffULL) | (t0v11 << 32));\
+    *((uint64_t*)(&((dest[16])))) = ((t0v5 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[1])))) = ((t0v14 & 0x00000000ffffffffULL) | (t0v17 << 32));\
+    *((uint64_t*)(&((dest[17])))) = ((t0v14 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[2])))) = ((t0v20 & 0x00000000ffffffffULL) | (t0v23 << 32));\
+    *((uint64_t*)(&((dest[18])))) = ((t0v20 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[3])))) = ((t0v26 & 0x00000000ffffffffULL) | (t0v29 << 32));\
+    *((uint64_t*)(&((dest[19])))) = ((t0v26 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[4])))) = ((t0v9 & 0x00000000ffffffffULL) | (t0v12 << 32));\
+    *((uint64_t*)(&((dest[20])))) = ((t0v9 >> 32) | (t0v12 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[5])))) = ((t0v15 & 0x00000000ffffffffULL) | (t0v18 << 32));\
+    *((uint64_t*)(&((dest[21])))) = ((t0v15 >> 32) | (t0v18 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[6])))) = ((t0v21 & 0x00000000ffffffffULL) | (t0v24 << 32));\
+    *((uint64_t*)(&((dest[22])))) = ((t0v21 >> 32) | (t0v24 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[7])))) = ((t0v27 & 0x00000000ffffffffULL) | (t0v30 << 32));\
+    *((uint64_t*)(&((dest[23])))) = ((t0v27 >> 32) | (t0v30 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[8])))) = ((t0v10 & 0x00000000ffffffffULL) | (t0v13 << 32));\
+    *((uint64_t*)(&((dest[24])))) = ((t0v10 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[9])))) = ((t0v16 & 0x00000000ffffffffULL) | (t0v19 << 32));\
+    *((uint64_t*)(&((dest[25])))) = ((t0v16 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[10])))) = ((t0v22 & 0x00000000ffffffffULL) | (t0v25 << 32));\
+    *((uint64_t*)(&((dest[26])))) = ((t0v22 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[11])))) = ((t0v28 & 0x00000000ffffffffULL) | (t0v31 << 32));\
+    *((uint64_t*)(&((dest[27])))) = ((t0v28 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[12])))) = ((t0v8 & 0x00000000ffffffffULL) | (t0v6 << 32));\
+    *((uint64_t*)(&((dest[28])))) = ((t0v8 >> 32) | (t0v6 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[13])))) = ((t0v7 & 0x00000000ffffffffULL) | (t0v4 << 32));\
+    *((uint64_t*)(&((dest[29])))) = ((t0v7 >> 32) | (t0v4 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[14])))) = ((t0v3 & 0x00000000ffffffffULL) | (t0v2 << 32));\
+    *((uint64_t*)(&((dest[30])))) = ((t0v3 >> 32) | (t0v2 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[15])))) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
+    *((uint64_t*)(&((dest[31])))) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -1012,38 +1012,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v29 = (((S0) >> 29) & 0x0000000100000001ULL);\
     t0v30 = (((S0) >> 30) & 0x0000000100000001ULL);\
     t0v31 = (((S0) >> 31) & 0x0000000100000001ULL);\
-    (dest[0]) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
-    (dest[16]) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
-    (dest[1]) = ((t0v2 & 0x00000000ffffffffULL) | (t0v3 << 32));\
-    (dest[17]) = ((t0v2 >> 32) | (t0v3 & 0xffffffff00000000ULL));\
-    (dest[2]) = ((t0v4 & 0x00000000ffffffffULL) | (t0v5 << 32));\
-    (dest[18]) = ((t0v4 >> 32) | (t0v5 & 0xffffffff00000000ULL));\
-    (dest[3]) = ((t0v6 & 0x00000000ffffffffULL) | (t0v7 << 32));\
-    (dest[19]) = ((t0v6 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
-    (dest[4]) = ((t0v8 & 0x00000000ffffffffULL) | (t0v9 << 32));\
-    (dest[20]) = ((t0v8 >> 32) | (t0v9 & 0xffffffff00000000ULL));\
-    (dest[5]) = ((t0v10 & 0x00000000ffffffffULL) | (t0v11 << 32));\
-    (dest[21]) = ((t0v10 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
-    (dest[6]) = ((t0v12 & 0x00000000ffffffffULL) | (t0v13 << 32));\
-    (dest[22]) = ((t0v12 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
-    (dest[7]) = ((t0v14 & 0x00000000ffffffffULL) | (t0v15 << 32));\
-    (dest[23]) = ((t0v14 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
-    (dest[8]) = ((t0v16 & 0x00000000ffffffffULL) | (t0v17 << 32));\
-    (dest[24]) = ((t0v16 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
-    (dest[9]) = ((t0v18 & 0x00000000ffffffffULL) | (t0v19 << 32));\
-    (dest[25]) = ((t0v18 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
-    (dest[10]) = ((t0v20 & 0x00000000ffffffffULL) | (t0v21 << 32));\
-    (dest[26]) = ((t0v20 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
-    (dest[11]) = ((t0v22 & 0x00000000ffffffffULL) | (t0v23 << 32));\
-    (dest[27]) = ((t0v22 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
-    (dest[12]) = ((t0v24 & 0x00000000ffffffffULL) | (t0v25 << 32));\
-    (dest[28]) = ((t0v24 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
-    (dest[13]) = ((t0v26 & 0x00000000ffffffffULL) | (t0v27 << 32));\
-    (dest[29]) = ((t0v26 >> 32) | (t0v27 & 0xffffffff00000000ULL));\
-    (dest[14]) = ((t0v28 & 0x00000000ffffffffULL) | (t0v29 << 32));\
-    (dest[30]) = ((t0v28 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
-    (dest[15]) = ((t0v30 & 0x00000000ffffffffULL) | (t0v31 << 32));\
-    (dest[31]) = ((t0v30 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[0])))) = ((t0v0 & 0x00000000ffffffffULL) | (t0v1 << 32));\
+    *((uint64_t*)(&((dest[16])))) = ((t0v0 >> 32) | (t0v1 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[1])))) = ((t0v2 & 0x00000000ffffffffULL) | (t0v3 << 32));\
+    *((uint64_t*)(&((dest[17])))) = ((t0v2 >> 32) | (t0v3 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[2])))) = ((t0v4 & 0x00000000ffffffffULL) | (t0v5 << 32));\
+    *((uint64_t*)(&((dest[18])))) = ((t0v4 >> 32) | (t0v5 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[3])))) = ((t0v6 & 0x00000000ffffffffULL) | (t0v7 << 32));\
+    *((uint64_t*)(&((dest[19])))) = ((t0v6 >> 32) | (t0v7 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[4])))) = ((t0v8 & 0x00000000ffffffffULL) | (t0v9 << 32));\
+    *((uint64_t*)(&((dest[20])))) = ((t0v8 >> 32) | (t0v9 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[5])))) = ((t0v10 & 0x00000000ffffffffULL) | (t0v11 << 32));\
+    *((uint64_t*)(&((dest[21])))) = ((t0v10 >> 32) | (t0v11 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[6])))) = ((t0v12 & 0x00000000ffffffffULL) | (t0v13 << 32));\
+    *((uint64_t*)(&((dest[22])))) = ((t0v12 >> 32) | (t0v13 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[7])))) = ((t0v14 & 0x00000000ffffffffULL) | (t0v15 << 32));\
+    *((uint64_t*)(&((dest[23])))) = ((t0v14 >> 32) | (t0v15 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[8])))) = ((t0v16 & 0x00000000ffffffffULL) | (t0v17 << 32));\
+    *((uint64_t*)(&((dest[24])))) = ((t0v16 >> 32) | (t0v17 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[9])))) = ((t0v18 & 0x00000000ffffffffULL) | (t0v19 << 32));\
+    *((uint64_t*)(&((dest[25])))) = ((t0v18 >> 32) | (t0v19 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[10])))) = ((t0v20 & 0x00000000ffffffffULL) | (t0v21 << 32));\
+    *((uint64_t*)(&((dest[26])))) = ((t0v20 >> 32) | (t0v21 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[11])))) = ((t0v22 & 0x00000000ffffffffULL) | (t0v23 << 32));\
+    *((uint64_t*)(&((dest[27])))) = ((t0v22 >> 32) | (t0v23 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[12])))) = ((t0v24 & 0x00000000ffffffffULL) | (t0v25 << 32));\
+    *((uint64_t*)(&((dest[28])))) = ((t0v24 >> 32) | (t0v25 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[13])))) = ((t0v26 & 0x00000000ffffffffULL) | (t0v27 << 32));\
+    *((uint64_t*)(&((dest[29])))) = ((t0v26 >> 32) | (t0v27 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[14])))) = ((t0v28 & 0x00000000ffffffffULL) | (t0v29 << 32));\
+    *((uint64_t*)(&((dest[30])))) = ((t0v28 >> 32) | (t0v29 & 0xffffffff00000000ULL));\
+    *((uint64_t*)(&((dest[15])))) = ((t0v30 & 0x00000000ffffffffULL) | (t0v31 << 32));\
+    *((uint64_t*)(&((dest[31])))) = ((t0v30 >> 32) | (t0v31 & 0xffffffff00000000ULL));\
 }
 "##,
         transform.out()
@@ -1260,38 +1260,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v0 = _m_por(_m_psrldi(t0v0, 16), _m_pand(t0v16, c9));\
     t0v16 = _m_por(_m_pand(t0v1, c8), _m_pslldi(t0v17, 16));\
     t0v1 = _m_por(_m_psrldi(t0v1, 16), _m_pand(t0v17, c9));\
-    (dest[0]) = _m_punpckldq(t0v25, t0v29);\
-    (dest[16]) = _m_punpckhdq(t0v25, t0v29);\
-    (dest[1]) = _m_punpckldq(t0v31, t0v32);\
-    (dest[17]) = _m_punpckhdq(t0v31, t0v32);\
-    (dest[2]) = _m_punpckldq(t0v30, t0v28);\
-    (dest[18]) = _m_punpckhdq(t0v30, t0v28);\
-    (dest[3]) = _m_punpckldq(t0v23, t0v26);\
-    (dest[19]) = _m_punpckhdq(t0v23, t0v26);\
-    (dest[4]) = _m_punpckldq(t0v24, t0v13);\
-    (dest[20]) = _m_punpckhdq(t0v24, t0v13);\
-    (dest[5]) = _m_punpckldq(t0v19, t0v22);\
-    (dest[21]) = _m_punpckhdq(t0v19, t0v22);\
-    (dest[6]) = _m_punpckldq(t0v20, t0v15);\
-    (dest[22]) = _m_punpckhdq(t0v20, t0v15);\
-    (dest[7]) = _m_punpckldq(t0v18, t0v16);\
-    (dest[23]) = _m_punpckhdq(t0v18, t0v16);\
-    (dest[8]) = _m_punpckldq(t0v9, t0v21);\
-    (dest[24]) = _m_punpckhdq(t0v9, t0v21);\
-    (dest[9]) = _m_punpckldq(t0v27, t0v14);\
-    (dest[25]) = _m_punpckhdq(t0v27, t0v14);\
-    (dest[10]) = _m_punpckldq(t0v12, t0v7);\
-    (dest[26]) = _m_punpckhdq(t0v12, t0v7);\
-    (dest[11]) = _m_punpckldq(t0v10, t0v8);\
-    (dest[27]) = _m_punpckhdq(t0v10, t0v8);\
-    (dest[12]) = _m_punpckldq(t0v5, t0v11);\
-    (dest[28]) = _m_punpckhdq(t0v5, t0v11);\
-    (dest[13]) = _m_punpckldq(t0v6, t0v4);\
-    (dest[29]) = _m_punpckhdq(t0v6, t0v4);\
-    (dest[14]) = _m_punpckldq(t0v3, t0v2);\
-    (dest[30]) = _m_punpckhdq(t0v3, t0v2);\
-    (dest[15]) = _m_punpckldq(t0v0, t0v1);\
-    (dest[31]) = _m_punpckhdq(t0v0, t0v1);\
+    *((__m64*)(&((dest[0])))) = _m_punpckldq(t0v25, t0v29);\
+    *((__m64*)(&((dest[16])))) = _m_punpckhdq(t0v25, t0v29);\
+    *((__m64*)(&((dest[1])))) = _m_punpckldq(t0v31, t0v32);\
+    *((__m64*)(&((dest[17])))) = _m_punpckhdq(t0v31, t0v32);\
+    *((__m64*)(&((dest[2])))) = _m_punpckldq(t0v30, t0v28);\
+    *((__m64*)(&((dest[18])))) = _m_punpckhdq(t0v30, t0v28);\
+    *((__m64*)(&((dest[3])))) = _m_punpckldq(t0v23, t0v26);\
+    *((__m64*)(&((dest[19])))) = _m_punpckhdq(t0v23, t0v26);\
+    *((__m64*)(&((dest[4])))) = _m_punpckldq(t0v24, t0v13);\
+    *((__m64*)(&((dest[20])))) = _m_punpckhdq(t0v24, t0v13);\
+    *((__m64*)(&((dest[5])))) = _m_punpckldq(t0v19, t0v22);\
+    *((__m64*)(&((dest[21])))) = _m_punpckhdq(t0v19, t0v22);\
+    *((__m64*)(&((dest[6])))) = _m_punpckldq(t0v20, t0v15);\
+    *((__m64*)(&((dest[22])))) = _m_punpckhdq(t0v20, t0v15);\
+    *((__m64*)(&((dest[7])))) = _m_punpckldq(t0v18, t0v16);\
+    *((__m64*)(&((dest[23])))) = _m_punpckhdq(t0v18, t0v16);\
+    *((__m64*)(&((dest[8])))) = _m_punpckldq(t0v9, t0v21);\
+    *((__m64*)(&((dest[24])))) = _m_punpckhdq(t0v9, t0v21);\
+    *((__m64*)(&((dest[9])))) = _m_punpckldq(t0v27, t0v14);\
+    *((__m64*)(&((dest[25])))) = _m_punpckhdq(t0v27, t0v14);\
+    *((__m64*)(&((dest[10])))) = _m_punpckldq(t0v12, t0v7);\
+    *((__m64*)(&((dest[26])))) = _m_punpckhdq(t0v12, t0v7);\
+    *((__m64*)(&((dest[11])))) = _m_punpckldq(t0v10, t0v8);\
+    *((__m64*)(&((dest[27])))) = _m_punpckhdq(t0v10, t0v8);\
+    *((__m64*)(&((dest[12])))) = _m_punpckldq(t0v5, t0v11);\
+    *((__m64*)(&((dest[28])))) = _m_punpckhdq(t0v5, t0v11);\
+    *((__m64*)(&((dest[13])))) = _m_punpckldq(t0v6, t0v4);\
+    *((__m64*)(&((dest[29])))) = _m_punpckhdq(t0v6, t0v4);\
+    *((__m64*)(&((dest[14])))) = _m_punpckldq(t0v3, t0v2);\
+    *((__m64*)(&((dest[30])))) = _m_punpckhdq(t0v3, t0v2);\
+    *((__m64*)(&((dest[15])))) = _m_punpckldq(t0v0, t0v1);\
+    *((__m64*)(&((dest[31])))) = _m_punpckhdq(t0v0, t0v1);\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -1433,38 +1433,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v0 = _m_psrldi(t0v0, 16);\
     t0v31 = _m_pand(t0v1, c8);\
     t0v1 = _m_psrldi(t0v1, 16);\
-    (dest[0]) = _m_punpckldq(t0v9, t0v17);\
-    (dest[16]) = _m_punpckhdq(t0v9, t0v17);\
-    (dest[1]) = _m_punpckldq(t0v18, t0v19);\
-    (dest[17]) = _m_punpckhdq(t0v18, t0v19);\
-    (dest[2]) = _m_punpckldq(t0v20, t0v21);\
-    (dest[18]) = _m_punpckhdq(t0v20, t0v21);\
-    (dest[3]) = _m_punpckldq(t0v22, t0v23);\
-    (dest[19]) = _m_punpckhdq(t0v22, t0v23);\
-    (dest[4]) = _m_punpckldq(t0v24, t0v25);\
-    (dest[20]) = _m_punpckhdq(t0v24, t0v25);\
-    (dest[5]) = _m_punpckldq(t0v26, t0v27);\
-    (dest[21]) = _m_punpckhdq(t0v26, t0v27);\
-    (dest[6]) = _m_punpckldq(t0v28, t0v29);\
-    (dest[22]) = _m_punpckhdq(t0v28, t0v29);\
-    (dest[7]) = _m_punpckldq(t0v30, t0v31);\
-    (dest[23]) = _m_punpckhdq(t0v30, t0v31);\
-    (dest[8]) = _m_punpckldq(t0v13, t0v15);\
-    (dest[24]) = _m_punpckhdq(t0v13, t0v15);\
-    (dest[9]) = _m_punpckldq(t0v16, t0v14);\
-    (dest[25]) = _m_punpckhdq(t0v16, t0v14);\
-    (dest[10]) = _m_punpckldq(t0v12, t0v7);\
-    (dest[26]) = _m_punpckhdq(t0v12, t0v7);\
-    (dest[11]) = _m_punpckldq(t0v10, t0v8);\
-    (dest[27]) = _m_punpckhdq(t0v10, t0v8);\
-    (dest[12]) = _m_punpckldq(t0v5, t0v11);\
-    (dest[28]) = _m_punpckhdq(t0v5, t0v11);\
-    (dest[13]) = _m_punpckldq(t0v6, t0v4);\
-    (dest[29]) = _m_punpckhdq(t0v6, t0v4);\
-    (dest[14]) = _m_punpckldq(t0v3, t0v2);\
-    (dest[30]) = _m_punpckhdq(t0v3, t0v2);\
-    (dest[15]) = _m_punpckldq(t0v0, t0v1);\
-    (dest[31]) = _m_punpckhdq(t0v0, t0v1);\
+    *((__m64*)(&((dest[0])))) = _m_punpckldq(t0v9, t0v17);\
+    *((__m64*)(&((dest[16])))) = _m_punpckhdq(t0v9, t0v17);\
+    *((__m64*)(&((dest[1])))) = _m_punpckldq(t0v18, t0v19);\
+    *((__m64*)(&((dest[17])))) = _m_punpckhdq(t0v18, t0v19);\
+    *((__m64*)(&((dest[2])))) = _m_punpckldq(t0v20, t0v21);\
+    *((__m64*)(&((dest[18])))) = _m_punpckhdq(t0v20, t0v21);\
+    *((__m64*)(&((dest[3])))) = _m_punpckldq(t0v22, t0v23);\
+    *((__m64*)(&((dest[19])))) = _m_punpckhdq(t0v22, t0v23);\
+    *((__m64*)(&((dest[4])))) = _m_punpckldq(t0v24, t0v25);\
+    *((__m64*)(&((dest[20])))) = _m_punpckhdq(t0v24, t0v25);\
+    *((__m64*)(&((dest[5])))) = _m_punpckldq(t0v26, t0v27);\
+    *((__m64*)(&((dest[21])))) = _m_punpckhdq(t0v26, t0v27);\
+    *((__m64*)(&((dest[6])))) = _m_punpckldq(t0v28, t0v29);\
+    *((__m64*)(&((dest[22])))) = _m_punpckhdq(t0v28, t0v29);\
+    *((__m64*)(&((dest[7])))) = _m_punpckldq(t0v30, t0v31);\
+    *((__m64*)(&((dest[23])))) = _m_punpckhdq(t0v30, t0v31);\
+    *((__m64*)(&((dest[8])))) = _m_punpckldq(t0v13, t0v15);\
+    *((__m64*)(&((dest[24])))) = _m_punpckhdq(t0v13, t0v15);\
+    *((__m64*)(&((dest[9])))) = _m_punpckldq(t0v16, t0v14);\
+    *((__m64*)(&((dest[25])))) = _m_punpckhdq(t0v16, t0v14);\
+    *((__m64*)(&((dest[10])))) = _m_punpckldq(t0v12, t0v7);\
+    *((__m64*)(&((dest[26])))) = _m_punpckhdq(t0v12, t0v7);\
+    *((__m64*)(&((dest[11])))) = _m_punpckldq(t0v10, t0v8);\
+    *((__m64*)(&((dest[27])))) = _m_punpckhdq(t0v10, t0v8);\
+    *((__m64*)(&((dest[12])))) = _m_punpckldq(t0v5, t0v11);\
+    *((__m64*)(&((dest[28])))) = _m_punpckhdq(t0v5, t0v11);\
+    *((__m64*)(&((dest[13])))) = _m_punpckldq(t0v6, t0v4);\
+    *((__m64*)(&((dest[29])))) = _m_punpckhdq(t0v6, t0v4);\
+    *((__m64*)(&((dest[14])))) = _m_punpckldq(t0v3, t0v2);\
+    *((__m64*)(&((dest[30])))) = _m_punpckhdq(t0v3, t0v2);\
+    *((__m64*)(&((dest[15])))) = _m_punpckldq(t0v0, t0v1);\
+    *((__m64*)(&((dest[31])))) = _m_punpckhdq(t0v0, t0v1);\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -1562,38 +1562,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v30 = _m_pand(_m_psrldi(t0v1, 8), c6);\
     t0v31 = _m_pand(_m_psrldi(t0v1, 16), c6);\
     t0v1 = _m_psrldi(t0v1, 24);\
-    (dest[0]) = _m_punpckldq(t0v5, t0v11);\
-    (dest[16]) = _m_punpckhdq(t0v5, t0v11);\
-    (dest[1]) = _m_punpckldq(t0v14, t0v17);\
-    (dest[17]) = _m_punpckhdq(t0v14, t0v17);\
-    (dest[2]) = _m_punpckldq(t0v20, t0v23);\
-    (dest[18]) = _m_punpckhdq(t0v20, t0v23);\
-    (dest[3]) = _m_punpckldq(t0v26, t0v29);\
-    (dest[19]) = _m_punpckhdq(t0v26, t0v29);\
-    (dest[4]) = _m_punpckldq(t0v9, t0v12);\
-    (dest[20]) = _m_punpckhdq(t0v9, t0v12);\
-    (dest[5]) = _m_punpckldq(t0v15, t0v18);\
-    (dest[21]) = _m_punpckhdq(t0v15, t0v18);\
-    (dest[6]) = _m_punpckldq(t0v21, t0v24);\
-    (dest[22]) = _m_punpckhdq(t0v21, t0v24);\
-    (dest[7]) = _m_punpckldq(t0v27, t0v30);\
-    (dest[23]) = _m_punpckhdq(t0v27, t0v30);\
-    (dest[8]) = _m_punpckldq(t0v10, t0v13);\
-    (dest[24]) = _m_punpckhdq(t0v10, t0v13);\
-    (dest[9]) = _m_punpckldq(t0v16, t0v19);\
-    (dest[25]) = _m_punpckhdq(t0v16, t0v19);\
-    (dest[10]) = _m_punpckldq(t0v22, t0v25);\
-    (dest[26]) = _m_punpckhdq(t0v22, t0v25);\
-    (dest[11]) = _m_punpckldq(t0v28, t0v31);\
-    (dest[27]) = _m_punpckhdq(t0v28, t0v31);\
-    (dest[12]) = _m_punpckldq(t0v8, t0v6);\
-    (dest[28]) = _m_punpckhdq(t0v8, t0v6);\
-    (dest[13]) = _m_punpckldq(t0v7, t0v4);\
-    (dest[29]) = _m_punpckhdq(t0v7, t0v4);\
-    (dest[14]) = _m_punpckldq(t0v3, t0v2);\
-    (dest[30]) = _m_punpckhdq(t0v3, t0v2);\
-    (dest[15]) = _m_punpckldq(t0v0, t0v1);\
-    (dest[31]) = _m_punpckhdq(t0v0, t0v1);\
+    *((__m64*)(&((dest[0])))) = _m_punpckldq(t0v5, t0v11);\
+    *((__m64*)(&((dest[16])))) = _m_punpckhdq(t0v5, t0v11);\
+    *((__m64*)(&((dest[1])))) = _m_punpckldq(t0v14, t0v17);\
+    *((__m64*)(&((dest[17])))) = _m_punpckhdq(t0v14, t0v17);\
+    *((__m64*)(&((dest[2])))) = _m_punpckldq(t0v20, t0v23);\
+    *((__m64*)(&((dest[18])))) = _m_punpckhdq(t0v20, t0v23);\
+    *((__m64*)(&((dest[3])))) = _m_punpckldq(t0v26, t0v29);\
+    *((__m64*)(&((dest[19])))) = _m_punpckhdq(t0v26, t0v29);\
+    *((__m64*)(&((dest[4])))) = _m_punpckldq(t0v9, t0v12);\
+    *((__m64*)(&((dest[20])))) = _m_punpckhdq(t0v9, t0v12);\
+    *((__m64*)(&((dest[5])))) = _m_punpckldq(t0v15, t0v18);\
+    *((__m64*)(&((dest[21])))) = _m_punpckhdq(t0v15, t0v18);\
+    *((__m64*)(&((dest[6])))) = _m_punpckldq(t0v21, t0v24);\
+    *((__m64*)(&((dest[22])))) = _m_punpckhdq(t0v21, t0v24);\
+    *((__m64*)(&((dest[7])))) = _m_punpckldq(t0v27, t0v30);\
+    *((__m64*)(&((dest[23])))) = _m_punpckhdq(t0v27, t0v30);\
+    *((__m64*)(&((dest[8])))) = _m_punpckldq(t0v10, t0v13);\
+    *((__m64*)(&((dest[24])))) = _m_punpckhdq(t0v10, t0v13);\
+    *((__m64*)(&((dest[9])))) = _m_punpckldq(t0v16, t0v19);\
+    *((__m64*)(&((dest[25])))) = _m_punpckhdq(t0v16, t0v19);\
+    *((__m64*)(&((dest[10])))) = _m_punpckldq(t0v22, t0v25);\
+    *((__m64*)(&((dest[26])))) = _m_punpckhdq(t0v22, t0v25);\
+    *((__m64*)(&((dest[11])))) = _m_punpckldq(t0v28, t0v31);\
+    *((__m64*)(&((dest[27])))) = _m_punpckhdq(t0v28, t0v31);\
+    *((__m64*)(&((dest[12])))) = _m_punpckldq(t0v8, t0v6);\
+    *((__m64*)(&((dest[28])))) = _m_punpckhdq(t0v8, t0v6);\
+    *((__m64*)(&((dest[13])))) = _m_punpckldq(t0v7, t0v4);\
+    *((__m64*)(&((dest[29])))) = _m_punpckhdq(t0v7, t0v4);\
+    *((__m64*)(&((dest[14])))) = _m_punpckldq(t0v3, t0v2);\
+    *((__m64*)(&((dest[30])))) = _m_punpckhdq(t0v3, t0v2);\
+    *((__m64*)(&((dest[15])))) = _m_punpckldq(t0v0, t0v1);\
+    *((__m64*)(&((dest[31])))) = _m_punpckhdq(t0v0, t0v1);\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -1663,38 +1663,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v29 = _m_pand(_m_psrldi((S0), 29), c0);\
     t0v30 = _m_pand(_m_psrldi((S0), 30), c0);\
     t0v31 = _m_psrldi((S0), 31);\
-    (dest[0]) = _m_punpckldq(t0v0, t0v1);\
-    (dest[16]) = _m_punpckhdq(t0v0, t0v1);\
-    (dest[1]) = _m_punpckldq(t0v2, t0v3);\
-    (dest[17]) = _m_punpckhdq(t0v2, t0v3);\
-    (dest[2]) = _m_punpckldq(t0v4, t0v5);\
-    (dest[18]) = _m_punpckhdq(t0v4, t0v5);\
-    (dest[3]) = _m_punpckldq(t0v6, t0v7);\
-    (dest[19]) = _m_punpckhdq(t0v6, t0v7);\
-    (dest[4]) = _m_punpckldq(t0v8, t0v9);\
-    (dest[20]) = _m_punpckhdq(t0v8, t0v9);\
-    (dest[5]) = _m_punpckldq(t0v10, t0v11);\
-    (dest[21]) = _m_punpckhdq(t0v10, t0v11);\
-    (dest[6]) = _m_punpckldq(t0v12, t0v13);\
-    (dest[22]) = _m_punpckhdq(t0v12, t0v13);\
-    (dest[7]) = _m_punpckldq(t0v14, t0v15);\
-    (dest[23]) = _m_punpckhdq(t0v14, t0v15);\
-    (dest[8]) = _m_punpckldq(t0v16, t0v17);\
-    (dest[24]) = _m_punpckhdq(t0v16, t0v17);\
-    (dest[9]) = _m_punpckldq(t0v18, t0v19);\
-    (dest[25]) = _m_punpckhdq(t0v18, t0v19);\
-    (dest[10]) = _m_punpckldq(t0v20, t0v21);\
-    (dest[26]) = _m_punpckhdq(t0v20, t0v21);\
-    (dest[11]) = _m_punpckldq(t0v22, t0v23);\
-    (dest[27]) = _m_punpckhdq(t0v22, t0v23);\
-    (dest[12]) = _m_punpckldq(t0v24, t0v25);\
-    (dest[28]) = _m_punpckhdq(t0v24, t0v25);\
-    (dest[13]) = _m_punpckldq(t0v26, t0v27);\
-    (dest[29]) = _m_punpckhdq(t0v26, t0v27);\
-    (dest[14]) = _m_punpckldq(t0v28, t0v29);\
-    (dest[30]) = _m_punpckhdq(t0v28, t0v29);\
-    (dest[15]) = _m_punpckldq(t0v30, t0v31);\
-    (dest[31]) = _m_punpckhdq(t0v30, t0v31);\
+    *((__m64*)(&((dest[0])))) = _m_punpckldq(t0v0, t0v1);\
+    *((__m64*)(&((dest[16])))) = _m_punpckhdq(t0v0, t0v1);\
+    *((__m64*)(&((dest[1])))) = _m_punpckldq(t0v2, t0v3);\
+    *((__m64*)(&((dest[17])))) = _m_punpckhdq(t0v2, t0v3);\
+    *((__m64*)(&((dest[2])))) = _m_punpckldq(t0v4, t0v5);\
+    *((__m64*)(&((dest[18])))) = _m_punpckhdq(t0v4, t0v5);\
+    *((__m64*)(&((dest[3])))) = _m_punpckldq(t0v6, t0v7);\
+    *((__m64*)(&((dest[19])))) = _m_punpckhdq(t0v6, t0v7);\
+    *((__m64*)(&((dest[4])))) = _m_punpckldq(t0v8, t0v9);\
+    *((__m64*)(&((dest[20])))) = _m_punpckhdq(t0v8, t0v9);\
+    *((__m64*)(&((dest[5])))) = _m_punpckldq(t0v10, t0v11);\
+    *((__m64*)(&((dest[21])))) = _m_punpckhdq(t0v10, t0v11);\
+    *((__m64*)(&((dest[6])))) = _m_punpckldq(t0v12, t0v13);\
+    *((__m64*)(&((dest[22])))) = _m_punpckhdq(t0v12, t0v13);\
+    *((__m64*)(&((dest[7])))) = _m_punpckldq(t0v14, t0v15);\
+    *((__m64*)(&((dest[23])))) = _m_punpckhdq(t0v14, t0v15);\
+    *((__m64*)(&((dest[8])))) = _m_punpckldq(t0v16, t0v17);\
+    *((__m64*)(&((dest[24])))) = _m_punpckhdq(t0v16, t0v17);\
+    *((__m64*)(&((dest[9])))) = _m_punpckldq(t0v18, t0v19);\
+    *((__m64*)(&((dest[25])))) = _m_punpckhdq(t0v18, t0v19);\
+    *((__m64*)(&((dest[10])))) = _m_punpckldq(t0v20, t0v21);\
+    *((__m64*)(&((dest[26])))) = _m_punpckhdq(t0v20, t0v21);\
+    *((__m64*)(&((dest[11])))) = _m_punpckldq(t0v22, t0v23);\
+    *((__m64*)(&((dest[27])))) = _m_punpckhdq(t0v22, t0v23);\
+    *((__m64*)(&((dest[12])))) = _m_punpckldq(t0v24, t0v25);\
+    *((__m64*)(&((dest[28])))) = _m_punpckhdq(t0v24, t0v25);\
+    *((__m64*)(&((dest[13])))) = _m_punpckldq(t0v26, t0v27);\
+    *((__m64*)(&((dest[29])))) = _m_punpckhdq(t0v26, t0v27);\
+    *((__m64*)(&((dest[14])))) = _m_punpckldq(t0v28, t0v29);\
+    *((__m64*)(&((dest[30])))) = _m_punpckhdq(t0v28, t0v29);\
+    *((__m64*)(&((dest[15])))) = _m_punpckldq(t0v30, t0v31);\
+    *((__m64*)(&((dest[31])))) = _m_punpckhdq(t0v30, t0v31);\
 }
 "##,
         transform.out()
@@ -2442,38 +2442,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c11));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c10), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c11));\
-    (dest[0]) = _mm_unpacklo_epi64(t0v17, t0v29);\
-    (dest[16]) = _mm_unpackhi_epi64(t0v17, t0v29);\
-    (dest[1]) = _mm_unpacklo_epi64(t0v32, t0v30);\
-    (dest[17]) = _mm_unpackhi_epi64(t0v32, t0v30);\
-    (dest[2]) = _mm_unpacklo_epi64(t0v26, t0v24);\
-    (dest[18]) = _mm_unpackhi_epi64(t0v26, t0v24);\
-    (dest[3]) = _mm_unpacklo_epi64(t0v22, t0v20);\
-    (dest[19]) = _mm_unpackhi_epi64(t0v22, t0v20);\
-    (dest[4]) = _mm_unpacklo_epi64(t0v18, t0v21);\
-    (dest[20]) = _mm_unpackhi_epi64(t0v18, t0v21);\
-    (dest[5]) = _mm_unpacklo_epi64(t0v27, t0v12);\
-    (dest[21]) = _mm_unpackhi_epi64(t0v27, t0v12);\
-    (dest[6]) = _mm_unpacklo_epi64(t0v10, t0v11);\
-    (dest[22]) = _mm_unpackhi_epi64(t0v10, t0v11);\
-    (dest[7]) = _mm_unpacklo_epi64(t0v6, t0v3);\
-    (dest[23]) = _mm_unpackhi_epi64(t0v6, t0v3);\
-    (dest[8]) = _mm_unpacklo_epi64(t0v25, t0v31);\
-    (dest[24]) = _mm_unpackhi_epi64(t0v25, t0v31);\
-    (dest[9]) = _mm_unpacklo_epi64(t0v28, t0v23);\
-    (dest[25]) = _mm_unpackhi_epi64(t0v28, t0v23);\
-    (dest[10]) = _mm_unpacklo_epi64(t0v13, t0v19);\
-    (dest[26]) = _mm_unpackhi_epi64(t0v13, t0v19);\
-    (dest[11]) = _mm_unpacklo_epi64(t0v15, t0v16);\
-    (dest[27]) = _mm_unpackhi_epi64(t0v15, t0v16);\
-    (dest[12]) = _mm_unpacklo_epi64(t0v9, t0v14);\
-    (dest[28]) = _mm_unpackhi_epi64(t0v9, t0v14);\
-    (dest[13]) = _mm_unpacklo_epi64(t0v7, t0v8);\
-    (dest[29]) = _mm_unpackhi_epi64(t0v7, t0v8);\
-    (dest[14]) = _mm_unpacklo_epi64(t0v5, t0v4);\
-    (dest[30]) = _mm_unpackhi_epi64(t0v5, t0v4);\
-    (dest[15]) = _mm_unpacklo_epi64(t0v2, t0v0);\
-    (dest[31]) = _mm_unpackhi_epi64(t0v2, t0v0);\
+    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v17, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v17, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v32, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v32, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v26, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v26, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v22, t0v20));\
+    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v22, t0v20));\
+    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v18, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v18, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v27, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v27, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v25, t0v31));\
+    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v25, t0v31));\
+    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v28, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v28, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v13, t0v19));\
+    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v13, t0v19));\
+    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v15, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v15, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v9, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v9, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -2650,38 +2650,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c10));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c9), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c10));\
-    (dest[0]) = _mm_unpacklo_epi64(t0v32, t0v17);\
-    (dest[16]) = _mm_unpackhi_epi64(t0v32, t0v17);\
-    (dest[1]) = _mm_unpacklo_epi64(t0v19, t0v21);\
-    (dest[17]) = _mm_unpackhi_epi64(t0v19, t0v21);\
-    (dest[2]) = _mm_unpacklo_epi64(t0v23, t0v25);\
-    (dest[18]) = _mm_unpackhi_epi64(t0v23, t0v25);\
-    (dest[3]) = _mm_unpacklo_epi64(t0v27, t0v29);\
-    (dest[19]) = _mm_unpackhi_epi64(t0v27, t0v29);\
-    (dest[4]) = _mm_unpacklo_epi64(t0v31, t0v15);\
-    (dest[20]) = _mm_unpackhi_epi64(t0v31, t0v15);\
-    (dest[5]) = _mm_unpacklo_epi64(t0v16, t0v12);\
-    (dest[21]) = _mm_unpackhi_epi64(t0v16, t0v12);\
-    (dest[6]) = _mm_unpacklo_epi64(t0v10, t0v11);\
-    (dest[22]) = _mm_unpackhi_epi64(t0v10, t0v11);\
-    (dest[7]) = _mm_unpacklo_epi64(t0v6, t0v3);\
-    (dest[23]) = _mm_unpackhi_epi64(t0v6, t0v3);\
-    (dest[8]) = _mm_unpacklo_epi64(t0v9, t0v18);\
-    (dest[24]) = _mm_unpackhi_epi64(t0v9, t0v18);\
-    (dest[9]) = _mm_unpacklo_epi64(t0v20, t0v22);\
-    (dest[25]) = _mm_unpackhi_epi64(t0v20, t0v22);\
-    (dest[10]) = _mm_unpacklo_epi64(t0v24, t0v26);\
-    (dest[26]) = _mm_unpackhi_epi64(t0v24, t0v26);\
-    (dest[11]) = _mm_unpacklo_epi64(t0v28, t0v30);\
-    (dest[27]) = _mm_unpackhi_epi64(t0v28, t0v30);\
-    (dest[12]) = _mm_unpacklo_epi64(t0v13, t0v14);\
-    (dest[28]) = _mm_unpackhi_epi64(t0v13, t0v14);\
-    (dest[13]) = _mm_unpacklo_epi64(t0v7, t0v8);\
-    (dest[29]) = _mm_unpackhi_epi64(t0v7, t0v8);\
-    (dest[14]) = _mm_unpacklo_epi64(t0v5, t0v4);\
-    (dest[30]) = _mm_unpackhi_epi64(t0v5, t0v4);\
-    (dest[15]) = _mm_unpacklo_epi64(t0v2, t0v0);\
-    (dest[31]) = _mm_unpackhi_epi64(t0v2, t0v0);\
+    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v31, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v31, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v16, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v16, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v9, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v9, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v13, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v13, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -2814,38 +2814,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c8));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c7), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c8));\
-    (dest[0]) = _mm_unpacklo_epi64(t0v32, t0v11);\
-    (dest[16]) = _mm_unpackhi_epi64(t0v32, t0v11);\
-    (dest[1]) = _mm_unpacklo_epi64(t0v17, t0v23);\
-    (dest[17]) = _mm_unpackhi_epi64(t0v17, t0v23);\
-    (dest[2]) = _mm_unpacklo_epi64(t0v29, t0v12);\
-    (dest[18]) = _mm_unpackhi_epi64(t0v29, t0v12);\
-    (dest[3]) = _mm_unpacklo_epi64(t0v18, t0v24);\
-    (dest[19]) = _mm_unpackhi_epi64(t0v18, t0v24);\
-    (dest[4]) = _mm_unpacklo_epi64(t0v30, t0v13);\
-    (dest[20]) = _mm_unpackhi_epi64(t0v30, t0v13);\
-    (dest[5]) = _mm_unpacklo_epi64(t0v19, t0v25);\
-    (dest[21]) = _mm_unpackhi_epi64(t0v19, t0v25);\
-    (dest[6]) = _mm_unpacklo_epi64(t0v31, t0v8);\
-    (dest[22]) = _mm_unpackhi_epi64(t0v31, t0v8);\
-    (dest[7]) = _mm_unpacklo_epi64(t0v7, t0v3);\
-    (dest[23]) = _mm_unpackhi_epi64(t0v7, t0v3);\
-    (dest[8]) = _mm_unpacklo_epi64(t0v5, t0v14);\
-    (dest[24]) = _mm_unpackhi_epi64(t0v5, t0v14);\
-    (dest[9]) = _mm_unpacklo_epi64(t0v20, t0v26);\
-    (dest[25]) = _mm_unpackhi_epi64(t0v20, t0v26);\
-    (dest[10]) = _mm_unpacklo_epi64(t0v9, t0v15);\
-    (dest[26]) = _mm_unpackhi_epi64(t0v9, t0v15);\
-    (dest[11]) = _mm_unpacklo_epi64(t0v21, t0v27);\
-    (dest[27]) = _mm_unpackhi_epi64(t0v21, t0v27);\
-    (dest[12]) = _mm_unpacklo_epi64(t0v10, t0v16);\
-    (dest[28]) = _mm_unpackhi_epi64(t0v10, t0v16);\
-    (dest[13]) = _mm_unpacklo_epi64(t0v22, t0v28);\
-    (dest[29]) = _mm_unpackhi_epi64(t0v22, t0v28);\
-    (dest[14]) = _mm_unpacklo_epi64(t0v6, t0v4);\
-    (dest[30]) = _mm_unpackhi_epi64(t0v6, t0v4);\
-    (dest[15]) = _mm_unpacklo_epi64(t0v2, t0v0);\
-    (dest[31]) = _mm_unpackhi_epi64(t0v2, t0v0);\
+    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v17, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v17, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v29, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v29, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v18, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v18, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v30, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v30, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v31, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v31, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v7, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v7, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v5, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v5, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v9, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v9, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v21, t0v27));\
+    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v21, t0v27));\
+    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v10, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v10, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v22, t0v28));\
+    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v22, t0v28));\
+    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v6, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v6, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -2950,38 +2950,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v29, c2));\
     t0v29 = _mm_or_si128(_mm_and_si128(t0v30, c1), _mm_slli_epi64(t0v31, 32));\
     t0v30 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v31, c2));\
-    (dest[0]) = _mm_unpacklo_epi64(t0v32, t0v1);\
-    (dest[16]) = _mm_unpackhi_epi64(t0v32, t0v1);\
-    (dest[1]) = _mm_unpacklo_epi64(t0v3, t0v5);\
-    (dest[17]) = _mm_unpackhi_epi64(t0v3, t0v5);\
-    (dest[2]) = _mm_unpacklo_epi64(t0v7, t0v9);\
-    (dest[18]) = _mm_unpackhi_epi64(t0v7, t0v9);\
-    (dest[3]) = _mm_unpacklo_epi64(t0v11, t0v13);\
-    (dest[19]) = _mm_unpackhi_epi64(t0v11, t0v13);\
-    (dest[4]) = _mm_unpacklo_epi64(t0v15, t0v17);\
-    (dest[20]) = _mm_unpackhi_epi64(t0v15, t0v17);\
-    (dest[5]) = _mm_unpacklo_epi64(t0v19, t0v21);\
-    (dest[21]) = _mm_unpackhi_epi64(t0v19, t0v21);\
-    (dest[6]) = _mm_unpacklo_epi64(t0v23, t0v25);\
-    (dest[22]) = _mm_unpackhi_epi64(t0v23, t0v25);\
-    (dest[7]) = _mm_unpacklo_epi64(t0v27, t0v29);\
-    (dest[23]) = _mm_unpackhi_epi64(t0v27, t0v29);\
-    (dest[8]) = _mm_unpacklo_epi64(t0v0, t0v2);\
-    (dest[24]) = _mm_unpackhi_epi64(t0v0, t0v2);\
-    (dest[9]) = _mm_unpacklo_epi64(t0v4, t0v6);\
-    (dest[25]) = _mm_unpackhi_epi64(t0v4, t0v6);\
-    (dest[10]) = _mm_unpacklo_epi64(t0v8, t0v10);\
-    (dest[26]) = _mm_unpackhi_epi64(t0v8, t0v10);\
-    (dest[11]) = _mm_unpacklo_epi64(t0v12, t0v14);\
-    (dest[27]) = _mm_unpackhi_epi64(t0v12, t0v14);\
-    (dest[12]) = _mm_unpacklo_epi64(t0v16, t0v18);\
-    (dest[28]) = _mm_unpackhi_epi64(t0v16, t0v18);\
-    (dest[13]) = _mm_unpacklo_epi64(t0v20, t0v22);\
-    (dest[29]) = _mm_unpackhi_epi64(t0v20, t0v22);\
-    (dest[14]) = _mm_unpacklo_epi64(t0v24, t0v26);\
-    (dest[30]) = _mm_unpackhi_epi64(t0v24, t0v26);\
-    (dest[15]) = _mm_unpacklo_epi64(t0v28, t0v30);\
-    (dest[31]) = _mm_unpackhi_epi64(t0v28, t0v30);\
+    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v1));\
+    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v1));\
+    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v3, t0v5));\
+    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v3, t0v5));\
+    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v7, t0v9));\
+    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v7, t0v9));\
+    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v11, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v11, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v15, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v15, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v0, t0v2));\
+    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v0, t0v2));\
+    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v4, t0v6));\
+    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v4, t0v6));\
+    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v8, t0v10));\
+    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v8, t0v10));\
+    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v12, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v12, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v16, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v16, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v28, t0v30));\
 }
 "##,
         transform.out()
@@ -3262,38 +3262,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c9));\
     t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c8), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c9));\
-    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v29, 0x20);\
-    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v29, 0x31);\
-    (dest[1]) = _mm256_permute2x128_si256(t0v32, t0v26, 0x20);\
-    (dest[17]) = _mm256_permute2x128_si256(t0v32, t0v26, 0x31);\
-    (dest[2]) = _mm256_permute2x128_si256(t0v22, t0v21, 0x20);\
-    (dest[18]) = _mm256_permute2x128_si256(t0v22, t0v21, 0x31);\
-    (dest[3]) = _mm256_permute2x128_si256(t0v27, t0v11, 0x20);\
-    (dest[19]) = _mm256_permute2x128_si256(t0v27, t0v11, 0x31);\
-    (dest[4]) = _mm256_permute2x128_si256(t0v6, t0v31, 0x20);\
-    (dest[20]) = _mm256_permute2x128_si256(t0v6, t0v31, 0x31);\
-    (dest[5]) = _mm256_permute2x128_si256(t0v28, t0v19, 0x20);\
-    (dest[21]) = _mm256_permute2x128_si256(t0v28, t0v19, 0x31);\
-    (dest[6]) = _mm256_permute2x128_si256(t0v16, t0v14, 0x20);\
-    (dest[22]) = _mm256_permute2x128_si256(t0v16, t0v14, 0x31);\
-    (dest[7]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x20);\
-    (dest[23]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x31);\
-    (dest[8]) = _mm256_permute2x128_si256(t0v17, t0v30, 0x20);\
-    (dest[24]) = _mm256_permute2x128_si256(t0v17, t0v30, 0x31);\
-    (dest[9]) = _mm256_permute2x128_si256(t0v24, t0v20, 0x20);\
-    (dest[25]) = _mm256_permute2x128_si256(t0v24, t0v20, 0x31);\
-    (dest[10]) = _mm256_permute2x128_si256(t0v18, t0v12, 0x20);\
-    (dest[26]) = _mm256_permute2x128_si256(t0v18, t0v12, 0x31);\
-    (dest[11]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x20);\
-    (dest[27]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x31);\
-    (dest[12]) = _mm256_permute2x128_si256(t0v25, t0v23, 0x20);\
-    (dest[28]) = _mm256_permute2x128_si256(t0v25, t0v23, 0x31);\
-    (dest[13]) = _mm256_permute2x128_si256(t0v13, t0v15, 0x20);\
-    (dest[29]) = _mm256_permute2x128_si256(t0v13, t0v15, 0x31);\
-    (dest[14]) = _mm256_permute2x128_si256(t0v9, t0v7, 0x20);\
-    (dest[30]) = _mm256_permute2x128_si256(t0v9, t0v7, 0x31);\
-    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
-    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v29, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v29, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v32, t0v26, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v32, t0v26, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v22, t0v21, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v22, t0v21, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v27, t0v11, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v27, t0v11, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v31, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v31, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v28, t0v19, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v28, t0v19, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v16, t0v14, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v16, t0v14, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v30, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v30, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v24, t0v20, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v24, t0v20, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v18, t0v12, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v18, t0v12, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v25, t0v23, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v25, t0v23, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v13, t0v15, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v13, t0v15, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v9, t0v7, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v9, t0v7, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -3502,38 +3502,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c10));\
     t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c9), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c10));\
-    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x20);\
-    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x31);\
-    (dest[1]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x20);\
-    (dest[17]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x31);\
-    (dest[2]) = _mm256_permute2x128_si256(t0v29, t0v31, 0x20);\
-    (dest[18]) = _mm256_permute2x128_si256(t0v29, t0v31, 0x31);\
-    (dest[3]) = _mm256_permute2x128_si256(t0v16, t0v11, 0x20);\
-    (dest[19]) = _mm256_permute2x128_si256(t0v16, t0v11, 0x31);\
-    (dest[4]) = _mm256_permute2x128_si256(t0v6, t0v18, 0x20);\
-    (dest[20]) = _mm256_permute2x128_si256(t0v6, t0v18, 0x31);\
-    (dest[5]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x20);\
-    (dest[21]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x31);\
-    (dest[6]) = _mm256_permute2x128_si256(t0v30, t0v14, 0x20);\
-    (dest[22]) = _mm256_permute2x128_si256(t0v30, t0v14, 0x31);\
-    (dest[7]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x20);\
-    (dest[23]) = _mm256_permute2x128_si256(t0v8, t0v5, 0x31);\
-    (dest[8]) = _mm256_permute2x128_si256(t0v17, t0v19, 0x20);\
-    (dest[24]) = _mm256_permute2x128_si256(t0v17, t0v19, 0x31);\
-    (dest[9]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x20);\
-    (dest[25]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x31);\
-    (dest[10]) = _mm256_permute2x128_si256(t0v15, t0v12, 0x20);\
-    (dest[26]) = _mm256_permute2x128_si256(t0v15, t0v12, 0x31);\
-    (dest[11]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x20);\
-    (dest[27]) = _mm256_permute2x128_si256(t0v10, t0v3, 0x31);\
-    (dest[12]) = _mm256_permute2x128_si256(t0v9, t0v20, 0x20);\
-    (dest[28]) = _mm256_permute2x128_si256(t0v9, t0v20, 0x31);\
-    (dest[13]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x20);\
-    (dest[29]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x31);\
-    (dest[14]) = _mm256_permute2x128_si256(t0v13, t0v7, 0x20);\
-    (dest[30]) = _mm256_permute2x128_si256(t0v13, t0v7, 0x31);\
-    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
-    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v29, t0v31, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v29, t0v31, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v16, t0v11, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v16, t0v11, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v18, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v18, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v30, t0v14, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v30, t0v14, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v19, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v19, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v12, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v12, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v9, t0v20, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v9, t0v20, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v13, t0v7, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v13, t0v7, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -3698,38 +3698,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v6, (64)>>3), _mm256_and_si256(t0v4, c8));\
     t0v6 = _mm256_or_si256(_mm256_and_si256(t0v2, c7), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c8));\
-    (dest[0]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x20);\
-    (dest[16]) = _mm256_permute2x128_si256(t0v1, t0v32, 0x31);\
-    (dest[1]) = _mm256_permute2x128_si256(t0v23, t0v29, 0x20);\
-    (dest[17]) = _mm256_permute2x128_si256(t0v23, t0v29, 0x31);\
-    (dest[2]) = _mm256_permute2x128_si256(t0v24, t0v30, 0x20);\
-    (dest[18]) = _mm256_permute2x128_si256(t0v24, t0v30, 0x31);\
-    (dest[3]) = _mm256_permute2x128_si256(t0v25, t0v31, 0x20);\
-    (dest[19]) = _mm256_permute2x128_si256(t0v25, t0v31, 0x31);\
-    (dest[4]) = _mm256_permute2x128_si256(t0v7, t0v14, 0x20);\
-    (dest[20]) = _mm256_permute2x128_si256(t0v7, t0v14, 0x31);\
-    (dest[5]) = _mm256_permute2x128_si256(t0v26, t0v15, 0x20);\
-    (dest[21]) = _mm256_permute2x128_si256(t0v26, t0v15, 0x31);\
-    (dest[6]) = _mm256_permute2x128_si256(t0v27, t0v16, 0x20);\
-    (dest[22]) = _mm256_permute2x128_si256(t0v27, t0v16, 0x31);\
-    (dest[7]) = _mm256_permute2x128_si256(t0v28, t0v6, 0x20);\
-    (dest[23]) = _mm256_permute2x128_si256(t0v28, t0v6, 0x31);\
-    (dest[8]) = _mm256_permute2x128_si256(t0v11, t0v17, 0x20);\
-    (dest[24]) = _mm256_permute2x128_si256(t0v11, t0v17, 0x31);\
-    (dest[9]) = _mm256_permute2x128_si256(t0v12, t0v18, 0x20);\
-    (dest[25]) = _mm256_permute2x128_si256(t0v12, t0v18, 0x31);\
-    (dest[10]) = _mm256_permute2x128_si256(t0v13, t0v19, 0x20);\
-    (dest[26]) = _mm256_permute2x128_si256(t0v13, t0v19, 0x31);\
-    (dest[11]) = _mm256_permute2x128_si256(t0v8, t0v3, 0x20);\
-    (dest[27]) = _mm256_permute2x128_si256(t0v8, t0v3, 0x31);\
-    (dest[12]) = _mm256_permute2x128_si256(t0v5, t0v20, 0x20);\
-    (dest[28]) = _mm256_permute2x128_si256(t0v5, t0v20, 0x31);\
-    (dest[13]) = _mm256_permute2x128_si256(t0v9, t0v21, 0x20);\
-    (dest[29]) = _mm256_permute2x128_si256(t0v9, t0v21, 0x31);\
-    (dest[14]) = _mm256_permute2x128_si256(t0v10, t0v22, 0x20);\
-    (dest[30]) = _mm256_permute2x128_si256(t0v10, t0v22, 0x31);\
-    (dest[15]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x20);\
-    (dest[31]) = _mm256_permute2x128_si256(t0v4, t0v0, 0x31);\
+    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v23, t0v29, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v23, t0v29, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v24, t0v30, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v24, t0v30, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v25, t0v31, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v25, t0v31, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v7, t0v14, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v7, t0v14, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v26, t0v15, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v26, t0v15, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v27, t0v16, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v27, t0v16, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v28, t0v6, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v28, t0v6, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v11, t0v17, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v11, t0v17, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v12, t0v18, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v12, t0v18, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v13, t0v19, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v13, t0v19, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v8, t0v3, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v8, t0v3, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v5, t0v20, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v5, t0v20, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v9, t0v21, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v9, t0v21, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v10, t0v22, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v10, t0v22, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -3866,38 +3866,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v24 = _mm256_or_si256(_mm256_srli_si256(t0v24, (64)>>3), _mm256_and_si256(t0v26, c2));\
     t0v26 = _mm256_or_si256(_mm256_and_si256(t0v28, c1), _mm256_slli_si256(t0v30, (64)>>3));\
     t0v28 = _mm256_or_si256(_mm256_srli_si256(t0v28, (64)>>3), _mm256_and_si256(t0v30, c2));\
-    (dest[0]) = _mm256_permute2x128_si256(t0v31, t0v32, 0x20);\
-    (dest[16]) = _mm256_permute2x128_si256(t0v31, t0v32, 0x31);\
-    (dest[1]) = _mm256_permute2x128_si256(t0v5, t0v9, 0x20);\
-    (dest[17]) = _mm256_permute2x128_si256(t0v5, t0v9, 0x31);\
-    (dest[2]) = _mm256_permute2x128_si256(t0v13, t0v17, 0x20);\
-    (dest[18]) = _mm256_permute2x128_si256(t0v13, t0v17, 0x31);\
-    (dest[3]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x20);\
-    (dest[19]) = _mm256_permute2x128_si256(t0v21, t0v25, 0x31);\
-    (dest[4]) = _mm256_permute2x128_si256(t0v29, t0v2, 0x20);\
-    (dest[20]) = _mm256_permute2x128_si256(t0v29, t0v2, 0x31);\
-    (dest[5]) = _mm256_permute2x128_si256(t0v6, t0v10, 0x20);\
-    (dest[21]) = _mm256_permute2x128_si256(t0v6, t0v10, 0x31);\
-    (dest[6]) = _mm256_permute2x128_si256(t0v14, t0v18, 0x20);\
-    (dest[22]) = _mm256_permute2x128_si256(t0v14, t0v18, 0x31);\
-    (dest[7]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x20);\
-    (dest[23]) = _mm256_permute2x128_si256(t0v22, t0v26, 0x31);\
-    (dest[8]) = _mm256_permute2x128_si256(t0v1, t0v3, 0x20);\
-    (dest[24]) = _mm256_permute2x128_si256(t0v1, t0v3, 0x31);\
-    (dest[9]) = _mm256_permute2x128_si256(t0v7, t0v11, 0x20);\
-    (dest[25]) = _mm256_permute2x128_si256(t0v7, t0v11, 0x31);\
-    (dest[10]) = _mm256_permute2x128_si256(t0v15, t0v19, 0x20);\
-    (dest[26]) = _mm256_permute2x128_si256(t0v15, t0v19, 0x31);\
-    (dest[11]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x20);\
-    (dest[27]) = _mm256_permute2x128_si256(t0v23, t0v27, 0x31);\
-    (dest[12]) = _mm256_permute2x128_si256(t0v0, t0v4, 0x20);\
-    (dest[28]) = _mm256_permute2x128_si256(t0v0, t0v4, 0x31);\
-    (dest[13]) = _mm256_permute2x128_si256(t0v8, t0v12, 0x20);\
-    (dest[29]) = _mm256_permute2x128_si256(t0v8, t0v12, 0x31);\
-    (dest[14]) = _mm256_permute2x128_si256(t0v16, t0v20, 0x20);\
-    (dest[30]) = _mm256_permute2x128_si256(t0v16, t0v20, 0x31);\
-    (dest[15]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x20);\
-    (dest[31]) = _mm256_permute2x128_si256(t0v24, t0v28, 0x31);\
+    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v31, t0v32, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v31, t0v32, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v5, t0v9, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v5, t0v9, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v13, t0v17, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v13, t0v17, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v29, t0v2, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v29, t0v2, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v6, t0v10, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v6, t0v10, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v14, t0v18, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v14, t0v18, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v1, t0v3, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v1, t0v3, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v7, t0v11, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v7, t0v11, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v19, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v19, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v0, t0v4, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v0, t0v4, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v8, t0v12, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v8, t0v12, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v16, t0v20, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v16, t0v20, 0x31));\
+    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
+    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
 }
 "##,
         transform.out()
@@ -4210,38 +4210,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v7 = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v7);\
     t0v9 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    (dest[0]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29);\
-    (dest[16]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29);\
-    (dest[1]) = _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22);\
-    (dest[17]) = _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22);\
-    (dest[2]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31);\
-    (dest[18]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31);\
-    (dest[3]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v16);\
-    (dest[19]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v16);\
-    (dest[4]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30);\
-    (dest[20]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30);\
-    (dest[5]) = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18);\
-    (dest[21]) = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18);\
-    (dest[6]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25);\
-    (dest[22]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25);\
-    (dest[7]) = _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9);\
-    (dest[23]) = _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9);\
-    (dest[8]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v26);\
-    (dest[24]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v26);\
-    (dest[9]) = _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11);\
-    (dest[25]) = _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11);\
-    (dest[10]) = _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19);\
-    (dest[26]) = _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19);\
-    (dest[11]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5);\
-    (dest[27]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5);\
-    (dest[12]) = _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20);\
-    (dest[28]) = _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20);\
-    (dest[13]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3);\
-    (dest[29]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3);\
-    (dest[14]) = _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13);\
-    (dest[30]) = _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13);\
-    (dest[15]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0);\
-    (dest[31]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0);\
+    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
+    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
+    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
+    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
+    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v16));\
+    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v16));\
+    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
+    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
+    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
+    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
+    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v26));\
+    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v26));\
+    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
+    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
+    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
+    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
+    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -4480,38 +4480,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v7 = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v7);\
     t0v13 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    (dest[0]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32);\
-    (dest[16]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32);\
-    (dest[1]) = _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31);\
-    (dest[17]) = _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31);\
-    (dest[2]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18);\
-    (dest[18]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18);\
-    (dest[3]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30);\
-    (dest[19]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30);\
-    (dest[4]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19);\
-    (dest[20]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19);\
-    (dest[5]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15);\
-    (dest[21]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15);\
-    (dest[6]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20);\
-    (dest[22]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20);\
-    (dest[7]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13);\
-    (dest[23]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13);\
-    (dest[8]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21);\
-    (dest[24]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21);\
-    (dest[9]) = _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11);\
-    (dest[25]) = _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11);\
-    (dest[10]) = _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22);\
-    (dest[26]) = _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22);\
-    (dest[11]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5);\
-    (dest[27]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5);\
-    (dest[12]) = _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23);\
-    (dest[28]) = _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23);\
-    (dest[13]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3);\
-    (dest[29]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3);\
-    (dest[14]) = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24);\
-    (dest[30]) = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24);\
-    (dest[15]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0);\
-    (dest[31]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0);\
+    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
+    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
+    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
+    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
+    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
+    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
+    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
+    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
+    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
+    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
+    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
+    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
+    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -4706,38 +4706,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v10 = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v22);\
     t0v22 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    (dest[0]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32);\
-    (dest[16]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32);\
-    (dest[1]) = _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30);\
-    (dest[17]) = _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30);\
-    (dest[2]) = _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v14);\
-    (dest[18]) = _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v14);\
-    (dest[3]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v27);\
-    (dest[19]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v27);\
-    (dest[4]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17);\
-    (dest[20]) = _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17);\
-    (dest[5]) = _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19);\
-    (dest[21]) = _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19);\
-    (dest[6]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20);\
-    (dest[22]) = _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20);\
-    (dest[7]) = _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22);\
-    (dest[23]) = _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22);\
-    (dest[8]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23);\
-    (dest[24]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23);\
-    (dest[9]) = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25);\
-    (dest[25]) = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25);\
-    (dest[10]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15);\
-    (dest[26]) = _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15);\
-    (dest[11]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6);\
-    (dest[27]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6);\
-    (dest[12]) = _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v12);\
-    (dest[28]) = _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v12);\
-    (dest[13]) = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3);\
-    (dest[29]) = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3);\
-    (dest[14]) = _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9);\
-    (dest[30]) = _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9);\
-    (dest[15]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0);\
-    (dest[31]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0);\
+    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v14));\
+    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v14));\
+    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v27));\
+    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v27));\
+    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
+    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
+    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
+    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
+    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
+    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
+    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
+    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
+    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v12));\
+    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v12));\
+    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
+    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
+    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -4904,38 +4904,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v16 = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v20);\
     t0v20 = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v28);\
     t0v24 = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v28);\
-    (dest[0]) = _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32);\
-    (dest[16]) = _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32);\
-    (dest[1]) = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17);\
-    (dest[17]) = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17);\
-    (dest[2]) = _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29);\
-    (dest[18]) = _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29);\
-    (dest[3]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18);\
-    (dest[19]) = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18);\
-    (dest[4]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3);\
-    (dest[20]) = _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3);\
-    (dest[5]) = _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19);\
-    (dest[21]) = _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19);\
-    (dest[6]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v4);\
-    (dest[22]) = _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v4);\
-    (dest[7]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20);\
-    (dest[23]) = _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20);\
-    (dest[8]) = _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5);\
-    (dest[24]) = _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5);\
-    (dest[9]) = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21);\
-    (dest[25]) = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21);\
-    (dest[10]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6);\
-    (dest[26]) = _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6);\
-    (dest[11]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22);\
-    (dest[27]) = _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22);\
-    (dest[12]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v7);\
-    (dest[28]) = _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v7);\
-    (dest[13]) = _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23);\
-    (dest[29]) = _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23);\
-    (dest[14]) = _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v8);\
-    (dest[30]) = _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v8);\
-    (dest[15]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24);\
-    (dest[31]) = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24);\
+    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
+    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
+    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
+    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
+    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v4));\
+    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v4));\
+    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
+    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
+    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
+    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
+    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v7));\
+    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v7));\
+    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v8));\
+    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v8));\
+    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
+    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
 }
 "##,
         transform.out()
@@ -6245,9 +6245,9 @@ fn test_clang_transform_gen_output_transform() {
 "##,
         transform.out()
     );
-    let mut transform = CLANG_TRANSFORM_INTEL_SSE.transform();
-    for i in (1..=32).rev() {
-        transform.gen_output_transform(i);
-    }
-    println!("{}", transform.out());
+    // let mut transform = CLANG_TRANSFORM_INTEL_AVX2.transform();
+    // for i in (1..=32).rev() {
+    //     transform.gen_output_transform(i);
+    // }
+    // println!("{}", transform.out());
 }

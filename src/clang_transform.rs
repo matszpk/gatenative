@@ -1263,12 +1263,8 @@ impl<'a> CLangTransform<'a> {
         let dest = mvars.format_var(output_type, dest);
         if output_type == OUTPUT_TYPE {
             if let Some(store_op) = self.config.store_op {
-                if self.config.comp_type_bit_len <= 32 {
-                    let dest = format!("&({})", &dest);
-                    Self::format_op(store_op, &[&dest, &src])
-                } else {
-                    format!("{} = {}", dest, src)
-                }
+                let dest = format!("&({})", &dest);
+                Self::format_op(store_op, &[&dest, &src])
             } else {
                 format!("{} = {}", dest, src)
             }
