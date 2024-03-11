@@ -1282,6 +1282,7 @@ impl<'a> CLangTransform<'a> {
         let src = mvars.format_var(input_type, src);
         if input_type == TEMPS_TYPE {
             if let Some(load_op) = self.config.load_op {
+                let src = format!("&({})", src);
                 Self::format_op(load_op, &[&src])
             } else {
                 src
