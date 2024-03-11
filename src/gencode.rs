@@ -102,9 +102,9 @@ fn get_input_orig_index_map(
 //          value - id of allocated variable
 //          size of allocation (number of allocated variables)
 //          optional: map of output variables: index - circuit output number
-//                   value - (id of allocated variable,
-//                            optional: second allocated variable for second sign of
-//                                 wire in list of outputs (second occurred))
+//                   value - (id of allocated variable for this circuit output,
+//                            optional: original variable for first sign occurred in
+//                            circuit's output list)
 fn gen_var_allocs<T>(
     circuit: &Circuit<T>,
     input_placement: Option<(&[usize], usize)>,
