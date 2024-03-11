@@ -1,5 +1,7 @@
 use crate::*;
 
+use crate::clang_transform::*;
+
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -37,6 +39,7 @@ pub struct CLangWriterConfig<'a> {
     set_u32_op: &'a str,
     set_u32_all_op: &'a str,
     func_finish: Option<&'a str>,
+    transform_config: &'a CLangTransformConfig<'a>,
 }
 
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -86,6 +89,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     set_u32_op: "{ (X) = (S); }",
     set_u32_all_op: "{ (X) = (S)[0]; }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U32,
 };
 
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -136,6 +140,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }"##,
     set_u32_all_op: "{ (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U64,
 };
 
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -186,6 +191,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }"##,
     set_u32_all_op: "{ (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U64,
 };
 
 pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -236,6 +242,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }"##,
     set_u32_all_op: "{ (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U64,
 };
 
 pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -301,6 +308,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
 }"##,
     set_u32_all_op: "{ (X) = *(__m64*)(S); }",
     func_finish: Some("_m_empty();"),
+    transform_config: &CLANG_TRANSFORM_INTEL_MMX,
 };
 
 pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -374,6 +382,7 @@ __attribute__((aligned(16))) = {
 }"##,
     set_u32_all_op: "{ (X) = _mm_loadu_ps((float*)(S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_INTEL_SSE,
 };
 
 pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -447,6 +456,7 @@ __attribute__((aligned(16))) = {
 }"##,
     set_u32_all_op: "{ (X) = _mm_loadu_si128((__m128i*)(S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_INTEL_SSE2,
 };
 
 pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -524,6 +534,7 @@ __attribute__((aligned(32))) = {
 }"##,
     set_u32_all_op: "{ (X) = _mm256_loadu_ps((float*)(S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_INTEL_AVX,
 };
 
 pub const CLANG_WRITER_INTEL_AVX2: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -601,6 +612,7 @@ __attribute__((aligned(32))) = {
 }"##,
     set_u32_all_op: "{ (X) = _mm256_loadu_si256((__m256i*)(S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_INTEL_AVX2,
 };
 
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -690,6 +702,7 @@ __attribute__((aligned(64))) = {
 }"##,
     set_u32_all_op: "{ (X) = _mm512_loadu_si512((S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_INTEL_AVX512,
 };
 
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -746,6 +759,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
 }"##,
     set_u32_all_op: "{ (X) = vld4q_u32((S)); }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_ARM_NEON,
 };
 
 pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -795,6 +809,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     set_u32_op: "{ (X) = (S); }",
     set_u32_all_op: "{ (X) = (S)[0]; }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
 pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriterConfig {
@@ -847,6 +862,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     set_u32_op: "{ (X) = (S); }",
     set_u32_all_op: "{ (X) = (S)[0]; }",
     func_finish: None,
+    transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
 pub struct CLangFuncWriter<'a, 'c> {
@@ -1428,6 +1444,16 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
     fn user_defs(&mut self, user_defs: &str) {
         self.out.extend(user_defs.as_bytes());
         self.out.push(b'\n');
+    }
+
+    fn transform_helpers(&mut self) {
+        let mut transform = self.config.transform_config.transform();
+        transform.init_defs();
+        for i in 1..=32 {
+            transform.gen_input_transform(i);
+            transform.gen_output_transform(i);
+        }
+        self.user_defs(&transform.out());
     }
 
     fn epilog(&mut self) {}

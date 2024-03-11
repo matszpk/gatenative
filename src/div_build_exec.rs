@@ -335,6 +335,10 @@ where
         self.builder.user_defs(user_defs);
     }
 
+    fn transform_helpers(&mut self) {
+        self.builder.transform_helpers();
+    }
+
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,

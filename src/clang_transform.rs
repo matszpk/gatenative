@@ -5,7 +5,6 @@ use std::fmt::Write;
 
 #[derive(Clone, Debug)]
 pub struct FinalType<'a> {
-    final_type_name: &'a str,
     final_type_bit_len: u32,
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
@@ -276,7 +275,7 @@ pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformCo
     comp_type_name: "uint32_t",
     comp_type_bit_len: 32,
     final_type: Some(FinalType {
-        final_type_name: "__m128",
+        // __m128 type
         final_type_bit_len: 128,
         load_op: Some("_mm_loadu_ps((const float*){})"),
         store_op: Some("_mm_storeu_ps((float*){}, {})"),
@@ -454,7 +453,7 @@ pub const CLANG_TRANSFORM_INTEL_AVX: CLangTransformConfig<'_> = CLangTransformCo
     comp_type_name: "__m128i",
     comp_type_bit_len: 128,
     final_type: Some(FinalType {
-        final_type_name: "__m256",
+        // __m256 type
         final_type_bit_len: 256,
         load_op: Some("_mm256_loadu_ps((const float*){})"),
         store_op: Some("_mm256_storeu_ps((float*){}, {})"),
@@ -1177,6 +1176,11 @@ const BIT_MASK_TBL: [u32; 5 * 2] = [
 const SINGLE_BIT_MASK_TBL: [u32; 5] = [0x1, 0x3, 0xf, 0xff, 0xffff];
 
 impl<'a> CLangTransform<'a> {
+    pub fn init_defs(&mut self) {
+        self.out.push_str(self.config.init_defs);
+        self.out.push('\n');
+    }
+
     fn write_op(out: &mut String, op: &str, args: &[&str]) {
         let mut rest = op;
         let mut arg_index = 0;

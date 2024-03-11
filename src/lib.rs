@@ -204,6 +204,8 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn prolog(&mut self);
     /// user definitions
     fn user_defs(&mut self, user_defs: &str);
+    /// add transform helpers
+    fn transform_helpers(&mut self);
     /// Generates epilog.
     fn epilog(&mut self);
     /// Get function writer.
@@ -458,6 +460,8 @@ where
     type ErrorType;
 
     fn user_defs(&mut self, user_defs: &str);
+    /// add transform helpers
+    fn transform_helpers(&mut self);
 
     // Add new circuit to built. arg_inputs - input that will be set by argument arg_input.
     fn add<T>(
@@ -624,6 +628,8 @@ where
     type ErrorType;
 
     fn user_defs(&mut self, user_defs: &str);
+    /// add transform helpers
+    fn transform_helpers(&mut self);
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -791,6 +797,8 @@ where
     type ErrorType;
 
     fn user_defs(&mut self, user_defs: &str);
+    /// add transform helpers
+    fn transform_helpers(&mut self);
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where

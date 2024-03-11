@@ -193,6 +193,9 @@ where
     fn user_defs(&mut self, user_defs: &str) {
         self.builder.user_defs(user_defs);
     }
+    fn transform_helpers(&mut self) {
+        self.builder.transform_helpers();
+    }
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -480,6 +483,9 @@ where
 
     fn user_defs(&mut self, user_defs: &str) {
         self.builder.user_defs(user_defs);
+    }
+    fn transform_helpers(&mut self) {
+        self.builder.transform_helpers();
     }
 
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)

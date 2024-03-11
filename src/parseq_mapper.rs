@@ -803,6 +803,13 @@ where
         }
     }
 
+    pub fn transform_helpers(&mut self) {
+        self.par.transform_helpers();
+        for s in self.seqs.iter_mut() {
+            s.transform_helpers();
+        }
+    }
+
     pub fn add_with_config<'b, T, DCF>(
         &mut self,
         name: &str,

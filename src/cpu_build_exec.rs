@@ -935,6 +935,10 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         self.writer.user_defs(user_defs);
     }
 
+    fn transform_helpers(&mut self) {
+        self.writer.transform_helpers();
+    }
+
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
