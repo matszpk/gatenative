@@ -673,20 +673,39 @@ pub enum ParSeqMapperBuilderError<PE, SE> {
 #[derive(Clone, Copy)]
 pub struct ParSeqDynamicConfig<'a> {
     pub init_code: Option<&'a str>,
+    pub pop_input_code: Option<&'a str>,
+    pub pop_input_len: Option<usize>,
     pub aggr_output_code: Option<&'a str>,
     pub aggr_output_len: Option<usize>,
+    // if some then some choosen circuit inputs populated from buffer.
+    pub pop_from_buffer: Option<&'a [usize]>,
+    // if some then aggregate some choosen circuit outputs to buffer.
+    // and keep storing circuit outputs to original output buffer.
+    pub aggr_to_buffer: Option<&'a [usize]>,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
     pub fn new() -> Self {
         Self {
             init_code: None,
+            pop_input_code: None,
+            pop_input_len: None,
             aggr_output_code: None,
             aggr_output_len: None,
+            pop_from_buffer: None,
+            aggr_to_buffer: None,
         }
     }
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
         self.init_code = init;
+        self
+    }
+    pub fn pop_input_code(mut self, pop: Option<&'a str>) -> Self {
+        self.pop_input_code = pop;
+        self
+    }
+    pub fn pop_input_len(mut self, pop: Option<usize>) -> Self {
+        self.pop_input_len = pop;
         self
     }
     pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
@@ -695,6 +714,14 @@ impl<'a> ParSeqDynamicConfig<'a> {
     }
     pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
         self.aggr_output_len = aggr;
+        self
+    }
+    pub fn pop_from_buffer(mut self, pop: Option<&'a [usize]>) -> Self {
+        self.pop_from_buffer = pop;
+        self
+    }
+    pub fn aggr_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
+        self.aggr_to_buffer = aggr;
         self
     }
 }
@@ -835,8 +862,12 @@ where
                 .arg_inputs(Some(arg_inputs))
                 .elem_inputs(elem_inputs)
                 .init_code(dyncfg.init_code)
+                .pop_input_code(dyncfg.pop_input_code)
+                .pop_input_len(dyncfg.pop_input_len)
                 .aggr_output_code(dyncfg.aggr_output_code)
-                .aggr_output_len(dyncfg.aggr_output_len),
+                .aggr_output_len(dyncfg.aggr_output_len)
+                .pop_from_buffer(dyncfg.pop_from_buffer)
+                .aggr_to_buffer(dyncfg.aggr_to_buffer),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
             let dyncfg = dyn_config(ParSeqSelection::Seq(i));
@@ -847,8 +878,12 @@ where
                     .arg_inputs(Some(arg_inputs))
                     .elem_inputs(elem_inputs)
                     .init_code(dyncfg.init_code)
+                    .pop_input_code(dyncfg.pop_input_code)
+                    .pop_input_len(dyncfg.pop_input_len)
                     .aggr_output_code(dyncfg.aggr_output_code)
-                    .aggr_output_len(dyncfg.aggr_output_len),
+                    .aggr_output_len(dyncfg.aggr_output_len)
+                    .pop_from_buffer(dyncfg.pop_from_buffer)
+                    .aggr_to_buffer(dyncfg.aggr_to_buffer),
             );
         }
     }
