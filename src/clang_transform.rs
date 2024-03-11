@@ -100,7 +100,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint64_t",
     comp_type_bit_len: 64,
     final_type: None,
-    load_op: Some("(*((const uint64_t*)({})))"),
+    load_op: Some("(((uint64_t)(*({0}))) | (((uint64_t)(*(({0})+1))) << 32))"),
     store_op: Some("*((uint64_t*)({})) = {}"),
     and_op: "({} & {})",
     or_op: "({} | {})",
