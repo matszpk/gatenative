@@ -1960,14 +1960,12 @@ impl<'a> CLangTransform<'a> {
                     "(temps + {})",
                     i * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
                 );
+                self.out.write_str("    ").unwrap();
+                let src = Self::format_arg_s_out(i as u32);
                 if let Some(store_op) = final_type.store_op {
-                    Self::write_op(
-                        &mut self.out,
-                        store_op,
-                        &[&arg, &Self::format_arg_s(i.to_string())],
-                    );
+                    Self::write_op(&mut self.out, store_op, &[&arg, &src]);
                 } else {
-                    write!(&mut self.out, "&({})", arg).unwrap();
+                    write!(&mut self.out, "{} = &({})", arg, src).unwrap();
                 }
                 self.out.write_str(";\\\n").unwrap();
             }

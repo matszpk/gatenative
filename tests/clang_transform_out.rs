@@ -5748,9 +5748,9 @@ fn test_clang_transform_gen_output_transform() {
 "##,
         transform.out()
     );
-    // let mut transform = CLANG_TRANSFORM_ARM_NEON.transform();
-    // for i in (1..=32).rev() {
-    //     transform.gen_output_transform(i);
-    // }
-    // println!("{}", transform.out());
+    let mut transform = CLANG_TRANSFORM_INTEL_SSE.transform();
+    for i in (1..=32).rev() {
+        transform.gen_output_transform(i);
+    }
+    println!("{}", transform.out());
 }
