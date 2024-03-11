@@ -204,6 +204,7 @@ impl SharedLib {
                 "-o",
                 self.shared_library_path.to_str().unwrap(),
                 "-Wall",
+                "-fno-strict-aliasing",
                 "-O2",
                 self.source_path.to_str().unwrap(),
             ]);
