@@ -94,6 +94,17 @@ fn get_input_orig_index_map(
     }
 }
 
+// input_map - input map after filtering arg inputs, elem inputs and other.
+// keep_output_vars - keep output variables to later usage.
+// pop_input - include rest of inputs (without arg inputs, elem inputs) to be loaded
+//    from populating code.
+// returns: variable id after allocation: index - wire index (circuit input and gate outputs)
+//          value - id of allocated variable
+//          size of allocation (number of allocated variables)
+//          optional: map of output variables: index - circuit output number
+//                   value - (id of allocated variable,
+//                            optional: second allocated variable for second sign of
+//                                 wire in list of outputs (second occurred))
 fn gen_var_allocs<T>(
     circuit: &Circuit<T>,
     input_placement: Option<(&[usize], usize)>,
