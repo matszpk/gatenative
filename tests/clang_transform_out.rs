@@ -2986,6 +2986,871 @@ fn test_clang_transform_gen_output_transform() {
 "##,
         transform.out()
     );
+    let mut transform = CLANG_TRANSFORM_INTEL_AVX.transform();
+    transform.gen_output_transform(32);
+    transform.gen_output_transform(16);
+    transform.gen_output_transform(6);
+    transform.gen_output_transform(1);
+    assert_eq!(
+        r##"#define OUTPUT_TRANSFORM_B32(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31) \
+{\
+    __m128i* dest = (__m128i*)(D);\
+    __m128i temps[64];\
+    unsigned int i;\
+    _mm256_storeu_ps((float*)(temps + 0), (S0));\
+    _mm256_storeu_ps((float*)(temps + 2), (S1));\
+    _mm256_storeu_ps((float*)(temps + 4), (S2));\
+    _mm256_storeu_ps((float*)(temps + 6), (S3));\
+    _mm256_storeu_ps((float*)(temps + 8), (S4));\
+    _mm256_storeu_ps((float*)(temps + 10), (S5));\
+    _mm256_storeu_ps((float*)(temps + 12), (S6));\
+    _mm256_storeu_ps((float*)(temps + 14), (S7));\
+    _mm256_storeu_ps((float*)(temps + 16), (S8));\
+    _mm256_storeu_ps((float*)(temps + 18), (S9));\
+    _mm256_storeu_ps((float*)(temps + 20), (S10));\
+    _mm256_storeu_ps((float*)(temps + 22), (S11));\
+    _mm256_storeu_ps((float*)(temps + 24), (S12));\
+    _mm256_storeu_ps((float*)(temps + 26), (S13));\
+    _mm256_storeu_ps((float*)(temps + 28), (S14));\
+    _mm256_storeu_ps((float*)(temps + 30), (S15));\
+    _mm256_storeu_ps((float*)(temps + 32), (S16));\
+    _mm256_storeu_ps((float*)(temps + 34), (S17));\
+    _mm256_storeu_ps((float*)(temps + 36), (S18));\
+    _mm256_storeu_ps((float*)(temps + 38), (S19));\
+    _mm256_storeu_ps((float*)(temps + 40), (S20));\
+    _mm256_storeu_ps((float*)(temps + 42), (S21));\
+    _mm256_storeu_ps((float*)(temps + 44), (S22));\
+    _mm256_storeu_ps((float*)(temps + 46), (S23));\
+    _mm256_storeu_ps((float*)(temps + 48), (S24));\
+    _mm256_storeu_ps((float*)(temps + 50), (S25));\
+    _mm256_storeu_ps((float*)(temps + 52), (S26));\
+    _mm256_storeu_ps((float*)(temps + 54), (S27));\
+    _mm256_storeu_ps((float*)(temps + 56), (S28));\
+    _mm256_storeu_ps((float*)(temps + 58), (S29));\
+    _mm256_storeu_ps((float*)(temps + 60), (S30));\
+    _mm256_storeu_ps((float*)(temps + 62), (S31));\
+    for (i = 0; i < 2; i++) {\
+    const unsigned int ib = i * 32;\
+    const __m128i c0 = (*(const __m128i*)(transform_const_tbl + 4*0));\
+    const __m128i c1 = (*(const __m128i*)(transform_const_tbl + 4*1));\
+    const __m128i c10 = (*(const __m128i*)(transform_const_tbl + 4*10));\
+    const __m128i c11 = (*(const __m128i*)(transform_const_tbl + 4*11));\
+    const __m128i c2 = (*(const __m128i*)(transform_const_tbl + 4*2));\
+    const __m128i c3 = (*(const __m128i*)(transform_const_tbl + 4*3));\
+    const __m128i c4 = (*(const __m128i*)(transform_const_tbl + 4*4));\
+    const __m128i c5 = (*(const __m128i*)(transform_const_tbl + 4*5));\
+    const __m128i c6 = (*(const __m128i*)(transform_const_tbl + 4*6));\
+    const __m128i c7 = (*(const __m128i*)(transform_const_tbl + 4*7));\
+    const __m128i c8 = (*(const __m128i*)(transform_const_tbl + 4*8));\
+    const __m128i c9 = (*(const __m128i*)(transform_const_tbl + 4*9));\
+    __m128i t0v0;\
+    __m128i t0v1;\
+    __m128i t0v2;\
+    __m128i t0v3;\
+    __m128i t0v4;\
+    __m128i t0v5;\
+    __m128i t0v6;\
+    __m128i t0v7;\
+    __m128i t0v8;\
+    __m128i t0v9;\
+    __m128i t0v10;\
+    __m128i t0v11;\
+    __m128i t0v12;\
+    __m128i t0v13;\
+    __m128i t0v14;\
+    __m128i t0v15;\
+    __m128i t0v16;\
+    __m128i t0v17;\
+    __m128i t0v18;\
+    __m128i t0v19;\
+    __m128i t0v20;\
+    __m128i t0v21;\
+    __m128i t0v22;\
+    __m128i t0v23;\
+    __m128i t0v24;\
+    __m128i t0v25;\
+    __m128i t0v26;\
+    __m128i t0v27;\
+    __m128i t0v28;\
+    __m128i t0v29;\
+    __m128i t0v30;\
+    __m128i t0v31;\
+    __m128i t0v32;\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v6 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c1));\
+    t0v8 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c1));\
+    t0v10 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c1));\
+    t0v12 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c1));\
+    t0v14 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c1));\
+    t0v16 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[32 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[34 + i])), c0), 1));\
+    t0v17 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[32 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[34 + i])), c1));\
+    t0v18 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[36 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[38 + i])), c0), 1));\
+    t0v19 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[36 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[38 + i])), c1));\
+    t0v20 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[40 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[42 + i])), c0), 1));\
+    t0v21 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[40 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[42 + i])), c1));\
+    t0v22 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[44 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[46 + i])), c0), 1));\
+    t0v23 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[44 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[46 + i])), c1));\
+    t0v24 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[48 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[50 + i])), c0), 1));\
+    t0v25 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[48 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[50 + i])), c1));\
+    t0v26 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[52 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[54 + i])), c0), 1));\
+    t0v27 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[52 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[54 + i])), c1));\
+    t0v28 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[56 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[58 + i])), c0), 1));\
+    t0v29 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[56 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[58 + i])), c1));\
+    t0v30 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[60 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[62 + i])), c0), 1));\
+    t0v31 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[60 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[62 + i])), c1));\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
+    t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c3), 2), _mm_and_si128(t0v3, c3));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v4, c2), _mm_slli_epi16(_mm_and_si128(t0v6, c2), 2));\
+    t0v4 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v4, c3), 2), _mm_and_si128(t0v6, c3));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v5, c2), _mm_slli_epi16(_mm_and_si128(t0v7, c2), 2));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v5, c3), 2), _mm_and_si128(t0v7, c3));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v8, c2), _mm_slli_epi16(_mm_and_si128(t0v10, c2), 2));\
+    t0v8 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v8, c3), 2), _mm_and_si128(t0v10, c3));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v9, c2), _mm_slli_epi16(_mm_and_si128(t0v11, c2), 2));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v9, c3), 2), _mm_and_si128(t0v11, c3));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v12, c2), _mm_slli_epi16(_mm_and_si128(t0v14, c2), 2));\
+    t0v12 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v12, c3), 2), _mm_and_si128(t0v14, c3));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v13, c2), _mm_slli_epi16(_mm_and_si128(t0v15, c2), 2));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v13, c3), 2), _mm_and_si128(t0v15, c3));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v16, c2), _mm_slli_epi16(_mm_and_si128(t0v18, c2), 2));\
+    t0v16 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v16, c3), 2), _mm_and_si128(t0v18, c3));\
+    t0v18 = _mm_or_si128(_mm_and_si128(t0v17, c2), _mm_slli_epi16(_mm_and_si128(t0v19, c2), 2));\
+    t0v17 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v17, c3), 2), _mm_and_si128(t0v19, c3));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v20, c2), _mm_slli_epi16(_mm_and_si128(t0v22, c2), 2));\
+    t0v20 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v20, c3), 2), _mm_and_si128(t0v22, c3));\
+    t0v22 = _mm_or_si128(_mm_and_si128(t0v21, c2), _mm_slli_epi16(_mm_and_si128(t0v23, c2), 2));\
+    t0v21 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v21, c3), 2), _mm_and_si128(t0v23, c3));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v24, c2), _mm_slli_epi16(_mm_and_si128(t0v26, c2), 2));\
+    t0v24 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v24, c3), 2), _mm_and_si128(t0v26, c3));\
+    t0v26 = _mm_or_si128(_mm_and_si128(t0v25, c2), _mm_slli_epi16(_mm_and_si128(t0v27, c2), 2));\
+    t0v25 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v25, c3), 2), _mm_and_si128(t0v27, c3));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v28, c2), _mm_slli_epi16(_mm_and_si128(t0v30, c2), 2));\
+    t0v28 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v28, c3), 2), _mm_and_si128(t0v30, c3));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v29, c2), _mm_slli_epi16(_mm_and_si128(t0v31, c2), 2));\
+    t0v29 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v29, c3), 2), _mm_and_si128(t0v31, c3));\
+    t0v31 = _mm_or_si128(_mm_and_si128(t0v32, c4), _mm_slli_epi16(_mm_and_si128(t0v3, c4), 4));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v32, c5), 4), _mm_and_si128(t0v3, c5));\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v2, c4), _mm_slli_epi16(_mm_and_si128(t0v6, c4), 4));\
+    t0v2 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v2, c5), 4), _mm_and_si128(t0v6, c5));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v0, c4), _mm_slli_epi16(_mm_and_si128(t0v4, c4), 4));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c5), 4), _mm_and_si128(t0v4, c5));\
+    t0v4 = _mm_or_si128(_mm_and_si128(t0v1, c4), _mm_slli_epi16(_mm_and_si128(t0v5, c4), 4));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c5), 4), _mm_and_si128(t0v5, c5));\
+    t0v5 = _mm_or_si128(_mm_and_si128(t0v7, c4), _mm_slli_epi16(_mm_and_si128(t0v11, c4), 4));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v7, c5), 4), _mm_and_si128(t0v11, c5));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v10, c4), _mm_slli_epi16(_mm_and_si128(t0v14, c4), 4));\
+    t0v10 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v10, c5), 4), _mm_and_si128(t0v14, c5));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v8, c4), _mm_slli_epi16(_mm_and_si128(t0v12, c4), 4));\
+    t0v8 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v8, c5), 4), _mm_and_si128(t0v12, c5));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v9, c4), _mm_slli_epi16(_mm_and_si128(t0v13, c4), 4));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v9, c5), 4), _mm_and_si128(t0v13, c5));\
+    t0v13 = _mm_or_si128(_mm_and_si128(t0v15, c4), _mm_slli_epi16(_mm_and_si128(t0v19, c4), 4));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v15, c5), 4), _mm_and_si128(t0v19, c5));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v18, c4), _mm_slli_epi16(_mm_and_si128(t0v22, c4), 4));\
+    t0v18 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v18, c5), 4), _mm_and_si128(t0v22, c5));\
+    t0v22 = _mm_or_si128(_mm_and_si128(t0v16, c4), _mm_slli_epi16(_mm_and_si128(t0v20, c4), 4));\
+    t0v16 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v16, c5), 4), _mm_and_si128(t0v20, c5));\
+    t0v20 = _mm_or_si128(_mm_and_si128(t0v17, c4), _mm_slli_epi16(_mm_and_si128(t0v21, c4), 4));\
+    t0v17 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v17, c5), 4), _mm_and_si128(t0v21, c5));\
+    t0v21 = _mm_or_si128(_mm_and_si128(t0v23, c4), _mm_slli_epi16(_mm_and_si128(t0v27, c4), 4));\
+    t0v23 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v23, c5), 4), _mm_and_si128(t0v27, c5));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v26, c4), _mm_slli_epi16(_mm_and_si128(t0v30, c4), 4));\
+    t0v26 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v26, c5), 4), _mm_and_si128(t0v30, c5));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v24, c4), _mm_slli_epi16(_mm_and_si128(t0v28, c4), 4));\
+    t0v24 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v24, c5), 4), _mm_and_si128(t0v28, c5));\
+    t0v28 = _mm_or_si128(_mm_and_si128(t0v25, c4), _mm_slli_epi16(_mm_and_si128(t0v29, c4), 4));\
+    t0v25 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v25, c5), 4), _mm_and_si128(t0v29, c5));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v31, c6), _mm_slli_epi16(t0v5, 8));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(t0v31, 8), _mm_and_si128(t0v5, c7));\
+    t0v31 = _mm_or_si128(_mm_and_si128(t0v32, c6), _mm_slli_epi16(t0v11, 8));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(t0v32, 8), _mm_and_si128(t0v11, c7));\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v6, c6), _mm_slli_epi16(t0v14, 8));\
+    t0v6 = _mm_or_si128(_mm_srli_epi16(t0v6, 8), _mm_and_si128(t0v14, c7));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v4, c6), _mm_slli_epi16(t0v12, 8));\
+    t0v4 = _mm_or_si128(_mm_srli_epi16(t0v4, 8), _mm_and_si128(t0v12, c7));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v3, c6), _mm_slli_epi16(t0v7, 8));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(t0v3, 8), _mm_and_si128(t0v7, c7));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v2, c6), _mm_slli_epi16(t0v10, 8));\
+    t0v2 = _mm_or_si128(_mm_srli_epi16(t0v2, 8), _mm_and_si128(t0v10, c7));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v0, c6), _mm_slli_epi16(t0v8, 8));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(t0v0, 8), _mm_and_si128(t0v8, c7));\
+    t0v8 = _mm_or_si128(_mm_and_si128(t0v1, c6), _mm_slli_epi16(t0v9, 8));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(t0v1, 8), _mm_and_si128(t0v9, c7));\
+    t0v9 = _mm_or_si128(_mm_and_si128(t0v13, c6), _mm_slli_epi16(t0v21, 8));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(t0v13, 8), _mm_and_si128(t0v21, c7));\
+    t0v21 = _mm_or_si128(_mm_and_si128(t0v19, c6), _mm_slli_epi16(t0v27, 8));\
+    t0v19 = _mm_or_si128(_mm_srli_epi16(t0v19, 8), _mm_and_si128(t0v27, c7));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v22, c6), _mm_slli_epi16(t0v30, 8));\
+    t0v22 = _mm_or_si128(_mm_srli_epi16(t0v22, 8), _mm_and_si128(t0v30, c7));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v20, c6), _mm_slli_epi16(t0v28, 8));\
+    t0v20 = _mm_or_si128(_mm_srli_epi16(t0v20, 8), _mm_and_si128(t0v28, c7));\
+    t0v28 = _mm_or_si128(_mm_and_si128(t0v15, c6), _mm_slli_epi16(t0v23, 8));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(t0v15, 8), _mm_and_si128(t0v23, c7));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v18, c6), _mm_slli_epi16(t0v26, 8));\
+    t0v18 = _mm_or_si128(_mm_srli_epi16(t0v18, 8), _mm_and_si128(t0v26, c7));\
+    t0v26 = _mm_or_si128(_mm_and_si128(t0v16, c6), _mm_slli_epi16(t0v24, 8));\
+    t0v16 = _mm_or_si128(_mm_srli_epi16(t0v16, 8), _mm_and_si128(t0v24, c7));\
+    t0v24 = _mm_or_si128(_mm_and_si128(t0v17, c6), _mm_slli_epi16(t0v25, 8));\
+    t0v17 = _mm_or_si128(_mm_srli_epi16(t0v17, 8), _mm_and_si128(t0v25, c7));\
+    t0v25 = _mm_or_si128(_mm_and_si128(t0v29, c8), _mm_slli_epi32(t0v9, 16));\
+    t0v9 = _mm_or_si128(_mm_srli_epi32(t0v29, 16), _mm_and_si128(t0v9, c9));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v31, c8), _mm_slli_epi32(t0v21, 16));\
+    t0v21 = _mm_or_si128(_mm_srli_epi32(t0v31, 16), _mm_and_si128(t0v21, c9));\
+    t0v31 = _mm_or_si128(_mm_and_si128(t0v32, c8), _mm_slli_epi32(t0v27, 16));\
+    t0v27 = _mm_or_si128(_mm_srli_epi32(t0v32, 16), _mm_and_si128(t0v27, c9));\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v14, c8), _mm_slli_epi32(t0v30, 16));\
+    t0v14 = _mm_or_si128(_mm_srli_epi32(t0v14, 16), _mm_and_si128(t0v30, c9));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v12, c8), _mm_slli_epi32(t0v28, 16));\
+    t0v12 = _mm_or_si128(_mm_srli_epi32(t0v12, 16), _mm_and_si128(t0v28, c9));\
+    t0v28 = _mm_or_si128(_mm_and_si128(t0v7, c8), _mm_slli_epi32(t0v23, 16));\
+    t0v7 = _mm_or_si128(_mm_srli_epi32(t0v7, 16), _mm_and_si128(t0v23, c9));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v10, c8), _mm_slli_epi32(t0v26, 16));\
+    t0v10 = _mm_or_si128(_mm_srli_epi32(t0v10, 16), _mm_and_si128(t0v26, c9));\
+    t0v26 = _mm_or_si128(_mm_and_si128(t0v8, c8), _mm_slli_epi32(t0v24, 16));\
+    t0v8 = _mm_or_si128(_mm_srli_epi32(t0v8, 16), _mm_and_si128(t0v24, c9));\
+    t0v24 = _mm_or_si128(_mm_and_si128(t0v5, c8), _mm_slli_epi32(t0v13, 16));\
+    t0v5 = _mm_or_si128(_mm_srli_epi32(t0v5, 16), _mm_and_si128(t0v13, c9));\
+    t0v13 = _mm_or_si128(_mm_and_si128(t0v11, c8), _mm_slli_epi32(t0v19, 16));\
+    t0v11 = _mm_or_si128(_mm_srli_epi32(t0v11, 16), _mm_and_si128(t0v19, c9));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v6, c8), _mm_slli_epi32(t0v22, 16));\
+    t0v6 = _mm_or_si128(_mm_srli_epi32(t0v6, 16), _mm_and_si128(t0v22, c9));\
+    t0v22 = _mm_or_si128(_mm_and_si128(t0v4, c8), _mm_slli_epi32(t0v20, 16));\
+    t0v4 = _mm_or_si128(_mm_srli_epi32(t0v4, 16), _mm_and_si128(t0v20, c9));\
+    t0v20 = _mm_or_si128(_mm_and_si128(t0v3, c8), _mm_slli_epi32(t0v15, 16));\
+    t0v3 = _mm_or_si128(_mm_srli_epi32(t0v3, 16), _mm_and_si128(t0v15, c9));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v2, c8), _mm_slli_epi32(t0v18, 16));\
+    t0v2 = _mm_or_si128(_mm_srli_epi32(t0v2, 16), _mm_and_si128(t0v18, c9));\
+    t0v18 = _mm_or_si128(_mm_and_si128(t0v0, c8), _mm_slli_epi32(t0v16, 16));\
+    t0v0 = _mm_or_si128(_mm_srli_epi32(t0v0, 16), _mm_and_si128(t0v16, c9));\
+    t0v16 = _mm_or_si128(_mm_and_si128(t0v1, c8), _mm_slli_epi32(t0v17, 16));\
+    t0v1 = _mm_or_si128(_mm_srli_epi32(t0v1, 16), _mm_and_si128(t0v17, c9));\
+    t0v17 = _mm_or_si128(_mm_and_si128(t0v25, c10), _mm_slli_epi64(t0v29, 32));\
+    t0v25 = _mm_or_si128(_mm_srli_epi64(t0v25, 32), _mm_and_si128(t0v29, c11));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v31, c10), _mm_slli_epi64(t0v32, 32));\
+    t0v31 = _mm_or_si128(_mm_srli_epi64(t0v31, 32), _mm_and_si128(t0v32, c11));\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v30, c10), _mm_slli_epi64(t0v28, 32));\
+    t0v28 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v28, c11));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v23, c10), _mm_slli_epi64(t0v26, 32));\
+    t0v23 = _mm_or_si128(_mm_srli_epi64(t0v23, 32), _mm_and_si128(t0v26, c11));\
+    t0v26 = _mm_or_si128(_mm_and_si128(t0v24, c10), _mm_slli_epi64(t0v13, 32));\
+    t0v13 = _mm_or_si128(_mm_srli_epi64(t0v24, 32), _mm_and_si128(t0v13, c11));\
+    t0v24 = _mm_or_si128(_mm_and_si128(t0v19, c10), _mm_slli_epi64(t0v22, 32));\
+    t0v19 = _mm_or_si128(_mm_srli_epi64(t0v19, 32), _mm_and_si128(t0v22, c11));\
+    t0v22 = _mm_or_si128(_mm_and_si128(t0v20, c10), _mm_slli_epi64(t0v15, 32));\
+    t0v15 = _mm_or_si128(_mm_srli_epi64(t0v20, 32), _mm_and_si128(t0v15, c11));\
+    t0v20 = _mm_or_si128(_mm_and_si128(t0v18, c10), _mm_slli_epi64(t0v16, 32));\
+    t0v16 = _mm_or_si128(_mm_srli_epi64(t0v18, 32), _mm_and_si128(t0v16, c11));\
+    t0v18 = _mm_or_si128(_mm_and_si128(t0v9, c10), _mm_slli_epi64(t0v21, 32));\
+    t0v9 = _mm_or_si128(_mm_srli_epi64(t0v9, 32), _mm_and_si128(t0v21, c11));\
+    t0v21 = _mm_or_si128(_mm_and_si128(t0v27, c10), _mm_slli_epi64(t0v14, 32));\
+    t0v14 = _mm_or_si128(_mm_srli_epi64(t0v27, 32), _mm_and_si128(t0v14, c11));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v12, c10), _mm_slli_epi64(t0v7, 32));\
+    t0v7 = _mm_or_si128(_mm_srli_epi64(t0v12, 32), _mm_and_si128(t0v7, c11));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v10, c10), _mm_slli_epi64(t0v8, 32));\
+    t0v8 = _mm_or_si128(_mm_srli_epi64(t0v10, 32), _mm_and_si128(t0v8, c11));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v5, c10), _mm_slli_epi64(t0v11, 32));\
+    t0v5 = _mm_or_si128(_mm_srli_epi64(t0v5, 32), _mm_and_si128(t0v11, c11));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v6, c10), _mm_slli_epi64(t0v4, 32));\
+    t0v4 = _mm_or_si128(_mm_srli_epi64(t0v6, 32), _mm_and_si128(t0v4, c11));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v3, c10), _mm_slli_epi64(t0v2, 32));\
+    t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c11));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c10), _mm_slli_epi64(t0v1, 32));\
+    t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c11));\
+    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v17, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v17, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v32, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v32, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v26, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v26, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v22, t0v20));\
+    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v22, t0v20));\
+    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v18, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v18, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v27, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v27, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v25, t0v31));\
+    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v25, t0v31));\
+    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v28, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v28, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v13, t0v19));\
+    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v13, t0v19));\
+    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v15, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v15, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v9, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v9, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    }\
+}
+#define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
+{\
+    __m128i* dest = (__m128i*)(D);\
+    __m128i temps[32];\
+    unsigned int i;\
+    _mm256_storeu_ps((float*)(temps + 0), (S0));\
+    _mm256_storeu_ps((float*)(temps + 2), (S1));\
+    _mm256_storeu_ps((float*)(temps + 4), (S2));\
+    _mm256_storeu_ps((float*)(temps + 6), (S3));\
+    _mm256_storeu_ps((float*)(temps + 8), (S4));\
+    _mm256_storeu_ps((float*)(temps + 10), (S5));\
+    _mm256_storeu_ps((float*)(temps + 12), (S6));\
+    _mm256_storeu_ps((float*)(temps + 14), (S7));\
+    _mm256_storeu_ps((float*)(temps + 16), (S8));\
+    _mm256_storeu_ps((float*)(temps + 18), (S9));\
+    _mm256_storeu_ps((float*)(temps + 20), (S10));\
+    _mm256_storeu_ps((float*)(temps + 22), (S11));\
+    _mm256_storeu_ps((float*)(temps + 24), (S12));\
+    _mm256_storeu_ps((float*)(temps + 26), (S13));\
+    _mm256_storeu_ps((float*)(temps + 28), (S14));\
+    _mm256_storeu_ps((float*)(temps + 30), (S15));\
+    for (i = 0; i < 2; i++) {\
+    const unsigned int ib = i * 32;\
+    const __m128i c8 = (*(const __m128i*)(transform_const2_tbl + 4*4));\
+    const __m128i c0 = (*(const __m128i*)(transform_const_tbl + 4*0));\
+    const __m128i c1 = (*(const __m128i*)(transform_const_tbl + 4*1));\
+    const __m128i c9 = (*(const __m128i*)(transform_const_tbl + 4*10));\
+    const __m128i c10 = (*(const __m128i*)(transform_const_tbl + 4*11));\
+    const __m128i c2 = (*(const __m128i*)(transform_const_tbl + 4*2));\
+    const __m128i c3 = (*(const __m128i*)(transform_const_tbl + 4*3));\
+    const __m128i c4 = (*(const __m128i*)(transform_const_tbl + 4*4));\
+    const __m128i c5 = (*(const __m128i*)(transform_const_tbl + 4*5));\
+    const __m128i c6 = (*(const __m128i*)(transform_const_tbl + 4*6));\
+    const __m128i c7 = (*(const __m128i*)(transform_const_tbl + 4*7));\
+    __m128i t0v0;\
+    __m128i t0v1;\
+    __m128i t0v2;\
+    __m128i t0v3;\
+    __m128i t0v4;\
+    __m128i t0v5;\
+    __m128i t0v6;\
+    __m128i t0v7;\
+    __m128i t0v8;\
+    __m128i t0v9;\
+    __m128i t0v10;\
+    __m128i t0v11;\
+    __m128i t0v12;\
+    __m128i t0v13;\
+    __m128i t0v14;\
+    __m128i t0v15;\
+    __m128i t0v16;\
+    __m128i t0v17;\
+    __m128i t0v18;\
+    __m128i t0v19;\
+    __m128i t0v20;\
+    __m128i t0v21;\
+    __m128i t0v22;\
+    __m128i t0v23;\
+    __m128i t0v24;\
+    __m128i t0v25;\
+    __m128i t0v26;\
+    __m128i t0v27;\
+    __m128i t0v28;\
+    __m128i t0v29;\
+    __m128i t0v30;\
+    __m128i t0v31;\
+    __m128i t0v32;\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v6 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c1));\
+    t0v8 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c1));\
+    t0v10 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c1));\
+    t0v12 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c1));\
+    t0v14 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c1));\
+    t0v16 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
+    t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c3), 2), _mm_and_si128(t0v3, c3));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v4, c2), _mm_slli_epi16(_mm_and_si128(t0v6, c2), 2));\
+    t0v4 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v4, c3), 2), _mm_and_si128(t0v6, c3));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v5, c2), _mm_slli_epi16(_mm_and_si128(t0v7, c2), 2));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v5, c3), 2), _mm_and_si128(t0v7, c3));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v8, c2), _mm_slli_epi16(_mm_and_si128(t0v10, c2), 2));\
+    t0v8 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v8, c3), 2), _mm_and_si128(t0v10, c3));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v9, c2), _mm_slli_epi16(_mm_and_si128(t0v11, c2), 2));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v9, c3), 2), _mm_and_si128(t0v11, c3));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v12, c2), _mm_slli_epi16(_mm_and_si128(t0v14, c2), 2));\
+    t0v12 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v12, c3), 2), _mm_and_si128(t0v14, c3));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v13, c2), _mm_slli_epi16(_mm_and_si128(t0v15, c2), 2));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v13, c3), 2), _mm_and_si128(t0v15, c3));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v16, c4), _mm_slli_epi16(_mm_and_si128(t0v3, c4), 4));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v16, c5), 4), _mm_and_si128(t0v3, c5));\
+    t0v16 = _mm_or_si128(_mm_and_si128(t0v2, c4), _mm_slli_epi16(_mm_and_si128(t0v6, c4), 4));\
+    t0v2 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v2, c5), 4), _mm_and_si128(t0v6, c5));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v0, c4), _mm_slli_epi16(_mm_and_si128(t0v4, c4), 4));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c5), 4), _mm_and_si128(t0v4, c5));\
+    t0v4 = _mm_or_si128(_mm_and_si128(t0v1, c4), _mm_slli_epi16(_mm_and_si128(t0v5, c4), 4));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c5), 4), _mm_and_si128(t0v5, c5));\
+    t0v5 = _mm_or_si128(_mm_and_si128(t0v7, c4), _mm_slli_epi16(_mm_and_si128(t0v11, c4), 4));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v7, c5), 4), _mm_and_si128(t0v11, c5));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v10, c4), _mm_slli_epi16(_mm_and_si128(t0v14, c4), 4));\
+    t0v10 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v10, c5), 4), _mm_and_si128(t0v14, c5));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v8, c4), _mm_slli_epi16(_mm_and_si128(t0v12, c4), 4));\
+    t0v8 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v8, c5), 4), _mm_and_si128(t0v12, c5));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v9, c4), _mm_slli_epi16(_mm_and_si128(t0v13, c4), 4));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v9, c5), 4), _mm_and_si128(t0v13, c5));\
+    t0v13 = _mm_or_si128(_mm_and_si128(t0v15, c6), _mm_slli_epi16(t0v5, 8));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(t0v15, 8), _mm_and_si128(t0v5, c7));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v16, c6), _mm_slli_epi16(t0v11, 8));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(t0v16, 8), _mm_and_si128(t0v11, c7));\
+    t0v16 = _mm_or_si128(_mm_and_si128(t0v6, c6), _mm_slli_epi16(t0v14, 8));\
+    t0v6 = _mm_or_si128(_mm_srli_epi16(t0v6, 8), _mm_and_si128(t0v14, c7));\
+    t0v14 = _mm_or_si128(_mm_and_si128(t0v4, c6), _mm_slli_epi16(t0v12, 8));\
+    t0v4 = _mm_or_si128(_mm_srli_epi16(t0v4, 8), _mm_and_si128(t0v12, c7));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v3, c6), _mm_slli_epi16(t0v7, 8));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(t0v3, 8), _mm_and_si128(t0v7, c7));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v2, c6), _mm_slli_epi16(t0v10, 8));\
+    t0v2 = _mm_or_si128(_mm_srli_epi16(t0v2, 8), _mm_and_si128(t0v10, c7));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v0, c6), _mm_slli_epi16(t0v8, 8));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(t0v0, 8), _mm_and_si128(t0v8, c7));\
+    t0v8 = _mm_or_si128(_mm_and_si128(t0v1, c6), _mm_slli_epi16(t0v9, 8));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(t0v1, 8), _mm_and_si128(t0v9, c7));\
+    t0v9 = _mm_and_si128(t0v13, c8);\
+    t0v13 = _mm_srli_epi32(t0v13, 16);\
+    t0v17 = _mm_and_si128(t0v15, c8);\
+    t0v15 = _mm_srli_epi32(t0v15, 16);\
+    t0v18 = _mm_and_si128(t0v16, c8);\
+    t0v16 = _mm_srli_epi32(t0v16, 16);\
+    t0v19 = _mm_and_si128(t0v14, c8);\
+    t0v14 = _mm_srli_epi32(t0v14, 16);\
+    t0v20 = _mm_and_si128(t0v12, c8);\
+    t0v12 = _mm_srli_epi32(t0v12, 16);\
+    t0v21 = _mm_and_si128(t0v7, c8);\
+    t0v7 = _mm_srli_epi32(t0v7, 16);\
+    t0v22 = _mm_and_si128(t0v10, c8);\
+    t0v10 = _mm_srli_epi32(t0v10, 16);\
+    t0v23 = _mm_and_si128(t0v8, c8);\
+    t0v8 = _mm_srli_epi32(t0v8, 16);\
+    t0v24 = _mm_and_si128(t0v5, c8);\
+    t0v5 = _mm_srli_epi32(t0v5, 16);\
+    t0v25 = _mm_and_si128(t0v11, c8);\
+    t0v11 = _mm_srli_epi32(t0v11, 16);\
+    t0v26 = _mm_and_si128(t0v6, c8);\
+    t0v6 = _mm_srli_epi32(t0v6, 16);\
+    t0v27 = _mm_and_si128(t0v4, c8);\
+    t0v4 = _mm_srli_epi32(t0v4, 16);\
+    t0v28 = _mm_and_si128(t0v3, c8);\
+    t0v3 = _mm_srli_epi32(t0v3, 16);\
+    t0v29 = _mm_and_si128(t0v2, c8);\
+    t0v2 = _mm_srli_epi32(t0v2, 16);\
+    t0v30 = _mm_and_si128(t0v0, c8);\
+    t0v0 = _mm_srli_epi32(t0v0, 16);\
+    t0v31 = _mm_and_si128(t0v1, c8);\
+    t0v1 = _mm_srli_epi32(t0v1, 16);\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v9, c9), _mm_slli_epi64(t0v17, 32));\
+    t0v9 = _mm_or_si128(_mm_srli_epi64(t0v9, 32), _mm_and_si128(t0v17, c10));\
+    t0v17 = _mm_or_si128(_mm_and_si128(t0v18, c9), _mm_slli_epi64(t0v19, 32));\
+    t0v18 = _mm_or_si128(_mm_srli_epi64(t0v18, 32), _mm_and_si128(t0v19, c10));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v20, c9), _mm_slli_epi64(t0v21, 32));\
+    t0v20 = _mm_or_si128(_mm_srli_epi64(t0v20, 32), _mm_and_si128(t0v21, c10));\
+    t0v21 = _mm_or_si128(_mm_and_si128(t0v22, c9), _mm_slli_epi64(t0v23, 32));\
+    t0v22 = _mm_or_si128(_mm_srli_epi64(t0v22, 32), _mm_and_si128(t0v23, c10));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v24, c9), _mm_slli_epi64(t0v25, 32));\
+    t0v24 = _mm_or_si128(_mm_srli_epi64(t0v24, 32), _mm_and_si128(t0v25, c10));\
+    t0v25 = _mm_or_si128(_mm_and_si128(t0v26, c9), _mm_slli_epi64(t0v27, 32));\
+    t0v26 = _mm_or_si128(_mm_srli_epi64(t0v26, 32), _mm_and_si128(t0v27, c10));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v28, c9), _mm_slli_epi64(t0v29, 32));\
+    t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v29, c10));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v30, c9), _mm_slli_epi64(t0v31, 32));\
+    t0v30 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v31, c10));\
+    t0v31 = _mm_or_si128(_mm_and_si128(t0v13, c9), _mm_slli_epi64(t0v15, 32));\
+    t0v13 = _mm_or_si128(_mm_srli_epi64(t0v13, 32), _mm_and_si128(t0v15, c10));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v16, c9), _mm_slli_epi64(t0v14, 32));\
+    t0v14 = _mm_or_si128(_mm_srli_epi64(t0v16, 32), _mm_and_si128(t0v14, c10));\
+    t0v16 = _mm_or_si128(_mm_and_si128(t0v12, c9), _mm_slli_epi64(t0v7, 32));\
+    t0v7 = _mm_or_si128(_mm_srli_epi64(t0v12, 32), _mm_and_si128(t0v7, c10));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v10, c9), _mm_slli_epi64(t0v8, 32));\
+    t0v8 = _mm_or_si128(_mm_srli_epi64(t0v10, 32), _mm_and_si128(t0v8, c10));\
+    t0v10 = _mm_or_si128(_mm_and_si128(t0v5, c9), _mm_slli_epi64(t0v11, 32));\
+    t0v5 = _mm_or_si128(_mm_srli_epi64(t0v5, 32), _mm_and_si128(t0v11, c10));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v6, c9), _mm_slli_epi64(t0v4, 32));\
+    t0v4 = _mm_or_si128(_mm_srli_epi64(t0v6, 32), _mm_and_si128(t0v4, c10));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v3, c9), _mm_slli_epi64(t0v2, 32));\
+    t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c10));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c9), _mm_slli_epi64(t0v1, 32));\
+    t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c10));\
+    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v31, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v31, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v16, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v16, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v9, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v9, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v13, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v13, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    }\
+}
+#define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
+{\
+    __m128i* dest = (__m128i*)(D);\
+    __m128i temps[12];\
+    unsigned int i;\
+    _mm256_storeu_ps((float*)(temps + 0), (S0));\
+    _mm256_storeu_ps((float*)(temps + 2), (S1));\
+    _mm256_storeu_ps((float*)(temps + 4), (S2));\
+    _mm256_storeu_ps((float*)(temps + 6), (S3));\
+    _mm256_storeu_ps((float*)(temps + 8), (S4));\
+    _mm256_storeu_ps((float*)(temps + 10), (S5));\
+    for (i = 0; i < 2; i++) {\
+    const unsigned int ib = i * 32;\
+    const __m128i c6 = (*(const __m128i*)(transform_const2_tbl + 4*3));\
+    const __m128i c0 = (*(const __m128i*)(transform_const_tbl + 4*0));\
+    const __m128i c1 = (*(const __m128i*)(transform_const_tbl + 4*1));\
+    const __m128i c7 = (*(const __m128i*)(transform_const_tbl + 4*10));\
+    const __m128i c8 = (*(const __m128i*)(transform_const_tbl + 4*11));\
+    const __m128i c2 = (*(const __m128i*)(transform_const_tbl + 4*2));\
+    const __m128i c3 = (*(const __m128i*)(transform_const_tbl + 4*3));\
+    const __m128i c4 = (*(const __m128i*)(transform_const_tbl + 4*4));\
+    const __m128i c5 = (*(const __m128i*)(transform_const_tbl + 4*5));\
+    __m128i t0v0;\
+    __m128i t0v1;\
+    __m128i t0v2;\
+    __m128i t0v3;\
+    __m128i t0v4;\
+    __m128i t0v5;\
+    __m128i t0v6;\
+    __m128i t0v7;\
+    __m128i t0v8;\
+    __m128i t0v9;\
+    __m128i t0v10;\
+    __m128i t0v11;\
+    __m128i t0v12;\
+    __m128i t0v13;\
+    __m128i t0v14;\
+    __m128i t0v15;\
+    __m128i t0v16;\
+    __m128i t0v17;\
+    __m128i t0v18;\
+    __m128i t0v19;\
+    __m128i t0v20;\
+    __m128i t0v21;\
+    __m128i t0v22;\
+    __m128i t0v23;\
+    __m128i t0v24;\
+    __m128i t0v25;\
+    __m128i t0v26;\
+    __m128i t0v27;\
+    __m128i t0v28;\
+    __m128i t0v29;\
+    __m128i t0v30;\
+    __m128i t0v31;\
+    __m128i t0v32;\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
+    t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c3), 2), _mm_and_si128(t0v3, c3));\
+    t0v3 = _mm_and_si128(t0v4, c2);\
+    t0v4 = _mm_srli_epi16(_mm_and_si128(t0v4, c3), 2);\
+    t0v7 = _mm_and_si128(t0v5, c2);\
+    t0v5 = _mm_srli_epi16(_mm_and_si128(t0v5, c3), 2);\
+    t0v8 = _mm_or_si128(_mm_and_si128(t0v6, c4), _mm_slli_epi16(_mm_and_si128(t0v3, c4), 4));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v6, c5), 4), _mm_and_si128(t0v3, c5));\
+    t0v6 = _mm_or_si128(_mm_and_si128(t0v2, c4), _mm_slli_epi16(_mm_and_si128(t0v7, c4), 4));\
+    t0v2 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v2, c5), 4), _mm_and_si128(t0v7, c5));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v0, c4), _mm_slli_epi16(_mm_and_si128(t0v4, c4), 4));\
+    t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c5), 4), _mm_and_si128(t0v4, c5));\
+    t0v4 = _mm_or_si128(_mm_and_si128(t0v1, c4), _mm_slli_epi16(_mm_and_si128(t0v5, c4), 4));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v1, c5), 4), _mm_and_si128(t0v5, c5));\
+    t0v5 = _mm_and_si128(t0v8, c6);\
+    t0v9 = _mm_and_si128(_mm_srli_epi32(t0v8, 8), c6);\
+    t0v10 = _mm_and_si128(_mm_srli_epi32(t0v8, 16), c6);\
+    t0v8 = _mm_srli_epi32(t0v8, 24);\
+    t0v11 = _mm_and_si128(t0v6, c6);\
+    t0v12 = _mm_and_si128(_mm_srli_epi32(t0v6, 8), c6);\
+    t0v13 = _mm_and_si128(_mm_srli_epi32(t0v6, 16), c6);\
+    t0v6 = _mm_srli_epi32(t0v6, 24);\
+    t0v14 = _mm_and_si128(t0v7, c6);\
+    t0v15 = _mm_and_si128(_mm_srli_epi32(t0v7, 8), c6);\
+    t0v16 = _mm_and_si128(_mm_srli_epi32(t0v7, 16), c6);\
+    t0v7 = _mm_srli_epi32(t0v7, 24);\
+    t0v17 = _mm_and_si128(t0v4, c6);\
+    t0v18 = _mm_and_si128(_mm_srli_epi32(t0v4, 8), c6);\
+    t0v19 = _mm_and_si128(_mm_srli_epi32(t0v4, 16), c6);\
+    t0v4 = _mm_srli_epi32(t0v4, 24);\
+    t0v20 = _mm_and_si128(t0v3, c6);\
+    t0v21 = _mm_and_si128(_mm_srli_epi32(t0v3, 8), c6);\
+    t0v22 = _mm_and_si128(_mm_srli_epi32(t0v3, 16), c6);\
+    t0v3 = _mm_srli_epi32(t0v3, 24);\
+    t0v23 = _mm_and_si128(t0v2, c6);\
+    t0v24 = _mm_and_si128(_mm_srli_epi32(t0v2, 8), c6);\
+    t0v25 = _mm_and_si128(_mm_srli_epi32(t0v2, 16), c6);\
+    t0v2 = _mm_srli_epi32(t0v2, 24);\
+    t0v26 = _mm_and_si128(t0v0, c6);\
+    t0v27 = _mm_and_si128(_mm_srli_epi32(t0v0, 8), c6);\
+    t0v28 = _mm_and_si128(_mm_srli_epi32(t0v0, 16), c6);\
+    t0v0 = _mm_srli_epi32(t0v0, 24);\
+    t0v29 = _mm_and_si128(t0v1, c6);\
+    t0v30 = _mm_and_si128(_mm_srli_epi32(t0v1, 8), c6);\
+    t0v31 = _mm_and_si128(_mm_srli_epi32(t0v1, 16), c6);\
+    t0v1 = _mm_srli_epi32(t0v1, 24);\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v5, c7), _mm_slli_epi64(t0v11, 32));\
+    t0v5 = _mm_or_si128(_mm_srli_epi64(t0v5, 32), _mm_and_si128(t0v11, c8));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v14, c7), _mm_slli_epi64(t0v17, 32));\
+    t0v14 = _mm_or_si128(_mm_srli_epi64(t0v14, 32), _mm_and_si128(t0v17, c8));\
+    t0v17 = _mm_or_si128(_mm_and_si128(t0v20, c7), _mm_slli_epi64(t0v23, 32));\
+    t0v20 = _mm_or_si128(_mm_srli_epi64(t0v20, 32), _mm_and_si128(t0v23, c8));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v26, c7), _mm_slli_epi64(t0v29, 32));\
+    t0v26 = _mm_or_si128(_mm_srli_epi64(t0v26, 32), _mm_and_si128(t0v29, c8));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v9, c7), _mm_slli_epi64(t0v12, 32));\
+    t0v9 = _mm_or_si128(_mm_srli_epi64(t0v9, 32), _mm_and_si128(t0v12, c8));\
+    t0v12 = _mm_or_si128(_mm_and_si128(t0v15, c7), _mm_slli_epi64(t0v18, 32));\
+    t0v15 = _mm_or_si128(_mm_srli_epi64(t0v15, 32), _mm_and_si128(t0v18, c8));\
+    t0v18 = _mm_or_si128(_mm_and_si128(t0v21, c7), _mm_slli_epi64(t0v24, 32));\
+    t0v21 = _mm_or_si128(_mm_srli_epi64(t0v21, 32), _mm_and_si128(t0v24, c8));\
+    t0v24 = _mm_or_si128(_mm_and_si128(t0v27, c7), _mm_slli_epi64(t0v30, 32));\
+    t0v27 = _mm_or_si128(_mm_srli_epi64(t0v27, 32), _mm_and_si128(t0v30, c8));\
+    t0v30 = _mm_or_si128(_mm_and_si128(t0v10, c7), _mm_slli_epi64(t0v13, 32));\
+    t0v10 = _mm_or_si128(_mm_srli_epi64(t0v10, 32), _mm_and_si128(t0v13, c8));\
+    t0v13 = _mm_or_si128(_mm_and_si128(t0v16, c7), _mm_slli_epi64(t0v19, 32));\
+    t0v16 = _mm_or_si128(_mm_srli_epi64(t0v16, 32), _mm_and_si128(t0v19, c8));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v22, c7), _mm_slli_epi64(t0v25, 32));\
+    t0v22 = _mm_or_si128(_mm_srli_epi64(t0v22, 32), _mm_and_si128(t0v25, c8));\
+    t0v25 = _mm_or_si128(_mm_and_si128(t0v28, c7), _mm_slli_epi64(t0v31, 32));\
+    t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v31, c8));\
+    t0v31 = _mm_or_si128(_mm_and_si128(t0v8, c7), _mm_slli_epi64(t0v6, 32));\
+    t0v6 = _mm_or_si128(_mm_srli_epi64(t0v8, 32), _mm_and_si128(t0v6, c8));\
+    t0v8 = _mm_or_si128(_mm_and_si128(t0v7, c7), _mm_slli_epi64(t0v4, 32));\
+    t0v4 = _mm_or_si128(_mm_srli_epi64(t0v7, 32), _mm_and_si128(t0v4, c8));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v3, c7), _mm_slli_epi64(t0v2, 32));\
+    t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c8));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c7), _mm_slli_epi64(t0v1, 32));\
+    t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c8));\
+    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v11));\
+    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v17, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v17, t0v23));\
+    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v29, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v29, t0v12));\
+    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v18, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v18, t0v24));\
+    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v30, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v30, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v31, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v31, t0v8));\
+    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v7, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v7, t0v3));\
+    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v5, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v5, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v9, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v9, t0v15));\
+    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v21, t0v27));\
+    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v21, t0v27));\
+    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v10, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v10, t0v16));\
+    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v22, t0v28));\
+    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v22, t0v28));\
+    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v6, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v6, t0v4));\
+    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    }\
+}
+#define OUTPUT_TRANSFORM_B1(D, S0) \
+{\
+    __m128i* dest = (__m128i*)(D);\
+    __m128i temps[2];\
+    unsigned int i;\
+    _mm256_storeu_ps((float*)(temps + 0), (S0));\
+    for (i = 0; i < 2; i++) {\
+    const unsigned int ib = i * 32;\
+    const __m128i c0 = (*(const __m128i*)(transform_const2_tbl + 4*0));\
+    const __m128i c1 = (*(const __m128i*)(transform_const_tbl + 4*10));\
+    const __m128i c2 = (*(const __m128i*)(transform_const_tbl + 4*11));\
+    __m128i t0v0;\
+    __m128i t0v1;\
+    __m128i t0v2;\
+    __m128i t0v3;\
+    __m128i t0v4;\
+    __m128i t0v5;\
+    __m128i t0v6;\
+    __m128i t0v7;\
+    __m128i t0v8;\
+    __m128i t0v9;\
+    __m128i t0v10;\
+    __m128i t0v11;\
+    __m128i t0v12;\
+    __m128i t0v13;\
+    __m128i t0v14;\
+    __m128i t0v15;\
+    __m128i t0v16;\
+    __m128i t0v17;\
+    __m128i t0v18;\
+    __m128i t0v19;\
+    __m128i t0v20;\
+    __m128i t0v21;\
+    __m128i t0v22;\
+    __m128i t0v23;\
+    __m128i t0v24;\
+    __m128i t0v25;\
+    __m128i t0v26;\
+    __m128i t0v27;\
+    __m128i t0v28;\
+    __m128i t0v29;\
+    __m128i t0v30;\
+    __m128i t0v31;\
+    __m128i t0v32;\
+    t0v0 = _mm_and_si128(temps[0 + i], c0);\
+    t0v1 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 1), c0);\
+    t0v2 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 2), c0);\
+    t0v3 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 3), c0);\
+    t0v4 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 4), c0);\
+    t0v5 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 5), c0);\
+    t0v6 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 6), c0);\
+    t0v7 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 7), c0);\
+    t0v8 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 8), c0);\
+    t0v9 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 9), c0);\
+    t0v10 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 10), c0);\
+    t0v11 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 11), c0);\
+    t0v12 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 12), c0);\
+    t0v13 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 13), c0);\
+    t0v14 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 14), c0);\
+    t0v15 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 15), c0);\
+    t0v16 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 16), c0);\
+    t0v17 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 17), c0);\
+    t0v18 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 18), c0);\
+    t0v19 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 19), c0);\
+    t0v20 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 20), c0);\
+    t0v21 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 21), c0);\
+    t0v22 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 22), c0);\
+    t0v23 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 23), c0);\
+    t0v24 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 24), c0);\
+    t0v25 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 25), c0);\
+    t0v26 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 26), c0);\
+    t0v27 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 27), c0);\
+    t0v28 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 28), c0);\
+    t0v29 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 29), c0);\
+    t0v30 = _mm_and_si128(_mm_srli_epi32(temps[0 + i], 30), c0);\
+    t0v31 = _mm_srli_epi32(temps[0 + i], 31);\
+    t0v32 = _mm_or_si128(_mm_and_si128(t0v0, c1), _mm_slli_epi64(t0v1, 32));\
+    t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c2));\
+    t0v1 = _mm_or_si128(_mm_and_si128(t0v2, c1), _mm_slli_epi64(t0v3, 32));\
+    t0v2 = _mm_or_si128(_mm_srli_epi64(t0v2, 32), _mm_and_si128(t0v3, c2));\
+    t0v3 = _mm_or_si128(_mm_and_si128(t0v4, c1), _mm_slli_epi64(t0v5, 32));\
+    t0v4 = _mm_or_si128(_mm_srli_epi64(t0v4, 32), _mm_and_si128(t0v5, c2));\
+    t0v5 = _mm_or_si128(_mm_and_si128(t0v6, c1), _mm_slli_epi64(t0v7, 32));\
+    t0v6 = _mm_or_si128(_mm_srli_epi64(t0v6, 32), _mm_and_si128(t0v7, c2));\
+    t0v7 = _mm_or_si128(_mm_and_si128(t0v8, c1), _mm_slli_epi64(t0v9, 32));\
+    t0v8 = _mm_or_si128(_mm_srli_epi64(t0v8, 32), _mm_and_si128(t0v9, c2));\
+    t0v9 = _mm_or_si128(_mm_and_si128(t0v10, c1), _mm_slli_epi64(t0v11, 32));\
+    t0v10 = _mm_or_si128(_mm_srli_epi64(t0v10, 32), _mm_and_si128(t0v11, c2));\
+    t0v11 = _mm_or_si128(_mm_and_si128(t0v12, c1), _mm_slli_epi64(t0v13, 32));\
+    t0v12 = _mm_or_si128(_mm_srli_epi64(t0v12, 32), _mm_and_si128(t0v13, c2));\
+    t0v13 = _mm_or_si128(_mm_and_si128(t0v14, c1), _mm_slli_epi64(t0v15, 32));\
+    t0v14 = _mm_or_si128(_mm_srli_epi64(t0v14, 32), _mm_and_si128(t0v15, c2));\
+    t0v15 = _mm_or_si128(_mm_and_si128(t0v16, c1), _mm_slli_epi64(t0v17, 32));\
+    t0v16 = _mm_or_si128(_mm_srli_epi64(t0v16, 32), _mm_and_si128(t0v17, c2));\
+    t0v17 = _mm_or_si128(_mm_and_si128(t0v18, c1), _mm_slli_epi64(t0v19, 32));\
+    t0v18 = _mm_or_si128(_mm_srli_epi64(t0v18, 32), _mm_and_si128(t0v19, c2));\
+    t0v19 = _mm_or_si128(_mm_and_si128(t0v20, c1), _mm_slli_epi64(t0v21, 32));\
+    t0v20 = _mm_or_si128(_mm_srli_epi64(t0v20, 32), _mm_and_si128(t0v21, c2));\
+    t0v21 = _mm_or_si128(_mm_and_si128(t0v22, c1), _mm_slli_epi64(t0v23, 32));\
+    t0v22 = _mm_or_si128(_mm_srli_epi64(t0v22, 32), _mm_and_si128(t0v23, c2));\
+    t0v23 = _mm_or_si128(_mm_and_si128(t0v24, c1), _mm_slli_epi64(t0v25, 32));\
+    t0v24 = _mm_or_si128(_mm_srli_epi64(t0v24, 32), _mm_and_si128(t0v25, c2));\
+    t0v25 = _mm_or_si128(_mm_and_si128(t0v26, c1), _mm_slli_epi64(t0v27, 32));\
+    t0v26 = _mm_or_si128(_mm_srli_epi64(t0v26, 32), _mm_and_si128(t0v27, c2));\
+    t0v27 = _mm_or_si128(_mm_and_si128(t0v28, c1), _mm_slli_epi64(t0v29, 32));\
+    t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v29, c2));\
+    t0v29 = _mm_or_si128(_mm_and_si128(t0v30, c1), _mm_slli_epi64(t0v31, 32));\
+    t0v30 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v31, c2));\
+    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v1));\
+    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v1));\
+    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v3, t0v5));\
+    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v3, t0v5));\
+    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v7, t0v9));\
+    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v7, t0v9));\
+    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v11, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v11, t0v13));\
+    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v15, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v15, t0v17));\
+    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v0, t0v2));\
+    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v0, t0v2));\
+    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v4, t0v6));\
+    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v4, t0v6));\
+    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v8, t0v10));\
+    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v8, t0v10));\
+    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v12, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v12, t0v14));\
+    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v16, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v16, t0v18));\
+    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    }\
+}
+"##,
+        transform.out()
+    );
     let mut transform = CLANG_TRANSFORM_INTEL_AVX2.transform();
     transform.gen_output_transform(32);
     transform.gen_output_transform(16);
@@ -6245,9 +7110,4 @@ fn test_clang_transform_gen_output_transform() {
 "##,
         transform.out()
     );
-    let mut transform = CLANG_TRANSFORM_INTEL_AVX.transform();
-    for i in (1..=32).rev() {
-        transform.gen_output_transform(i);
-    }
-    println!("{}", transform.out());
 }

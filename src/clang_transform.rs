@@ -1892,12 +1892,7 @@ impl<'a> CLangTransform<'a> {
         let (outputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
             (
                 (0..32)
-                    .map(|i| {
-                        self.format_arg_d_out(format!(
-                            "{} + ib",
-                            (self.config.comp_type_bit_len >> 5) * i
-                        ))
-                    })
+                    .map(|i| self.format_arg_d_out(format!("{} + ib", i)))
                     .collect::<Vec<_>>(),
                 (0..bits)
                     .map(|i| {
@@ -1968,9 +1963,8 @@ impl<'a> CLangTransform<'a> {
             }
             writeln!(
                 &mut self.out,
-                "    for (i = 0; i < {}; i++) {{\\\n    const unsigned int ib = i * {};\\",
-                (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize,
-                self.config.comp_type_bit_len
+                "    for (i = 0; i < {}; i++) {{\\\n    const unsigned int ib = i * 32;\\",
+                (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
             )
             .unwrap();
         }
