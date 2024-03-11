@@ -1699,6 +1699,503 @@ fn test_clang_transform_gen_output_transform() {
 "##,
         transform.out()
     );
+    let mut transform = CLANG_TRANSFORM_INTEL_SSE.transform();
+    transform.gen_output_transform(32);
+    transform.gen_output_transform(16);
+    transform.gen_output_transform(6);
+    transform.gen_output_transform(1);
+    assert_eq!(
+        r##"#define OUTPUT_TRANSFORM_B32(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31) \
+{\
+    uint32_t temps[128];\
+    unsigned int i;\
+    _mm_storeu_ps((float*)(temps + 0), (S0));\
+    _mm_storeu_ps((float*)(temps + 4), (S1));\
+    _mm_storeu_ps((float*)(temps + 8), (S2));\
+    _mm_storeu_ps((float*)(temps + 12), (S3));\
+    _mm_storeu_ps((float*)(temps + 16), (S4));\
+    _mm_storeu_ps((float*)(temps + 20), (S5));\
+    _mm_storeu_ps((float*)(temps + 24), (S6));\
+    _mm_storeu_ps((float*)(temps + 28), (S7));\
+    _mm_storeu_ps((float*)(temps + 32), (S8));\
+    _mm_storeu_ps((float*)(temps + 36), (S9));\
+    _mm_storeu_ps((float*)(temps + 40), (S10));\
+    _mm_storeu_ps((float*)(temps + 44), (S11));\
+    _mm_storeu_ps((float*)(temps + 48), (S12));\
+    _mm_storeu_ps((float*)(temps + 52), (S13));\
+    _mm_storeu_ps((float*)(temps + 56), (S14));\
+    _mm_storeu_ps((float*)(temps + 60), (S15));\
+    _mm_storeu_ps((float*)(temps + 64), (S16));\
+    _mm_storeu_ps((float*)(temps + 68), (S17));\
+    _mm_storeu_ps((float*)(temps + 72), (S18));\
+    _mm_storeu_ps((float*)(temps + 76), (S19));\
+    _mm_storeu_ps((float*)(temps + 80), (S20));\
+    _mm_storeu_ps((float*)(temps + 84), (S21));\
+    _mm_storeu_ps((float*)(temps + 88), (S22));\
+    _mm_storeu_ps((float*)(temps + 92), (S23));\
+    _mm_storeu_ps((float*)(temps + 96), (S24));\
+    _mm_storeu_ps((float*)(temps + 100), (S25));\
+    _mm_storeu_ps((float*)(temps + 104), (S26));\
+    _mm_storeu_ps((float*)(temps + 108), (S27));\
+    _mm_storeu_ps((float*)(temps + 112), (S28));\
+    _mm_storeu_ps((float*)(temps + 116), (S29));\
+    _mm_storeu_ps((float*)(temps + 120), (S30));\
+    _mm_storeu_ps((float*)(temps + 124), (S31));\
+    for (i = 0; i < 4; i++) {\
+    const unsigned int ib = i * 32;\
+    uint32_t t0v0;\
+    uint32_t t0v1;\
+    uint32_t t0v2;\
+    uint32_t t0v3;\
+    uint32_t t0v4;\
+    uint32_t t0v5;\
+    uint32_t t0v6;\
+    uint32_t t0v7;\
+    uint32_t t0v8;\
+    uint32_t t0v9;\
+    uint32_t t0v10;\
+    uint32_t t0v11;\
+    uint32_t t0v12;\
+    uint32_t t0v13;\
+    uint32_t t0v14;\
+    uint32_t t0v15;\
+    uint32_t t0v16;\
+    uint32_t t0v17;\
+    uint32_t t0v18;\
+    uint32_t t0v19;\
+    uint32_t t0v20;\
+    uint32_t t0v21;\
+    uint32_t t0v22;\
+    uint32_t t0v23;\
+    uint32_t t0v24;\
+    uint32_t t0v25;\
+    uint32_t t0v26;\
+    uint32_t t0v27;\
+    uint32_t t0v28;\
+    uint32_t t0v29;\
+    uint32_t t0v30;\
+    uint32_t t0v31;\
+    uint32_t t0v32;\
+    t0v0 = ((temps[0 + i] & 0x55555555U) | ((temps[4 + i] & 0x55555555U) << 1));\
+    t0v1 = (((temps[0 + i] & 0xaaaaaaaaU) >> 1) | (temps[4 + i] & 0xaaaaaaaaU));\
+    t0v2 = ((temps[8 + i] & 0x55555555U) | ((temps[12 + i] & 0x55555555U) << 1));\
+    t0v3 = (((temps[8 + i] & 0xaaaaaaaaU) >> 1) | (temps[12 + i] & 0xaaaaaaaaU));\
+    t0v4 = ((temps[16 + i] & 0x55555555U) | ((temps[20 + i] & 0x55555555U) << 1));\
+    t0v5 = (((temps[16 + i] & 0xaaaaaaaaU) >> 1) | (temps[20 + i] & 0xaaaaaaaaU));\
+    t0v6 = ((temps[24 + i] & 0x55555555U) | ((temps[28 + i] & 0x55555555U) << 1));\
+    t0v7 = (((temps[24 + i] & 0xaaaaaaaaU) >> 1) | (temps[28 + i] & 0xaaaaaaaaU));\
+    t0v8 = ((temps[32 + i] & 0x55555555U) | ((temps[36 + i] & 0x55555555U) << 1));\
+    t0v9 = (((temps[32 + i] & 0xaaaaaaaaU) >> 1) | (temps[36 + i] & 0xaaaaaaaaU));\
+    t0v10 = ((temps[40 + i] & 0x55555555U) | ((temps[44 + i] & 0x55555555U) << 1));\
+    t0v11 = (((temps[40 + i] & 0xaaaaaaaaU) >> 1) | (temps[44 + i] & 0xaaaaaaaaU));\
+    t0v12 = ((temps[48 + i] & 0x55555555U) | ((temps[52 + i] & 0x55555555U) << 1));\
+    t0v13 = (((temps[48 + i] & 0xaaaaaaaaU) >> 1) | (temps[52 + i] & 0xaaaaaaaaU));\
+    t0v14 = ((temps[56 + i] & 0x55555555U) | ((temps[60 + i] & 0x55555555U) << 1));\
+    t0v15 = (((temps[56 + i] & 0xaaaaaaaaU) >> 1) | (temps[60 + i] & 0xaaaaaaaaU));\
+    t0v16 = ((temps[64 + i] & 0x55555555U) | ((temps[68 + i] & 0x55555555U) << 1));\
+    t0v17 = (((temps[64 + i] & 0xaaaaaaaaU) >> 1) | (temps[68 + i] & 0xaaaaaaaaU));\
+    t0v18 = ((temps[72 + i] & 0x55555555U) | ((temps[76 + i] & 0x55555555U) << 1));\
+    t0v19 = (((temps[72 + i] & 0xaaaaaaaaU) >> 1) | (temps[76 + i] & 0xaaaaaaaaU));\
+    t0v20 = ((temps[80 + i] & 0x55555555U) | ((temps[84 + i] & 0x55555555U) << 1));\
+    t0v21 = (((temps[80 + i] & 0xaaaaaaaaU) >> 1) | (temps[84 + i] & 0xaaaaaaaaU));\
+    t0v22 = ((temps[88 + i] & 0x55555555U) | ((temps[92 + i] & 0x55555555U) << 1));\
+    t0v23 = (((temps[88 + i] & 0xaaaaaaaaU) >> 1) | (temps[92 + i] & 0xaaaaaaaaU));\
+    t0v24 = ((temps[96 + i] & 0x55555555U) | ((temps[100 + i] & 0x55555555U) << 1));\
+    t0v25 = (((temps[96 + i] & 0xaaaaaaaaU) >> 1) | (temps[100 + i] & 0xaaaaaaaaU));\
+    t0v26 = ((temps[104 + i] & 0x55555555U) | ((temps[108 + i] & 0x55555555U) << 1));\
+    t0v27 = (((temps[104 + i] & 0xaaaaaaaaU) >> 1) | (temps[108 + i] & 0xaaaaaaaaU));\
+    t0v28 = ((temps[112 + i] & 0x55555555U) | ((temps[116 + i] & 0x55555555U) << 1));\
+    t0v29 = (((temps[112 + i] & 0xaaaaaaaaU) >> 1) | (temps[116 + i] & 0xaaaaaaaaU));\
+    t0v30 = ((temps[120 + i] & 0x55555555U) | ((temps[124 + i] & 0x55555555U) << 1));\
+    t0v31 = (((temps[120 + i] & 0xaaaaaaaaU) >> 1) | (temps[124 + i] & 0xaaaaaaaaU));\
+    t0v32 = ((t0v0 & 0x33333333U) | ((t0v2 & 0x33333333U) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccU) >> 2) | (t0v2 & 0xccccccccU));\
+    t0v2 = ((t0v1 & 0x33333333U) | ((t0v3 & 0x33333333U) << 2));\
+    t0v1 = (((t0v1 & 0xccccccccU) >> 2) | (t0v3 & 0xccccccccU));\
+    t0v3 = ((t0v4 & 0x33333333U) | ((t0v6 & 0x33333333U) << 2));\
+    t0v4 = (((t0v4 & 0xccccccccU) >> 2) | (t0v6 & 0xccccccccU));\
+    t0v6 = ((t0v5 & 0x33333333U) | ((t0v7 & 0x33333333U) << 2));\
+    t0v5 = (((t0v5 & 0xccccccccU) >> 2) | (t0v7 & 0xccccccccU));\
+    t0v7 = ((t0v8 & 0x33333333U) | ((t0v10 & 0x33333333U) << 2));\
+    t0v8 = (((t0v8 & 0xccccccccU) >> 2) | (t0v10 & 0xccccccccU));\
+    t0v10 = ((t0v9 & 0x33333333U) | ((t0v11 & 0x33333333U) << 2));\
+    t0v9 = (((t0v9 & 0xccccccccU) >> 2) | (t0v11 & 0xccccccccU));\
+    t0v11 = ((t0v12 & 0x33333333U) | ((t0v14 & 0x33333333U) << 2));\
+    t0v12 = (((t0v12 & 0xccccccccU) >> 2) | (t0v14 & 0xccccccccU));\
+    t0v14 = ((t0v13 & 0x33333333U) | ((t0v15 & 0x33333333U) << 2));\
+    t0v13 = (((t0v13 & 0xccccccccU) >> 2) | (t0v15 & 0xccccccccU));\
+    t0v15 = ((t0v16 & 0x33333333U) | ((t0v18 & 0x33333333U) << 2));\
+    t0v16 = (((t0v16 & 0xccccccccU) >> 2) | (t0v18 & 0xccccccccU));\
+    t0v18 = ((t0v17 & 0x33333333U) | ((t0v19 & 0x33333333U) << 2));\
+    t0v17 = (((t0v17 & 0xccccccccU) >> 2) | (t0v19 & 0xccccccccU));\
+    t0v19 = ((t0v20 & 0x33333333U) | ((t0v22 & 0x33333333U) << 2));\
+    t0v20 = (((t0v20 & 0xccccccccU) >> 2) | (t0v22 & 0xccccccccU));\
+    t0v22 = ((t0v21 & 0x33333333U) | ((t0v23 & 0x33333333U) << 2));\
+    t0v21 = (((t0v21 & 0xccccccccU) >> 2) | (t0v23 & 0xccccccccU));\
+    t0v23 = ((t0v24 & 0x33333333U) | ((t0v26 & 0x33333333U) << 2));\
+    t0v24 = (((t0v24 & 0xccccccccU) >> 2) | (t0v26 & 0xccccccccU));\
+    t0v26 = ((t0v25 & 0x33333333U) | ((t0v27 & 0x33333333U) << 2));\
+    t0v25 = (((t0v25 & 0xccccccccU) >> 2) | (t0v27 & 0xccccccccU));\
+    t0v27 = ((t0v28 & 0x33333333U) | ((t0v30 & 0x33333333U) << 2));\
+    t0v28 = (((t0v28 & 0xccccccccU) >> 2) | (t0v30 & 0xccccccccU));\
+    t0v30 = ((t0v29 & 0x33333333U) | ((t0v31 & 0x33333333U) << 2));\
+    t0v29 = (((t0v29 & 0xccccccccU) >> 2) | (t0v31 & 0xccccccccU));\
+    t0v31 = ((t0v32 & 0x0f0f0f0fU) | ((t0v3 & 0x0f0f0f0fU) << 4));\
+    t0v3 = (((t0v32 & 0xf0f0f0f0U) >> 4) | (t0v3 & 0xf0f0f0f0U));\
+    t0v32 = ((t0v2 & 0x0f0f0f0fU) | ((t0v6 & 0x0f0f0f0fU) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0U) >> 4) | (t0v6 & 0xf0f0f0f0U));\
+    t0v6 = ((t0v0 & 0x0f0f0f0fU) | ((t0v4 & 0x0f0f0f0fU) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0U) >> 4) | (t0v4 & 0xf0f0f0f0U));\
+    t0v4 = ((t0v1 & 0x0f0f0f0fU) | ((t0v5 & 0x0f0f0f0fU) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0U) >> 4) | (t0v5 & 0xf0f0f0f0U));\
+    t0v5 = ((t0v7 & 0x0f0f0f0fU) | ((t0v11 & 0x0f0f0f0fU) << 4));\
+    t0v7 = (((t0v7 & 0xf0f0f0f0U) >> 4) | (t0v11 & 0xf0f0f0f0U));\
+    t0v11 = ((t0v10 & 0x0f0f0f0fU) | ((t0v14 & 0x0f0f0f0fU) << 4));\
+    t0v10 = (((t0v10 & 0xf0f0f0f0U) >> 4) | (t0v14 & 0xf0f0f0f0U));\
+    t0v14 = ((t0v8 & 0x0f0f0f0fU) | ((t0v12 & 0x0f0f0f0fU) << 4));\
+    t0v8 = (((t0v8 & 0xf0f0f0f0U) >> 4) | (t0v12 & 0xf0f0f0f0U));\
+    t0v12 = ((t0v9 & 0x0f0f0f0fU) | ((t0v13 & 0x0f0f0f0fU) << 4));\
+    t0v9 = (((t0v9 & 0xf0f0f0f0U) >> 4) | (t0v13 & 0xf0f0f0f0U));\
+    t0v13 = ((t0v15 & 0x0f0f0f0fU) | ((t0v19 & 0x0f0f0f0fU) << 4));\
+    t0v15 = (((t0v15 & 0xf0f0f0f0U) >> 4) | (t0v19 & 0xf0f0f0f0U));\
+    t0v19 = ((t0v18 & 0x0f0f0f0fU) | ((t0v22 & 0x0f0f0f0fU) << 4));\
+    t0v18 = (((t0v18 & 0xf0f0f0f0U) >> 4) | (t0v22 & 0xf0f0f0f0U));\
+    t0v22 = ((t0v16 & 0x0f0f0f0fU) | ((t0v20 & 0x0f0f0f0fU) << 4));\
+    t0v16 = (((t0v16 & 0xf0f0f0f0U) >> 4) | (t0v20 & 0xf0f0f0f0U));\
+    t0v20 = ((t0v17 & 0x0f0f0f0fU) | ((t0v21 & 0x0f0f0f0fU) << 4));\
+    t0v17 = (((t0v17 & 0xf0f0f0f0U) >> 4) | (t0v21 & 0xf0f0f0f0U));\
+    t0v21 = ((t0v23 & 0x0f0f0f0fU) | ((t0v27 & 0x0f0f0f0fU) << 4));\
+    t0v23 = (((t0v23 & 0xf0f0f0f0U) >> 4) | (t0v27 & 0xf0f0f0f0U));\
+    t0v27 = ((t0v26 & 0x0f0f0f0fU) | ((t0v30 & 0x0f0f0f0fU) << 4));\
+    t0v26 = (((t0v26 & 0xf0f0f0f0U) >> 4) | (t0v30 & 0xf0f0f0f0U));\
+    t0v30 = ((t0v24 & 0x0f0f0f0fU) | ((t0v28 & 0x0f0f0f0fU) << 4));\
+    t0v24 = (((t0v24 & 0xf0f0f0f0U) >> 4) | (t0v28 & 0xf0f0f0f0U));\
+    t0v28 = ((t0v25 & 0x0f0f0f0fU) | ((t0v29 & 0x0f0f0f0fU) << 4));\
+    t0v25 = (((t0v25 & 0xf0f0f0f0U) >> 4) | (t0v29 & 0xf0f0f0f0U));\
+    t0v29 = ((t0v31 & 0x00ff00ffU) | ((t0v5 & 0x00ff00ffU) << 8));\
+    t0v5 = (((t0v31 & 0xff00ff00U) >> 8) | (t0v5 & 0xff00ff00U));\
+    t0v31 = ((t0v32 & 0x00ff00ffU) | ((t0v11 & 0x00ff00ffU) << 8));\
+    t0v11 = (((t0v32 & 0xff00ff00U) >> 8) | (t0v11 & 0xff00ff00U));\
+    t0v32 = ((t0v6 & 0x00ff00ffU) | ((t0v14 & 0x00ff00ffU) << 8));\
+    t0v6 = (((t0v6 & 0xff00ff00U) >> 8) | (t0v14 & 0xff00ff00U));\
+    t0v14 = ((t0v4 & 0x00ff00ffU) | ((t0v12 & 0x00ff00ffU) << 8));\
+    t0v4 = (((t0v4 & 0xff00ff00U) >> 8) | (t0v12 & 0xff00ff00U));\
+    t0v12 = ((t0v3 & 0x00ff00ffU) | ((t0v7 & 0x00ff00ffU) << 8));\
+    t0v3 = (((t0v3 & 0xff00ff00U) >> 8) | (t0v7 & 0xff00ff00U));\
+    t0v7 = ((t0v2 & 0x00ff00ffU) | ((t0v10 & 0x00ff00ffU) << 8));\
+    t0v2 = (((t0v2 & 0xff00ff00U) >> 8) | (t0v10 & 0xff00ff00U));\
+    t0v10 = ((t0v0 & 0x00ff00ffU) | ((t0v8 & 0x00ff00ffU) << 8));\
+    t0v0 = (((t0v0 & 0xff00ff00U) >> 8) | (t0v8 & 0xff00ff00U));\
+    t0v8 = ((t0v1 & 0x00ff00ffU) | ((t0v9 & 0x00ff00ffU) << 8));\
+    t0v1 = (((t0v1 & 0xff00ff00U) >> 8) | (t0v9 & 0xff00ff00U));\
+    t0v9 = ((t0v13 & 0x00ff00ffU) | ((t0v21 & 0x00ff00ffU) << 8));\
+    t0v13 = (((t0v13 & 0xff00ff00U) >> 8) | (t0v21 & 0xff00ff00U));\
+    t0v21 = ((t0v19 & 0x00ff00ffU) | ((t0v27 & 0x00ff00ffU) << 8));\
+    t0v19 = (((t0v19 & 0xff00ff00U) >> 8) | (t0v27 & 0xff00ff00U));\
+    t0v27 = ((t0v22 & 0x00ff00ffU) | ((t0v30 & 0x00ff00ffU) << 8));\
+    t0v22 = (((t0v22 & 0xff00ff00U) >> 8) | (t0v30 & 0xff00ff00U));\
+    t0v30 = ((t0v20 & 0x00ff00ffU) | ((t0v28 & 0x00ff00ffU) << 8));\
+    t0v20 = (((t0v20 & 0xff00ff00U) >> 8) | (t0v28 & 0xff00ff00U));\
+    t0v28 = ((t0v15 & 0x00ff00ffU) | ((t0v23 & 0x00ff00ffU) << 8));\
+    t0v15 = (((t0v15 & 0xff00ff00U) >> 8) | (t0v23 & 0xff00ff00U));\
+    t0v23 = ((t0v18 & 0x00ff00ffU) | ((t0v26 & 0x00ff00ffU) << 8));\
+    t0v18 = (((t0v18 & 0xff00ff00U) >> 8) | (t0v26 & 0xff00ff00U));\
+    t0v26 = ((t0v16 & 0x00ff00ffU) | ((t0v24 & 0x00ff00ffU) << 8));\
+    t0v16 = (((t0v16 & 0xff00ff00U) >> 8) | (t0v24 & 0xff00ff00U));\
+    t0v24 = ((t0v17 & 0x00ff00ffU) | ((t0v25 & 0x00ff00ffU) << 8));\
+    t0v17 = (((t0v17 & 0xff00ff00U) >> 8) | (t0v25 & 0xff00ff00U));\
+    ((D)[0 + ib]) = ((t0v29 & 0x0000ffffU) | (t0v9 << 16));\
+    ((D)[16 + ib]) = ((t0v29 >> 16) | (t0v9 & 0xffff0000U));\
+    ((D)[1 + ib]) = ((t0v31 & 0x0000ffffU) | (t0v21 << 16));\
+    ((D)[17 + ib]) = ((t0v31 >> 16) | (t0v21 & 0xffff0000U));\
+    ((D)[2 + ib]) = ((t0v32 & 0x0000ffffU) | (t0v27 << 16));\
+    ((D)[18 + ib]) = ((t0v32 >> 16) | (t0v27 & 0xffff0000U));\
+    ((D)[3 + ib]) = ((t0v14 & 0x0000ffffU) | (t0v30 << 16));\
+    ((D)[19 + ib]) = ((t0v14 >> 16) | (t0v30 & 0xffff0000U));\
+    ((D)[4 + ib]) = ((t0v12 & 0x0000ffffU) | (t0v28 << 16));\
+    ((D)[20 + ib]) = ((t0v12 >> 16) | (t0v28 & 0xffff0000U));\
+    ((D)[5 + ib]) = ((t0v7 & 0x0000ffffU) | (t0v23 << 16));\
+    ((D)[21 + ib]) = ((t0v7 >> 16) | (t0v23 & 0xffff0000U));\
+    ((D)[6 + ib]) = ((t0v10 & 0x0000ffffU) | (t0v26 << 16));\
+    ((D)[22 + ib]) = ((t0v10 >> 16) | (t0v26 & 0xffff0000U));\
+    ((D)[7 + ib]) = ((t0v8 & 0x0000ffffU) | (t0v24 << 16));\
+    ((D)[23 + ib]) = ((t0v8 >> 16) | (t0v24 & 0xffff0000U));\
+    ((D)[8 + ib]) = ((t0v5 & 0x0000ffffU) | (t0v13 << 16));\
+    ((D)[24 + ib]) = ((t0v5 >> 16) | (t0v13 & 0xffff0000U));\
+    ((D)[9 + ib]) = ((t0v11 & 0x0000ffffU) | (t0v19 << 16));\
+    ((D)[25 + ib]) = ((t0v11 >> 16) | (t0v19 & 0xffff0000U));\
+    ((D)[10 + ib]) = ((t0v6 & 0x0000ffffU) | (t0v22 << 16));\
+    ((D)[26 + ib]) = ((t0v6 >> 16) | (t0v22 & 0xffff0000U));\
+    ((D)[11 + ib]) = ((t0v4 & 0x0000ffffU) | (t0v20 << 16));\
+    ((D)[27 + ib]) = ((t0v4 >> 16) | (t0v20 & 0xffff0000U));\
+    ((D)[12 + ib]) = ((t0v3 & 0x0000ffffU) | (t0v15 << 16));\
+    ((D)[28 + ib]) = ((t0v3 >> 16) | (t0v15 & 0xffff0000U));\
+    ((D)[13 + ib]) = ((t0v2 & 0x0000ffffU) | (t0v18 << 16));\
+    ((D)[29 + ib]) = ((t0v2 >> 16) | (t0v18 & 0xffff0000U));\
+    ((D)[14 + ib]) = ((t0v0 & 0x0000ffffU) | (t0v16 << 16));\
+    ((D)[30 + ib]) = ((t0v0 >> 16) | (t0v16 & 0xffff0000U));\
+    ((D)[15 + ib]) = ((t0v1 & 0x0000ffffU) | (t0v17 << 16));\
+    ((D)[31 + ib]) = ((t0v1 >> 16) | (t0v17 & 0xffff0000U));\
+    }\
+}
+#define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
+{\
+    uint32_t temps[64];\
+    unsigned int i;\
+    _mm_storeu_ps((float*)(temps + 0), (S0));\
+    _mm_storeu_ps((float*)(temps + 4), (S1));\
+    _mm_storeu_ps((float*)(temps + 8), (S2));\
+    _mm_storeu_ps((float*)(temps + 12), (S3));\
+    _mm_storeu_ps((float*)(temps + 16), (S4));\
+    _mm_storeu_ps((float*)(temps + 20), (S5));\
+    _mm_storeu_ps((float*)(temps + 24), (S6));\
+    _mm_storeu_ps((float*)(temps + 28), (S7));\
+    _mm_storeu_ps((float*)(temps + 32), (S8));\
+    _mm_storeu_ps((float*)(temps + 36), (S9));\
+    _mm_storeu_ps((float*)(temps + 40), (S10));\
+    _mm_storeu_ps((float*)(temps + 44), (S11));\
+    _mm_storeu_ps((float*)(temps + 48), (S12));\
+    _mm_storeu_ps((float*)(temps + 52), (S13));\
+    _mm_storeu_ps((float*)(temps + 56), (S14));\
+    _mm_storeu_ps((float*)(temps + 60), (S15));\
+    for (i = 0; i < 4; i++) {\
+    const unsigned int ib = i * 32;\
+    uint32_t t0v0;\
+    uint32_t t0v1;\
+    uint32_t t0v2;\
+    uint32_t t0v3;\
+    uint32_t t0v4;\
+    uint32_t t0v5;\
+    uint32_t t0v6;\
+    uint32_t t0v7;\
+    uint32_t t0v8;\
+    uint32_t t0v9;\
+    uint32_t t0v10;\
+    uint32_t t0v11;\
+    uint32_t t0v12;\
+    uint32_t t0v13;\
+    uint32_t t0v14;\
+    uint32_t t0v15;\
+    uint32_t t0v16;\
+    t0v0 = ((temps[0 + i] & 0x55555555U) | ((temps[4 + i] & 0x55555555U) << 1));\
+    t0v1 = (((temps[0 + i] & 0xaaaaaaaaU) >> 1) | (temps[4 + i] & 0xaaaaaaaaU));\
+    t0v2 = ((temps[8 + i] & 0x55555555U) | ((temps[12 + i] & 0x55555555U) << 1));\
+    t0v3 = (((temps[8 + i] & 0xaaaaaaaaU) >> 1) | (temps[12 + i] & 0xaaaaaaaaU));\
+    t0v4 = ((temps[16 + i] & 0x55555555U) | ((temps[20 + i] & 0x55555555U) << 1));\
+    t0v5 = (((temps[16 + i] & 0xaaaaaaaaU) >> 1) | (temps[20 + i] & 0xaaaaaaaaU));\
+    t0v6 = ((temps[24 + i] & 0x55555555U) | ((temps[28 + i] & 0x55555555U) << 1));\
+    t0v7 = (((temps[24 + i] & 0xaaaaaaaaU) >> 1) | (temps[28 + i] & 0xaaaaaaaaU));\
+    t0v8 = ((temps[32 + i] & 0x55555555U) | ((temps[36 + i] & 0x55555555U) << 1));\
+    t0v9 = (((temps[32 + i] & 0xaaaaaaaaU) >> 1) | (temps[36 + i] & 0xaaaaaaaaU));\
+    t0v10 = ((temps[40 + i] & 0x55555555U) | ((temps[44 + i] & 0x55555555U) << 1));\
+    t0v11 = (((temps[40 + i] & 0xaaaaaaaaU) >> 1) | (temps[44 + i] & 0xaaaaaaaaU));\
+    t0v12 = ((temps[48 + i] & 0x55555555U) | ((temps[52 + i] & 0x55555555U) << 1));\
+    t0v13 = (((temps[48 + i] & 0xaaaaaaaaU) >> 1) | (temps[52 + i] & 0xaaaaaaaaU));\
+    t0v14 = ((temps[56 + i] & 0x55555555U) | ((temps[60 + i] & 0x55555555U) << 1));\
+    t0v15 = (((temps[56 + i] & 0xaaaaaaaaU) >> 1) | (temps[60 + i] & 0xaaaaaaaaU));\
+    t0v16 = ((t0v0 & 0x33333333U) | ((t0v2 & 0x33333333U) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccU) >> 2) | (t0v2 & 0xccccccccU));\
+    t0v2 = ((t0v1 & 0x33333333U) | ((t0v3 & 0x33333333U) << 2));\
+    t0v1 = (((t0v1 & 0xccccccccU) >> 2) | (t0v3 & 0xccccccccU));\
+    t0v3 = ((t0v4 & 0x33333333U) | ((t0v6 & 0x33333333U) << 2));\
+    t0v4 = (((t0v4 & 0xccccccccU) >> 2) | (t0v6 & 0xccccccccU));\
+    t0v6 = ((t0v5 & 0x33333333U) | ((t0v7 & 0x33333333U) << 2));\
+    t0v5 = (((t0v5 & 0xccccccccU) >> 2) | (t0v7 & 0xccccccccU));\
+    t0v7 = ((t0v8 & 0x33333333U) | ((t0v10 & 0x33333333U) << 2));\
+    t0v8 = (((t0v8 & 0xccccccccU) >> 2) | (t0v10 & 0xccccccccU));\
+    t0v10 = ((t0v9 & 0x33333333U) | ((t0v11 & 0x33333333U) << 2));\
+    t0v9 = (((t0v9 & 0xccccccccU) >> 2) | (t0v11 & 0xccccccccU));\
+    t0v11 = ((t0v12 & 0x33333333U) | ((t0v14 & 0x33333333U) << 2));\
+    t0v12 = (((t0v12 & 0xccccccccU) >> 2) | (t0v14 & 0xccccccccU));\
+    t0v14 = ((t0v13 & 0x33333333U) | ((t0v15 & 0x33333333U) << 2));\
+    t0v13 = (((t0v13 & 0xccccccccU) >> 2) | (t0v15 & 0xccccccccU));\
+    t0v15 = ((t0v16 & 0x0f0f0f0fU) | ((t0v3 & 0x0f0f0f0fU) << 4));\
+    t0v3 = (((t0v16 & 0xf0f0f0f0U) >> 4) | (t0v3 & 0xf0f0f0f0U));\
+    t0v16 = ((t0v2 & 0x0f0f0f0fU) | ((t0v6 & 0x0f0f0f0fU) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0U) >> 4) | (t0v6 & 0xf0f0f0f0U));\
+    t0v6 = ((t0v0 & 0x0f0f0f0fU) | ((t0v4 & 0x0f0f0f0fU) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0U) >> 4) | (t0v4 & 0xf0f0f0f0U));\
+    t0v4 = ((t0v1 & 0x0f0f0f0fU) | ((t0v5 & 0x0f0f0f0fU) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0U) >> 4) | (t0v5 & 0xf0f0f0f0U));\
+    t0v5 = ((t0v7 & 0x0f0f0f0fU) | ((t0v11 & 0x0f0f0f0fU) << 4));\
+    t0v7 = (((t0v7 & 0xf0f0f0f0U) >> 4) | (t0v11 & 0xf0f0f0f0U));\
+    t0v11 = ((t0v10 & 0x0f0f0f0fU) | ((t0v14 & 0x0f0f0f0fU) << 4));\
+    t0v10 = (((t0v10 & 0xf0f0f0f0U) >> 4) | (t0v14 & 0xf0f0f0f0U));\
+    t0v14 = ((t0v8 & 0x0f0f0f0fU) | ((t0v12 & 0x0f0f0f0fU) << 4));\
+    t0v8 = (((t0v8 & 0xf0f0f0f0U) >> 4) | (t0v12 & 0xf0f0f0f0U));\
+    t0v12 = ((t0v9 & 0x0f0f0f0fU) | ((t0v13 & 0x0f0f0f0fU) << 4));\
+    t0v9 = (((t0v9 & 0xf0f0f0f0U) >> 4) | (t0v13 & 0xf0f0f0f0U));\
+    t0v13 = ((t0v15 & 0x00ff00ffU) | ((t0v5 & 0x00ff00ffU) << 8));\
+    t0v5 = (((t0v15 & 0xff00ff00U) >> 8) | (t0v5 & 0xff00ff00U));\
+    t0v15 = ((t0v16 & 0x00ff00ffU) | ((t0v11 & 0x00ff00ffU) << 8));\
+    t0v11 = (((t0v16 & 0xff00ff00U) >> 8) | (t0v11 & 0xff00ff00U));\
+    t0v16 = ((t0v6 & 0x00ff00ffU) | ((t0v14 & 0x00ff00ffU) << 8));\
+    t0v6 = (((t0v6 & 0xff00ff00U) >> 8) | (t0v14 & 0xff00ff00U));\
+    t0v14 = ((t0v4 & 0x00ff00ffU) | ((t0v12 & 0x00ff00ffU) << 8));\
+    t0v4 = (((t0v4 & 0xff00ff00U) >> 8) | (t0v12 & 0xff00ff00U));\
+    t0v12 = ((t0v3 & 0x00ff00ffU) | ((t0v7 & 0x00ff00ffU) << 8));\
+    t0v3 = (((t0v3 & 0xff00ff00U) >> 8) | (t0v7 & 0xff00ff00U));\
+    t0v7 = ((t0v2 & 0x00ff00ffU) | ((t0v10 & 0x00ff00ffU) << 8));\
+    t0v2 = (((t0v2 & 0xff00ff00U) >> 8) | (t0v10 & 0xff00ff00U));\
+    t0v10 = ((t0v0 & 0x00ff00ffU) | ((t0v8 & 0x00ff00ffU) << 8));\
+    t0v0 = (((t0v0 & 0xff00ff00U) >> 8) | (t0v8 & 0xff00ff00U));\
+    t0v8 = ((t0v1 & 0x00ff00ffU) | ((t0v9 & 0x00ff00ffU) << 8));\
+    t0v1 = (((t0v1 & 0xff00ff00U) >> 8) | (t0v9 & 0xff00ff00U));\
+    ((D)[0 + ib]) = (t0v13 & 0xffffU);\
+    ((D)[16 + ib]) = (t0v13 >> 16);\
+    ((D)[1 + ib]) = (t0v15 & 0xffffU);\
+    ((D)[17 + ib]) = (t0v15 >> 16);\
+    ((D)[2 + ib]) = (t0v16 & 0xffffU);\
+    ((D)[18 + ib]) = (t0v16 >> 16);\
+    ((D)[3 + ib]) = (t0v14 & 0xffffU);\
+    ((D)[19 + ib]) = (t0v14 >> 16);\
+    ((D)[4 + ib]) = (t0v12 & 0xffffU);\
+    ((D)[20 + ib]) = (t0v12 >> 16);\
+    ((D)[5 + ib]) = (t0v7 & 0xffffU);\
+    ((D)[21 + ib]) = (t0v7 >> 16);\
+    ((D)[6 + ib]) = (t0v10 & 0xffffU);\
+    ((D)[22 + ib]) = (t0v10 >> 16);\
+    ((D)[7 + ib]) = (t0v8 & 0xffffU);\
+    ((D)[23 + ib]) = (t0v8 >> 16);\
+    ((D)[8 + ib]) = (t0v5 & 0xffffU);\
+    ((D)[24 + ib]) = (t0v5 >> 16);\
+    ((D)[9 + ib]) = (t0v11 & 0xffffU);\
+    ((D)[25 + ib]) = (t0v11 >> 16);\
+    ((D)[10 + ib]) = (t0v6 & 0xffffU);\
+    ((D)[26 + ib]) = (t0v6 >> 16);\
+    ((D)[11 + ib]) = (t0v4 & 0xffffU);\
+    ((D)[27 + ib]) = (t0v4 >> 16);\
+    ((D)[12 + ib]) = (t0v3 & 0xffffU);\
+    ((D)[28 + ib]) = (t0v3 >> 16);\
+    ((D)[13 + ib]) = (t0v2 & 0xffffU);\
+    ((D)[29 + ib]) = (t0v2 >> 16);\
+    ((D)[14 + ib]) = (t0v0 & 0xffffU);\
+    ((D)[30 + ib]) = (t0v0 >> 16);\
+    ((D)[15 + ib]) = (t0v1 & 0xffffU);\
+    ((D)[31 + ib]) = (t0v1 >> 16);\
+    }\
+}
+#define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
+{\
+    uint32_t temps[24];\
+    unsigned int i;\
+    _mm_storeu_ps((float*)(temps + 0), (S0));\
+    _mm_storeu_ps((float*)(temps + 4), (S1));\
+    _mm_storeu_ps((float*)(temps + 8), (S2));\
+    _mm_storeu_ps((float*)(temps + 12), (S3));\
+    _mm_storeu_ps((float*)(temps + 16), (S4));\
+    _mm_storeu_ps((float*)(temps + 20), (S5));\
+    for (i = 0; i < 4; i++) {\
+    const unsigned int ib = i * 32;\
+    uint32_t t0v0;\
+    uint32_t t0v1;\
+    uint32_t t0v2;\
+    uint32_t t0v3;\
+    uint32_t t0v4;\
+    uint32_t t0v5;\
+    uint32_t t0v6;\
+    uint32_t t0v7;\
+    uint32_t t0v8;\
+    t0v0 = ((temps[0 + i] & 0x55555555U) | ((temps[4 + i] & 0x55555555U) << 1));\
+    t0v1 = (((temps[0 + i] & 0xaaaaaaaaU) >> 1) | (temps[4 + i] & 0xaaaaaaaaU));\
+    t0v2 = ((temps[8 + i] & 0x55555555U) | ((temps[12 + i] & 0x55555555U) << 1));\
+    t0v3 = (((temps[8 + i] & 0xaaaaaaaaU) >> 1) | (temps[12 + i] & 0xaaaaaaaaU));\
+    t0v4 = ((temps[16 + i] & 0x55555555U) | ((temps[20 + i] & 0x55555555U) << 1));\
+    t0v5 = (((temps[16 + i] & 0xaaaaaaaaU) >> 1) | (temps[20 + i] & 0xaaaaaaaaU));\
+    t0v6 = ((t0v0 & 0x33333333U) | ((t0v2 & 0x33333333U) << 2));\
+    t0v0 = (((t0v0 & 0xccccccccU) >> 2) | (t0v2 & 0xccccccccU));\
+    t0v2 = ((t0v1 & 0x33333333U) | ((t0v3 & 0x33333333U) << 2));\
+    t0v1 = (((t0v1 & 0xccccccccU) >> 2) | (t0v3 & 0xccccccccU));\
+    t0v3 = (t0v4 & 0x33333333U);\
+    t0v4 = ((t0v4 & 0xccccccccU) >> 2);\
+    t0v7 = (t0v5 & 0x33333333U);\
+    t0v5 = ((t0v5 & 0xccccccccU) >> 2);\
+    t0v8 = ((t0v6 & 0x0f0f0f0fU) | ((t0v3 & 0x0f0f0f0fU) << 4));\
+    t0v3 = (((t0v6 & 0xf0f0f0f0U) >> 4) | (t0v3 & 0xf0f0f0f0U));\
+    t0v6 = ((t0v2 & 0x0f0f0f0fU) | ((t0v7 & 0x0f0f0f0fU) << 4));\
+    t0v2 = (((t0v2 & 0xf0f0f0f0U) >> 4) | (t0v7 & 0xf0f0f0f0U));\
+    t0v7 = ((t0v0 & 0x0f0f0f0fU) | ((t0v4 & 0x0f0f0f0fU) << 4));\
+    t0v0 = (((t0v0 & 0xf0f0f0f0U) >> 4) | (t0v4 & 0xf0f0f0f0U));\
+    t0v4 = ((t0v1 & 0x0f0f0f0fU) | ((t0v5 & 0x0f0f0f0fU) << 4));\
+    t0v1 = (((t0v1 & 0xf0f0f0f0U) >> 4) | (t0v5 & 0xf0f0f0f0U));\
+    ((D)[0 + ib]) = (t0v8 & 0xffU);\
+    ((D)[8 + ib]) = ((t0v8 >> 8) & 0xffU);\
+    ((D)[16 + ib]) = ((t0v8 >> 16) & 0xffU);\
+    ((D)[24 + ib]) = (t0v8 >> 24);\
+    ((D)[1 + ib]) = (t0v6 & 0xffU);\
+    ((D)[9 + ib]) = ((t0v6 >> 8) & 0xffU);\
+    ((D)[17 + ib]) = ((t0v6 >> 16) & 0xffU);\
+    ((D)[25 + ib]) = (t0v6 >> 24);\
+    ((D)[2 + ib]) = (t0v7 & 0xffU);\
+    ((D)[10 + ib]) = ((t0v7 >> 8) & 0xffU);\
+    ((D)[18 + ib]) = ((t0v7 >> 16) & 0xffU);\
+    ((D)[26 + ib]) = (t0v7 >> 24);\
+    ((D)[3 + ib]) = (t0v4 & 0xffU);\
+    ((D)[11 + ib]) = ((t0v4 >> 8) & 0xffU);\
+    ((D)[19 + ib]) = ((t0v4 >> 16) & 0xffU);\
+    ((D)[27 + ib]) = (t0v4 >> 24);\
+    ((D)[4 + ib]) = (t0v3 & 0xffU);\
+    ((D)[12 + ib]) = ((t0v3 >> 8) & 0xffU);\
+    ((D)[20 + ib]) = ((t0v3 >> 16) & 0xffU);\
+    ((D)[28 + ib]) = (t0v3 >> 24);\
+    ((D)[5 + ib]) = (t0v2 & 0xffU);\
+    ((D)[13 + ib]) = ((t0v2 >> 8) & 0xffU);\
+    ((D)[21 + ib]) = ((t0v2 >> 16) & 0xffU);\
+    ((D)[29 + ib]) = (t0v2 >> 24);\
+    ((D)[6 + ib]) = (t0v0 & 0xffU);\
+    ((D)[14 + ib]) = ((t0v0 >> 8) & 0xffU);\
+    ((D)[22 + ib]) = ((t0v0 >> 16) & 0xffU);\
+    ((D)[30 + ib]) = (t0v0 >> 24);\
+    ((D)[7 + ib]) = (t0v1 & 0xffU);\
+    ((D)[15 + ib]) = ((t0v1 >> 8) & 0xffU);\
+    ((D)[23 + ib]) = ((t0v1 >> 16) & 0xffU);\
+    ((D)[31 + ib]) = (t0v1 >> 24);\
+    }\
+}
+#define OUTPUT_TRANSFORM_B1(D, S0) \
+{\
+    uint32_t temps[4];\
+    unsigned int i;\
+    _mm_storeu_ps((float*)(temps + 0), (S0));\
+    for (i = 0; i < 4; i++) {\
+    const unsigned int ib = i * 32;\
+    ((D)[0 + ib]) = (temps[0 + i] & 0x1U);\
+    ((D)[1 + ib]) = ((temps[0 + i] >> 1) & 0x1U);\
+    ((D)[2 + ib]) = ((temps[0 + i] >> 2) & 0x1U);\
+    ((D)[3 + ib]) = ((temps[0 + i] >> 3) & 0x1U);\
+    ((D)[4 + ib]) = ((temps[0 + i] >> 4) & 0x1U);\
+    ((D)[5 + ib]) = ((temps[0 + i] >> 5) & 0x1U);\
+    ((D)[6 + ib]) = ((temps[0 + i] >> 6) & 0x1U);\
+    ((D)[7 + ib]) = ((temps[0 + i] >> 7) & 0x1U);\
+    ((D)[8 + ib]) = ((temps[0 + i] >> 8) & 0x1U);\
+    ((D)[9 + ib]) = ((temps[0 + i] >> 9) & 0x1U);\
+    ((D)[10 + ib]) = ((temps[0 + i] >> 10) & 0x1U);\
+    ((D)[11 + ib]) = ((temps[0 + i] >> 11) & 0x1U);\
+    ((D)[12 + ib]) = ((temps[0 + i] >> 12) & 0x1U);\
+    ((D)[13 + ib]) = ((temps[0 + i] >> 13) & 0x1U);\
+    ((D)[14 + ib]) = ((temps[0 + i] >> 14) & 0x1U);\
+    ((D)[15 + ib]) = ((temps[0 + i] >> 15) & 0x1U);\
+    ((D)[16 + ib]) = ((temps[0 + i] >> 16) & 0x1U);\
+    ((D)[17 + ib]) = ((temps[0 + i] >> 17) & 0x1U);\
+    ((D)[18 + ib]) = ((temps[0 + i] >> 18) & 0x1U);\
+    ((D)[19 + ib]) = ((temps[0 + i] >> 19) & 0x1U);\
+    ((D)[20 + ib]) = ((temps[0 + i] >> 20) & 0x1U);\
+    ((D)[21 + ib]) = ((temps[0 + i] >> 21) & 0x1U);\
+    ((D)[22 + ib]) = ((temps[0 + i] >> 22) & 0x1U);\
+    ((D)[23 + ib]) = ((temps[0 + i] >> 23) & 0x1U);\
+    ((D)[24 + ib]) = ((temps[0 + i] >> 24) & 0x1U);\
+    ((D)[25 + ib]) = ((temps[0 + i] >> 25) & 0x1U);\
+    ((D)[26 + ib]) = ((temps[0 + i] >> 26) & 0x1U);\
+    ((D)[27 + ib]) = ((temps[0 + i] >> 27) & 0x1U);\
+    ((D)[28 + ib]) = ((temps[0 + i] >> 28) & 0x1U);\
+    ((D)[29 + ib]) = ((temps[0 + i] >> 29) & 0x1U);\
+    ((D)[30 + ib]) = ((temps[0 + i] >> 30) & 0x1U);\
+    ((D)[31 + ib]) = (temps[0 + i] >> 31);\
+    }\
+}
+"##,
+        transform.out()
+    );
     let mut transform = CLANG_TRANSFORM_INTEL_SSE2.transform();
     transform.gen_output_transform(32);
     transform.gen_output_transform(16);
