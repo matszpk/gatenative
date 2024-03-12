@@ -88,6 +88,16 @@ where
     }
 
     #[inline]
+    fn input_data_len(&self, elem_num: usize) -> usize {
+        self.executor.input_data_len(elem_num)
+    }
+
+    #[inline]
+    fn output_data_len(&self, elem_num: usize) -> usize {
+        self.executor.output_data_len(elem_num)
+    }
+
+    #[inline]
     fn word_len(&self) -> u32 {
         self.executor.word_len()
     }
@@ -380,6 +390,16 @@ where
 
     fn new_data_from_slice(&mut self, data: &[u32]) -> D {
         self.executor.new_data_from_slice(data)
+    }
+
+    #[inline]
+    fn input_data_len(&self, elem_num: usize) -> usize {
+        self.executor.input_data_len(elem_num)
+    }
+
+    #[inline]
+    fn output_data_len(&self, elem_num: usize) -> usize {
+        self.executor.output_data_len(elem_num)
     }
 
     #[inline]

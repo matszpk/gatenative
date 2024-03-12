@@ -396,6 +396,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType>;
     fn execute(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType> {
         assert!(!self.is_single_buffer());
+        assert!(!(self.input_is_populated() && self.is_populated_from_buffer()));
+        assert!(!(self.output_is_aggregated() && self.is_aggregated_to_buffer()));
         unsafe { self.execute_internal(input, arg_input) }
     }
 
@@ -412,6 +414,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         output: &mut D,
     ) -> Result<(), Self::ErrorType> {
         assert!(!self.is_single_buffer());
+        assert!(!(self.input_is_populated() && self.is_populated_from_buffer()));
+        assert!(!(self.output_is_aggregated() && self.is_aggregated_to_buffer()));
         unsafe { self.execute_reuse_internal(input, arg_input, output) }
     }
 
@@ -449,7 +453,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     // in 32-bit words
     fn input_data_len(&self, elem_num: usize) -> usize {
-        if self.input_is_populated() {
+        if self.input_is_populated() && !self.is_populated_from_buffer() {
             self.pop_input_len().unwrap()
         } else if self.real_input_len() != 0 {
             assert_eq!(elem_num % (self.word_len() as usize), 0);
@@ -462,7 +466,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     // in 32-bit words
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
-        if self.output_is_aggregated() {
+        if self.output_is_aggregated() && !self.is_aggregated_to_buffer() {
             self.aggr_output_len().unwrap()
         } else {
             (elem_num * self.real_output_len()) >> 5
@@ -610,26 +614,10 @@ where
     fn elem_count(&self, input_len: usize) -> usize;
 
     // in 32-bit words
-    fn input_data_len(&self, elem_num: usize) -> usize {
-        if self.input_is_populated() {
-            self.pop_input_len().unwrap()
-        } else if self.real_input_len() != 0 {
-            assert_eq!(elem_num % (self.word_len() as usize), 0);
-            (elem_num * self.real_input_len()) >> 5
-        } else {
-            1
-        }
-    }
+    fn input_data_len(&self, elem_num: usize) -> usize;
 
     // in 32-bit words
-    fn output_data_len(&self, elem_num: usize) -> usize {
-        assert_eq!(elem_num % (self.word_len() as usize), 0);
-        if self.output_is_aggregated() {
-            self.aggr_output_len().unwrap()
-        } else {
-            (elem_num * self.output_len()) >> 5
-        }
-    }
+    fn output_data_len(&self, elem_num: usize) -> usize;
 
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
@@ -781,26 +769,10 @@ where
     fn elem_count(&self, input_len: usize) -> usize;
 
     // in 32-bit words
-    fn input_data_len(&self, elem_num: usize) -> usize {
-        if self.input_is_populated() {
-            self.pop_input_len().unwrap()
-        } else if self.real_input_len() != 0 {
-            assert_eq!(elem_num % (self.word_len() as usize), 0);
-            (elem_num * self.real_input_len()) >> 5
-        } else {
-            1
-        }
-    }
+    fn input_data_len(&self, elem_num: usize) -> usize;
 
     // in 32-bit words
-    fn output_data_len(&self, elem_num: usize) -> usize {
-        assert_eq!(elem_num % (self.word_len() as usize), 0);
-        if self.output_is_aggregated() {
-            self.aggr_output_len().unwrap()
-        } else {
-            (elem_num * self.output_len()) >> 5
-        }
-    }
+    fn output_data_len(&self, elem_num: usize) -> usize;
 
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))

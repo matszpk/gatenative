@@ -530,7 +530,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     }
 
     fn elem_count(&self, input_len: usize) -> usize {
-        if self.populated_input {
+        if self.populated_input && !self.populated_from_buffer {
             1 << (self.input_len - self.arg_input_len.unwrap_or(0))
         } else if self.real_input_len != 0 {
             (input_len / self.real_input_len) << 5
