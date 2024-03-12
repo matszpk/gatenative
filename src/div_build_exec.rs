@@ -230,6 +230,11 @@ where
     }
 
     #[inline]
+    fn is_aggregated_to_buffer(&self) -> bool {
+        self.executors.last().unwrap().is_aggregated_to_buffer()
+    }
+
+    #[inline]
     fn input_is_populated(&self) -> bool {
         self.executors.first().unwrap().input_is_populated()
     }
@@ -237,6 +242,11 @@ where
     #[inline]
     fn pop_input_len(&self) -> Option<usize> {
         self.executors.first().unwrap().pop_input_len()
+    }
+
+    #[inline]
+    fn is_populated_from_buffer(&self) -> bool {
+        self.executors.first().unwrap().is_populated_from_buffer()
     }
 }
 

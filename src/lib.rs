@@ -440,7 +440,9 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn word_len(&self) -> u32;
 
     fn input_is_populated(&self) -> bool;
+    fn is_populated_from_buffer(&self) -> bool;
     fn output_is_aggregated(&self) -> bool;
+    fn is_aggregated_to_buffer(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;

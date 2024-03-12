@@ -234,8 +234,10 @@ pub struct OpenCLExecutor {
     single_buffer: bool,
     group_vec: bool,
     aggregated_output: bool,
+    aggregated_to_buffer: bool,
     aggr_output_len: Option<usize>,
     populated_input: bool,
+    populated_from_buffer: bool,
     pop_input_len: Option<usize>,
 }
 
@@ -529,8 +531,10 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             group_vec: self.group_vec,
             elem_input_num: self.elem_input_num,
             aggregated_output: self.aggregated_output,
+            aggregated_to_buffer: self.aggregated_to_buffer,
             aggr_output_len: self.aggr_output_len,
             populated_input: self.populated_input,
+            populated_from_buffer: self.populated_from_buffer,
             pop_input_len: self.pop_input_len,
         })
     }
@@ -556,6 +560,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     }
 
     #[inline]
+    fn is_aggregated_to_buffer(&self) -> bool {
+        self.aggregated_to_buffer
+    }
+
+    #[inline]
     fn input_is_populated(&self) -> bool {
         self.populated_input
     }
@@ -563,6 +572,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     #[inline]
     fn pop_input_len(&self) -> Option<usize> {
         self.pop_input_len
+    }
+
+    #[inline]
+    fn is_populated_from_buffer(&self) -> bool {
+        self.populated_from_buffer
     }
 }
 
@@ -659,8 +673,10 @@ struct CircuitEntry {
     elem_input_len: Option<usize>,
     single_buffer: bool,
     aggregated_output: bool,
+    aggregated_to_buffer: bool,
     aggr_output_len: Option<usize>,
     populated_input: bool,
+    populated_from_buffer: bool,
     pop_input_len: Option<usize>,
 }
 
@@ -763,6 +779,8 @@ impl<'b, 'a>
             elem_input_len: code_config.elem_inputs.map(|x| x.len()),
             single_buffer: code_config.single_buffer,
             aggregated_output: code_config.aggr_output_code.is_some(),
+            aggregated_to_buffer: code_config.aggr_output_code.is_some()
+                && code_config.aggr_to_buffer.is_some(),
             aggr_output_len: if code_config.aggr_output_code.is_some() {
                 Some(
                     code_config
@@ -773,6 +791,8 @@ impl<'b, 'a>
                 None
             },
             populated_input: code_config.pop_input_code.is_some(),
+            populated_from_buffer: code_config.pop_input_code.is_some()
+                && code_config.pop_from_buffer.is_some(),
             pop_input_len: if code_config.pop_input_code.is_some() {
                 Some(
                     code_config
@@ -828,8 +848,10 @@ impl<'b, 'a>
                     single_buffer: e.single_buffer,
                     group_vec: self.group_vec,
                     aggregated_output: e.aggregated_output,
+                    aggregated_to_buffer: e.aggregated_to_buffer,
                     aggr_output_len: e.aggr_output_len,
                     populated_input: e.populated_input,
+                    populated_from_buffer: e.populated_from_buffer,
                     pop_input_len: e.pop_input_len,
                 })
             })
