@@ -1087,7 +1087,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}({}{}{}, size_t idx{}) {{"##,
+                r##"{}{}void gate_sys_{}({}{}{}{}, size_t idx) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -1213,7 +1213,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 (0..self.input_len).collect::<Vec<_>>()
             };
             for i in &pop_inputs {
-                if !self.input_map.is_empty() {
+                if let Some(iv) = self.pop_input_map.get(&i) {
+                    writeln!(self.writer.out, "#define i{} (v{})", i, iv).unwrap();
+                } else if !self.input_map.is_empty() {
                     if let Some(iv) = self.input_map.get(&i) {
                         writeln!(self.writer.out, "#define i{} (v{})", i, iv).unwrap();
                     }
@@ -1224,7 +1226,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.extend(pop_input_code.as_bytes());
             self.writer.out.push(b'\n');
             for i in &pop_inputs {
-                if self.input_map.is_empty() || self.input_map.contains_key(&i) {
+                if self.input_map.is_empty()
+                    || self.input_map.contains_key(&i)
+                    || self.pop_input_map.contains_key(&i)
+                {
                     writeln!(self.writer.out, "#define i{0}", i).unwrap();
                 }
             }

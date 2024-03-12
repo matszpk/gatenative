@@ -94,6 +94,27 @@ fn get_input_orig_index_map(
     }
 }
 
+fn load_input_later(
+    input_map: Option<&HashMap<usize, usize>>,
+    pop_inputs: Option<&[usize]>,
+    gi0: usize,
+) -> bool {
+    let (pop_input, pop_input_list) = if let Some(pop_inputs) = pop_inputs {
+        if !pop_inputs.is_empty() {
+            (true, Some(pop_inputs))
+        } else {
+            (true, None)
+        }
+    } else {
+        (false, None)
+    };
+    if let Some(pop_input_list) = pop_input_list {
+        pop_input_list.binary_search(&gi0).is_err()
+    } else {
+        !pop_input || !input_map.map(|im| im.contains_key(&gi0)).unwrap_or(true)
+    }
+}
+
 // input_map - input map after filtering arg inputs, elem inputs and other.
 // keep_output_vars - keep output variables to later usage.
 // pop_input - include rest of inputs (without arg inputs, elem inputs) to be loaded
@@ -165,15 +186,20 @@ where
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if let Some(pop_inputs) = pop_inputs {
-        for i in pop_inputs {
-            if is_in_input_map(*i) {
+        if !pop_inputs.is_empty() {
+            for i in pop_inputs {
                 single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(*i).unwrap());
                 input_already_read[*i] = true;
             }
+        } else {
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+                    input_already_read[i] = true;
+                }
+            }
         }
     }
-
-    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -218,14 +244,14 @@ where
                 // allocate circuit inputs now if not allocated
                 if gates[node_index].i0 < input_len_t {
                     let gi0 = usize::try_from(gates[node_index].i0).unwrap();
-                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
+                    if load_input_later(input_map, pop_inputs, gi0) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
                         input_already_read[gi0] = true;
                     }
                 }
                 if gates[node_index].i1 < input_len_t {
                     let gi1 = usize::try_from(gates[node_index].i1).unwrap();
-                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
+                    if load_input_later(input_map, pop_inputs, gi1) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
                         input_already_read[gi1] = true;
                     }
@@ -424,13 +450,18 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if let Some(pop_inputs) = pop_inputs {
-        for i in pop_inputs {
-            if is_in_input_map(*i) {
+        if !pop_inputs.is_empty() {
+            for i in pop_inputs {
                 used_inputs[*i] = true;
+            }
+        } else {
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    used_inputs[i] = true;
+                }
             }
         }
     }
-    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
@@ -483,13 +514,13 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
+                    if load_input_later(input_map, pop_inputs, gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
+                    if load_input_later(input_map, pop_inputs, gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
@@ -626,13 +657,18 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     if let Some(pop_inputs) = pop_inputs {
-        for i in pop_inputs {
-            if is_in_input_map(*i) {
+        if !pop_inputs.is_empty() {
+            for i in pop_inputs {
                 used_inputs[*i] = true;
+            }
+        } else {
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    used_inputs[i] = true;
+                }
             }
         }
     }
-    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
@@ -685,13 +721,13 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].0.i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].0.i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
+                    if load_input_later(input_map, pop_inputs, gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
+                    if load_input_later(input_map, pop_inputs, gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
@@ -841,19 +877,11 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         }
     };
 
-    let pop_inputs = input_map
-        .as_ref()
-        .map(|input_map| {
-            let mut input_list = input_map.keys().copied().collect::<Vec<_>>();
-            input_list.sort();
-            input_list
-        })
-        .unwrap_or((0..input_len).collect::<Vec<_>>());
     let pop_inputs = code_config.pop_input_code.map(|_| {
         if let Some(inputs) = code_config.pop_from_buffer {
             inputs
         } else {
-            &pop_inputs
+            &[]
         }
     });
     let (var_allocs, var_num, output_vars) = gen_var_allocs(
@@ -1041,7 +1069,7 @@ mod tests {
                 false,
                 None,
                 false,
-                Some(&[0, 1, 2])
+                Some(&[])
             )
         );
 
@@ -1206,7 +1234,7 @@ mod tests {
                 true,
                 None,
                 true,
-                Some(&[0, 1, 2, 3])
+                Some(&[])
             )
         );
         //
@@ -1262,7 +1290,7 @@ mod tests {
                 false,
                 None,
                 true,
-                Some(&[0, 1, 2, 3])
+                Some(&[])
             )
         );
 
@@ -1475,7 +1503,7 @@ mod tests {
                 false,
                 None,
                 false,
-                Some(&[0, 1, 2, 3])
+                Some(&[])
             )
         );
         // with pop input 2
@@ -1601,7 +1629,7 @@ mod tests {
                 false,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
                 false,
-                Some(&[1, 3, 4, 5])
+                Some(&[])
             )
         );
     }

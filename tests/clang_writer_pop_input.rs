@@ -1327,3 +1327,67 @@ kernel void gate_sys_testcirc(unsigned long n,
 "##
     );
 }
+
+// #[test]
+// fn test_clang_writer_populate_input_from_buffer() {
+//     let circuit = Circuit::new(
+//         4,
+//         [
+//             Gate::new_and(0, 2),
+//             Gate::new_and(1, 2),
+//             Gate::new_and(0, 3),
+//             Gate::new_and(1, 3),
+//             // add a1*b0 + a0*b1
+//             Gate::new_xor(5, 6),
+//             Gate::new_and(5, 6),
+//             // add c(a1*b0 + a0*b1) + a1*b1
+//             Gate::new_xor(7, 9),
+//             Gate::new_and(7, 9),
+//         ],
+//         [(4, false), (8, true), (10, false), (11, true)],
+//     )
+//     .unwrap();
+//     let mut writer = CLANG_WRITER_U32.writer();
+//     generate_code_with_config(
+//         &mut writer,
+//         "testcirc",
+//         circuit.clone(),
+//         false,
+//         CodeConfig::new()
+//             .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+//             .pop_from_buffer(Some(&[0, 1, 3])),
+//     );
+//     assert_eq!(
+//         &String::from_utf8(writer.out()).unwrap(),
+//         r##"void gate_sys_testcirc(const void* input,
+//     uint32_t* output, size_t idx) {
+//     uint32_t v0;
+//     uint32_t v1;
+//     uint32_t v2;
+//     uint32_t v3;
+//     uint32_t v4;
+// #define i0 (v0)
+// #define i1 (v1)
+// #define i2 (v2)
+// #define i3 (v3)
+//     i0 = ((TYPE_NAME*)input)[0];
+// #define i0
+// #define i1
+// #define i2
+// #define i3
+//     v4 = (v0 & v2);
+//     output[0] = v4;
+//     v2 = (v1 & v2);
+//     v0 = (v0 & v3);
+//     v4 = (v2 ^ v0);
+//     output[1] = ~v4;
+//     v1 = (v1 & v3);
+//     v0 = (v2 & v0);
+//     v2 = (v1 ^ v0);
+//     output[2] = v2;
+//     v0 = (v1 & v0);
+//     output[3] = ~v0;
+// }
+// "##
+//     );
+// }
