@@ -70,6 +70,30 @@ where
         Ok(out)
     }
 
+    fn execute_buffer<Out, F, Stop>(
+        &mut self,
+        input: &D,
+        buffer: &mut D,
+        init: Out,
+        mut f: F,
+        mut stop: Stop,
+    ) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(Out, &D, &D, &D, u64) -> Out,
+        Stop: FnMut(&Out) -> bool,
+    {
+        let mut out = init;
+        // just execute
+        for arg in 0..=self.arg_input_max {
+            let output = self.executor.execute_buffer(input, arg, buffer)?;
+            out = f(out, input, &output, &buffer, arg);
+            if stop(&out) {
+                break;
+            }
+        }
+        Ok(out)
+    }
+
     #[inline]
     fn elem_count(&self, input_len: usize) -> usize {
         self.executor.elem_count(input_len)
@@ -413,11 +437,6 @@ where
     }
 
     #[inline]
-    fn is_aggregated_to_buffer(&self) -> bool {
-        self.executor.is_aggregated_to_buffer()
-    }
-
-    #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.executor.aggr_output_len()
     }
@@ -425,11 +444,6 @@ where
     #[inline]
     fn input_is_populated(&self) -> bool {
         self.executor.input_is_populated()
-    }
-
-    #[inline]
-    fn is_populated_from_buffer(&self) -> bool {
-        self.executor.is_populated_from_buffer()
     }
 
     #[inline]

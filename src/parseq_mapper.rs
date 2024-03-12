@@ -484,18 +484,8 @@ where
     }
 
     #[inline]
-    pub fn is_aggregated_to_buffer(&self) -> bool {
-        self.par.is_aggregated_to_buffer()
-    }
-
-    #[inline]
     pub fn input_is_populated(&self) -> bool {
         self.par.input_is_populated()
-    }
-
-    #[inline]
-    pub fn is_populated_from_buffer(&self) -> bool {
-        self.par.is_populated_from_buffer()
     }
 
     #[inline]

@@ -664,46 +664,46 @@ where
         )
     }
     // executes for additional buffers
-    // fn execute_buffer<Out, F, Stop>(
-    //     &mut self,
-    //     input: &D,
-    //     buffer: &D,
-    //     init: Out,
-    //     f: F,
-    //     stop: Stop,
-    // ) -> Result<Out, Self::ErrorType>
-    // where
-    //     F: FnMut(Out, &D, &D, &D, u64) -> Out,
-    //     Stop: FnMut(&Out) -> bool;
-    // 
-    // fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
-    //     &mut self,
-    //     input: &'b D,
-    //     buffer: &'b D,
-    //     init: Out,
-    //     mut f: F,
-    //     stop: Stop,
-    // ) -> Result<Out, Self::ErrorType>
-    // where
-    //     F: FnMut(Out, &[u32], &[u32], &[u32], u64) -> Out,
-    //     Stop: FnMut(&Out) -> bool,
-    // {
-    //     self.execute_buffer(
-    //         input,
-    //         buffer,
-    //         init,
-    //         |out, input, output, buf_output, arg_input| {
-    //             input.process(|inputx| {
-    //                 output.process(|outputx| {
-    //                     buf_output.process(|buf_outputx| {
-    //                         f(out.clone(), inputx, outputx, buf_outputx, arg_input)
-    //                     })
-    //                 })
-    //             })
-    //         },
-    //         stop,
-    //     )
-    // }
+    fn execute_buffer<Out, F, Stop>(
+        &mut self,
+        input: &D,
+        buffer: &mut D,
+        init: Out,
+        f: F,
+        stop: Stop,
+    ) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(Out, &D, &D, &D, u64) -> Out,
+        Stop: FnMut(&Out) -> bool;
+
+    fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
+        &mut self,
+        input: &'b D,
+        buffer: &'b mut D,
+        init: Out,
+        mut f: F,
+        stop: Stop,
+    ) -> Result<Out, Self::ErrorType>
+    where
+        F: FnMut(Out, &[u32], &[u32], &[u32], u64) -> Out,
+        Stop: FnMut(&Out) -> bool,
+    {
+        self.execute_buffer(
+            input,
+            buffer,
+            init,
+            |out, input, output, buf_output, arg_input| {
+                input.process(|inputx| {
+                    output.process(|outputx| {
+                        buf_output.process(|buf_outputx| {
+                            f(out.clone(), inputx, outputx, buf_outputx, arg_input)
+                        })
+                    })
+                })
+            },
+            stop,
+        )
+    }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.
@@ -859,47 +859,6 @@ where
             stop,
         )
     }
-    // executes for additional buffers
-    // fn execute_buffer<Out, F, Stop>(
-    //     &mut self,
-    //     input: &D,
-    //     buffer: &D,
-    //     init: Out,
-    //     f: F,
-    //     stop: Stop,
-    // ) -> Result<Out, Self::ErrorType>
-    // where
-    //     F: FnMut(Out, &D, &D, &D, u64) -> Out,
-    //     Stop: FnMut(&Out) -> bool;
-    // 
-    // fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
-    //     &mut self,
-    //     input: &'b D,
-    //     buffer: &'b D,
-    //     init: Out,
-    //     mut f: F,
-    //     stop: Stop,
-    // ) -> Result<Out, Self::ErrorType>
-    // where
-    //     F: FnMut(Out, &[u32], &[u32], &[u32], u64) -> Out,
-    //     Stop: FnMut(&Out) -> bool,
-    // {
-    //     self.execute_buffer(
-    //         input,
-    //         buffer,
-    //         init,
-    //         |out, input, output, buf_output, arg_input| {
-    //             input.process(|inputx| {
-    //                 output.process(|outputx| {
-    //                     buf_output.process(|buf_outputx| {
-    //                         f(out.clone(), inputx, outputx, buf_outputx, arg_input)
-    //                     })
-    //                 })
-    //             })
-    //         },
-    //         stop,
-    //     )
-    // }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.
@@ -925,9 +884,7 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
-    fn is_aggregated_to_buffer(&self) -> bool;
     fn input_is_populated(&self) -> bool;
-    fn is_populated_from_buffer(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;
