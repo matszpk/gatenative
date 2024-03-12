@@ -2,6 +2,7 @@ use gatesim::Circuit;
 
 use int_enum::IntEnum;
 
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::{Range, RangeFrom};
@@ -276,13 +277,31 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             psorted.dedup();
             assert_eq!(psorted.len(), elem_inputs.len());
         }
+        if let Some(pop_inputs) = code_config.pop_from_buffer {
+            assert!(pop_inputs.iter().all(|x| *x < input_len));
+            let mut psorted = pop_inputs.to_vec();
+            psorted.sort();
+            psorted.dedup();
+            assert_eq!(psorted.len(), pop_inputs.len());
+        }
         // check whether arg_input and elem_input have common inputs
         if let Some(arg_inputs) = code_config.arg_inputs {
             if let Some(elem_inputs) = code_config.elem_inputs {
-                use std::collections::HashSet;
                 let arg_input_set = HashSet::<usize>::from_iter(arg_inputs.iter().copied());
                 let elem_input_set = HashSet::from_iter(elem_inputs.iter().copied());
                 assert_eq!(arg_input_set.intersection(&elem_input_set).count(), 0);
+            }
+            if let Some(pop_inputs) = code_config.pop_from_buffer {
+                let arg_input_set = HashSet::<usize>::from_iter(arg_inputs.iter().copied());
+                let pop_input_set = HashSet::from_iter(pop_inputs.iter().copied());
+                assert_eq!(arg_input_set.intersection(&pop_input_set).count(), 0);
+            }
+        }
+        if let Some(elem_inputs) = code_config.elem_inputs {
+            if let Some(pop_inputs) = code_config.pop_from_buffer {
+                let elem_input_set = HashSet::<usize>::from_iter(elem_inputs.iter().copied());
+                let pop_input_set = HashSet::from_iter(pop_inputs.iter().copied());
+                assert_eq!(elem_input_set.intersection(&pop_input_set).count(), 0);
             }
         }
 
