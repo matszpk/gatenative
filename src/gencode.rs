@@ -333,6 +333,32 @@ where
         if *o < input_len_t {
             single_var_alloc(&mut var_alloc, &mut alloc_vars, *o);
             let outlist = out_map.get(o).unwrap();
+            if single_buffer {
+                for oi in outlist {
+                    // check output mapping to not already inputs
+                    let out_p = get_bit_place(output_placement, *oi);
+                    if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                        // if input_bit under output placement is not read
+                        if !input_already_read[*input_bit] {
+                            // println!(
+                            //     "Not already alloc: {}, {} {}: {}",
+                            //     node_index + input_len,
+                            //     *oi,
+                            //     input_bit,
+                            //     input_already_read[*input_bit]
+                            // );
+                            // just input bit must be read now
+                            single_var_alloc(
+                                &mut var_alloc,
+                                &mut alloc_vars,
+                                T::try_from(*input_bit).unwrap(),
+                            );
+                            input_already_read[*input_bit] = true;
+                        }
+                    }
+                }
+            }
+
             if let Some(output_vars) = output_vars.as_mut() {
                 let mut use_normal = false;
                 let mut use_neg = false;
@@ -579,6 +605,19 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     let mut out_negs_2 = HashSet::new();
     for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
+            if single_buffer {
+                // check output mapping to not already inputs
+                let out_p = get_bit_place(output_placement, oi);
+                if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                    // if input_bit under output placement is not read
+                    if !used_inputs[*input_bit] {
+                        writer
+                            .gen_load(usize::try_from(var_allocs[*input_bit]).unwrap(), *input_bit);
+                        used_inputs[*input_bit] = true;
+                    }
+                }
+            }
+
             let ou = usize::try_from(*o).unwrap();
             if !used_inputs[ou] {
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
@@ -784,6 +823,18 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     let mut out_negs_2 = HashSet::new();
     for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if *o < input_len_t {
+            if single_buffer {
+                // check output mapping to not already inputs
+                let out_p = get_bit_place(output_placement, oi);
+                if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                    // if input_bit under output placement is not read
+                    if !used_inputs[*input_bit] {
+                        writer
+                            .gen_load(usize::try_from(var_allocs[*input_bit]).unwrap(), *input_bit);
+                        used_inputs[*input_bit] = true;
+                    }
+                }
+            }
             let ou = usize::try_from(*o).unwrap();
             if !used_inputs[ou] {
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);

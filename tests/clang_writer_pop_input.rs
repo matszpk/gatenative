@@ -1924,4 +1924,98 @@ fn test_clang_writer_populate_input_from_buffer() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[1, 2, 4]))
+            .input_placement(Some((&[3, 1, 0], 4)))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+#define i1 (v0)
+#define i2 (v1)
+#define i4 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i2
+#define i4
+    v3 = output[1];
+    v4 = (v1 & v3);
+    v5 = output[3];
+    v5 = ~(v5 | v3);
+    v5 = (v4 & ~v5);
+    v1 = (v1 ^ v3);
+    v3 = (v4 & v1);
+    v1 = (v1 ^ v3);
+    v3 = (v5 ^ v1);
+    output[2] = v3;
+    v0 = (v1 & ~v0);
+    output[3] = ~v0;
+    v0 = output[0];
+    output[0] = v2;
+    output[1] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[1, 2, 4]))
+            .input_placement(Some((&[3, 1, 0], 4)))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(__m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    __m64 v5;
+#define i1 (v0)
+#define i2 (v1)
+#define i4 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i2
+#define i4
+    v3 = output[1];
+    v4 = _m_pand(v1, v3);
+    v5 = output[3];
+    v5 = _m_por(v5, v3);
+    v5 = _m_pand(v4, v5);
+    v1 = _m_pxor(v1, v3);
+    v3 = _m_pand(v4, v1);
+    v1 = _m_pxor(v1, v3);
+    v3 = _m_pxor(v5, v1);
+    output[2] = v3;
+    v0 = _m_pandn(v0, v1);
+    output[3] = _m_pxor(v0, one);
+    v0 = output[0];
+    output[0] = v2;
+    output[1] = _m_pxor(v0, one);
+    _m_empty();
+}
+"##
+    );
 }

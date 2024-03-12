@@ -2044,10 +2044,10 @@ fn test_clang_writer_extra() {
     output[0] = v1;
     v0 = (v0 & ~v2);
     output[1] = ~v0;
+    v1 = output[3];
     v0 = output[2];
     output[3] = v0;
-    v0 = output[3];
-    output[2] = ~v0;
+    output[2] = ~v1;
 }
 "##
     );
@@ -2085,10 +2085,10 @@ fn test_clang_writer_extra() {
     output[0] = v1;
     v0 = _m_pandn(v2, v0);
     output[1] = _m_pxor(v0, one);
+    v1 = output[3];
     v0 = output[2];
     output[3] = v0;
-    v0 = output[3];
-    output[2] = _m_pxor(v0, one);
+    output[2] = _m_pxor(v1, one);
     _m_empty();
 }
 "##
