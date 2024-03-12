@@ -1481,6 +1481,91 @@ fn test_clang_writer_populate_input_from_buffer() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[3, 0, 1])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+#define i3 (v0)
+#define i0 (v1)
+#define i1 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i3
+#define i0
+#define i1
+    v3 = input[0];
+    v4 = (v1 & v3);
+    output[0] = v4;
+    v3 = (v2 & v3);
+    v1 = (v1 & v0);
+    v4 = (v3 ^ v1);
+    output[1] = ~v4;
+    v0 = (v2 & v0);
+    v1 = (v3 & v1);
+    v2 = (v0 ^ v1);
+    output[2] = v2;
+    v0 = (v0 & v1);
+    output[3] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[3, 0, 1])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const __m128* input,
+    __m128* output, void* buffer, size_t idx) {
+    const __m128 one = *((const __m128*)one_value);
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+#define i3 (v0)
+#define i0 (v1)
+#define i1 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i3
+#define i0
+#define i1
+    v3 = _mm_loadu_ps((const float*)&input[0]);
+    v4 = _mm_and_ps(v1, v3);
+    _mm_storeu_ps((float*)&output[0], v4);
+    v3 = _mm_and_ps(v2, v3);
+    v1 = _mm_and_ps(v1, v0);
+    v4 = _mm_xor_ps(v3, v1);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v4, one));
+    v0 = _mm_and_ps(v2, v0);
+    v1 = _mm_and_ps(v3, v1);
+    v2 = _mm_xor_ps(v0, v1);
+    _mm_storeu_ps((float*)&output[2], v2);
+    v0 = _mm_and_ps(v0, v1);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
+}
+"##
+    );
 
     let circuit = Circuit::new(
         4,
