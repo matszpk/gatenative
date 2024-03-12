@@ -426,6 +426,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     ) -> Result<(), Self::ErrorType>;
     fn execute_single(&mut self, output: &mut D, arg_input: u64) -> Result<(), Self::ErrorType> {
         assert!(self.is_single_buffer());
+        assert!(!(self.input_is_populated() && self.is_populated_from_buffer()));
+        assert!(!(self.output_is_aggregated() && self.is_aggregated_to_buffer()));
         unsafe { self.execute_single_internal(output, arg_input) }
     }
     /// Create new data - length is number of 32-bit words
