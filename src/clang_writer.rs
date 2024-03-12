@@ -965,15 +965,31 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
+        let shift_args = if self.writer.config.init_index.is_some()
+            && self.pop_input_code.is_some()
+            && !self.pop_input_map.is_empty()
+        {
+            shift_args.to_string() + "unsigned long buffer_shift, "
+        } else {
+            shift_args.to_string()
+        };
         let arg_input = if !self.arg_input_map.is_empty() {
             ", unsigned int arg, unsigned int arg2"
         } else {
             ""
         };
         let buffer = if !self.pop_input_map.is_empty() {
-            ", void* buffer"
+            format!(
+                ",{}{} void* buffer",
+                if self.writer.config.arg_modifier.is_some() {
+                    " "
+                } else {
+                    ""
+                },
+                self.writer.config.arg_modifier.unwrap_or("")
+            )
         } else {
-            ""
+            String::new()
         };
         let in_out_args = if self.single_buffer {
             format!(
@@ -999,7 +1015,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     ""
                 },
-                if self.pop_input_code.is_some() {
+                if self.pop_input_code.is_some() && self.pop_input_map.is_empty() {
                     "void"
                 } else {
                     self.writer.config.type_name
@@ -1173,7 +1189,20 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if self.writer.config.init_index.is_some() {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
-            if self.pop_input_code.is_some() && !self.single_buffer {
+            if self.pop_input_code.is_some() && !self.pop_input_map.is_empty() {
+                if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                    writeln!(
+                        self.writer.out,
+                        "    buffer = (const {0} void*)(((const {0} char*)buffer) + 4*buffer_shift);",
+                        arg_modifier
+                    )
+                    .unwrap();
+                } else {
+                    self.writer.out.extend(
+                        b"    buffer = (const void*)(((const char*)buffer) + 4*buffer_shift);\n",
+                    );
+                }
+            } else if self.pop_input_code.is_some() && !self.single_buffer {
                 if let Some(arg_modifier) = self.writer.config.arg_modifier {
                     writeln!(
                         self.writer.out,
@@ -1208,10 +1237,16 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if let Some(pop_input_code) = self.pop_input_code {
             let pop_inputs = if !self.pop_input_map.is_empty() {
-                let mut map = self.pop_input_map.iter().map(|(x,y)| (*x, *y)).collect::<Vec<_>>();
+                let mut map = self
+                    .pop_input_map
+                    .iter()
+                    .map(|(x, y)| (*x, *y))
+                    .collect::<Vec<_>>();
                 // include original order of pop_inputs
                 map.sort_by_key(|(_, order)| *order);
-                map.into_iter().map(|(pop_input, _)| pop_input).collect::<Vec<_>>()
+                map.into_iter()
+                    .map(|(pop_input, _)| pop_input)
+                    .collect::<Vec<_>>()
             } else {
                 (0..self.input_len).collect::<Vec<_>>()
             };

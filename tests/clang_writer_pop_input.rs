@@ -1359,7 +1359,7 @@ fn test_clang_writer_populate_input_from_buffer() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_testcirc(const void* input,
+        r##"void gate_sys_testcirc(const uint32_t* input,
     uint32_t* output, void* buffer, size_t idx) {
     uint32_t v0;
     uint32_t v1;
@@ -1386,6 +1386,98 @@ fn test_clang_writer_populate_input_from_buffer() {
     output[2] = v2;
     v0 = (v1 & v0);
     output[3] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const __m128* input,
+    __m128* output, void* buffer, size_t idx) {
+    const __m128 one = *((const __m128*)one_value);
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = _mm_loadu_ps((const float*)&input[0]);
+    v4 = _mm_and_ps(v0, v3);
+    _mm_storeu_ps((float*)&output[0], v4);
+    v3 = _mm_and_ps(v1, v3);
+    v0 = _mm_and_ps(v0, v2);
+    v4 = _mm_xor_ps(v3, v0);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v4, one));
+    v1 = _mm_and_ps(v1, v2);
+    v0 = _mm_and_ps(v3, v0);
+    v2 = _mm_xor_ps(v1, v0);
+    _mm_storeu_ps((float*)&output[2], v2);
+    v0 = _mm_and_ps(v1, v0);
+    _mm_storeu_ps((float*)&output[3], _mm_xor_ps(v0, one));
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 1 * idx + input_shift;
+    const size_t ovn = 4 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = input[ivn + 0];
+    v4 = (v0 & v3);
+    output[ovn + 0] = v4;
+    v3 = (v1 & v3);
+    v0 = (v0 & v2);
+    v4 = (v3 ^ v0);
+    output[ovn + 1] = ~v4;
+    v1 = (v1 & v2);
+    v0 = (v3 & v0);
+    v2 = (v1 ^ v0);
+    output[ovn + 2] = v2;
+    v0 = (v1 & v0);
+    output[ovn + 3] = ~v0;
 }
 "##
     );
