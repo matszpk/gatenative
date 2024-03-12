@@ -1655,7 +1655,7 @@ mod tests {
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
         assert_eq!(
-            (vec![3, 2, 0, 1, 0, 0, 2, 0, 3, 1, 3, 0, 1, 0], 4, None),
+            (vec![3, 2, 0, 1, 0, 1, 2, 0, 3, 1, 3, 0, 1, 0], 4, None),
             gen_var_allocs(
                 &circuit,
                 None,
