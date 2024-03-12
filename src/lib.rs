@@ -13,6 +13,7 @@ use std::ops::{Range, RangeFrom};
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
 // TODO: Add (transforming to CLang).
 // TODO: Add output aggregation with same original output.
+// TODO: exclude some circuit outputs from outputs.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
