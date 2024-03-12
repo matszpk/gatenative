@@ -1208,7 +1208,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if let Some(pop_input_code) = self.pop_input_code {
             let pop_inputs = if !self.pop_input_map.is_empty() {
-                self.pop_input_map.keys().copied().collect::<Vec<_>>()
+                let mut map = self.pop_input_map.iter().map(|(x,y)| (*x, *y)).collect::<Vec<_>>();
+                // include original order of pop_inputs
+                map.sort_by_key(|(_, order)| *order);
+                map.into_iter().map(|(pop_input, _)| pop_input).collect::<Vec<_>>()
             } else {
                 (0..self.input_len).collect::<Vec<_>>()
             };
