@@ -245,17 +245,19 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             input_len
                 - code_config.arg_inputs.map(|x| x.len()).unwrap_or(0)
                 - code_config.elem_inputs.map(|x| x.len()).unwrap_or(0)
+                - code_config.pop_from_buffer.map(|x| x.len()).unwrap_or(0)
         };
         let real_output_len = if let Some((_, len)) = code_config.output_placement {
             len
         } else {
             output_len
         };
+        let pop_input_same =
+            code_config.pop_input_code.is_some() && code_config.pop_from_buffer.is_none();
+        let aggr_output_same =
+            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_none();
         // check requirements for single buffer
-        if !(code_config.pop_input_code.is_some()
-            && code_config.aggr_output_code.is_some()
-            && code_config.single_buffer)
-        {
+        if !(pop_input_same && aggr_output_same && code_config.single_buffer) {
             assert!(!code_config.single_buffer || real_input_len == real_output_len);
         }
         assert!(check_placements(
@@ -305,17 +307,12 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             }
         }
 
-        if code_config.pop_input_code.is_some()
-            && code_config.aggr_output_code.is_some()
-            && code_config.single_buffer
-        {
+        if pop_input_same && aggr_output_same && code_config.single_buffer {
             assert_eq!(
                 code_config.pop_input_len.unwrap(),
                 code_config.aggr_output_len.unwrap()
             );
-        } else if (code_config.pop_input_code.is_some() && code_config.pop_from_buffer.is_none())
-            || (code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_none())
-        {
+        } else if pop_input_same || aggr_output_same {
             assert!(!code_config.single_buffer);
         }
 
