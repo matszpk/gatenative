@@ -1481,4 +1481,192 @@ fn test_clang_writer_populate_input_from_buffer() {
 }
 "##
     );
+
+    let circuit = Circuit::new(
+        4,
+        [
+            Gate::new_and(2, 3),
+            Gate::new_xor(2, 3),
+            Gate::new_nor(0, 3),
+            Gate::new_and(4, 5),
+            Gate::new_nimpl(4, 6),
+            Gate::new_xor(5, 6),
+            Gate::new_xor(8, 9),
+            Gate::new_nimpl(9, 1),
+        ],
+        [(7, false), (8, true), (10, false), (11, true)],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = input[0];
+    v4 = (v3 & v2);
+    v3 = (v3 ^ v2);
+    v5 = (v4 & v3);
+    output[0] = v5;
+    v0 = ~(v0 | v2);
+    v2 = (v4 & ~v0);
+    output[1] = ~v2;
+    v0 = (v3 ^ v0);
+    v2 = (v2 ^ v0);
+    output[2] = v2;
+    v0 = (v0 & ~v1);
+    output[3] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    __m64 v5;
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = input[0];
+    v4 = _m_pand(v3, v2);
+    v3 = _m_pxor(v3, v2);
+    v5 = _m_pand(v4, v3);
+    output[0] = v5;
+    v0 = _m_por(v0, v2);
+    v2 = _m_pand(v4, v0);
+    output[1] = _m_pxor(v2, one);
+    v0 = _m_pxor(v3, v0);
+    v2 = _m_pxor(v2, v0);
+    output[2] = _m_pxor(v2, one);
+    v0 = _m_por(v0, v1);
+    output[3] = v0;
+    _m_empty();
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+#define i1 (v0)
+#define i3 (v1)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i3
+    v2 = input[1];
+    v3 = (v2 & v1);
+    v2 = (v2 ^ v1);
+    v4 = (v3 & v2);
+    output[0] = v4;
+    v4 = input[0];
+    v1 = ~(v4 | v1);
+    v3 = (v3 & ~v1);
+    output[1] = ~v3;
+    v1 = (v2 ^ v1);
+    v2 = (v3 ^ v1);
+    output[2] = v2;
+    v0 = (v1 & ~v0);
+    output[3] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+#define i1 (v0)
+#define i3 (v1)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i1
+#define i3
+    v2 = input[1];
+    v3 = _m_pand(v2, v1);
+    v2 = _m_pxor(v2, v1);
+    v4 = _m_pand(v3, v2);
+    output[0] = v4;
+    v4 = input[0];
+    v1 = _m_por(v4, v1);
+    v3 = _m_pand(v3, v1);
+    output[1] = _m_pxor(v3, one);
+    v1 = _m_pxor(v2, v1);
+    v2 = _m_pxor(v3, v1);
+    output[2] = _m_pxor(v2, one);
+    v0 = _m_por(v1, v0);
+    output[3] = v0;
+    _m_empty();
+}
+"##
+    );
 }
