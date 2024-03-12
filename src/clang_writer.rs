@@ -970,6 +970,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
+        let buffer = if !self.pop_input_map.is_empty() {
+            ", void* buffer"
+        } else {
+            ""
+        };
         let in_out_args = if self.single_buffer {
             format!(
                 "{0}{1}{2}* output",
@@ -1009,7 +1014,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(init_index) = self.writer.config.init_index {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}(unsigned long n, {}{}{}) {{
+                r##"{}{}void gate_sys_{}(unsigned long n, {}{}{}{}) {{
     {}"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
@@ -1021,6 +1026,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 shift_args,
                 in_out_args,
                 arg_input,
+                buffer,
                 init_index
             )
             .unwrap();
@@ -1081,7 +1087,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(
                 self.writer.out,
-                r##"{}{}void gate_sys_{}({}{}{}, size_t idx) {{"##,
+                r##"{}{}void gate_sys_{}({}{}{}, size_t idx{}) {{"##,
                 self.writer.config.func_modifier.unwrap_or(""),
                 if self.writer.config.func_modifier.is_some() {
                     " "
@@ -1092,6 +1098,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 shift_args,
                 in_out_args,
                 arg_input,
+                buffer
             )
             .unwrap();
         }
