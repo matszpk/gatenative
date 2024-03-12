@@ -1478,6 +1478,38 @@ mod tests {
                 Some(&[0, 1, 2, 3])
             )
         );
+        // with pop input 2
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 3, 0, 5, 2, 0, 2, 0], 6, None),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                Some(&[0, 1, 3])
+            )
+        );
+        // with pop input 3
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![4, 0, 2, 1, 3, 2, 1, 4, 3, 1, 2, 0], 5, None),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                false,
+                Some(&[1, 3])
+            )
+        );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
