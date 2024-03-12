@@ -113,7 +113,7 @@ fn gen_var_allocs<T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     keep_output_vars: bool,
-    pop_input: bool,
+    pop_inputs: Option<&[usize]>,
 ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -127,7 +127,7 @@ where
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(keep_output_vars && pop_input);
+    let single_buffer = single_buffer && !(keep_output_vars && pop_inputs.is_some());
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
@@ -164,14 +164,16 @@ where
 
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
-    if pop_input {
-        for i in 0..input_len {
-            if is_in_input_map(i) {
-                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
-                input_already_read[i] = true;
+    if let Some(pop_inputs) = pop_inputs {
+        for i in pop_inputs {
+            if is_in_input_map(*i) {
+                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(*i).unwrap());
+                input_already_read[*i] = true;
             }
         }
     }
+
+    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
@@ -216,14 +218,14 @@ where
                 // allocate circuit inputs now if not allocated
                 if gates[node_index].i0 < input_len_t {
                     let gi0 = usize::try_from(gates[node_index].i0).unwrap();
-                    if !pop_input || !is_in_input_map(gi0) {
+                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
                         input_already_read[gi0] = true;
                     }
                 }
                 if gates[node_index].i1 < input_len_t {
                     let gi1 = usize::try_from(gates[node_index].i1).unwrap();
-                    if !pop_input || !is_in_input_map(gi1) {
+                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
                         input_already_read[gi1] = true;
                     }
@@ -798,8 +800,8 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     let nimpl_op = (supported_ops & (1u64 << InstrOp::Nimpl.int_value())) != 0;
 
     // generate input_map
+    let input_len = usize::try_from(circuit.input_len()).unwrap();
     let input_map = {
-        let input_len = usize::try_from(circuit.input_len()).unwrap();
         let arg_input_map = if let Some(arg_inputs) = code_config.arg_inputs {
             HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
         } else {
@@ -826,6 +828,14 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         }
     };
 
+    let pop_inputs = input_map
+        .as_ref()
+        .map(|input_map| {
+            let mut input_list = input_map.keys().copied().collect::<Vec<_>>();
+            input_list.sort();
+            input_list
+        })
+        .unwrap_or((0..input_len).collect::<Vec<_>>());
     let (var_allocs, var_num, output_vars) = gen_var_allocs(
         &circuit,
         code_config.input_placement,
@@ -834,7 +844,13 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         code_config.single_buffer,
         input_map.as_ref(),
         code_config.aggr_output_code.is_some(),
-        code_config.pop_input_code.is_some(),
+        code_config.pop_input_code.map(|_| {
+            if let Some(inputs) = code_config.pop_from_buffer {
+                inputs
+            } else {
+                &pop_inputs
+            }
+        }),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -959,7 +975,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -974,7 +990,7 @@ mod tests {
                 false,
                 None,
                 false,
-                false
+                None
             )
         );
         // keep outputs
@@ -994,7 +1010,7 @@ mod tests {
                 false,
                 None,
                 true,
-                false
+                None
             )
         );
 
@@ -1011,7 +1027,7 @@ mod tests {
                 false,
                 None,
                 false,
-                true
+                Some(&[0, 1, 2])
             )
         );
 
@@ -1044,7 +1060,7 @@ mod tests {
                 false,
                 None,
                 true,
-                false
+                None
             )
         );
         // keep outputs with double outputs (with both normal and negated)
@@ -1076,7 +1092,7 @@ mod tests {
                 false,
                 None,
                 true,
-                false
+                None
             )
         );
 
@@ -1123,7 +1139,7 @@ mod tests {
                 false,
                 None,
                 true,
-                false
+                None
             )
         );
 
@@ -1156,7 +1172,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         // single buffer with pop_input and aggr_output_code
@@ -1168,7 +1184,16 @@ mod tests {
                 6,
                 Some(vec![(4, None), (5, None), (2, None), (0, None)])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, true, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                true,
+                Some(&[0, 1, 2, 3])
+            )
         );
         //
         let mut var_usage = gen_var_usage(&circuit);
@@ -1183,7 +1208,7 @@ mod tests {
                 false,
                 None,
                 false,
-                false
+                None
             )
         );
         // keep outputs
@@ -1203,7 +1228,7 @@ mod tests {
                 false,
                 None,
                 true,
-                false
+                None
             )
         );
         // keep outputs with pop_input
@@ -1223,7 +1248,7 @@ mod tests {
                 false,
                 None,
                 true,
-                true
+                Some(&[0, 1, 2, 3])
             )
         );
 
@@ -1251,7 +1276,7 @@ mod tests {
                 false,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1266,7 +1291,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         // with single_buffer, pop_input and keep_output_vars
@@ -1278,7 +1303,16 @@ mod tests {
                 6,
                 Some(vec![(4, None), (5, None), (0, None), (1, None)])
             ),
-            gen_var_allocs(&circuit, None, None, &mut var_usage, true, None, true, true)
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                true,
+                Some(&[0, 1, 2, 3])
+            )
         );
         // with placement
         let mut var_usage = gen_var_usage(&circuit);
@@ -1293,7 +1327,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1308,7 +1342,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1323,7 +1357,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1338,7 +1372,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
 
@@ -1365,7 +1399,7 @@ mod tests {
                 false,
                 None,
                 false,
-                false
+                None
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1380,7 +1414,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
 
@@ -1411,7 +1445,7 @@ mod tests {
                 false,
                 None,
                 false,
-                false
+                None
             )
         );
         // with pop_input
@@ -1427,7 +1461,7 @@ mod tests {
                 false,
                 None,
                 false,
-                true
+                Some(&[0, 1, 2, 3])
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1442,7 +1476,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false
+                None
             )
         );
         // testcase with placements
@@ -1458,7 +1492,7 @@ mod tests {
                 true,
                 None,
                 false,
-                false,
+                None,
             )
         );
         // testcase with placements and with input_map (some input are used as arg_input)
@@ -1474,7 +1508,7 @@ mod tests {
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1)])),
                 false,
-                false,
+                None,
             )
         );
         let circuit = Circuit::new(
@@ -1505,7 +1539,7 @@ mod tests {
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
                 false,
-                false,
+                None,
             )
         );
         // with pop_input and input_map
@@ -1521,7 +1555,7 @@ mod tests {
                 false,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
                 false,
-                true
+                Some(&[1, 3, 4, 5])
             )
         );
     }
