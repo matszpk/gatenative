@@ -386,7 +386,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&[(usize, Option<usize>)]>,
-    pop_input: bool,
+    pop_inputs: Option<&[usize]>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -399,7 +399,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(output_vars.is_some() && pop_input);
+    let single_buffer = single_buffer && !(output_vars.is_some() && pop_inputs.is_some());
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -423,13 +423,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
-    if pop_input {
-        for i in 0..input_len {
-            if is_in_input_map(i) {
-                used_inputs[i] = true;
+    if let Some(pop_inputs) = pop_inputs {
+        for i in pop_inputs {
+            if is_in_input_map(*i) {
+                used_inputs[*i] = true;
             }
         }
     }
+    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
@@ -482,13 +483,13 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !pop_input || !is_in_input_map(gi0) {
+                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !pop_input || !is_in_input_map(gi1) {
+                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
@@ -588,7 +589,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&[(usize, Option<usize>)]>,
-    pop_input: bool,
+    pop_inputs: Option<&[usize]>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -601,7 +602,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(output_vars.is_some() && pop_input);
+    let single_buffer = single_buffer && !(output_vars.is_some() && pop_inputs.is_some());
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -624,14 +625,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
-    // if populated input then allocate variables as first to avoid next allocations
-    if pop_input {
-        for i in 0..input_len {
-            if is_in_input_map(i) {
-                used_inputs[i] = true;
+    if let Some(pop_inputs) = pop_inputs {
+        for i in pop_inputs {
+            if is_in_input_map(*i) {
+                used_inputs[*i] = true;
             }
         }
     }
+    let is_in_pop_inputs = |x| pop_inputs.unwrap_or(&[]).binary_search(&x).is_ok();
 
     let mut visited = vec![false; gate_num];
     for (o, _) in circuit.outputs.iter() {
@@ -684,13 +685,13 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 let gi0 = usize::try_from(gates[node_index].0.i0).unwrap();
                 let gi1 = usize::try_from(gates[node_index].0.i1).unwrap();
                 if gi0 < input_len && !used_inputs[gi0] {
-                    if !pop_input || !is_in_input_map(gi0) {
+                    if !is_in_pop_inputs(gi0) || !is_in_input_map(gi0) {
                         writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
                         used_inputs[gi0] = true;
                     }
                 }
                 if gi1 < input_len && !used_inputs[gi1] {
-                    if !pop_input || !is_in_input_map(gi1) {
+                    if !is_in_pop_inputs(gi1) || !is_in_input_map(gi1) {
                         writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
                         used_inputs[gi1] = true;
                     }
@@ -812,11 +813,23 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         } else {
             HashMap::new()
         };
+        let pop_input_map = if code_config.pop_input_code.is_some() {
+            if let Some(pop_inputs) = code_config.pop_from_buffer {
+                HashMap::from_iter(pop_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+            } else {
+                HashMap::new()
+            }
+        } else {
+            HashMap::new()
+        };
         let mut input_map = HashMap::new();
-        if !arg_input_map.is_empty() || !elem_input_map.is_empty() {
+        if !arg_input_map.is_empty() || !elem_input_map.is_empty() || !pop_input_map.is_empty() {
             let mut count = 0;
             for i in 0..input_len {
-                if !arg_input_map.contains_key(&i) && !elem_input_map.contains_key(&i) {
+                if !arg_input_map.contains_key(&i)
+                    && !elem_input_map.contains_key(&i)
+                    && !pop_input_map.contains_key(&i)
+                {
                     input_map.insert(i, count);
                     count += 1;
                 }
@@ -836,6 +849,13 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             input_list
         })
         .unwrap_or((0..input_len).collect::<Vec<_>>());
+    let pop_inputs = code_config.pop_input_code.map(|_| {
+        if let Some(inputs) = code_config.pop_from_buffer {
+            inputs
+        } else {
+            &pop_inputs
+        }
+    });
     let (var_allocs, var_num, output_vars) = gen_var_allocs(
         &circuit,
         code_config.input_placement,
@@ -844,13 +864,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         code_config.single_buffer,
         input_map.as_ref(),
         code_config.aggr_output_code.is_some(),
-        code_config.pop_input_code.map(|_| {
-            if let Some(inputs) = code_config.pop_from_buffer {
-                inputs
-            } else {
-                &pop_inputs
-            }
-        }),
+        pop_inputs,
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -886,7 +900,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
-            code_config.pop_input_code.is_some(),
+            pop_inputs,
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -911,7 +925,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref().map(|ov| ov.as_slice()),
-            code_config.pop_input_code.is_some(),
+            pop_inputs,
         );
     }
 
