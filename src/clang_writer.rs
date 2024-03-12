@@ -886,6 +886,7 @@ pub struct CLangWriter<'a> {
     config: &'a CLangWriterConfig<'a>,
     elem_low_bits: u32,
     out: Vec<u8>,
+    transform_helpers_added: bool,
 }
 
 impl<'a> CLangWriterConfig<'a> {
@@ -900,6 +901,7 @@ impl<'a> CLangWriterConfig<'a> {
                 .position(|x| *x == "")
                 .unwrap_or(16) as u32,
             out: vec![],
+            transform_helpers_added: false,
         }
     }
 }
@@ -1447,13 +1449,15 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
     }
 
     fn transform_helpers(&mut self) {
-        let mut transform = self.config.transform_config.transform();
-        transform.init_defs();
-        for i in 1..=32 {
-            transform.gen_input_transform(i);
-            transform.gen_output_transform(i);
+        if !self.transform_helpers_added {
+            let mut transform = self.config.transform_config.transform();
+            transform.init_defs();
+            for i in 1..=32 {
+                transform.gen_input_transform(i);
+                transform.gen_output_transform(i);
+            }
+            self.user_defs(&transform.out());
         }
-        self.user_defs(&transform.out());
     }
 
     fn epilog(&mut self) {}
