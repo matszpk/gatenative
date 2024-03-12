@@ -294,7 +294,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
                 code_config.pop_input_len.unwrap(),
                 code_config.aggr_output_len.unwrap()
             );
-        } else if code_config.pop_input_code.is_some() || code_config.aggr_output_code.is_some() {
+        } else if (code_config.pop_input_code.is_some() && code_config.pop_from_buffer.is_none())
+            || (code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_none())
+        {
             assert!(!code_config.single_buffer);
         }
 
