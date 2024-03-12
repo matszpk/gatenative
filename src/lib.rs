@@ -639,7 +639,9 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+    fn is_aggregated_to_buffer(&self) -> bool;
     fn input_is_populated(&self) -> bool;
+    fn is_populated_from_buffer(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;
@@ -808,7 +810,9 @@ where
     }
 
     fn output_is_aggregated(&self) -> bool;
+    fn is_aggregated_to_buffer(&self) -> bool;
     fn input_is_populated(&self) -> bool;
+    fn is_populated_from_buffer(&self) -> bool;
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;

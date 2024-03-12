@@ -98,6 +98,11 @@ where
     }
 
     #[inline]
+    fn is_aggregated_to_buffer(&self) -> bool {
+        self.executor.is_aggregated_to_buffer()
+    }
+
+    #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.executor.aggr_output_len()
     }
@@ -105,6 +110,11 @@ where
     #[inline]
     fn input_is_populated(&self) -> bool {
         self.executor.input_is_populated()
+    }
+
+    #[inline]
+    fn is_populated_from_buffer(&self) -> bool {
+        self.executor.is_populated_from_buffer()
     }
 
     #[inline]
@@ -383,6 +393,11 @@ where
     }
 
     #[inline]
+    fn is_aggregated_to_buffer(&self) -> bool {
+        self.executor.is_aggregated_to_buffer()
+    }
+
+    #[inline]
     fn aggr_output_len(&self) -> Option<usize> {
         self.executor.aggr_output_len()
     }
@@ -390,6 +405,11 @@ where
     #[inline]
     fn input_is_populated(&self) -> bool {
         self.executor.input_is_populated()
+    }
+
+    #[inline]
+    fn is_populated_from_buffer(&self) -> bool {
+        self.executor.is_populated_from_buffer()
     }
 
     #[inline]
