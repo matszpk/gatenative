@@ -480,6 +480,34 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         Ok(())
     }
 
+    unsafe fn execute_buffer_internal(
+        &mut self,
+        input: &OpenCLDataHolder,
+        arg_input: u64,
+        buffer: &mut OpenCLDataHolder,
+    ) -> Result<OpenCLDataHolder, Self::ErrorType> {
+        Ok(self.new_data(1))
+    }
+
+    unsafe fn execute_buffer_reuse_internal(
+        &mut self,
+        input: &OpenCLDataHolder,
+        arg_input: u64,
+        output: &mut OpenCLDataHolder,
+        buffer: &mut OpenCLDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
+    unsafe fn execute_buffer_single_internal(
+        &mut self,
+        output: &mut OpenCLDataHolder,
+        arg_input: u64,
+        buffer: &mut OpenCLDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
     fn new_data(&mut self, len: usize) -> OpenCLDataHolder {
         OpenCLDataHolder::new(
             len,

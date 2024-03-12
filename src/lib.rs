@@ -430,6 +430,64 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         assert!(!(self.output_is_aggregated() && self.is_aggregated_to_buffer()));
         unsafe { self.execute_single_internal(output, arg_input) }
     }
+
+    // executes for additional buffers
+    unsafe fn execute_buffer_internal(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        buffer: &mut D,
+    ) -> Result<D, Self::ErrorType>;
+    fn execute_buffer(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        buffer: &mut D,
+    ) -> Result<D, Self::ErrorType> {
+        assert!(!self.is_single_buffer());
+        assert!(self.input_is_populated() && self.is_populated_from_buffer());
+        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        unsafe { self.execute_buffer_internal(input, arg_input, buffer) }
+    }
+
+    unsafe fn execute_buffer_reuse_internal(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        output: &mut D,
+        buffer: &mut D,
+    ) -> Result<(), Self::ErrorType>;
+    fn execute_buffer_reuse(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        output: &mut D,
+        buffer: &mut D,
+    ) -> Result<(), Self::ErrorType> {
+        assert!(!self.is_single_buffer());
+        assert!(self.input_is_populated() && self.is_populated_from_buffer());
+        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        unsafe { self.execute_buffer_reuse_internal(input, arg_input, output, buffer) }
+    }
+
+    unsafe fn execute_buffer_single_internal(
+        &mut self,
+        output: &mut D,
+        arg_input: u64,
+        buffer: &mut D,
+    ) -> Result<(), Self::ErrorType>;
+    fn execute_buffer_single(
+        &mut self,
+        output: &mut D,
+        buffer: &mut D,
+        arg_input: u64,
+    ) -> Result<(), Self::ErrorType> {
+        assert!(self.is_single_buffer());
+        assert!(self.input_is_populated() && self.is_populated_from_buffer());
+        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        unsafe { self.execute_buffer_single_internal(output, arg_input, buffer) }
+    }
+
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.

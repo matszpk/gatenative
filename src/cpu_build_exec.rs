@@ -771,6 +771,34 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         Ok(())
     }
 
+    unsafe fn execute_buffer_internal(
+        &mut self,
+        input: &CPUDataHolder,
+        arg_input: u64,
+        buffer: &mut CPUDataHolder,
+    ) -> Result<CPUDataHolder, Self::ErrorType> {
+        Ok(self.new_data(1))
+    }
+
+    unsafe fn execute_buffer_reuse_internal(
+        &mut self,
+        input: &CPUDataHolder,
+        arg_input: u64,
+        output: &mut CPUDataHolder,
+        buffer: &mut CPUDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
+    unsafe fn execute_buffer_single_internal(
+        &mut self,
+        output: &mut CPUDataHolder,
+        arg_input: u64,
+        buffer: &mut CPUDataHolder,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
     fn new_data(&mut self, len: usize) -> CPUDataHolder {
         CPUDataHolder::new(vec![0u32; len])
     }

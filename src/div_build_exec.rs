@@ -167,6 +167,34 @@ where
         }
     }
 
+    unsafe fn execute_buffer_internal(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        buffer: &mut D,
+    ) -> Result<D, Self::ErrorType> {
+        Ok(self.new_data(1))
+    }
+
+    unsafe fn execute_buffer_reuse_internal(
+        &mut self,
+        input: &D,
+        arg_input: u64,
+        output: &mut D,
+        buffer: &mut D,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
+    unsafe fn execute_buffer_single_internal(
+        &mut self,
+        output: &mut D,
+        arg_input: u64,
+        buffer: &mut D,
+    ) -> Result<(), Self::ErrorType> {
+        Ok(())
+    }
+
     fn new_data(&mut self, len: usize) -> D {
         self.executors.first_mut().unwrap().new_data(len)
     }
