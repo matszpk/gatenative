@@ -917,6 +917,7 @@ struct CircuitEntry {
     populated_input: bool,
     populated_from_buffer: bool,
     pop_input_len: Option<usize>,
+    pop_input_len_from_buffer: Option<usize>,
 }
 
 pub struct CPUBuilder<'a> {
@@ -1019,6 +1020,13 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             populated_input: code_config.pop_input_code.is_some(),
             populated_from_buffer: code_config.pop_input_code.is_some()
                 && code_config.pop_from_buffer.is_some(),
+            pop_input_len_from_buffer: if code_config.pop_input_code.is_some()
+                && code_config.pop_from_buffer.is_some()
+            {
+                code_config.pop_from_buffer.map(|x| x.len())
+            } else {
+                None
+            },
             pop_input_len: if code_config.pop_input_code.is_some() {
                 Some(
                     code_config
@@ -1052,7 +1060,10 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     input_len: e.input_len,
                     output_len: e.output_len,
                     real_input_len: e.input_placement.as_ref().map(|x| x.1).unwrap_or(
-                        e.input_len - e.arg_input_len.unwrap_or(0) - e.elem_input_len.unwrap_or(0),
+                        e.input_len
+                            - e.arg_input_len.unwrap_or(0)
+                            - e.elem_input_len.unwrap_or(0)
+                            - e.pop_input_len_from_buffer.unwrap_or(0),
                     ),
                     real_output_len: e
                         .output_placement
