@@ -1207,7 +1207,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.push(b'\n');
         }
         if let Some(pop_input_code) = self.pop_input_code {
-            for i in 0..self.input_len {
+            let pop_inputs = if !self.pop_input_map.is_empty() {
+                self.pop_input_map.keys().copied().collect::<Vec<_>>()
+            } else {
+                (0..self.input_len).collect::<Vec<_>>()
+            };
+            for i in &pop_inputs {
                 if !self.input_map.is_empty() {
                     if let Some(iv) = self.input_map.get(&i) {
                         writeln!(self.writer.out, "#define i{} (v{})", i, iv).unwrap();
@@ -1218,7 +1223,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             }
             self.writer.out.extend(pop_input_code.as_bytes());
             self.writer.out.push(b'\n');
-            for i in 0..self.input_len {
+            for i in &pop_inputs {
                 if self.input_map.is_empty() || self.input_map.contains_key(&i) {
                     writeln!(self.writer.out, "#define i{0}", i).unwrap();
                 }
