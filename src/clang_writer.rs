@@ -1045,7 +1045,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         "    const size_t ovn = llen * ({} * idx){};\n"
                     ),
                     self.input_placement.map(|(_, len)| len).unwrap_or(
-                        self.input_len - self.arg_input_map.len() - self.elem_input_map.len()
+                        self.input_len
+                            - self.arg_input_map.len()
+                            - self.elem_input_map.len()
+                            - self.pop_input_map.len()
                     ),
                     input_shift_part,
                     self.output_placement
@@ -1062,7 +1065,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         "    const size_t ovn = {} * idx{};\n"
                     ),
                     self.input_placement.map(|(_, len)| len).unwrap_or(
-                        self.input_len - self.arg_input_map.len() - self.elem_input_map.len()
+                        self.input_len
+                            - self.arg_input_map.len()
+                            - self.elem_input_map.len()
+                            - self.pop_input_map.len()
                     ),
                     input_shift_part,
                     self.output_placement
