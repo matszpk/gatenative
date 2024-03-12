@@ -365,6 +365,7 @@ pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     fn process_mut<F, Out>(&mut self, f: F) -> Out
     where
         F: FnMut(&mut [u32]) -> Out;
+    fn copy(&self) -> Self;
     /// release underlying data
     fn release(self) -> Vec<u32>;
     // free
@@ -662,6 +663,47 @@ where
             stop,
         )
     }
+    // executes for additional buffers
+    // fn execute_buffer<Out, F, Stop>(
+    //     &mut self,
+    //     input: &D,
+    //     buffer: &D,
+    //     init: Out,
+    //     f: F,
+    //     stop: Stop,
+    // ) -> Result<Out, Self::ErrorType>
+    // where
+    //     F: FnMut(Out, &D, &D, &D, u64) -> Out,
+    //     Stop: FnMut(&Out) -> bool;
+    // 
+    // fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
+    //     &mut self,
+    //     input: &'b D,
+    //     buffer: &'b D,
+    //     init: Out,
+    //     mut f: F,
+    //     stop: Stop,
+    // ) -> Result<Out, Self::ErrorType>
+    // where
+    //     F: FnMut(Out, &[u32], &[u32], &[u32], u64) -> Out,
+    //     Stop: FnMut(&Out) -> bool,
+    // {
+    //     self.execute_buffer(
+    //         input,
+    //         buffer,
+    //         init,
+    //         |out, input, output, buf_output, arg_input| {
+    //             input.process(|inputx| {
+    //                 output.process(|outputx| {
+    //                     buf_output.process(|buf_outputx| {
+    //                         f(out.clone(), inputx, outputx, buf_outputx, arg_input)
+    //                     })
+    //                 })
+    //             })
+    //         },
+    //         stop,
+    //     )
+    // }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.
@@ -817,6 +859,47 @@ where
             stop,
         )
     }
+    // executes for additional buffers
+    // fn execute_buffer<Out, F, Stop>(
+    //     &mut self,
+    //     input: &D,
+    //     buffer: &D,
+    //     init: Out,
+    //     f: F,
+    //     stop: Stop,
+    // ) -> Result<Out, Self::ErrorType>
+    // where
+    //     F: FnMut(Out, &D, &D, &D, u64) -> Out,
+    //     Stop: FnMut(&Out) -> bool;
+    // 
+    // fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
+    //     &mut self,
+    //     input: &'b D,
+    //     buffer: &'b D,
+    //     init: Out,
+    //     mut f: F,
+    //     stop: Stop,
+    // ) -> Result<Out, Self::ErrorType>
+    // where
+    //     F: FnMut(Out, &[u32], &[u32], &[u32], u64) -> Out,
+    //     Stop: FnMut(&Out) -> bool,
+    // {
+    //     self.execute_buffer(
+    //         input,
+    //         buffer,
+    //         init,
+    //         |out, input, output, buf_output, arg_input| {
+    //             input.process(|inputx| {
+    //                 output.process(|outputx| {
+    //                     buf_output.process(|buf_outputx| {
+    //                         f(out.clone(), inputx, outputx, buf_outputx, arg_input)
+    //                     })
+    //                 })
+    //             })
+    //         },
+    //         stop,
+    //     )
+    // }
     /// Create new data - length is number of 32-bit words
     fn new_data(&mut self, len: usize) -> D;
     /// Create new data from vector.

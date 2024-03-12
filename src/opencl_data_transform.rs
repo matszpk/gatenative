@@ -170,7 +170,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     fn transform(&mut self, input: &OpenCLDataHolder) -> Result<OpenCLDataHolder, Self::ErrorType> {
         let mut output = OpenCLDataHolder::new(
             self.output_data_len(input.len()),
-            &self.context,
+            self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );
@@ -386,7 +386,7 @@ impl<'a> DataTransformer<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLD
     fn transform(&mut self, input: &OpenCLDataHolder) -> Result<OpenCLDataHolder, Self::ErrorType> {
         let mut output = OpenCLDataHolder::new(
             self.output_data_len(input.len()),
-            &self.context,
+            self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );

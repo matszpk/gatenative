@@ -8,7 +8,6 @@ use opencl3::context::Context;
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 use opencl3::memory::CL_MEM_READ_WRITE;
 
-use std::ops::Deref;
 use std::sync::Arc;
 
 #[test]
@@ -34,7 +33,7 @@ fn test_opencl_input_output_data_transformer() {
             let group_num = 17541;
             let mut input = OpenCLDataHolder::new(
                 shift + input_elem_word_num * group_num,
-                context.deref(),
+                context.clone(),
                 cmd_queue.clone(),
                 CL_MEM_READ_WRITE,
             );
@@ -43,7 +42,7 @@ fn test_opencl_input_output_data_transformer() {
             }
             let mut input_2 = OpenCLDataHolder::new(
                 shift + input_elem_word_num * group_num,
-                context.deref(),
+                context.clone(),
                 cmd_queue.clone(),
                 CL_MEM_READ_WRITE,
             );
@@ -52,7 +51,7 @@ fn test_opencl_input_output_data_transformer() {
             }
             let mut output = OpenCLDataHolder::new(
                 shift + output_elem_word_num * group_num,
-                context.deref(),
+                context.clone(),
                 cmd_queue.clone(),
                 CL_MEM_READ_WRITE,
             );

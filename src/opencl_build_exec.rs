@@ -14,6 +14,7 @@ use opencl3::program::Program;
 use opencl3::types::{cl_mem, cl_mem_flags, cl_uint, cl_ulong, CL_BLOCKING};
 
 use std::hash::Hash;
+use std::ops::Deref;
 use std::sync::Arc;
 
 pub struct OpenCLDataReader<'a> {
@@ -130,6 +131,7 @@ impl<'a> Drop for OpenCLDataWriter<'a> {
 
 pub struct OpenCLDataHolder {
     len: usize,
+    context: Arc<Context>,
     cmd_queue: Arc<CommandQueue>,
     pub(crate) buffer: Buffer<u32>,
     pub(crate) range: Range<usize>,
@@ -138,12 +140,12 @@ pub struct OpenCLDataHolder {
 impl OpenCLDataHolder {
     pub fn new(
         len: usize,
-        context: &Context,
+        context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
         flags: cl_mem_flags,
     ) -> OpenCLDataHolder {
         let mut buffer =
-            unsafe { Buffer::create(context, flags, len, std::ptr::null_mut()).unwrap() };
+            unsafe { Buffer::create(context.deref(), flags, len, std::ptr::null_mut()).unwrap() };
         unsafe {
             cmd_queue
                 .enqueue_fill_buffer(&mut buffer, &[0u32], 0, 4 * len, &[])
@@ -152,6 +154,7 @@ impl OpenCLDataHolder {
         }
         Self {
             len,
+            context,
             cmd_queue,
             buffer,
             range: 0..len,
@@ -190,6 +193,29 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
     {
         let mut w = OpenCLDataWriter::new(self, &self.range);
         f(w.get_mut())
+    }
+    fn copy(&self) -> Self {
+        let len = self.len();
+        let mut new = Self::new(
+            len,
+            self.context.clone(),
+            self.cmd_queue.clone(),
+            CL_MEM_READ_WRITE,
+        );
+        unsafe {
+            self.cmd_queue
+                .enqueue_copy_buffer(
+                    &self.buffer,
+                    &mut new.buffer,
+                    self.range.start * 4,
+                    0,
+                    len * 4,
+                    &[],
+                )
+                .unwrap();
+        }
+        self.cmd_queue.finish().unwrap();
+        new
     }
     fn release(self) -> Vec<u32> {
         let mut out = vec![0u32; self.len()];
@@ -309,7 +335,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             } else {
                 real_output_words * num
             },
-            &self.context,
+            self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );
@@ -511,7 +537,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     fn new_data(&mut self, len: usize) -> OpenCLDataHolder {
         OpenCLDataHolder::new(
             len,
-            &self.context,
+            self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         )
@@ -524,7 +550,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     fn new_data_from_slice(&mut self, data: &[u32]) -> OpenCLDataHolder {
         let mut output = OpenCLDataHolder::new(
             data.len(),
-            &self.context,
+            self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );
