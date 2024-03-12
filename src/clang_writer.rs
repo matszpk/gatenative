@@ -875,6 +875,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     input_map: HashMap<usize, usize>,
     arg_input_map: HashMap<usize, usize>,
     elem_input_map: HashMap<usize, usize>,
+    pop_input_map: HashMap<usize, usize>,
     single_buffer: bool,
     init_code: Option<&'c str>,
     pop_input_code: Option<&'c str>,
@@ -1474,7 +1475,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             assert!(elem_inputs.len() <= 64 + (self.elem_low_bits as usize));
         }
 
-        let (input_map, arg_input_map, elem_input_map) = {
+        let (input_map, arg_input_map, elem_input_map, pop_input_map) = {
             let arg_input_map = if let Some(arg_inputs) = code_config.arg_inputs {
                 HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
             } else {
@@ -1485,17 +1486,30 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             } else {
                 HashMap::new()
             };
+            let pop_input_map = if code_config.pop_input_code.is_some() {
+                if let Some(pop_inputs) = code_config.pop_from_buffer {
+                    HashMap::from_iter(pop_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+                } else {
+                    HashMap::new()
+                }
+            } else {
+                HashMap::new()
+            };
             let mut input_map = HashMap::new();
-            if !arg_input_map.is_empty() || !elem_input_map.is_empty() {
+            if !arg_input_map.is_empty() || !elem_input_map.is_empty() || !pop_input_map.is_empty()
+            {
                 let mut count = 0;
                 for i in 0..input_len {
-                    if !arg_input_map.contains_key(&i) && !elem_input_map.contains_key(&i) {
+                    if !arg_input_map.contains_key(&i)
+                        && !elem_input_map.contains_key(&i)
+                        && !pop_input_map.contains_key(&i)
+                    {
                         input_map.insert(i, count);
                         count += 1;
                     }
                 }
             }
-            (input_map, arg_input_map, elem_input_map)
+            (input_map, arg_input_map, elem_input_map, pop_input_map)
         };
 
         CLangFuncWriter::<'a, 'c> {
@@ -1508,6 +1522,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             input_map,
             arg_input_map,
             elem_input_map,
+            pop_input_map,
             single_buffer: code_config.single_buffer,
             init_code: code_config.init_code,
             pop_input_code: code_config.pop_input_code,
