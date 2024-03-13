@@ -1438,6 +1438,16 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
                 .pop_input_len(Some(3))
                 .pop_from_buffer(Some(&(0..20).collect::<Vec<_>>())),
         );
+        builder.add_with_config(
+            "comb_pop_from_buffer_4",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>()))
+                .input_placement(Some((&[0, 1, 2, 3], 12)))
+                .single_buffer(true),
+        );
         let mut execs = builder.build().unwrap();
         // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
@@ -1518,6 +1528,26 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
         assert_eq!(1 << 20, output.len());
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out_3[i], *out, "{}: {}", config_num, i);
+        }
+        // first exec
+        let mut it = execs[3].input_transformer(32, &[0, 1, 2, 3]).unwrap();
+        let mut ot = execs[3]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[3].new_data_from_slice(&params[..]);
+        let input = execs[3].new_data_from_vec(
+            (0..1 << 20)
+                .map(|i| (i & 0xf0000) >> 16)
+                .collect::<Vec<_>>(),
+        );
+        let mut output_circ = it.transform(&input).unwrap();
+        execs[3]
+            .execute_buffer_single(&mut output_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
         }
     }
 }

@@ -2377,6 +2377,7 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out_3[i], *out, "{}: {}", config_num, i);
         }
+        // with single buffer
         let mut it = execs[3].input_transformer(32, &[0, 1, 2, 3]).unwrap();
         let mut ot = execs[3]
             .output_transformer(32, &(0..12).collect::<Vec<_>>())
