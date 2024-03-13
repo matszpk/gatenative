@@ -141,7 +141,6 @@ where
         }
     }
 
-    // TODO: check for elem_input
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut D,
@@ -151,7 +150,13 @@ where
         if exec_len != 1 {
             let output_len = output.len();
             let output_chunk_len = self.real_output_len();
-            let num = output_len / output_chunk_len;
+            let num = if output_chunk_len != 0 {
+                output_len / output_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
+            } else {
+                0
+            };
             let mut buffer = self.new_data(num * self.buffer_len);
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
@@ -259,7 +264,13 @@ where
         if exec_len != 1 {
             let output_len = output.len();
             let output_chunk_len = self.real_output_len();
-            let num = output_len / output_chunk_len;
+            let num = if output_chunk_len != 0 {
+                output_len / output_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
+            } else {
+                0
+            };
             let mut buffer = self.new_data(num * self.buffer_len);
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
