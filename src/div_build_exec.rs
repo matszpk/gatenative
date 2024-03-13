@@ -141,6 +141,7 @@ where
         }
     }
 
+    // TODO: check for elem_input
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut D,
@@ -171,9 +172,36 @@ where
         &mut self,
         input: &D,
         arg_input: u64,
-        buffer: &mut D,
+        user_buffer: &mut D,
     ) -> Result<D, Self::ErrorType> {
-        Ok(self.new_data(1))
+        let exec_len = self.executors.len();
+        if exec_len != 1 {
+            let input_len = input.len();
+            let input_chunk_len = self.real_input_len();
+            let num = if input_chunk_len != 0 {
+                input_len / input_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
+            } else if self.is_populated_from_buffer() {
+                self.elem_count(1)
+            } else {
+                0
+            };
+            let mut buffer = self.new_data(num * self.buffer_len);
+            let mut output = self.new_data(num * self.real_output_len());
+            for (i, exec) in self.executors.iter_mut().enumerate() {
+                if i == 0 {
+                    exec.execute_buffer_reuse_internal(input, arg_input, &mut buffer, user_buffer)?;
+                } else if exec_len == i + 1 {
+                    exec.execute_buffer_reuse_internal(&buffer, 0, &mut output, user_buffer)?;
+                } else {
+                    exec.execute_single_internal(&mut buffer, 0)?;
+                }
+            }
+            Ok(output)
+        } else {
+            unsafe { self.executors[0].execute_buffer_internal(input, arg_input, user_buffer) }
+        }
     }
 
     unsafe fn execute_buffer_reuse_internal(
@@ -181,18 +209,78 @@ where
         input: &D,
         arg_input: u64,
         output: &mut D,
-        buffer: &mut D,
+        user_buffer: &mut D,
     ) -> Result<(), Self::ErrorType> {
-        Ok(())
+        let exec_len = self.executors.len();
+        if exec_len != 1 {
+            let input_len = input.len();
+            let output_len = output.len();
+            let input_chunk_len = self.real_input_len();
+            let output_chunk_len = self.real_output_len();
+            let num = if input_chunk_len != 0 {
+                input_len / input_chunk_len
+            } else if self.elem_input_num != 0 {
+                1 << (self.elem_input_num - 5)
+            } else if self.is_populated_from_buffer() {
+                self.elem_count(1)
+            } else {
+                output_len / output_chunk_len
+            };
+            let mut buffer = self.new_data(num * self.buffer_len);
+            for (i, exec) in self.executors.iter_mut().enumerate() {
+                if i == 0 {
+                    exec.execute_buffer_reuse_internal(input, arg_input, &mut buffer, user_buffer)?;
+                } else if exec_len == i + 1 {
+                    exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                } else {
+                    exec.execute_single_internal(&mut buffer, 0)?;
+                }
+            }
+            Ok(())
+        } else {
+            unsafe {
+                self.executors[0].execute_buffer_reuse_internal(
+                    input,
+                    arg_input,
+                    output,
+                    user_buffer,
+                )
+            }
+        }
     }
 
     unsafe fn execute_buffer_single_internal(
         &mut self,
         output: &mut D,
         arg_input: u64,
-        buffer: &mut D,
+        user_buffer: &mut D,
     ) -> Result<(), Self::ErrorType> {
-        Ok(())
+        let exec_len = self.executors.len();
+        if exec_len != 1 {
+            let output_len = output.len();
+            let output_chunk_len = self.real_output_len();
+            let num = output_len / output_chunk_len;
+            let mut buffer = self.new_data(num * self.buffer_len);
+            for (i, exec) in self.executors.iter_mut().enumerate() {
+                if i == 0 {
+                    exec.execute_buffer_reuse_internal(
+                        output,
+                        arg_input,
+                        &mut buffer,
+                        user_buffer,
+                    )?;
+                } else if exec_len == i + 1 {
+                    exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                } else {
+                    exec.execute_single_internal(&mut buffer, 0)?;
+                }
+            }
+            Ok(())
+        } else {
+            unsafe {
+                self.executors[0].execute_buffer_single_internal(output, arg_input, user_buffer)
+            }
+        }
     }
 
     fn new_data(&mut self, len: usize) -> D {
@@ -452,6 +540,11 @@ where
                     } else {
                         None
                     })
+                    .aggr_to_buffer(if i + 1 == subcircuit_num {
+                        code_config.aggr_to_buffer
+                    } else {
+                        None
+                    })
                     .pop_input_code(if i == 0 {
                         code_config.pop_input_code
                     } else {
@@ -459,6 +552,11 @@ where
                     })
                     .pop_input_len(if i == 0 {
                         code_config.pop_input_len
+                    } else {
+                        None
+                    })
+                    .pop_from_buffer(if i == 0 {
+                        code_config.pop_from_buffer
                     } else {
                         None
                     }),
