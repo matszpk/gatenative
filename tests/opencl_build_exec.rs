@@ -2306,6 +2306,17 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
                 .pop_input_len(Some(3))
                 .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
         );
+        // 5: arg input with single buffer (based on comb_pop_from_buffer_2)
+        builder.add_with_config(
+            "comb_pop_from_buffer_arg_2",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(12..16).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(16..20).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
         let mut execs = builder.build().unwrap();
         // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
@@ -2440,6 +2451,33 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
             for (i, out) in output.iter().enumerate() {
                 assert_eq!(
                     expected_out[(arg << 16) + i],
+                    *out,
+                    "{}: {} {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+        }
+        // arg_inputs 2
+        let mut it = execs[5]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[5]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[5].new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+        for arg in 0usize..16 {
+            let mut buffer = execs[5].new_data_from_slice(&params[..]);
+            let mut output_circ = it.transform(&input).unwrap();
+            execs[5]
+                .execute_buffer_single(&mut output_circ, arg as u64, &mut buffer)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 12, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out_2[(arg << 12) + i],
                     *out,
                     "{}: {} {}",
                     config_num,
