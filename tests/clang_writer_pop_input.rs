@@ -2103,4 +2103,106 @@ fn test_clang_writer_populate_input_from_buffer() {
 }
 "##
     );
+    // with arg input
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3]))
+            .arg_inputs(Some(&[2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = ((arg & 1) != 0) ? one : zero;
+    v4 = (v3 & v2);
+    v0 = ~(v0 | v2);
+    v0 = (v4 & ~v0);
+    v2 = (v3 ^ v2);
+    v3 = (v4 & v2);
+    v2 = (v2 ^ v3);
+    v0 = (v0 ^ v2);
+    output[2] = v0;
+    v0 = (v2 & ~v1);
+    output[3] = ~v0;
+    v0 = input[0];
+    output[0] = v0;
+    v0 = input[1];
+    output[1] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3]))
+            .arg_inputs(Some(&[2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, unsigned int arg, unsigned int arg2, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 2 * idx + input_shift;
+    const size_t ovn = 4 * idx + output_shift;
+    const uint zero = 0;
+    const uint one = 0xffffffff;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = ((arg & 1) != 0) ? one : zero;
+    v4 = (v3 & v2);
+    v0 = ~(v0 | v2);
+    v0 = (v4 & ~v0);
+    v2 = (v3 ^ v2);
+    v3 = (v4 & v2);
+    v2 = (v2 ^ v3);
+    v0 = (v0 ^ v2);
+    output[ovn + 2] = v0;
+    v0 = (v2 & ~v1);
+    output[ovn + 3] = ~v0;
+    v0 = input[ivn + 0];
+    output[ovn + 0] = v0;
+    v0 = input[ivn + 1];
+    output[ovn + 1] = ~v0;
+}
+"##
+    );
 }
