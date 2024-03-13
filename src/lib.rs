@@ -485,8 +485,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn execute_buffer_single(
         &mut self,
         output: &mut D,
-        buffer: &mut D,
         arg_input: u64,
+        buffer: &mut D,
     ) -> Result<(), Self::ErrorType> {
         assert!(self.is_single_buffer());
         assert!(
