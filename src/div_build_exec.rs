@@ -194,11 +194,26 @@ where
             };
             let mut buffer = self.new_data(num * self.buffer_len);
             let mut output = self.new_data(num * self.real_output_len());
+            let is_pop_from_buffer = self.is_populated_from_buffer();
+            let is_aggr_to_buffer = self.is_aggregated_to_buffer();
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
-                    exec.execute_buffer_reuse_internal(input, arg_input, &mut buffer, user_buffer)?;
+                    if is_pop_from_buffer {
+                        exec.execute_buffer_reuse_internal(
+                            input,
+                            arg_input,
+                            &mut buffer,
+                            user_buffer,
+                        )?;
+                    } else {
+                        exec.execute_reuse_internal(input, arg_input, &mut buffer)?;
+                    }
                 } else if exec_len == i + 1 {
-                    exec.execute_buffer_reuse_internal(&buffer, 0, &mut output, user_buffer)?;
+                    if is_aggr_to_buffer {
+                        exec.execute_buffer_reuse_internal(&buffer, 0, &mut output, user_buffer)?;
+                    } else {
+                        exec.execute_reuse_internal(&buffer, 0, &mut output)?;
+                    }
                 } else {
                     exec.execute_single_internal(&mut buffer, 0)?;
                 }
@@ -232,11 +247,26 @@ where
                 output_len / output_chunk_len
             };
             let mut buffer = self.new_data(num * self.buffer_len);
+            let is_pop_from_buffer = self.is_populated_from_buffer();
+            let is_aggr_to_buffer = self.is_aggregated_to_buffer();
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
-                    exec.execute_buffer_reuse_internal(input, arg_input, &mut buffer, user_buffer)?;
+                    if is_pop_from_buffer {
+                        exec.execute_buffer_reuse_internal(
+                            input,
+                            arg_input,
+                            &mut buffer,
+                            user_buffer,
+                        )?;
+                    } else {
+                        exec.execute_reuse_internal(input, arg_input, &mut buffer)?;
+                    }
                 } else if exec_len == i + 1 {
-                    exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                    if is_aggr_to_buffer {
+                        exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                    } else {
+                        exec.execute_reuse_internal(&buffer, 0, output)?;
+                    }
                 } else {
                     exec.execute_single_internal(&mut buffer, 0)?;
                 }
@@ -272,16 +302,26 @@ where
                 0
             };
             let mut buffer = self.new_data(num * self.buffer_len);
+            let is_pop_from_buffer = self.is_populated_from_buffer();
+            let is_aggr_to_buffer = self.is_aggregated_to_buffer();
             for (i, exec) in self.executors.iter_mut().enumerate() {
                 if i == 0 {
-                    exec.execute_buffer_reuse_internal(
-                        output,
-                        arg_input,
-                        &mut buffer,
-                        user_buffer,
-                    )?;
+                    if is_pop_from_buffer {
+                        exec.execute_buffer_reuse_internal(
+                            output,
+                            arg_input,
+                            &mut buffer,
+                            user_buffer,
+                        )?;
+                    } else {
+                        exec.execute_reuse_internal(output, arg_input, &mut buffer)?;
+                    }
                 } else if exec_len == i + 1 {
-                    exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                    if is_aggr_to_buffer {
+                        exec.execute_buffer_reuse_internal(&buffer, 0, output, user_buffer)?;
+                    } else {
+                        exec.execute_reuse_internal(&buffer, 0, output)?;
+                    }
                 } else {
                     exec.execute_single_internal(&mut buffer, 0)?;
                 }
