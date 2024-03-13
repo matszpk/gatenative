@@ -2052,6 +2052,12 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
             circuit2_out[idx as usize]
         })
         .collect::<Vec<_>>();
+    let expected_out_2 = (0..1u32 << 16)
+        .map(|x| {
+            let idx = (x & 0xffff) | ((((params[0] + params[1]) ^ params[2]) & 15) << 16);
+            circuit2_out[idx as usize]
+        })
+        .collect::<Vec<_>>();
     let configs = get_builder_configs();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         let mut builder =
@@ -2070,6 +2076,18 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
     INPUT_TRANSFORM_B16(i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13,
             i14, i15, i16, i17, inp);
 }"##;
+        let pop_input_code_2 = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        inp[i] = ((p0 + p1) ^ p2) & 15;
+    }
+    INPUT_TRANSFORM_B4(i16, i17, i18, i19, inp);
+}"##;
         builder.transform_helpers();
         builder.add_with_config(
             "comb_pop_from_buffer",
@@ -2079,7 +2097,17 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
                 .pop_input_len(Some(3))
                 .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
         );
+        builder.add_with_config(
+            "comb_pop_from_buffer_2",
+            circuit2.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(16..20).collect::<Vec<_>>())),
+        );
         let mut execs = builder.build().unwrap();
+        // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
         let mut ot = execs[0]
             .output_transformer(32, &(0..12).collect::<Vec<_>>())
@@ -2108,6 +2136,20 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
         let output = ot.transform(&output_circ).unwrap().release();
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // second exec
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[1].new_data_from_slice(&params[..]);
+        let input_circ = execs[1].new_data(1);
+        let output_circ = execs[1]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 16, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
         }
     }
 }
