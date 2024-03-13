@@ -402,7 +402,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             0
         };
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let output_len = output.get().get().len();
+        let output_len = output.len();
         let num = if self.populated_input {
             (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
         } else if real_input_words != 0 {
@@ -465,6 +465,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         arg_input: u64,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.len();
         let num = if self.populated_input {
             (1 << (self.input_len - self.arg_input_len.unwrap_or(0) - 5)) / self.words_per_real_word
         } else if real_input_words != 0 {
@@ -474,6 +476,9 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         } else {
             0
         };
+        if !self.aggregated_output {
+            assert!(output_len >= real_output_words * num);
+        }
         let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
@@ -599,7 +604,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
         let real_output_words = self.real_output_len * self.words_per_real_word;
-        let output_len = output.get().get().len();
+        let output_len = output.len();
         let num = if real_input_words != 0 {
             (input.range.end - input.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
@@ -666,6 +671,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         buffer: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
         let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.len();
         let num = if real_input_words != 0 {
             (output.range.end - output.range.start) / real_input_words
         } else if self.elem_input_num != 0 {
@@ -675,6 +682,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         } else {
             0
         };
+        assert!(output_len >= real_output_words * num);
         let cl_num = cl_ulong::try_from(num).unwrap();
         let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
