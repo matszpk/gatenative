@@ -2224,11 +2224,29 @@ fn test_cpu_data_holder() {
 
         // test new from slice
         let array = [3, 5, 2, 11, 581, 521];
-        let data = execs[0].new_data_from_slice(&array[..]);
+        let mut data = execs[0].new_data_from_slice(&array[..]);
         {
             let rd = data.get();
             for (i, x) in rd.get().iter().enumerate() {
                 assert_eq!(array[i], *x, "1: {} {}", config_num, i);
+            }
+        }
+        // test copy
+        let data2 = data.copy();
+        {
+            let rd = data2.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(array[i], *x, "1: {} {}", config_num, i);
+            }
+        }
+        // test copy of range
+        data.set_range(1..5);
+        let data2 = data.copy();
+        {
+            assert_eq!(data2.len(), 4);
+            let rd = data2.get();
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(array[i + 1], *x, "1: {} {}", config_num, i);
             }
         }
 
