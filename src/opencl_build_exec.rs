@@ -513,13 +513,81 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         Ok(())
     }
 
+    // with buffer argument
     unsafe fn execute_buffer_internal(
         &mut self,
         input: &OpenCLDataHolder,
         arg_input: u64,
         buffer: &mut OpenCLDataHolder,
     ) -> Result<OpenCLDataHolder, Self::ErrorType> {
-        Ok(self.new_data(1))
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let num = if real_input_words != 0 {
+            (input.range.end - input.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            0
+        };
+        let output = OpenCLDataHolder::new(
+            if self.aggregated_output {
+                self.aggr_output_len.unwrap()
+            } else {
+                real_output_words * num
+            },
+            self.context.clone(),
+            self.cmd_queue.clone(),
+            CL_MEM_READ_WRITE,
+        );
+        let cl_num = cl_ulong::try_from(num).unwrap();
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
+        let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
+        unsafe {
+            if self.arg_input_len.is_some() {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&input.buffer)
+                    .set_arg(&output.buffer)
+                    .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            } else {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&input.buffer)
+                    .set_arg(&output.buffer)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            }
+            self.cmd_queue.finish()?;
+        }
+        Ok(output)
     }
 
     unsafe fn execute_buffer_reuse_internal(
@@ -529,6 +597,65 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         output: &mut OpenCLDataHolder,
         buffer: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
+        let num = if real_input_words != 0 {
+            (input.range.end - input.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            (output.range.end - output.range.start) / real_output_words
+        };
+        assert!(output_len >= real_output_words * num);
+        let cl_num = cl_ulong::try_from(num).unwrap();
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
+        let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
+        let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
+        unsafe {
+            if self.arg_input_len.is_some() {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&input.buffer)
+                    .set_arg(&output.buffer)
+                    .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            } else {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_input_start)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&input.buffer)
+                    .set_arg(&output.buffer)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            }
+            self.cmd_queue.finish()?;
+        }
         Ok(())
     }
 
@@ -538,6 +665,57 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         arg_input: u64,
         buffer: &mut OpenCLDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let num = if real_input_words != 0 {
+            (output.range.end - output.range.start) / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            0
+        };
+        let cl_num = cl_ulong::try_from(num).unwrap();
+        let cl_arg_input = cl_uint::try_from(arg_input & 0xffffffff).unwrap();
+        let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
+        let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
+        let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
+        // kernel worksize: if group_vec: group_len*num
+        let num = if self.group_vec {
+            num * self.group_len
+        } else {
+            num
+        };
+        unsafe {
+            if self.arg_input_len.is_some() {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&output.buffer)
+                    .set_arg(&cl_arg_input)
+                    .set_arg(&cl_arg_input_2)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            } else {
+                ExecuteKernel::new(&self.kernel)
+                    .set_arg(&cl_num)
+                    .set_arg(&cl_output_start)
+                    .set_arg(&cl_buffer_start)
+                    .set_arg(&output.buffer)
+                    .set_arg(&buffer.buffer)
+                    .set_local_work_size(self.group_len)
+                    .set_global_work_size(
+                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
+                    )
+                    .enqueue_nd_range(&self.cmd_queue)?;
+            }
+            self.cmd_queue.finish()?;
+        }
         Ok(())
     }
 
