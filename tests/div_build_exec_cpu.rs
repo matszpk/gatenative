@@ -1307,3 +1307,217 @@ fn test_cpu_div_builder_and_exec_with_pop_input() {
         }
     }
 }
+
+#[test]
+fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
+    use CPUExtension::*;
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+        parallel: None,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+        parallel: None,
+    };
+
+    let configs = vec![
+        (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
+        (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
+        (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
+    ];
+
+    let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
+    let circuit2_out = (0..1u32 << 20)
+        .map(|x| {
+            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+    let params = [7, 3, 19];
+    let expected_out = (0..1u32 << 20)
+        .map(|x| {
+            let newx = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            let idx = (newx << 2) | ((x >> 16) & 3) | (x & 0xc0000);
+            circuit2_out[idx as usize]
+        })
+        .collect::<Vec<_>>();
+    let expected_out_2 = (0..1u32 << 16)
+        .map(|x| {
+            let idx = (x & 0xffff) | ((((params[0] + params[1]) ^ params[2]) & 15) << 16);
+            circuit2_out[idx as usize]
+        })
+        .collect::<Vec<_>>();
+    let expected_out_3 = (0..1u32 << 20)
+        .map(|x| {
+            let x = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xfffff;
+            circuit2_out[x as usize]
+        })
+        .collect::<Vec<_>>();
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        let builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        let mut builder = DivBuilder::new(builder, 20);
+        let pop_input_code = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        inp[i] = (x*p0 + ((x << p1) & ~p2)) & 0xffff;
+    }
+    INPUT_TRANSFORM_B16(i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13,
+            i14, i15, i16, i17, inp);
+}"##;
+        let pop_input_code_2 = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        inp[i] = ((p0 + p1) ^ p2) & 15;
+    }
+    INPUT_TRANSFORM_B4(i16, i17, i18, i19, inp);
+}"##;
+        let pop_input_code_3 = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        inp[i] = (x*p0 + ((x << p1) & ~p2)) & 0xfffff;
+    }
+    INPUT_TRANSFORM_B20(i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11,
+            i12, i13, i14, i15, i16, i17, i18, i19, inp);
+}"##;
+        builder.transform_helpers();
+        builder.add_with_config(
+            "comb_pop_from_buffer",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "comb_pop_from_buffer_2",
+            circuit2.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .pop_input_code(Some(pop_input_code_2))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(16..20).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "comb_pop_from_buffer_3",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code_3))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(0..20).collect::<Vec<_>>())),
+        );
+        let mut execs = builder.build().unwrap();
+        // first exec
+        let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[0].new_data_from_slice(&params[..]);
+        let input = execs[0].new_data_from_vec(
+            (0..1 << 20)
+                .map(|i| (i & 0xf0000) >> 16)
+                .collect::<Vec<_>>(),
+        );
+        let input_circ = it.transform(&input).unwrap();
+        let output_circ = execs[0]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[0].new_data_from_slice(&params[..]);
+        let mut output_circ = execs[0].new_data(output_circ.len());
+        execs[0]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // second exec
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[1].new_data_from_slice(&params[..]);
+        let input_circ = execs[1].new_data(1);
+        let output_circ = execs[1]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 16, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[1].new_data_from_slice(&params[..]);
+        let mut output_circ = execs[1].new_data(output_circ.len());
+        execs[1]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 16, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_2[i], *out, "{}: {}", config_num, i);
+        }
+        // third exec
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[2].new_data(1);
+        let mut buffer = execs[2].new_data_from_slice(&params[..]);
+        let output_circ = execs[2]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_3[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[2].new_data_from_slice(&params[..]);
+        let mut output_circ = execs[2].new_data(output_circ.len());
+        execs[2]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_3[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}

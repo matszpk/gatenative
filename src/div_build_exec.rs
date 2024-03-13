@@ -188,7 +188,7 @@ where
             } else if self.elem_input_num != 0 {
                 1 << (self.elem_input_num - 5)
             } else if self.is_populated_from_buffer() {
-                self.elem_count(1)
+                self.elem_count(1) >> 5
             } else {
                 0
             };
@@ -227,7 +227,7 @@ where
             } else if self.elem_input_num != 0 {
                 1 << (self.elem_input_num - 5)
             } else if self.is_populated_from_buffer() {
-                self.elem_count(1)
+                self.elem_count(1) >> 5
             } else {
                 output_len / output_chunk_len
             };
