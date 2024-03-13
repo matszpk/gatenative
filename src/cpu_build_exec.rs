@@ -358,6 +358,7 @@ pub struct CPUExecutor {
     populated_input: bool,
     populated_from_buffer: bool,
     pop_input_len: Option<usize>,
+    pop_input_len_from_buffer: Option<usize>,
     // parallel chunk length
     parallel: Option<usize>,
 }
@@ -511,6 +512,104 @@ impl CPUExecutor {
         }
         Ok(())
     }
+
+    fn call_execute_buffer_internal(
+        &self,
+        num: usize,
+        input: &[u32],
+        output: &mut [u32],
+        buffer: &mut [u32],
+        real_input_words: usize,
+        real_output_words: usize,
+        arg_input: u64,
+    ) -> Result<(), libloading::Error> {
+        if let Some(par_chunk_len) = self.parallel {
+            // parallel code
+            if self.arg_input_len.is_some() {
+                let symbol: Symbol<
+                    unsafe extern "C" fn(*const u32, *mut u32, u32, u32, *mut u32, usize),
+                > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                output
+                    .chunks_mut(par_chunk_len * real_output_words)
+                    .enumerate()
+                    .par_bridge()
+                    .for_each(|(ch_idx, out_chunk)| {
+                        let buffer_ptr = buffer[..].as_ptr();
+                        let start = ch_idx * par_chunk_len;
+                        let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
+                        for i in start..end {
+                            let buffer_ptr = buffer_ptr.cast_mut();
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    buffer_ptr,
+                                    i,
+                                );
+                            }
+                        }
+                    });
+            } else {
+                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                output
+                    .chunks_mut(par_chunk_len * real_output_words)
+                    .enumerate()
+                    .par_bridge()
+                    .for_each(|(ch_idx, out_chunk)| {
+                        let buffer_ptr = buffer[..].as_ptr();
+                        let start = ch_idx * par_chunk_len;
+                        let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
+                        for i in start..end {
+                            let buffer_ptr = buffer_ptr.cast_mut();
+                            unsafe {
+                                (symbol)(
+                                    input[i * real_input_words..].as_ptr(),
+                                    out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                    buffer_ptr,
+                                    i,
+                                );
+                            }
+                        }
+                    });
+            }
+        } else {
+            // non-parallel code
+            if self.arg_input_len.is_some() {
+                let symbol: Symbol<
+                    unsafe extern "C" fn(*const u32, *mut u32, u32, u32, *mut u32, usize),
+                > = unsafe { self.library.get(self.sym_name.as_bytes())? };
+                for i in 0..num {
+                    unsafe {
+                        (symbol)(
+                            input[i * real_input_words..].as_ptr(),
+                            output[i * real_output_words..].as_mut_ptr(),
+                            (arg_input & 0xffffffff) as u32,
+                            (arg_input >> 32) as u32,
+                            buffer[..].as_mut_ptr(),
+                            i,
+                        );
+                    }
+                }
+            } else {
+                let symbol: Symbol<unsafe extern "C" fn(*const u32, *mut u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                for i in 0..num {
+                    unsafe {
+                        (symbol)(
+                            input[i * real_input_words..].as_ptr(),
+                            output[i * real_output_words..].as_mut_ptr(),
+                            buffer[..].as_mut_ptr(),
+                            i,
+                        );
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for CPUExecutor {
@@ -539,6 +638,12 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             (input_len / self.real_input_len) << 5
         } else if self.elem_input_num != 0 {
             1 << self.elem_input_num
+        } else if self.populated_input && self.populated_from_buffer {
+            if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+                1 << pop_from_buffer_len
+            } else {
+                0
+            }
         } else {
             0
         }
@@ -780,7 +885,36 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         arg_input: u64,
         buffer: &mut CPUDataHolder,
     ) -> Result<CPUDataHolder, Self::ErrorType> {
-        Ok(self.new_data(1))
+        let input_r = input.get();
+        let input = input_r.get();
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let num = if real_input_words != 0 {
+            input.len() / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            0
+        };
+        let mut output = vec![0; num * real_output_words];
+        let mut buffer_w = buffer.get_mut();
+        let buffer = buffer_w.get_mut();
+        self.call_execute_buffer_internal(
+            num,
+            input,
+            &mut output,
+            buffer,
+            real_input_words,
+            real_output_words,
+            arg_input,
+        )?;
+        let out_len = output.len();
+        Ok(CPUDataHolder {
+            buffer: output.into(),
+            range: 0..out_len,
+        })
     }
 
     unsafe fn execute_buffer_reuse_internal(
@@ -790,7 +924,34 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         output: &mut CPUDataHolder,
         buffer: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
-        Ok(())
+        let input_r = input.get();
+        let input = input_r.get();
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
+        let num = if real_input_words != 0 {
+            input.len() / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            output_len / real_output_words
+        };
+        let mut output_w = output.get_mut();
+        let output = output_w.get_mut();
+        assert!(output_len >= real_output_words * num);
+        let mut buffer_w = buffer.get_mut();
+        let buffer = buffer_w.get_mut();
+        self.call_execute_buffer_internal(
+            num,
+            input,
+            output,
+            buffer,
+            real_input_words,
+            real_output_words,
+            arg_input,
+        )
     }
 
     unsafe fn execute_buffer_single_internal(
@@ -799,6 +960,102 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         arg_input: u64,
         buffer: &mut CPUDataHolder,
     ) -> Result<(), Self::ErrorType> {
+        let real_input_words = self.real_input_len * self.words_per_real_word;
+        let real_output_words = self.real_output_len * self.words_per_real_word;
+        let output_len = output.get().get().len();
+        let num = if real_input_words != 0 {
+            output_len / real_input_words
+        } else if self.elem_input_num != 0 {
+            (1 << (self.elem_input_num - 5)) / self.words_per_real_word
+        } else if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+            (1 << (pop_from_buffer_len - 5)) / self.words_per_real_word
+        } else {
+            0
+        };
+        let mut output_w = output.get_mut();
+        let output = output_w.get_mut();
+        assert!(output_len >= real_output_words * num);
+        let mut buffer_w = buffer.get_mut();
+        let buffer = buffer_w.get_mut();
+        if let Some(par_chunk_len) = self.parallel {
+            // parallel code
+            if self.arg_input_len.is_some() {
+                let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                output
+                    .chunks_mut(par_chunk_len * real_output_words)
+                    .enumerate()
+                    .par_bridge()
+                    .for_each(|(ch_idx, out_chunk)| {
+                        let buffer_ptr = buffer[..].as_ptr();
+                        let start = ch_idx * par_chunk_len;
+                        let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
+                        for i in start..end {
+                            let buffer_ptr = buffer_ptr.cast_mut();
+                            unsafe {
+                                (symbol)(
+                                    out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                    (arg_input & 0xffffffff) as u32,
+                                    (arg_input >> 32) as u32,
+                                    buffer_ptr,
+                                    i,
+                                );
+                            }
+                        }
+                    });
+            } else {
+                let symbol: Symbol<unsafe extern "C" fn(*mut u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                output
+                    .chunks_mut(par_chunk_len * real_output_words)
+                    .enumerate()
+                    .par_bridge()
+                    .for_each(|(ch_idx, out_chunk)| {
+                        let buffer_ptr = buffer[..].as_ptr();
+                        let start = ch_idx * par_chunk_len;
+                        let end = std::cmp::min((ch_idx + 1) * par_chunk_len, num);
+                        for i in start..end {
+                            let buffer_ptr = buffer_ptr.cast_mut();
+                            unsafe {
+                                (symbol)(
+                                    out_chunk[(i - start) * real_output_words..].as_mut_ptr(),
+                                    buffer_ptr,
+                                    i,
+                                );
+                            }
+                        }
+                    });
+            }
+        } else {
+            // non-parallel code
+            if self.arg_input_len.is_some() {
+                let symbol: Symbol<unsafe extern "C" fn(*mut u32, u32, u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                for i in 0..num {
+                    unsafe {
+                        (symbol)(
+                            output[i * real_output_words..].as_mut_ptr(),
+                            (arg_input & 0xffffffff) as u32,
+                            (arg_input >> 32) as u32,
+                            buffer.as_mut_ptr(),
+                            i,
+                        );
+                    }
+                }
+            } else {
+                let symbol: Symbol<unsafe extern "C" fn(*mut u32, *mut u32, usize)> =
+                    unsafe { self.library.get(self.sym_name.as_bytes())? };
+                for i in 0..num {
+                    unsafe {
+                        (symbol)(
+                            output[i * real_output_words..].as_mut_ptr(),
+                            buffer.as_mut_ptr(),
+                            i,
+                        );
+                    }
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1081,6 +1338,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     aggr_output_len: e.aggr_output_len,
                     populated_input: e.populated_input,
                     populated_from_buffer: e.populated_from_buffer,
+                    pop_input_len_from_buffer: e.pop_input_len_from_buffer,
                     pop_input_len: e.pop_input_len,
                     parallel: self.parallel,
                 }

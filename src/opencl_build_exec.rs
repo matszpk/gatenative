@@ -265,6 +265,7 @@ pub struct OpenCLExecutor {
     populated_input: bool,
     populated_from_buffer: bool,
     pop_input_len: Option<usize>,
+    pop_input_len_from_buffer: Option<usize>,
 }
 
 impl OpenCLExecutor {
@@ -304,6 +305,12 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             (input_len / self.real_input_len) << 5
         } else if self.elem_input_num != 0 {
             1 << self.elem_input_num
+        } else if self.populated_input && self.populated_from_buffer {
+            if let Some(pop_from_buffer_len) = self.pop_input_len_from_buffer {
+                1 << pop_from_buffer_len
+            } else {
+                0
+            }
         } else {
             0
         }
@@ -590,6 +597,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             populated_input: self.populated_input,
             populated_from_buffer: self.populated_from_buffer,
             pop_input_len: self.pop_input_len,
+            pop_input_len_from_buffer: self.pop_input_len_from_buffer,
         })
     }
 
@@ -918,6 +926,7 @@ impl<'b, 'a>
                     populated_input: e.populated_input,
                     populated_from_buffer: e.populated_from_buffer,
                     pop_input_len: e.pop_input_len,
+                    pop_input_len_from_buffer: e.pop_input_len_from_buffer,
                 })
             })
             .collect::<Result<Vec<_>, _>>()
