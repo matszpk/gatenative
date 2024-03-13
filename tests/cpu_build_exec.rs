@@ -2027,6 +2027,82 @@ fn test_cpu_builder_and_exec_with_pop_input_with_helpers() {
 }
 
 #[test]
+fn test_cpu_builder_and_exec_with_pop_from_buffer() {
+    let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
+    let circuit2_out = (0..1u32 << 20)
+        .map(|x| {
+            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+    let params = [7, 3, 19];
+    let expected_out = (0..1u32 << 20)
+        .map(|x| {
+            let newx = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            let idx = (newx << 2) | ((x >> 16) & 3) | (x & 0xc0000);
+            circuit2_out[idx as usize]
+        })
+        .collect::<Vec<_>>();
+    let configs = get_builder_configs();
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        let mut builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        let pop_input_code = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        inp[i] = (x*p0 + ((x << p1) & ~p2)) & 0xffff;
+    }
+    INPUT_TRANSFORM_B16(i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13,
+            i14, i15, i16, i17, inp);
+}"##;
+        builder.transform_helpers();
+        builder.add_with_config(
+            "comb_pop_from_buffer",
+            circuit2.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
+        );
+        let mut execs = builder.build().unwrap();
+        let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[0].new_data_from_slice(&params[..]);
+        let input = execs[0].new_data_from_vec(
+            (0..1 << 20)
+                .map(|i| (i & 0xf0000) >> 16)
+                .collect::<Vec<_>>(),
+        );
+        let input_circ = it.transform(&input).unwrap();
+        let output_circ = execs[0]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(1 << 20, output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}
+
+#[test]
 fn test_cpu_data_holder() {
     let no_opt_neg_config = CPUBuilderConfig {
         optimize_negs: false,

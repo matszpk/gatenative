@@ -447,8 +447,10 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         buffer: &mut D,
     ) -> Result<D, Self::ErrorType> {
         assert!(!self.is_single_buffer());
-        assert!(self.input_is_populated() && self.is_populated_from_buffer());
-        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        assert!(
+            (self.input_is_populated() && self.is_populated_from_buffer())
+                || (self.output_is_aggregated() && self.is_aggregated_to_buffer())
+        );
         unsafe { self.execute_buffer_internal(input, arg_input, buffer) }
     }
 
@@ -467,8 +469,10 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         buffer: &mut D,
     ) -> Result<(), Self::ErrorType> {
         assert!(!self.is_single_buffer());
-        assert!(self.input_is_populated() && self.is_populated_from_buffer());
-        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        assert!(
+            (self.input_is_populated() && self.is_populated_from_buffer())
+                || (self.output_is_aggregated() && self.is_aggregated_to_buffer())
+        );
         unsafe { self.execute_buffer_reuse_internal(input, arg_input, output, buffer) }
     }
 
@@ -485,8 +489,10 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         arg_input: u64,
     ) -> Result<(), Self::ErrorType> {
         assert!(self.is_single_buffer());
-        assert!(self.input_is_populated() && self.is_populated_from_buffer());
-        assert!(self.output_is_aggregated() && self.is_aggregated_to_buffer());
+        assert!(
+            (self.input_is_populated() && self.is_populated_from_buffer())
+                || (self.output_is_aggregated() && self.is_aggregated_to_buffer())
+        );
         unsafe { self.execute_buffer_single_internal(output, arg_input, buffer) }
     }
 
