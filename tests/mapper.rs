@@ -570,6 +570,146 @@ fn test_basic_mapper_builder_and_exec_with_aggr_output() {
     }
 }
 
+const COMB_CIRCUIT2: &str = r##"
+{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 xor(4,9) and(20,5):0 xor(5,0) xor(22,10)
+nimpl(4,9) nimpl(20,24) xor(23,25) and(26,6):1 xor(6,1) and(5,0) xor(28,29) xor(30,11)
+nor(23,25) nimpl(22,10) nor(32,33) xor(31,34) and(35,7):2 xor(7,2) and(28,29) and(6,1)
+nor(38,39) xor(37,40) xor(41,12) nor(31,34) nimpl(30,11) nor(43,44) xor(42,45) nimpl(8,46):3
+xor(8,3) nimpl(37,40) and(7,2) nor(49,50) xor(48,51) xor(52,13) nimpl(42,45) nor(41,12)
+nor(54,55) xor(53,56) xor(57,7) nimpl(9,58):4 xor(9,4) nimpl(48,51) and(8,3) nor(61,62)
+xor(60,63) xor(64,14) nimpl(53,56) nor(52,13) nor(66,67) xor(65,68) xor(69,8) nimpl(7,57)
+xor(70,71) nimpl(10,72):5 xor(10,5) nimpl(60,63) and(9,4) nor(75,76) xor(74,77) xor(78,15)
+nimpl(65,68) nor(64,14) nor(80,81) xor(79,82) xor(83,9) nimpl(71,70) nimpl(8,69) nor(85,86)
+xor(84,87) and(88,11):6 xor(11,6) nimpl(74,77) and(10,5) nor(91,92) xor(90,93) xor(94,16)
+nimpl(79,82) nor(78,15) nor(96,97) xor(95,98) xor(99,10) nor(84,87) nimpl(9,83) nor(101,102)
+xor(100,103) and(104,12):7 xor(0,17) nimpl(95,98) nor(94,16) nor(107,108) xor(106,109)
+xor(110,11) nor(100,103) nimpl(10,99) nor(112,113) xor(111,114) nimpl(13,115):8 xor(1,18)
+nor(106,109) nimpl(0,17) nor(118,119) xor(117,120) nimpl(111,114) and(110,11) nor(122,123)
+xor(121,124) nimpl(14,125):9 xor(2,19) nor(117,120) nimpl(1,18) nor(128,129) xor(127,130)
+nimpl(121,124) xor(131,132) and(133,15):10 xor(3,0) nor(127,130) nimpl(2,19) nor(136,137)
+xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
+
+#[test]
+fn test_basic_mapper_builder_and_exec_with_pop_from_buffer() {
+    let no_opt_neg_config = CPUBuilderConfig {
+        optimize_negs: false,
+        parallel: None,
+    };
+    let opt_neg_config = CPUBuilderConfig {
+        optimize_negs: true,
+        parallel: None,
+    };
+
+    let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
+    let circuit2_out = (0..1u32 << 20)
+        .map(|x| {
+            let out = circuit2.eval((0..20).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+    let params = [7, 3, 19];
+    let expected_out = (0..1u32 << 20)
+        .map(|x| {
+            let newx = (x
+                .overflowing_mul(params[0])
+                .0
+                .overflowing_add((x << params[1]) & !params[2])
+                .0)
+                & 0xffff;
+            let idx = (newx << 2) | ((x >> 16) & 3) | (x & 0xc0000);
+            circuit2_out[idx as usize]
+        })
+        .collect::<Vec<_>>();
+
+    for (config_num, (writer_config, builder_config)) in [
+        (&CLANG_WRITER_U32, &no_opt_neg_config),
+        (&CLANG_WRITER_U32, &opt_neg_config),
+        (&CLANG_WRITER_U64, &no_opt_neg_config),
+        (&CLANG_WRITER_U64, &opt_neg_config),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let builder = CPUBuilder::new_with_cpu_ext_and_clang_config(
+            CPUExtension::NoExtension,
+            writer_config,
+            Some(builder_config.clone()),
+        );
+        let mut builder = BasicMapperBuilder::new(builder);
+        let pop_input_code = r##"{
+    unsigned int i;
+    uint32_t inp[TYPE_LEN];
+    const uint32_t* params = (const uint32_t*)buffer;
+    const uint32_t p0 = params[0];
+    const uint32_t p1 = params[1];
+    const uint32_t p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t x = idx*TYPE_LEN + i;
+        inp[i] = (x*p0 + ((x << p1) & ~p2)) & 0xffff;
+    }
+    INPUT_TRANSFORM_B16(i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13,
+            i14, i15, i16, i17, inp);
+}"##;
+        builder.transform_helpers();
+        builder.add_with_config(
+            "comb_pop_from_buffer_arg_1",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&[0, 1, 18, 19]))
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
+        );
+        let mut execs = builder.build().unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut buffer = execs[0].new_data_from_slice(&params[..]);
+        let buffer_orig = buffer.copy();
+        let input_circ = execs[0].new_data(1);
+        let mut exec_count = 0;
+        assert!(
+            execs[0]
+                .execute_buffer(
+                    &input_circ,
+                    &mut buffer,
+                    true,
+                    |out, _, result_out, result_buffer, arg| {
+                        exec_count += 1;
+                        let output = ot.transform(&result_out).unwrap().release();
+                        let arg = usize::try_from(arg).unwrap();
+                        assert_eq!(1 << 16, output.len());
+                        for (i, out) in output.iter().enumerate() {
+                            assert_eq!(
+                                expected_out[(arg << 16) + i],
+                                *out,
+                                "{}: {} {}",
+                                config_num,
+                                arg,
+                                i
+                            );
+                        }
+                        let buffer_r = buffer_orig.get();
+                        let buffer_data = buffer_r.get();
+                        let result_buffer_r = result_buffer.get();
+                        let result_buffer_data = result_buffer_r.get();
+                        out && (output == expected_out[arg << 16..(arg + 1) << 16]
+                            && buffer_data == result_buffer_data)
+                    },
+                    |_| false,
+                )
+                .unwrap(),
+            "{}",
+            config_num
+        );
+        assert_eq!(exec_count, 16);
+    }
+}
+
 #[test]
 fn test_basic_mapper_builder_and_exec_info() {
     let no_opt_neg_config = CPUBuilderConfig {
