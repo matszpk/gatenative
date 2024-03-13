@@ -2149,6 +2149,16 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
                 .input_placement(Some((&[0, 1, 2, 3], 12)))
                 .single_buffer(true),
         );
+        // 4: arg_input
+        builder.add_with_config(
+            "comb_pop_from_buffer_arg_1",
+            circuit2.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&[0, 1, 18, 19]))
+                .pop_input_code(Some(pop_input_code))
+                .pop_input_len(Some(3))
+                .pop_from_buffer(Some(&(2..18).collect::<Vec<_>>())),
+        );
         let mut execs = builder.build().unwrap();
         // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
@@ -2249,6 +2259,47 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
         assert_eq!(1 << 20, output.len());
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        // arg_inputs
+        let mut ot = execs[4]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        for arg in 0usize..16 {
+            let mut buffer = execs[4].new_data_from_slice(&params[..]);
+            let input_circ = execs[4].new_data(1);
+            let output_circ = execs[4]
+                .execute_buffer(&input_circ, arg as u64, &mut buffer)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out[(arg << 16) + i],
+                    *out,
+                    "{}: {} {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
+            // reuse
+            let mut buffer = execs[4].new_data_from_slice(&params[..]);
+            let mut output_circ = execs[4].new_data(output_circ.len());
+            execs[4]
+                .execute_buffer_reuse(&input_circ, arg as u64, &mut output_circ, &mut buffer)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(1 << 16, output.len());
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(
+                    expected_out[(arg << 16) + i],
+                    *out,
+                    "{}: {} {}",
+                    config_num,
+                    arg,
+                    i
+                );
+            }
         }
     }
 }
