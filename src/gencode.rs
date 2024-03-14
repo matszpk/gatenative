@@ -117,12 +117,13 @@ fn load_input_later(
 
 // input_map - input map after filtering arg inputs, elem inputs and other.
 // keep_output_vars - keep output variables to later usage.
+//          if supplied empty array then use all circuits outputs as aggr outputs.
 // pop_input - include rest of inputs (without arg inputs, elem inputs) to be loaded
-//    from populating code.
+//    from populating code. If supplied empty array then use all circuit inputs as pop inputs.
 // returns: variable id after allocation: index - wire index (circuit input and gate outputs)
 //          value - id of allocated variable
 //          size of allocation (number of allocated variables)
-//          optional: map of output variables: index - circuit output number
+//          optional: map of output variables: key - circuit output number
 //                   value - (id of allocated variable for this circuit output,
 //                            optional: original variable for first sign occurred in
 //                            circuit's output list)
@@ -1229,6 +1230,7 @@ mod tests {
                 None
             )
         );
+        // with various keep_output_vars
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
         assert_eq!(
@@ -1346,6 +1348,7 @@ mod tests {
                 None
             )
         );
+        // with various keep_output_vars
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
         assert_eq!(
