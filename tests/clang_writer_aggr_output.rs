@@ -1707,4 +1707,164 @@ fn test_clang_writer_aggregate_output_to_buffer() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 2, 4, 7, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    output[0] = v0;
+    v0 = input[1];
+    output[1] = _m_pxor(v0, one);
+    v1 = input[2];
+    output[2] = v1;
+    v2 = input[3];
+    output[3] = _m_pxor(v2, one);
+    output[4] = v0;
+    output[5] = _m_pxor(v1, one);
+    output[6] = _m_pxor(v2, one);
+    output[7] = v1;
+    output[8] = _m_pxor(v0, one);
+    v0 = _m_pxor(v0, one);
+    v2 = _m_pxor(v0, one);
+#define o1 (v0)
+#define o2 (v1)
+#define o4 (v2)
+#define o7 (v1)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o2
+#undef o4
+#undef o7
+#undef o8
+    _m_empty();
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 4, 5, 6, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    output[0] = v0;
+    v0 = input[1];
+    output[1] = ~v0;
+    v1 = input[2];
+    output[2] = v1;
+    v2 = input[3];
+    output[3] = ~v2;
+    output[4] = v0;
+    output[5] = ~v1;
+    output[6] = ~v2;
+    output[7] = v1;
+    output[8] = ~v0;
+    v0 = ~v0;
+    v3 = ~v0;
+    v1 = ~v1;
+    v2 = ~v2;
+#define o1 (v0)
+#define o4 (v3)
+#define o5 (v1)
+#define o6 (v2)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o4
+#undef o5
+#undef o6
+#undef o8
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 4, 5, 6, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    output[0] = v0;
+    v0 = input[1];
+    output[1] = _m_pxor(v0, one);
+    v1 = input[2];
+    output[2] = v1;
+    v2 = input[3];
+    output[3] = _m_pxor(v2, one);
+    output[4] = v0;
+    output[5] = _m_pxor(v1, one);
+    output[6] = _m_pxor(v2, one);
+    output[7] = v1;
+    output[8] = _m_pxor(v0, one);
+    v0 = _m_pxor(v0, one);
+    v3 = _m_pxor(v0, one);
+    v1 = _m_pxor(v1, one);
+    v2 = _m_pxor(v2, one);
+#define o1 (v0)
+#define o4 (v3)
+#define o5 (v1)
+#define o6 (v2)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o4
+#undef o5
+#undef o6
+#undef o8
+    _m_empty();
+}
+"##
+    );
 }
