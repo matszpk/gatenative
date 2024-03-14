@@ -673,6 +673,8 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 );
             }
         }
+    }
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if let Some(output_vars) = output_vars {
             if let Some(out_var_entry) = output_vars.get(&oi) {
                 if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
@@ -893,6 +895,8 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 );
             }
         }
+    }
+    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
         if let Some(output_vars) = output_vars {
             if let Some(out_var_entry) = output_vars.get(&oi) {
                 if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {

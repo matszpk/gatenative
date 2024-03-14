@@ -957,6 +957,131 @@ kernel void gate_sys_xor(unsigned long n,
 }
 "##
     );
+
+    let circuit = Circuit::new(
+        4,
+        [],
+        [
+            (0, false),
+            (1, true),
+            (2, false),
+            (3, true),
+            (1, false),
+            (2, true),
+            (3, true),
+            (2, false),
+            (1, true),
+        ],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            )),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    void* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v1 = ~v1;
+    v3 = ~v3;
+    v4 = ~v1;
+    v5 = ~v2;
+#define o0 (v0)
+#define o1 (v1)
+#define o2 (v2)
+#define o3 (v3)
+#define o4 (v4)
+#define o5 (v5)
+#define o6 (v3)
+#define o7 (v2)
+#define o8 (v1)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+#undef o6
+#undef o7
+#undef o8
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            )),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    void* output, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    __m64 v5;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v1 = _m_pxor(v1, one);
+    v3 = _m_pxor(v3, one);
+    v4 = _m_pxor(v1, one);
+    v5 = _m_pxor(v2, one);
+#define o0 (v0)
+#define o1 (v1)
+#define o2 (v2)
+#define o3 (v3)
+#define o4 (v4)
+#define o5 (v5)
+#define o6 (v3)
+#define o7 (v2)
+#define o8 (v1)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o0
+#undef o1
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+#undef o6
+#undef o7
+#undef o8
+    _m_empty();
+}
+"##
+    );
 }
 
 #[test]
@@ -1512,6 +1637,73 @@ fn test_clang_writer_aggregate_output_to_buffer() {
 #undef o3
 #undef o4
     _m_empty();
+}
+"##
+    );
+
+    let circuit = Circuit::new(
+        4,
+        [],
+        [
+            (0, false),
+            (1, true),
+            (2, false),
+            (3, true),
+            (1, false),
+            (2, true),
+            (3, true),
+            (2, false),
+            (1, true),
+        ],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 2, 4, 7, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    output[0] = v0;
+    v0 = input[1];
+    output[1] = ~v0;
+    v1 = input[2];
+    output[2] = v1;
+    v2 = input[3];
+    output[3] = ~v2;
+    output[4] = v0;
+    output[5] = ~v1;
+    output[6] = ~v2;
+    output[7] = v1;
+    output[8] = ~v0;
+    v0 = ~v0;
+    v2 = ~v0;
+#define o1 (v0)
+#define o2 (v1)
+#define o4 (v2)
+#define o7 (v1)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o2
+#undef o4
+#undef o7
+#undef o8
 }
 "##
     );
