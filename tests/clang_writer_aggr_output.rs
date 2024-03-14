@@ -973,7 +973,6 @@ fn test_clang_writer_aggregate_output_to_buffer() {
         [(4, false), (7, true), (4, true)],
     )
     .unwrap();
-
     let mut writer = CLANG_WRITER_U32.writer();
     generate_code_with_config(
         &mut writer,
@@ -1102,6 +1101,417 @@ fn test_clang_writer_aggregate_output_to_buffer() {
     ((TYPE_NAME*)output)[0] |= o0 ^ o2;
 #undef o0
 #undef o2
+}
+"##
+    );
+
+    let circuit = Circuit::new(
+        3,
+        [
+            Gate::new_xor(0, 1),
+            Gate::new_xor(2, 3),
+            Gate::new_and(2, 3),
+            Gate::new_and(0, 1),
+            Gate::new_nor(5, 6),
+        ],
+        [
+            (4, false),
+            (7, true),
+            (4, true),
+            (7, false),
+            (7, true),
+            (4, false),
+        ],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    output[2] = ~v4;
+    output[5] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[1] = ~v0;
+    output[3] = v0;
+    output[4] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = _m_pxor(v0, v1);
+    v3 = input[2];
+    v4 = _m_pxor(v3, v2);
+    output[0] = v4;
+    output[2] = _m_pxor(v4, one);
+    output[5] = v4;
+    v2 = _m_pand(v3, v2);
+    v0 = _m_pand(v0, v1);
+    v0 = _m_por(v2, v0);
+    output[1] = v0;
+    output[3] = _m_pxor(v0, one);
+    output[4] = v0;
+    v1 = _m_pxor(v4, one);
+    v0 = _m_pxor(v0, one);
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+    _m_empty();
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[2, 3, 4, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    output[2] = ~v4;
+    output[5] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[1] = ~v0;
+    output[3] = v0;
+    output[4] = ~v0;
+    v4 = ~v4;
+    v1 = ~v0;
+    v2 = ~v4;
+#define o2 (v4)
+#define o3 (v0)
+#define o4 (v1)
+#define o5 (v2)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[2, 3, 4, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = _m_pxor(v0, v1);
+    v3 = input[2];
+    v4 = _m_pxor(v3, v2);
+    output[0] = v4;
+    output[2] = _m_pxor(v4, one);
+    output[5] = v4;
+    v2 = _m_pand(v3, v2);
+    v0 = _m_pand(v0, v1);
+    v0 = _m_por(v2, v0);
+    output[1] = v0;
+    output[3] = _m_pxor(v0, one);
+    output[4] = v0;
+    v4 = _m_pxor(v4, one);
+    v0 = _m_pxor(v0, one);
+    v1 = _m_pxor(v0, one);
+    v2 = _m_pxor(v4, one);
+#define o2 (v4)
+#define o3 (v0)
+#define o4 (v1)
+#define o5 (v2)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o2
+#undef o3
+#undef o4
+#undef o5
+    _m_empty();
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    output[2] = ~v4;
+    output[5] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[1] = ~v0;
+    output[3] = v0;
+    output[4] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 5])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = _m_pxor(v0, v1);
+    v3 = input[2];
+    v4 = _m_pxor(v3, v2);
+    output[0] = v4;
+    output[2] = _m_pxor(v4, one);
+    output[5] = v4;
+    v2 = _m_pand(v3, v2);
+    v0 = _m_pand(v0, v1);
+    v0 = _m_por(v2, v0);
+    output[1] = v0;
+    output[3] = _m_pxor(v0, one);
+    output[4] = v0;
+    v1 = _m_pxor(v4, one);
+#define o0 (v4)
+#define o2 (v1)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o5
+    _m_empty();
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[1, 3, 4])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    output[2] = ~v4;
+    output[5] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[1] = ~v0;
+    output[3] = v0;
+    output[4] = ~v0;
+    v0 = ~v0;
+    v1 = ~v0;
+#define o1 (v0)
+#define o3 (v1)
+#define o4 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o1
+#undef o3
+#undef o4
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[1, 3, 4])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m64* input,
+    __m64* output, void* buffer, size_t idx) {
+    const __m64 one = *((const __m64*)one_value);
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = _m_pxor(v0, v1);
+    v3 = input[2];
+    v4 = _m_pxor(v3, v2);
+    output[0] = v4;
+    output[2] = _m_pxor(v4, one);
+    output[5] = v4;
+    v2 = _m_pand(v3, v2);
+    v0 = _m_pand(v0, v1);
+    v0 = _m_por(v2, v0);
+    output[1] = v0;
+    output[3] = _m_pxor(v0, one);
+    output[4] = v0;
+    v1 = _m_pxor(v0, one);
+#define o1 (v0)
+#define o3 (v1)
+#define o4 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o1
+#undef o3
+#undef o4
+    _m_empty();
 }
 "##
     );
