@@ -317,20 +317,29 @@ where
                         // It is using first occurred sign in output list ordered by
                         // circuit outputs index. Main goal is keeping sign of output
                         // if it can be changed by circuit conversion.
-                        let first_neg = circ_outputs[*outlist.first().unwrap()].1;
+                        let mut first_neg = None;
+                        let mut output_used_later = false;
                         for oi in outlist {
                             if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                                if first_neg.is_none() {
+                                    first_neg = Some(circ_outputs[*oi].1);
+                                }
                                 if use_neg && use_normal {
                                     // it will be allocated later after releasing other variables
-                                    outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
-                                    if circ_outputs[*oi].1 == first_neg {
+                                    outputs_awaits_alloc.insert(*oi, (out_var, !first_neg.unwrap()));
+                                    if circ_outputs[*oi].1 == first_neg.unwrap() {
                                         // if first sign occurence
                                         *out_var_entry = (out_var, None);
                                     }
                                 } else {
                                     *out_var_entry = (out_var, None);
                                 }
+                                output_used_later = true;
                             }
+                        }
+                        if !output_used_later {
+                            // if this output not used later then use in this
+                            single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
                         }
                     } else {
                         single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
@@ -390,20 +399,29 @@ where
                 // It is using first occurred sign in output list ordered by
                 // circuit outputs index. Main goal is keeping sign of output
                 // if it can be changed by circuit conversion.
-                let first_neg = circ_outputs[*outlist.first().unwrap()].1;
+                let mut output_used_later = false;
+                let mut first_neg = None;
                 for oi in outlist {
                     if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        if first_neg.is_none() {
+                            first_neg = Some(circ_outputs[*oi].1);
+                        }
                         if use_neg && use_normal {
                             // it will be allocated later after releasing other variables
-                            outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
-                            if circ_outputs[*oi].1 == first_neg {
+                            outputs_awaits_alloc.insert(*oi, (out_var, !first_neg.unwrap()));
+                            if circ_outputs[*oi].1 == first_neg.unwrap() {
                                 // if first sign occurence
                                 *out_var_entry = (out_var, None);
                             }
                         } else {
                             *out_var_entry = (out_var, None);
                         }
+                        output_used_later = true;
                     }
+                }
+                if !output_used_later {
+                    // if this output not used later then use in this
+                    single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
                 }
             } else {
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
@@ -1207,6 +1225,44 @@ mod tests {
                 false,
                 None,
                 Some(&[]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([(0, (4, None)), (2, (0, Some(4)))]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([(1, (0, None)), (2, (4, None))]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 2]),
                 None
             )
         );
