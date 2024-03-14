@@ -308,10 +308,12 @@ where
                                 .unwrap();
                         // check whether both normal and neg
                         for oi in outlist {
-                            if circ_outputs[*oi].1 {
-                                use_neg = true;
-                            } else {
-                                use_normal = true;
+                            if output_vars.contains_key(oi) {
+                                if circ_outputs[*oi].1 {
+                                    use_neg = true;
+                                } else {
+                                    use_normal = true;
+                                }
                             }
                         }
                         // allocate neg_var (for negated out_var)
@@ -391,10 +393,12 @@ where
                     usize::try_from(alloc_vars[usize::try_from(*o).unwrap()].unwrap()).unwrap();
                 // check whether both normal and neg
                 for oi in outlist {
-                    if circ_outputs[*oi].1 {
-                        use_neg = true;
-                    } else {
-                        use_normal = true;
+                    if output_vars.contains_key(oi) {
+                        if circ_outputs[*oi].1 {
+                            use_neg = true;
+                        } else {
+                            use_normal = true;
+                        }
                     }
                 }
                 // allocate neg_var (for negated out_var)
@@ -1357,7 +1361,7 @@ mod tests {
                 5,
                 Some(BTreeMap::from_iter([
                     (0, (4, None)),
-                    (2, (2, Some(4))),
+                    (2, (1, Some(4))),
                     (3, (0, None)),
                     (5, (4, None))
                 ]))
@@ -1906,7 +1910,7 @@ mod tests {
         assert_eq!(
             (
                 vec![0, 0, 1, 2],
-                4,
+                3,
                 Some(BTreeMap::from_iter([
                     (1, (0, None)),
                     (2, (1, None)),
@@ -1931,7 +1935,7 @@ mod tests {
         assert_eq!(
             (
                 vec![0, 0, 1, 2],
-                5,
+                4,
                 Some(BTreeMap::from_iter([
                     (1, (0, None)),
                     (4, (3, Some(0))),
