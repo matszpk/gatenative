@@ -978,8 +978,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
-        let buffer = if !self.pop_input_map.is_empty() || self.aggr_to_buffer
-        {
+        let buffer = if !self.pop_input_map.is_empty() || self.aggr_to_buffer {
             format!(
                 ",{}{} void* buffer",
                 if self.writer.config.arg_modifier.is_some() {
@@ -1203,32 +1202,37 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                         b"    buffer = (const void*)(((const char*)buffer) + 4*buffer_shift);\n",
                     );
                 }
-            } else if self.pop_input_code.is_some() && !self.single_buffer {
-                if let Some(arg_modifier) = self.writer.config.arg_modifier {
-                    writeln!(
-                        self.writer.out,
-                        "    input = (const {0} void*)(((const {0} char*)input) + 4*input_shift);",
-                        arg_modifier
-                    )
-                    .unwrap();
-                } else {
-                    self.writer.out.extend(
-                        b"    input = (const void*)(((const char*)input) + 4*input_shift);\n",
-                    );
+            } else {
+                if self.pop_input_code.is_some() && !self.single_buffer {
+                    if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                        writeln!(
+                            self.writer.out,
+                            concat!(
+                                "    input = (const {0} void*)(((const {0} char*)input) + ",
+                                "4*input_shift);"
+                            ),
+                            arg_modifier
+                        )
+                        .unwrap();
+                    } else {
+                        self.writer.out.extend(
+                            b"    input = (const void*)(((const char*)input) + 4*input_shift);\n",
+                        );
+                    }
                 }
-            }
-            if self.aggr_output_code.is_some() {
-                if let Some(arg_modifier) = self.writer.config.arg_modifier {
-                    writeln!(
-                        self.writer.out,
-                        "    output = ({0} void*)((({0} char*)output) + 4*output_shift);",
-                        arg_modifier
-                    )
-                    .unwrap();
-                } else {
-                    self.writer
-                        .out
-                        .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+                if self.aggr_output_code.is_some() {
+                    if let Some(arg_modifier) = self.writer.config.arg_modifier {
+                        writeln!(
+                            self.writer.out,
+                            "    output = ({0} void*)((({0} char*)output) + 4*output_shift);",
+                            arg_modifier
+                        )
+                        .unwrap();
+                    } else {
+                        self.writer
+                            .out
+                            .extend(b"    output = (void*)(((char*)output) + 4*output_shift);\n");
+                    }
                 }
             }
         }
