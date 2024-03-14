@@ -127,7 +127,7 @@ impl<'c> CodeWriter<'c, TestFuncWriter<'c>> for TestCodeWriter {
         input_len: usize,
         output_len: usize,
         code_config: CodeConfig<'c>,
-        _output_vars: Option<Vec<usize>>,
+        _output_vars: Option<Vec<(usize, usize)>>,
     ) -> TestFuncWriter<'c> {
         TestFuncWriter::<'c> {
             writer: self,

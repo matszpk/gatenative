@@ -234,7 +234,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_len: usize,
         output_len: usize,
         code_config: CodeConfig<'a>,
-        output_vars: Option<Vec<usize>>,
+        output_vars: Option<Vec<(usize, usize)>>,
     ) -> FW;
 
     fn func_writer_with_config(
@@ -243,7 +243,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         input_len: usize,
         output_len: usize,
         code_config: CodeConfig<'a>,
-        output_vars: Option<Vec<usize>>,
+        output_vars: Option<Vec<(usize, usize)>>,
     ) -> FW {
         // for checking requirements for single_buffer
         let real_input_len = if let Some((_, len)) = code_config.input_placement {

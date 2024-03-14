@@ -985,7 +985,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         // TODO: fix it!!
         output_vars
             .as_ref()
-            .map(|ov| ov.values().map(|(x, _)| *x).collect()),
+            .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
     );
     func_writer.func_start();
     func_writer.alloc_vars(var_num);

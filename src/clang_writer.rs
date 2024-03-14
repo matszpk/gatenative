@@ -880,7 +880,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     init_code: Option<&'c str>,
     pop_input_code: Option<&'c str>,
     aggr_output_code: Option<&'c str>,
-    output_vars: Option<Vec<usize>>,
+    output_vars: Option<Vec<(usize, usize)>>,
 }
 
 pub struct CLangWriter<'a> {
@@ -1161,14 +1161,14 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_end(&mut self) {
         if let Some(aggr_output_code) = self.aggr_output_code {
             if let Some(output_vars) = self.output_vars.as_ref() {
-                for (i, v) in output_vars.iter().enumerate() {
+                for (i, v) in output_vars {
                     writeln!(self.writer.out, "#define o{} (v{})", i, *v).unwrap();
                 }
             }
             self.writer.out.extend(aggr_output_code.as_bytes());
             self.writer.out.push(b'\n');
             if let Some(output_vars) = self.output_vars.as_ref() {
-                for i in 0..output_vars.len() {
+                for (i, _) in output_vars {
                     writeln!(self.writer.out, "#undef o{}", i).unwrap();
                 }
             }
@@ -1530,7 +1530,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         input_len: usize,
         output_len: usize,
         code_config: CodeConfig<'c>,
-        output_vars: Option<Vec<usize>>,
+        output_vars: Option<Vec<(usize, usize)>>,
     ) -> CLangFuncWriter<'a, 'c> {
         if let Some(elem_inputs) = code_config.elem_inputs {
             assert!(elem_inputs.len() <= 64 + (self.elem_low_bits as usize));
