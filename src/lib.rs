@@ -47,9 +47,9 @@ pub struct CodeConfig<'a> {
     // determine place of circuit output bits in input bits and its length.
     // first: index - circuit output bit, value - destination output bit. second - output length.
     pub output_placement: Option<(&'a [usize], usize)>,
-    // determine what circuit input bits is assigned to argument passed to execute.
+    // determine what circuit input bits are assigned to argument passed to execute.
     pub arg_inputs: Option<&'a [usize]>,
-    // determine what circuit input bits is assigned to element index.
+    // determine what circuit input bits are assigned to element index.
     pub elem_inputs: Option<&'a [usize]>,
     // use single buffer to store input and output.
     pub single_buffer: bool,
