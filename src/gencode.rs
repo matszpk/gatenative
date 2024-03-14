@@ -1855,5 +1855,101 @@ mod tests {
                 Some(&[])
             )
         );
+
+        let circuit = Circuit::new(
+            4,
+            [],
+            [
+                (0, false),
+                (1, true),
+                (2, false),
+                (3, true),
+                (1, false),
+                (2, true),
+                (3, true),
+                (2, false),
+                (1, true),
+            ],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3],
+                6,
+                Some(BTreeMap::from_iter([
+                    (0, (0, None)),
+                    (1, (1, None)),
+                    (2, (2, None)),
+                    (3, (3, None)),
+                    (4, (4, Some(1))),
+                    (5, (5, Some(2))),
+                    (6, (3, None)),
+                    (7, (2, None)),
+                    (8, (1, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 0, 1, 2],
+                4,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (2, (1, None)),
+                    (4, (2, Some(0))),
+                    (7, (1, None)),
+                    (8, (0, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 2, 4, 7, 8]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 0, 1, 2],
+                5,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (4, (3, Some(0))),
+                    (5, (1, None)),
+                    (6, (2, None)),
+                    (8, (0, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 4, 5, 6, 8]),
+                None
+            )
+        );
     }
 }
