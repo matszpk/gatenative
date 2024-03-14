@@ -133,7 +133,7 @@ fn gen_var_allocs<T>(
     var_usage: &mut [T],
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
-    keep_output_vars: bool,
+    keep_output_vars: Option<&[usize]>,
     pop_inputs: Option<&[usize]>,
 ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
 where
@@ -148,14 +148,14 @@ where
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(keep_output_vars && pop_inputs.is_some());
+    let single_buffer = single_buffer && !(keep_output_vars.is_some() && pop_inputs.is_some());
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.len();
     let gates = circuit.gates();
     let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
     let mut var_alloc = VarAllocator::<T>::new();
-    let mut output_vars = if keep_output_vars {
+    let mut output_vars = if keep_output_vars.is_some() {
         Some(vec![(0, None); circuit.outputs().len()])
     } else {
         None
@@ -942,7 +942,15 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         &mut gen_var_usage(&circuit),
         code_config.single_buffer,
         input_map.as_ref(),
-        code_config.aggr_output_code.is_some(),
+        if code_config.aggr_output_code.is_some() {
+            if code_config.aggr_to_buffer.is_some() {
+                code_config.aggr_to_buffer
+            } else {
+                Some(&[])
+            }
+        } else {
+            None
+        },
         pop_inputs,
     );
 
@@ -1067,7 +1075,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1082,7 +1090,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1102,7 +1110,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 None
             )
         );
@@ -1119,7 +1127,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 Some(&[])
             )
         );
@@ -1152,7 +1160,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 None
             )
         );
@@ -1184,7 +1192,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 None
             )
         );
@@ -1231,7 +1239,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 None
             )
         );
@@ -1264,7 +1272,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1284,7 +1292,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                true,
+                Some(&[]),
                 Some(&[])
             )
         );
@@ -1300,7 +1308,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1320,7 +1328,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 None
             )
         );
@@ -1340,7 +1348,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                true,
+                Some(&[]),
                 Some(&[])
             )
         );
@@ -1368,7 +1376,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1383,7 +1391,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1403,7 +1411,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                true,
+                Some(&[]),
                 Some(&[0, 1, 2, 3])
             )
         );
@@ -1419,7 +1427,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1434,7 +1442,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1449,7 +1457,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1464,7 +1472,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1491,7 +1499,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1506,7 +1514,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1537,7 +1545,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1553,7 +1561,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 Some(&[])
             )
         );
@@ -1569,7 +1577,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 Some(&[0, 1, 3])
             )
         );
@@ -1585,7 +1593,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 None,
-                false,
+                None,
                 Some(&[1, 3])
             )
         );
@@ -1600,7 +1608,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None
             )
         );
@@ -1616,7 +1624,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 None,
-                false,
+                None,
                 None,
             )
         );
@@ -1632,7 +1640,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1)])),
-                false,
+                None,
                 None,
             )
         );
@@ -1663,7 +1671,7 @@ mod tests {
                 &mut var_usage,
                 true,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
-                false,
+                None,
                 None,
             )
         );
@@ -1679,7 +1687,7 @@ mod tests {
                 &mut var_usage,
                 false,
                 Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
-                false,
+                None,
                 Some(&[])
             )
         );

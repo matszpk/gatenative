@@ -296,6 +296,14 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             psorted.dedup();
             assert_eq!(psorted.len(), pop_inputs.len());
         }
+        if let Some(aggr_outputs) = code_config.aggr_to_buffer {
+            assert_ne!(aggr_outputs.len(), 0);
+            assert!(aggr_outputs.iter().all(|x| *x < output_len));
+            let mut psorted = aggr_outputs.to_vec();
+            psorted.sort();
+            psorted.dedup();
+            assert_eq!(psorted.len(), aggr_outputs.len());
+        }
         // check whether arg_input and elem_input have common inputs
         if let Some(arg_inputs) = code_config.arg_inputs {
             if let Some(elem_inputs) = code_config.elem_inputs {
