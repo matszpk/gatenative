@@ -982,7 +982,6 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         input_len,
         circuit.outputs().len(),
         code_config.clone(),
-        // TODO: fix it!!
         output_vars
             .as_ref()
             .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
