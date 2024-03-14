@@ -135,7 +135,11 @@ fn gen_var_allocs<T>(
     input_map: Option<&HashMap<usize, usize>>,
     keep_output_vars: Option<&[usize]>,
     pop_inputs: Option<&[usize]>,
-) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
+) -> (
+    Vec<T>,
+    usize,
+    Option<BTreeMap<usize, (usize, Option<usize>)>>,
+)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -151,12 +155,19 @@ where
     let single_buffer = single_buffer && !(keep_output_vars.is_some() && pop_inputs.is_some());
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
+    let output_len = circuit.outputs().len();
     let gate_num = circuit.len();
     let gates = circuit.gates();
     let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
     let mut var_alloc = VarAllocator::<T>::new();
-    let mut output_vars = if keep_output_vars.is_some() {
-        Some(vec![(0, None); circuit.outputs().len()])
+    let mut output_vars = if let Some(vars) = keep_output_vars {
+        if vars.is_empty() {
+            Some(BTreeMap::from_iter((0..output_len).map(|i| (i, (0, None)))))
+        } else {
+            Some(BTreeMap::from_iter(
+                vars.into_iter().map(|i| (*i, (0, None))),
+            ))
+        }
     } else {
         None
     };
@@ -308,15 +319,17 @@ where
                         // if it can be changed by circuit conversion.
                         let first_neg = circ_outputs[*outlist.first().unwrap()].1;
                         for oi in outlist {
-                            if use_neg && use_normal {
-                                // it will be allocated later after releasing other variables
-                                outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
-                                if circ_outputs[*oi].1 == first_neg {
-                                    // if first sign occurence
-                                    output_vars[*oi] = (out_var, None);
+                            if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                                if use_neg && use_normal {
+                                    // it will be allocated later after releasing other variables
+                                    outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
+                                    if circ_outputs[*oi].1 == first_neg {
+                                        // if first sign occurence
+                                        *out_var_entry = (out_var, None);
+                                    }
+                                } else {
+                                    *out_var_entry = (out_var, None);
                                 }
-                            } else {
-                                output_vars[*oi] = (out_var, None);
                             }
                         }
                     } else {
@@ -379,15 +392,17 @@ where
                 // if it can be changed by circuit conversion.
                 let first_neg = circ_outputs[*outlist.first().unwrap()].1;
                 for oi in outlist {
-                    if use_neg && use_normal {
-                        // it will be allocated later after releasing other variables
-                        outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
-                        if circ_outputs[*oi].1 == first_neg {
-                            // if first sign occurence
-                            output_vars[*oi] = (out_var, None);
+                    if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        if use_neg && use_normal {
+                            // it will be allocated later after releasing other variables
+                            outputs_awaits_alloc.insert(*oi, (out_var, !first_neg));
+                            if circ_outputs[*oi].1 == first_neg {
+                                // if first sign occurence
+                                *out_var_entry = (out_var, None);
+                            }
+                        } else {
+                            *out_var_entry = (out_var, None);
                         }
-                    } else {
-                        output_vars[*oi] = (out_var, None);
                     }
                 }
             } else {
@@ -409,10 +424,12 @@ where
         if let Some(output_vars) = output_vars.as_mut() {
             for (oi, (out_var, second_neg)) in outputs_awaits_alloc.iter() {
                 if circ_outputs[*oi].1 == *second_neg {
-                    output_vars[*oi] = (
-                        second_var_for_outputs.get(out_var).unwrap().unwrap(),
-                        Some(*out_var),
-                    );
+                    if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        *out_var_entry = (
+                            second_var_for_outputs.get(out_var).unwrap().unwrap(),
+                            Some(*out_var),
+                        );
+                    }
                 }
             }
         }
@@ -428,6 +445,7 @@ where
     )
 }
 
+// TODO: add keeping storing to outputs that are aggr_to_buffer
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     writer: &mut FW,
     circuit: &VCircuit<T>,
@@ -437,7 +455,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     var_allocs: &[T],
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
-    output_vars: Option<&[(usize, Option<usize>)]>,
+    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
     pop_inputs: Option<&[usize]>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -632,17 +650,19 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             }
         }
         if let Some(output_vars) = output_vars {
-            if !out_negs.contains(&o) && *on && output_vars[oi].1.is_none() {
-                // only if negation neeeded and is first occurred sign.
-                // negate output
-                let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
-                writer.gen_not(v, v);
-                out_negs.insert(o);
-            }
-            if !out_negs_2.contains(&o) {
-                if let Some(orig_var) = output_vars[oi].1 {
-                    writer.gen_not(output_vars[oi].0, orig_var);
-                    out_negs_2.insert(o);
+            if let Some(out_var_entry) = output_vars.get(&oi) {
+                if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
+                    // only if negation neeeded and is first occurred sign.
+                    // negate output
+                    let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
+                    writer.gen_not(v, v);
+                    out_negs.insert(o);
+                }
+                if !out_negs_2.contains(&o) {
+                    if let Some(orig_var) = out_var_entry.1 {
+                        writer.gen_not(out_var_entry.0, orig_var);
+                        out_negs_2.insert(o);
+                    }
                 }
             }
         }
@@ -658,7 +678,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     var_allocs: &[T],
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
-    output_vars: Option<&[(usize, Option<usize>)]>,
+    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
     pop_inputs: Option<&[usize]>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -849,17 +869,19 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
             }
         }
         if let Some(output_vars) = output_vars {
-            if !out_negs.contains(&o) && *on && output_vars[oi].1.is_none() {
-                // only if negation neeeded and is first occurred sign.
-                // negate output
-                let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
-                writer.gen_not(v, v);
-                out_negs.insert(o);
-            }
-            if !out_negs_2.contains(&o) {
-                if let Some(orig_var) = output_vars[oi].1 {
-                    writer.gen_not(output_vars[oi].0, orig_var);
-                    out_negs_2.insert(o);
+            if let Some(out_var_entry) = output_vars.get(&oi) {
+                if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
+                    // only if negation neeeded and is first occurred sign.
+                    // negate output
+                    let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
+                    writer.gen_not(v, v);
+                    out_negs.insert(o);
+                }
+                if !out_negs_2.contains(&o) {
+                    if let Some(orig_var) = out_var_entry.1 {
+                        writer.gen_not(out_var_entry.0, orig_var);
+                        out_negs_2.insert(o);
+                    }
                 }
             }
         }
@@ -986,7 +1008,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             &var_allocs,
             code_config.single_buffer,
             input_map.as_ref(),
-            output_vars.as_ref().map(|ov| ov.as_slice()),
+            output_vars.as_ref(),
             pop_inputs,
         );
     } else {
@@ -1011,7 +1033,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             &var_allocs,
             code_config.single_buffer,
             input_map.as_ref(),
-            output_vars.as_ref().map(|ov| ov.as_slice()),
+            output_vars.as_ref(),
             pop_inputs,
         );
     }
@@ -1050,6 +1072,36 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 mod tests {
     use super::*;
 
+    fn gen_var_allocs_old<T>(
+        circuit: &Circuit<T>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
+        var_usage: &mut [T],
+        single_buffer: bool,
+        input_map: Option<&HashMap<usize, usize>>,
+        keep_output_vars: Option<&[usize]>,
+        pop_inputs: Option<&[usize]>,
+    ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let (v, l, m) = gen_var_allocs(
+            circuit,
+            input_placement,
+            output_placement,
+            var_usage,
+            single_buffer,
+            input_map,
+            keep_output_vars,
+            pop_inputs,
+        );
+        (v, l, m.map(|x| x.values().copied().collect::<Vec<_>>()))
+    }
+
     #[test]
     fn test_gen_var_usage_and_var_allocs() {
         let circuit = Circuit::new(
@@ -1068,22 +1120,13 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
-            gen_var_allocs(
-                &circuit,
-                None,
-                None,
-                &mut var_usage,
-                true,
-                None,
-                None,
-                None
-            )
+            gen_var_allocs_old(&circuit, None, None, &mut var_usage, true, None, None, None)
         );
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1103,7 +1146,7 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None)])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1120,7 +1163,7 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 2, 3, 4, 2, 0, 0], 5, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1153,7 +1196,7 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None), (1, Some(4))])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1185,7 +1228,7 @@ mod tests {
                 5,
                 Some(vec![(4, None), (0, None), (2, Some(4)), (1, Some(0))])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1232,7 +1275,7 @@ mod tests {
                     (4, None)
                 ])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1265,16 +1308,7 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5, None),
-            gen_var_allocs(
-                &circuit,
-                None,
-                None,
-                &mut var_usage,
-                true,
-                None,
-                None,
-                None
-            )
+            gen_var_allocs_old(&circuit, None, None, &mut var_usage, true, None, None, None)
         );
         // single buffer with pop_input and aggr_output_code
         let mut var_usage = gen_var_usage(&circuit);
@@ -1285,7 +1319,7 @@ mod tests {
                 6,
                 Some(vec![(4, None), (5, None), (2, None), (0, None)])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1301,7 +1335,7 @@ mod tests {
         assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 2, 1, 3, 2, 1, 0, 2, 4, 0, 1, 0], 5, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1321,7 +1355,7 @@ mod tests {
                 6,
                 Some(vec![(2, None), (5, None), (1, None), (0, None)])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1341,7 +1375,7 @@ mod tests {
                 6,
                 Some(vec![(4, None), (5, None), (2, None), (0, None)])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1369,7 +1403,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1384,16 +1418,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 1, 0, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(
-                &circuit,
-                None,
-                None,
-                &mut var_usage,
-                true,
-                None,
-                None,
-                None
-            )
+            gen_var_allocs_old(&circuit, None, None, &mut var_usage, true, None, None, None)
         );
         // with single_buffer, pop_input and keep_output_vars
         let mut var_usage = gen_var_usage(&circuit);
@@ -1404,7 +1429,7 @@ mod tests {
                 6,
                 Some(vec![(4, None), (5, None), (0, None), (1, None)])
             ),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1420,7 +1445,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 1, 2, 2, 0, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 Some((&[1, 2, 3, 0], 4)),
                 Some((&[3, 2, 0, 1], 4)),
@@ -1435,7 +1460,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 1, 3, 2, 2, 0, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 Some((&[1, 2, 0, 3], 4)),
                 Some((&[3, 2, 0, 1], 4)),
@@ -1450,7 +1475,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 4, 3, 2, 2, 0, 0], 5, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 Some((&[3, 2, 0, 1], 4)),
@@ -1465,7 +1490,7 @@ mod tests {
         assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 0, 2, 2, 0, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 Some((&[1, 2, 0, 3], 4)),
                 None,
@@ -1492,7 +1517,7 @@ mod tests {
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1507,16 +1532,7 @@ mod tests {
         assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 4, 0, 1, 2, 2, 0, 0], 5, None),
-            gen_var_allocs(
-                &circuit,
-                None,
-                None,
-                &mut var_usage,
-                true,
-                None,
-                None,
-                None
-            )
+            gen_var_allocs_old(&circuit, None, None, &mut var_usage, true, None, None, None)
         );
 
         let circuit = Circuit::new(
@@ -1538,7 +1554,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1554,7 +1570,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 2, 3, 4, 2, 0, 5, 3, 0, 2, 0], 6, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1570,7 +1586,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![0, 1, 3, 2, 4, 3, 0, 5, 2, 0, 2, 0], 6, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1586,7 +1602,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![4, 0, 2, 1, 3, 2, 1, 4, 3, 1, 2, 0], 5, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
@@ -1601,23 +1617,14 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![4, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 5, None),
-            gen_var_allocs(
-                &circuit,
-                None,
-                None,
-                &mut var_usage,
-                true,
-                None,
-                None,
-                None
-            )
+            gen_var_allocs_old(&circuit, None, None, &mut var_usage, true, None, None, None)
         );
         // testcase with placements
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 Some((&[1, 2, 3, 0], 4)),
                 Some((&[3, 2, 0, 1], 4)),
@@ -1633,7 +1640,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 2, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 Some((&[1, 0], 4)),
                 Some((&[3, 2, 1, 0], 4)),
@@ -1664,7 +1671,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![3, 2, 0, 1, 0, 1, 2, 0, 3, 1, 3, 0, 1, 0], 4, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 Some((&[3, 2, 0, 1], 4)),
@@ -1680,7 +1687,7 @@ mod tests {
         assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
         assert_eq!(
             (vec![6, 0, 4, 1, 2, 3, 5, 1, 6, 4, 6, 1, 4, 0], 7, None),
-            gen_var_allocs(
+            gen_var_allocs_old(
                 &circuit,
                 None,
                 None,
