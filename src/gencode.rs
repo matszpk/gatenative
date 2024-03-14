@@ -326,7 +326,8 @@ where
                                 }
                                 if use_neg && use_normal {
                                     // it will be allocated later after releasing other variables
-                                    outputs_awaits_alloc.insert(*oi, (out_var, !first_neg.unwrap()));
+                                    outputs_awaits_alloc
+                                        .insert(*oi, (out_var, !first_neg.unwrap()));
                                     if circ_outputs[*oi].1 == first_neg.unwrap() {
                                         // if first sign occurence
                                         *out_var_entry = (out_var, None);
@@ -1342,6 +1343,100 @@ mod tests {
                 false,
                 None,
                 Some(&[]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (0, (4, None)),
+                    (2, (2, Some(4))),
+                    (3, (0, None)),
+                    (5, (4, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2, 3, 5]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (2, (4, None)),
+                    (3, (0, None)),
+                    (4, (1, Some(0))),
+                    (5, (2, Some(4)))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[2, 3, 4, 5]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (0, (4, None)),
+                    (2, (1, Some(4))),
+                    (5, (4, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2, 5]),
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (3, (1, Some(0))),
+                    (4, (0, None))
+                ]))
+            ),
+            gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 3, 4]),
                 None
             )
         );
