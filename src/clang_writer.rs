@@ -881,6 +881,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     pop_input_code: Option<&'c str>,
     aggr_output_code: Option<&'c str>,
     output_vars: Option<Vec<(usize, usize)>>,
+    aggr_to_buffer: bool,
 }
 
 pub struct CLangWriter<'a> {
@@ -966,8 +967,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             ""
         };
         let shift_args = if self.writer.config.init_index.is_some()
-            && self.pop_input_code.is_some()
-            && !self.pop_input_map.is_empty()
+            && (!self.pop_input_map.is_empty() || self.aggr_to_buffer)
         {
             shift_args.to_string() + "unsigned long buffer_shift, "
         } else {
@@ -978,7 +978,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             ""
         };
-        let buffer = if !self.pop_input_map.is_empty() {
+        let buffer = if !self.pop_input_map.is_empty() || self.aggr_to_buffer
+        {
             format!(
                 ",{}{} void* buffer",
                 if self.writer.config.arg_modifier.is_some() {
@@ -1020,7 +1021,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     self.writer.config.type_name
                 },
-                if self.output_vars.is_some() {
+                if self.output_vars.is_some() && !self.aggr_to_buffer {
                     "void"
                 } else {
                     self.writer.config.type_name
@@ -1189,7 +1190,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if self.writer.config.init_index.is_some() {
             self.writer.out.extend(b"    if (idx >= n) return;\n");
-            if self.pop_input_code.is_some() && !self.pop_input_map.is_empty() {
+            if !self.pop_input_map.is_empty() || self.aggr_to_buffer {
                 if let Some(arg_modifier) = self.writer.config.arg_modifier {
                     writeln!(
                         self.writer.out,
@@ -1589,6 +1590,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             pop_input_code: code_config.pop_input_code,
             aggr_output_code: code_config.aggr_output_code,
             output_vars,
+            aggr_to_buffer: code_config.aggr_output_code.is_some()
+                && code_config.aggr_to_buffer.is_some(),
         }
     }
 
