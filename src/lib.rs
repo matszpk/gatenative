@@ -180,6 +180,9 @@ fn check_placements(
     output_placement: Option<(&[usize], usize)>,
 ) -> bool {
     if let Some((placement, len)) = input_placement {
+        if placement.len() == 0 {
+            return false;
+        }
         if placement.iter().any(|x| *x >= len) {
             return false;
         }
@@ -189,6 +192,9 @@ fn check_placements(
         assert_eq!(psorted.len(), placement.len());
     }
     if let Some((placement, len)) = output_placement {
+        if placement.len() == 0 {
+            return false;
+        }
         if placement.iter().any(|x| *x >= len) {
             return false;
         }
@@ -266,6 +272,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             code_config.output_placement
         ));
         if let Some(arg_inputs) = code_config.arg_inputs {
+            assert_ne!(arg_inputs.len(), 0);
             assert!(arg_inputs.len() <= 64);
             assert!(arg_inputs.iter().all(|x| *x < input_len));
             let mut psorted = arg_inputs.to_vec();
@@ -274,6 +281,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             assert_eq!(psorted.len(), arg_inputs.len());
         }
         if let Some(elem_inputs) = code_config.elem_inputs {
+            assert_ne!(elem_inputs.len(), 0);
             assert!(elem_inputs.iter().all(|x| *x < input_len));
             let mut psorted = elem_inputs.to_vec();
             psorted.sort();
@@ -281,6 +289,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             assert_eq!(psorted.len(), elem_inputs.len());
         }
         if let Some(pop_inputs) = code_config.pop_from_buffer {
+            assert_ne!(pop_inputs.len(), 0);
             assert!(pop_inputs.iter().all(|x| *x < input_len));
             let mut psorted = pop_inputs.to_vec();
             psorted.sort();
