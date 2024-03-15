@@ -679,11 +679,8 @@ pub struct ParSeqDynamicConfig<'a> {
     pub pop_input_len: Option<usize>,
     pub aggr_output_code: Option<&'a str>,
     pub aggr_output_len: Option<usize>,
-    // if some then some choosen circuit inputs populated from buffer.
-    pub pop_from_buffer: Option<&'a [usize]>,
-    // if some then aggregate some choosen circuit outputs to buffer.
-    // and keep storing circuit outputs to original output buffer.
-    pub aggr_to_buffer: Option<&'a [usize]>,
+    // exclude outputs
+    pub exclude_outputs: Option<&'a [usize]>,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
@@ -694,8 +691,7 @@ impl<'a> ParSeqDynamicConfig<'a> {
             pop_input_len: None,
             aggr_output_code: None,
             aggr_output_len: None,
-            pop_from_buffer: None,
-            aggr_to_buffer: None,
+            exclude_outputs: None,
         }
     }
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
@@ -718,12 +714,9 @@ impl<'a> ParSeqDynamicConfig<'a> {
         self.aggr_output_len = aggr;
         self
     }
-    pub fn pop_from_buffer(mut self, pop: Option<&'a [usize]>) -> Self {
-        self.pop_from_buffer = pop;
-        self
-    }
-    pub fn aggr_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
-        self.aggr_to_buffer = aggr;
+
+    pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
+        self.exclude_outputs = excl;
         self
     }
 }
@@ -868,8 +861,7 @@ where
                 .pop_input_len(dyncfg.pop_input_len)
                 .aggr_output_code(dyncfg.aggr_output_code)
                 .aggr_output_len(dyncfg.aggr_output_len)
-                .pop_from_buffer(dyncfg.pop_from_buffer)
-                .aggr_to_buffer(dyncfg.aggr_to_buffer),
+                .exclude_outputs(dyncfg.exclude_outputs),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
             let dyncfg = dyn_config(ParSeqSelection::Seq(i));
@@ -884,8 +876,7 @@ where
                     .pop_input_len(dyncfg.pop_input_len)
                     .aggr_output_code(dyncfg.aggr_output_code)
                     .aggr_output_len(dyncfg.aggr_output_len)
-                    .pop_from_buffer(dyncfg.pop_from_buffer)
-                    .aggr_to_buffer(dyncfg.aggr_to_buffer),
+                    .exclude_outputs(dyncfg.exclude_outputs),
             );
         }
     }
