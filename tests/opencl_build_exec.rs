@@ -1670,6 +1670,19 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
                 .aggr_output_len(Some(128 + 3))
                 .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
         );
+        // 7 with pop_input
+        builder.add_with_config(
+            "comb_aggr_out_pop_in_sb",
+            circuit.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(comb_pop_input_code))
+                .pop_input_len(Some(128 + 3))
+                .pop_from_buffer(Some(&(12..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(128 + 3))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>()))
+                .single_buffer(true),
+        );
         let mut execs = builder.build().unwrap();
         let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
@@ -1889,7 +1902,6 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
             assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
         // with pop_input
-        let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[6]
             .input_transformer(32, &(0..12).collect::<Vec<_>>())
             .unwrap();
@@ -1906,6 +1918,33 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
         );
         let output_circ = execs[6]
             .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out_aggr_pop.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_aggr_pop[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer[0..expected_buffer.len()].iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // with pop_input and single_buffer
+        let mut it = execs[7]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[7]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[7].new_data_from_vec((0..1 << 16).map(|x| x & 0xfff).collect::<Vec<_>>());
+        let mut output_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[7].new_data_from_vec(
+            std::iter::repeat(0u32)
+                .take(expected_buffer.len())
+                .chain(params.iter().copied())
+                .collect::<Vec<_>>(),
+        );
+        execs[7]
+            .execute_buffer_single(&mut output_circ, 0, &mut buffer)
             .unwrap();
         let output = ot.transform(&output_circ).unwrap().release();
         assert_eq!(expected_out_aggr_pop.len(), output.len());
