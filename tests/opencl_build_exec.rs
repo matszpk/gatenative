@@ -1542,6 +1542,14 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
                 | ((y & 2048) << 11)
         })
         .collect::<Vec<_>>();
+    let params = [11, 5, 12];
+    let expected_out_aggr_pop = (0..1 << 16)
+        .map(|x| {
+            let pidx = x >> 12;
+            let x = (x & 0xfff) | ((((pidx * params[0] + params[1]) ^ params[2]) & 15) << 12);
+            expected_out[x as usize]
+        })
+        .collect::<Vec<_>>();
 
     for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
     {
@@ -1566,6 +1574,19 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
                 ((out[i] & 0x380) << 2);
         atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
     }
+}"##;
+        let comb_pop_input_code = r##"{
+    unsigned int i;
+    uint inp[TYPE_LEN];
+    global uint* params = ((global uint*)buffer) + 128;
+    const uint p0 = params[0];
+    const uint p1 = params[1];
+    const uint p2 = params[2];
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint pidx = (idx*TYPE_LEN + i) >> 12;
+        inp[i] = ((pidx*p0 + p1) ^ p2) & 15;
+    }
+    INPUT_TRANSFORM_B4(i12, i13, i14, i15, inp);
 }"##;
         let expected_buffer_2: [u32; 128] = [
             4294967295, 0, 4294967295, 0, 4294967295, 0, 4294967295, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1635,6 +1656,18 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
                 .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
                 .aggr_output_code(Some(comb_aggr_output_code))
                 .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        // 6 with pop_input
+        builder.add_with_config(
+            "comb_aggr_out_pop_in",
+            circuit.clone(),
+            CodeConfig::new()
+                .pop_input_code(Some(comb_pop_input_code))
+                .pop_input_len(Some(128 + 3))
+                .pop_from_buffer(Some(&(12..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(128 + 3))
                 .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
         );
         let mut execs = builder.build().unwrap();
@@ -1853,6 +1886,34 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
             }
         }
         for (i, out) in buffer_comb.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // with pop_input
+        let expected_buffer = AGGR_OUTPUT_EXPECTED;
+        let mut it = execs[6]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[6]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[6].new_data_from_vec((0..1 << 16).map(|x| x & 0xfff).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[6].new_data_from_vec(
+            std::iter::repeat(0u32)
+                .take(expected_buffer.len())
+                .chain(params.iter().copied())
+                .collect::<Vec<_>>(),
+        );
+        let output_circ = execs[6]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out_aggr_pop.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_aggr_pop[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer[0..expected_buffer.len()].iter().enumerate() {
             assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
     }
