@@ -537,11 +537,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             0
         };
         let output = OpenCLDataHolder::new(
-            if self.aggregated_output {
-                self.aggr_output_len.unwrap()
-            } else {
-                real_output_words * num
-            },
+            real_output_words * num,
             self.context.clone(),
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
