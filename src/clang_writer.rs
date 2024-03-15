@@ -2,7 +2,7 @@ use crate::*;
 
 use crate::clang_transform::*;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::Write;
 
 #[derive(Clone, Debug)]
@@ -873,6 +873,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     input_placement: Option<(&'c [usize], usize)>,
     output_placement: Option<(&'c [usize], usize)>,
     input_map: HashMap<usize, usize>,
+    output_map: HashMap<usize, usize>,
     arg_input_map: HashMap<usize, usize>,
     elem_input_map: HashMap<usize, usize>,
     pop_input_map: HashMap<usize, usize>,
@@ -1076,9 +1077,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                             - self.pop_input_map.len()
                     ),
                     input_shift_part,
-                    self.output_placement
-                        .map(|(_, len)| len)
-                        .unwrap_or(self.output_len),
+                    self.output_placement.map(|(_, len)| len).unwrap_or(
+                        if !self.output_map.is_empty() {
+                            self.output_map.len()
+                        } else {
+                            self.output_len
+                        }
+                    ),
                     output_shift_part,
                 )
                 .unwrap();
@@ -1096,9 +1101,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                             - self.pop_input_map.len()
                     ),
                     input_shift_part,
-                    self.output_placement
-                        .map(|(_, len)| len)
-                        .unwrap_or(self.output_len),
+                    self.output_placement.map(|(_, len)| len).unwrap_or(
+                        if !self.output_map.is_empty() {
+                            self.output_map.len()
+                        } else {
+                            self.output_len
+                        }
+                    ),
                     output_shift_part,
                 )
                 .unwrap();
@@ -1403,10 +1412,15 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
-        let output = self
-            .output_placement
-            .map(|(p, _)| p[output])
-            .unwrap_or(output);
+        let output = if let Some(real_output) = self.output_map.get(&output) {
+            self.output_placement
+                .map(|(p, _)| p[*real_output])
+                .unwrap_or(*real_output)
+        } else {
+            self.output_placement
+                .map(|(p, _)| p[output])
+                .unwrap_or(output)
+        };
         let arg = CLangWriter::<'a>::format_neg_arg(self.writer.config, neg, reg);
         let (dst, src) = if self.writer.config.init_index.is_some() {
             if self.writer.config.init_local_index.is_some() {
@@ -1580,6 +1594,20 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             }
             (input_map, arg_input_map, elem_input_map, pop_input_map)
         };
+        let output_map = if let Some(excl_outputs) = code_config.exclude_outputs {
+            let mut output_map = HashMap::new();
+            let excl_set = HashSet::<usize>::from_iter(excl_outputs.iter().copied());
+            let mut count = 0;
+            for i in 0..output_len {
+                if excl_set.contains(&i) {
+                    output_map.insert(i, count);
+                    count += 1;
+                }
+            }
+            output_map
+        } else {
+            HashMap::new()
+        };
 
         CLangFuncWriter::<'a, 'c> {
             writer: self,
@@ -1589,6 +1617,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             input_placement: code_config.input_placement,
             output_placement: code_config.output_placement,
             input_map,
+            output_map,
             arg_input_map,
             elem_input_map,
             pop_input_map,
