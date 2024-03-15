@@ -245,6 +245,9 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         code_config: CodeConfig<'a>,
         output_vars: Option<Vec<(usize, usize)>>,
     ) -> FW {
+        if code_config.pop_input_code.is_some() && code_config.aggr_output_code.is_some() {
+            assert!(code_config.pop_from_buffer.is_some() == code_config.aggr_to_buffer.is_some());
+        }
         // for checking requirements for single_buffer
         let real_input_len = if let Some((_, len)) = code_config.input_placement {
             len
