@@ -816,6 +816,50 @@ fn test_opencl_div_builder_and_exec_with_elem_input() {
     }
 }
 
+const COMB_CIRCUIT: &str = concat!(
+    "{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ",
+    "xor(0,7) and(16,5):0 xor(1,8) and(0,7) xor(18,19) and(20,6):1 xor(2,9) ",
+    "and(18,19) and(1,8) nor(23,24) xor(22,25) nimpl(7,26):2 xor(3,10) nimpl(22,25) ",
+    "and(2,9) nor(29,30) xor(28,31) nimpl(8,32):3 xor(4,0) xor(34,11) nimpl(28,31) ",
+    "and(3,10) nor(36,37) xor(35,38) xor(39,5) nimpl(9,40):4 xor(5,1) and(4,0) ",
+    "xor(42,43) xor(44,12) nimpl(35,38) and(34,11) nor(46,47) xor(45,48) xor(49,6) ",
+    "nimpl(5,39) xor(50,51) nimpl(10,52):5 xor(6,2) and(42,43) and(5,1) nor(55,56) ",
+    "xor(54,57) xor(58,13) nimpl(45,48) and(44,12) nor(60,61) xor(59,62) xor(63,7) ",
+    "nimpl(51,50) nimpl(6,49) nor(65,66) xor(64,67) nimpl(11,68):6 xor(7,3) ",
+    "nimpl(54,57) and(6,2) nor(71,72) xor(70,73) xor(74,14) nor(59,62) nimpl(13,58) ",
+    "nor(76,77) xor(75,78) xor(79,8) nimpl(64,67) and(63,7) nor(81,82) xor(80,83) ",
+    "nimpl(12,84):7 xor(8,4) nimpl(70,73) and(7,3) nor(87,88) xor(86,89) xor(90,15) ",
+    "nor(75,78) nimpl(14,74) nor(92,93) xor(91,94) xor(95,9) nimpl(80,83) and(79,8) ",
+    "nor(97,98) xor(96,99) nimpl(13,100):8 xor(9,5) nimpl(86,89) and(8,4) nor(103,104) ",
+    "xor(102,105) xor(106,0) nor(91,94) nimpl(15,90) nor(108,109) xor(107,110) ",
+    "xor(111,10) nimpl(96,99) and(95,9) nor(113,114) xor(112,115) nimpl(14,116):9 ",
+    "xor(10,6) nimpl(102,105) and(9,5) nor(119,120) xor(118,121) xor(122,1) ",
+    "nor(107,110) nimpl(0,106) nor(124,125) xor(123,126) xor(127,11) nimpl(112,115) ",
+    "and(111,10) nor(129,130) xor(128,131) nimpl(15,132):10 xor(11,7) nimpl(118,121) ",
+    "and(10,6) nor(135,136) xor(134,137) xor(138,2) nor(123,126) nimpl(1,122) ",
+    "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
+    "xor(144,147) nimpl(0,148):11}(16)"
+);
+
+const AGGR_OUTPUT_EXPECTED: [u32; 128] = [
+    4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 939491327,
+    4294967295, 4294967295, 3221225471, 1543503871, 2147483647, 2004844543, 3086483455, 805142527,
+    4294967295, 4294967295, 4294967295, 4160749567, 4294967295, 3489658879, 2147481599, 536565759,
+    4294967295, 3087007743, 3082813439, 2077734911, 503316479, 2809659391, 2503417855, 19096951,
+    4294967295, 2147483647, 2013265919, 4160749567, 4294967295, 931102719, 1610612735, 85292543,
+    4294967295, 2147483647, 1438646271, 1312536575, 4290772991, 291452927, 565411711, 285546271,
+    4294967295, 935288831, 930611199, 1744295935, 662700031, 94330879, 1732196351, 289738727,
+    2013265919, 1970789887, 1466940927, 118362399, 394256255, 10175999, 69310335, 68157743,
+    1600085855, 1600085855, 1600085855, 358571871, 1600085855, 387931999, 1600085855, 375349087,
+    1600085855, 1465868127, 1600085855, 522147679, 1465868127, 392109919, 257908575, 320019295,
+    1600085855, 526344031, 1600085855, 387931999, 1465868127, 354359135, 1196623711, 18027615,
+    1600085855, 358571359, 425156447, 421024607, 1129799519, 270472479, 17651039, 1179993,
+    1600085855, 526344031, 1461673823, 392124255, 1600085855, 291446623, 325017439, 88301395,
+    1600085855, 526341983, 1432311639, 17506127, 454778719, 18436959, 23007063, 65558, 1600085855,
+    118955871, 1398759263, 374806295, 1449088863, 21697055, 117526879, 21299231, 56581983,
+    273094487, 123016983, 84085013, 274661723, 67311135, 1140916567, 16781322,
+];
+
 const COMB_AGGR_OUTPUT_CODE: &str = r##"{
     unsigned int i;
     uint out[(TYPE_LEN >> 5)*12];
@@ -874,30 +918,7 @@ fn test_opencl_div_builder_and_exec_with_aggr_output() {
         // with elem_index
         let builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let mut builder = DivBuilder::new(builder, 20);
-        let circuit =
-            Circuit::<u32>::from_str(concat!("{0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ",
-            "xor(0,7) and(16,5):0 xor(1,8) and(0,7) xor(18,19) and(20,6):1 xor(2,9) ",
-            "and(18,19) and(1,8) nor(23,24) xor(22,25) nimpl(7,26):2 xor(3,10) nimpl(22,25) ",
-            "and(2,9) nor(29,30) xor(28,31) nimpl(8,32):3 xor(4,0) xor(34,11) nimpl(28,31) ",
-            "and(3,10) nor(36,37) xor(35,38) xor(39,5) nimpl(9,40):4 xor(5,1) and(4,0) ",
-            "xor(42,43) xor(44,12) nimpl(35,38) and(34,11) nor(46,47) xor(45,48) xor(49,6) ",
-            "nimpl(5,39) xor(50,51) nimpl(10,52):5 xor(6,2) and(42,43) and(5,1) nor(55,56) ",
-            "xor(54,57) xor(58,13) nimpl(45,48) and(44,12) nor(60,61) xor(59,62) xor(63,7) ",
-            "nimpl(51,50) nimpl(6,49) nor(65,66) xor(64,67) nimpl(11,68):6 xor(7,3) ",
-            "nimpl(54,57) and(6,2) nor(71,72) xor(70,73) xor(74,14) nor(59,62) nimpl(13,58) ",
-            "nor(76,77) xor(75,78) xor(79,8) nimpl(64,67) and(63,7) nor(81,82) xor(80,83) ",
-            "nimpl(12,84):7 xor(8,4) nimpl(70,73) and(7,3) nor(87,88) xor(86,89) xor(90,15) ",
-            "nor(75,78) nimpl(14,74) nor(92,93) xor(91,94) xor(95,9) nimpl(80,83) and(79,8) ",
-            "nor(97,98) xor(96,99) nimpl(13,100):8 xor(9,5) nimpl(86,89) and(8,4) nor(103,104) ",
-            "xor(102,105) xor(106,0) nor(91,94) nimpl(15,90) nor(108,109) xor(107,110) ",
-            "xor(111,10) nimpl(96,99) and(95,9) nor(113,114) xor(112,115) nimpl(14,116):9 ",
-            "xor(10,6) nimpl(102,105) and(9,5) nor(119,120) xor(118,121) xor(122,1) ",
-            "nor(107,110) nimpl(0,106) nor(124,125) xor(123,126) xor(127,11) nimpl(112,115) ",
-            "and(111,10) nor(129,130) xor(128,131) nimpl(15,132):10 xor(11,7) nimpl(118,121) ",
-            "and(10,6) nor(135,136) xor(134,137) xor(138,2) nor(123,126) nimpl(1,122) ",
-            "nor(140,141) xor(139,142) xor(143,12) nimpl(128,131) and(127,11) nor(145,146) ",
-            "xor(144,147) nimpl(0,148):11}(16)"))
-            .unwrap();
+        let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
 
         let aggr_output_code = COMB_AGGR_OUTPUT_CODE;
         // 0
@@ -938,26 +959,7 @@ fn test_opencl_div_builder_and_exec_with_aggr_output() {
             );
         }
 
-        let expected = vec![
-            4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295,
-            939491327, 4294967295, 4294967295, 3221225471, 1543503871, 2147483647, 2004844543,
-            3086483455, 805142527, 4294967295, 4294967295, 4294967295, 4160749567, 4294967295,
-            3489658879, 2147481599, 536565759, 4294967295, 3087007743, 3082813439, 2077734911,
-            503316479, 2809659391, 2503417855, 19096951, 4294967295, 2147483647, 2013265919,
-            4160749567, 4294967295, 931102719, 1610612735, 85292543, 4294967295, 2147483647,
-            1438646271, 1312536575, 4290772991, 291452927, 565411711, 285546271, 4294967295,
-            935288831, 930611199, 1744295935, 662700031, 94330879, 1732196351, 289738727,
-            2013265919, 1970789887, 1466940927, 118362399, 394256255, 10175999, 69310335, 68157743,
-            1600085855, 1600085855, 1600085855, 358571871, 1600085855, 387931999, 1600085855,
-            375349087, 1600085855, 1465868127, 1600085855, 522147679, 1465868127, 392109919,
-            257908575, 320019295, 1600085855, 526344031, 1600085855, 387931999, 1465868127,
-            354359135, 1196623711, 18027615, 1600085855, 358571359, 425156447, 421024607,
-            1129799519, 270472479, 17651039, 1179993, 1600085855, 526344031, 1461673823, 392124255,
-            1600085855, 291446623, 325017439, 88301395, 1600085855, 526341983, 1432311639,
-            17506127, 454778719, 18436959, 23007063, 65558, 1600085855, 118955871, 1398759263,
-            374806295, 1449088863, 21697055, 117526879, 21299231, 56581983, 273094487, 123016983,
-            84085013, 274661723, 67311135, 1140916567, 16781322,
-        ];
+        let expected = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
             .input_transformer(32, &(0..16).collect::<Vec<_>>())
             .unwrap();
@@ -1498,6 +1500,390 @@ fn test_opencl_div_builder_and_exec_with_pop_from_buffer() {
         assert_eq!(1 << 20, output.len());
         for (i, out) in output.iter().enumerate() {
             assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}
+
+#[test]
+fn test_opencl_div_builder_and_exec_with_aggr_output_to_buffer() {
+    let no_opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: false,
+        group_vec: false,
+        group_len: None,
+    };
+    let opt_neg_config = OpenCLBuilderConfig {
+        optimize_negs: true,
+        group_vec: false,
+        group_len: None,
+    };
+
+    let device = Device::new(
+        *get_all_devices(CL_DEVICE_TYPE_GPU)
+            .unwrap()
+            .get(0)
+            .expect("No device in platform"),
+    );
+
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
+    let expected_out = (0..1u32 << 16)
+        .map(|x| {
+            let out = circuit.eval((0..16).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+    let expected_out_op = expected_out
+        .iter()
+        .map(|y| {
+            (y & 1)
+                | ((y & 2) << 1)
+                | ((y & 4) << 2)
+                | ((y & 8) << 3)
+                | ((y & 16) << 4)
+                | ((y & 32) << 5)
+                | ((y & 64) << 6)
+                | ((y & 128) << 7)
+                | ((y & 256) << 8)
+                | ((y & 512) << 9)
+                | ((y & 1024) << 10)
+                | ((y & 2048) << 11)
+        })
+        .collect::<Vec<_>>();
+    let expected_out_op_2 = expected_out
+        .iter()
+        .enumerate()
+        .map(|(x, y)| {
+            (u32::try_from(x).unwrap() & 0xaaaa)
+                | (y & 1)
+                | ((y & 2) << 1)
+                | ((y & 4) << 2)
+                | ((y & 8) << 3)
+                | ((y & 16) << 4)
+                | ((y & 32) << 5)
+                | ((y & 64) << 6)
+                | ((y & 128) << 7)
+                | ((y & 256) << 8)
+                | ((y & 512) << 9)
+                | ((y & 1024) << 10)
+                | ((y & 2048) << 11)
+        })
+        .collect::<Vec<_>>();
+
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    {
+        let builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
+        let mut builder = DivBuilder::new(builder, 20);
+        let comb_aggr_output_code = r##"{
+    unsigned int i;
+    uint out[TYPE_LEN];
+    global uint* output_u32 = (global uint*)buffer;
+    OUTPUT_TRANSFORM_B12(out, o0, o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint out_idx = out[i];
+        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+        let comb_aggr_output_code_2 = r##"{
+    unsigned int i;
+    uint out[TYPE_LEN];
+    global uint* output_u32 = (global uint*)buffer;
+    OUTPUT_TRANSFORM_B10(out, o0, o1, o2, o3, o4, o6, o7, o9, o10, o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint out_idx = (out[i] & 0x1f) | ((out[i] & 0x60) << 1) |
+                ((out[i] & 0x380) << 2);
+        atomic_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+        let expected_buffer_2: [u32; 128] = [
+            4294967295, 0, 4294967295, 0, 4294967295, 0, 4294967295, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            4294967295, 0, 4294967295, 0, 4294967295, 0, 4294967295, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            4294967295, 0, 4294967295, 0, 4294967295, 0, 2147483647, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            4294967295, 0, 2013265919, 0, 939524095, 0, 2004860927, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1600085855, 0, 1600085855, 0, 1600085855, 0, 1600085855, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1600085855, 0, 1600085855, 0, 1465868127, 0, 1197430623, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1600085855, 0, 1465868127, 0, 1600085855, 0, 392126303, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            1600085855, 0, 1465868127, 0, 1465866079, 0, 1195725151, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        builder.transform_helpers();
+        // 0
+        builder.add_with_config(
+            "comb_aggr_out",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        builder.add_with_config(
+            "comb_aggr_out_2",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(comb_aggr_output_code_2))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&[0, 1, 2, 3, 4, 6, 7, 9, 10, 11])),
+        );
+        // 2
+        builder.add_with_config(
+            "comb_aggr_out_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        // 3
+        builder.add_with_config(
+            "comb_aggr_out_op",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>()))
+                .output_placement(Some((&[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22], 24))),
+        );
+        // 4
+        builder.add_with_config(
+            "comb_aggr_out_op_sb",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>()))
+                .input_placement(Some((&(0..16).collect::<Vec<_>>(), 24)))
+                .output_placement(Some((&[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22], 24)))
+                .single_buffer(true),
+        );
+        // 5
+        builder.add_with_config(
+            "comb_aggr_out_arg",
+            circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..4).collect::<Vec<_>>()))
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        let mut execs = builder.build().unwrap();
+        let expected_buffer = AGGR_OUTPUT_EXPECTED;
+        let mut it = execs[0]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[0].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[0].new_data(expected_buffer.len());
+        let output_circ = execs[0]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[0].new_data(expected_buffer.len());
+        let mut output_circ = execs[0].new_data(output_circ.len());
+        execs[0]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // with limited output
+        let mut it = execs[1]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[1]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[1].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[1].new_data(expected_buffer.len());
+        let output_circ = execs[1]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer_2[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[1].new_data(expected_buffer.len());
+        let mut output_circ = execs[1].new_data(output_circ.len());
+        execs[1]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer_2[i], *out, "{}: {}", config_num, i);
+        }
+        // with elem full
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[2].new_data(1);
+        let mut buffer = execs[2].new_data(expected_buffer.len());
+        let output_circ = execs[2]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[2].new_data(expected_buffer.len());
+        let mut output_circ = execs[2].new_data(output_circ.len());
+        execs[2]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // with output placement
+        let mut it = execs[3]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[3]
+            .output_transformer(32, &(0..24).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[3].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[3].new_data(expected_buffer.len());
+        let output_circ = execs[3]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out_op.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_op[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[3].new_data(expected_buffer.len());
+        let mut output_circ = execs[3].new_data(output_circ.len());
+        execs[3]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_op[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // with single_buffer
+        let mut it = execs[4]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[4]
+            .output_transformer(32, &(0..24).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[4].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        let mut output_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[4].new_data(expected_buffer.len());
+        execs[4]
+            .execute_buffer_single(&mut output_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out_op.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out_op_2[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // arg_inputs
+        let mut it = execs[5]
+            .input_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[5]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[5].new_data_from_vec((0..1 << 12).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer_comb = vec![0u32; expected_buffer.len()];
+        for arg in 0..16 {
+            let mut buffer = execs[5].new_data(expected_buffer.len());
+            let output_circ = execs[5]
+                .execute_buffer(&input_circ, arg, &mut buffer)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(expected_out.len() >> 4, output.len());
+            let arg = usize::try_from(arg).unwrap();
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(expected_out[(i << 4) + arg], *out, "{}: {}", config_num, i);
+            }
+            let buffer = buffer.release();
+            for (i, v) in buffer_comb.iter_mut().enumerate() {
+                *v |= buffer[i];
+            }
+        }
+        for (i, out) in buffer_comb.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer_comb = vec![0u32; expected_buffer.len()];
+        for arg in 0..16 {
+            let mut buffer = execs[5].new_data(expected_buffer.len());
+            let mut output_circ = execs[5].new_data_output_elems(1 << 12);
+            execs[5]
+                .execute_buffer_reuse(&input_circ, arg, &mut output_circ, &mut buffer)
+                .unwrap();
+            let output = ot.transform(&output_circ).unwrap().release();
+            assert_eq!(expected_out.len() >> 4, output.len());
+            let arg = usize::try_from(arg).unwrap();
+            for (i, out) in output.iter().enumerate() {
+                assert_eq!(expected_out[(i << 4) + arg], *out, "{}: {}", config_num, i);
+            }
+            let buffer = buffer.release();
+            for (i, v) in buffer_comb.iter_mut().enumerate() {
+                *v |= buffer[i];
+            }
+        }
+        for (i, out) in buffer_comb.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
     }
 }
