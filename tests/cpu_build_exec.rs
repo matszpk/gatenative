@@ -1482,6 +1482,18 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
                 .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>()))
                 .output_placement(Some((&[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22], 24))),
         );
+        // 4
+        // builder.add_with_config(
+        //     "comb_aggr_out_op_sb",
+        //     circuit.clone(),
+        //     CodeConfig::new()
+        //         .aggr_output_code(Some(comb_aggr_output_code))
+        //         .aggr_output_len(Some(1 << (12 - 5)))
+        //         .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>()))
+        //         .input_placement(Some((&(0..16).collect::<Vec<_>>(), 24)))
+        //         .output_placement(Some((&[0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22], 24)))
+        //         .single_buffer(true),
+        // );
         let mut execs = builder.build().unwrap();
         let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
@@ -1627,6 +1639,28 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
         for (i, out) in buffer.iter().enumerate() {
             assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
+        // with single_buffer
+        // let mut it = execs[4]
+        //     .input_transformer(32, &(0..16).collect::<Vec<_>>())
+        //     .unwrap();
+        // let mut ot = execs[4]
+        //     .output_transformer(32, &(0..24).collect::<Vec<_>>())
+        //     .unwrap();
+        // let input = execs[4].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        // let mut output_circ = it.transform(&input).unwrap();
+        // let mut buffer = execs[4].new_data(expected_buffer.len());
+        // execs[4]
+        //     .execute_buffer_single(&mut output_circ, 0, &mut buffer)
+        //     .unwrap();
+        // let output = ot.transform(&output_circ).unwrap().release();
+        // assert_eq!(expected_out_op.len(), output.len());
+        // for (i, out) in output.iter().enumerate() {
+        //     assert_eq!(expected_out_op[i], *out, "{}: {}", config_num, i);
+        // }
+        // let buffer = buffer.release();
+        // for (i, out) in buffer.iter().enumerate() {
+        //     assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        // }
     }
 }
 

@@ -1000,7 +1000,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 } else {
                     ""
                 },
-                if self.output_vars.is_some() {
+                if self.output_vars.is_some()
+                    && self.pop_input_map.is_empty()
+                    && !self.aggr_to_buffer
+                {
                     "void"
                 } else {
                     self.writer.config.type_name
