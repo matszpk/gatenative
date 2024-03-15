@@ -1445,6 +1445,16 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
                 .aggr_output_len(Some(1 << (12 - 5)))
                 .aggr_to_buffer(Some(&[0, 1, 2, 3, 4, 6, 7, 9, 10, 11])),
         );
+        // 2
+        builder.add_with_config(
+            "comb_aggr_out_elem_full",
+            circuit.clone(),
+            CodeConfig::new()
+                .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
         let mut execs = builder.build().unwrap();
         let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
@@ -1519,6 +1529,39 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
         let buffer = buffer.release();
         for (i, out) in buffer.iter().enumerate() {
             assert_eq!(expected_buffer_2[i], *out, "{}: {}", config_num, i);
+        }
+        // with elem full
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input_circ = execs[2].new_data(1);
+        let mut buffer = execs[2].new_data(expected_buffer.len());
+        let output_circ = execs[2]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+        // reuse
+        let mut buffer = execs[2].new_data(expected_buffer.len());
+        let mut output_circ = execs[2].new_data(output_circ.len());
+        execs[2]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
     }
 }
