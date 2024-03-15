@@ -1439,6 +1439,21 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
         for (i, out) in buffer.iter().enumerate() {
             assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
         }
+        // reuse
+        let mut buffer = execs[0].new_data(expected_buffer.len());
+        let mut output_circ = execs[0].new_data(output_circ.len());
+        execs[0]
+            .execute_buffer_reuse(&input_circ, 0, &mut output_circ, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
     }
 }
 
