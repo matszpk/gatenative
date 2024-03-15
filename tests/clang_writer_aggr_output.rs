@@ -1640,6 +1640,56 @@ fn test_clang_writer_aggregate_output_to_buffer() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .input_placement(Some((&[0, 6, 7], 8)))
+            .output_placement(Some((&[0, 2, 3, 5, 6, 7], 8)))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = output[0];
+    v1 = output[6];
+    v2 = (v0 ^ v1);
+    v3 = output[7];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    output[3] = ~v4;
+    output[7] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[2] = ~v0;
+    output[5] = v0;
+    output[6] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
 
     let circuit = Circuit::new(
         4,
