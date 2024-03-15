@@ -1379,6 +1379,70 @@ fn test_cpu_builder_and_exec_with_aggr_output_with_helpers() {
 }
 
 #[test]
+fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
+    let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
+    let expected_out = (0..1u32 << 16)
+        .map(|x| {
+            let out = circuit.eval((0..16).map(|i| ((x >> i) & 1) != 0));
+            let mut y = 0;
+            for (i, outb) in out.into_iter().enumerate() {
+                y |= u32::from(outb) << i;
+            }
+            y
+        })
+        .collect::<Vec<_>>();
+
+    let configs = get_builder_configs();
+    for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
+        let mut builder =
+            CPUBuilder::new_with_cpu_ext_and_clang_config(cpu_ext, writer_config, builder_config);
+        let comb_aggr_output_code = r##"{
+    unsigned int i;
+    uint32_t out[TYPE_LEN];
+    uint32_t* output_u32 = (uint32_t*)buffer;
+    OUTPUT_TRANSFORM_B12(out, o0, o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11);
+    for (i = 0; i < TYPE_LEN; i++) {
+        const uint32_t out_idx = out[i];
+        __sync_fetch_and_or(&output_u32[out_idx >> 5], (1 << (out_idx & 31)));
+    }
+}"##;
+        // 0
+        builder.transform_helpers();
+        builder.add_with_config(
+            "comb_aggr_out",
+            circuit.clone(),
+            CodeConfig::new()
+                .aggr_output_code(Some(comb_aggr_output_code))
+                .aggr_output_len(Some(1 << (12 - 5)))
+                .aggr_to_buffer(Some(&(0..12).collect::<Vec<_>>())),
+        );
+        let mut execs = builder.build().unwrap();
+        let expected_buffer = AGGR_OUTPUT_EXPECTED;
+        let mut it = execs[0]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..12).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[0].new_data_from_vec((0..1 << 16).collect::<Vec<_>>());
+        let input_circ = it.transform(&input).unwrap();
+        let mut buffer = execs[0].new_data(expected_buffer.len());
+        let output_circ = execs[0]
+            .execute_buffer(&input_circ, 0, &mut buffer)
+            .unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(expected_out.len(), output.len());
+        for (i, out) in output.iter().enumerate() {
+            assert_eq!(expected_out[i], *out, "{}: {}", config_num, i);
+        }
+        let buffer = buffer.release();
+        for (i, out) in buffer.iter().enumerate() {
+            assert_eq!(expected_buffer[i], *out, "{}: {}", config_num, i);
+        }
+    }
+}
+
+#[test]
 fn test_cpu_builder_and_exec_with_pop_input() {
     let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
     let circuit2_out = (0..1u32 << 20)
