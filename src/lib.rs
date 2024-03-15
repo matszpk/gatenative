@@ -63,6 +63,8 @@ pub struct CodeConfig<'a> {
     // if some then aggregate some choosen circuit outputs to buffer.
     // and keep storing circuit outputs to original output buffer.
     pub aggr_to_buffer: Option<&'a [usize]>,
+    // exclude outputs
+    pub exclude_outputs: Option<&'a [usize]>,
 }
 
 impl<'a> CodeConfig<'a> {
@@ -80,6 +82,7 @@ impl<'a> CodeConfig<'a> {
             aggr_output_len: None,
             pop_from_buffer: None,
             aggr_to_buffer: None,
+            exclude_outputs: None,
         }
     }
 
@@ -129,6 +132,10 @@ impl<'a> CodeConfig<'a> {
     }
     pub fn aggr_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
         self.aggr_to_buffer = aggr;
+        self
+    }
+    pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
+        self.exclude_outputs = excl;
         self
     }
 }
@@ -258,7 +265,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         let real_output_len = if let Some((_, len)) = code_config.output_placement {
             len
         } else {
-            output_len
+            output_len - code_config.exclude_outputs.map(|x| x.len()).unwrap_or(0)
         };
         let pop_input_same =
             code_config.pop_input_code.is_some() && code_config.pop_from_buffer.is_none();
@@ -272,6 +279,14 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             code_config.input_placement,
             code_config.output_placement
         ));
+        if let Some(exclude_outputs) = code_config.exclude_outputs {
+            assert_ne!(exclude_outputs.len(), 0);
+            assert!(exclude_outputs.iter().all(|x| *x < output_len));
+            let mut psorted = exclude_outputs.to_vec();
+            psorted.sort();
+            psorted.dedup();
+            assert_eq!(psorted.len(), exclude_outputs.len());
+        }
         if let Some(arg_inputs) = code_config.arg_inputs {
             assert_ne!(arg_inputs.len(), 0);
             assert!(arg_inputs.len() <= 64);
