@@ -610,6 +610,11 @@ where
                         code_config.pop_from_buffer
                     } else {
                         None
+                    })
+                    .exclude_outputs(if i + 1 == subcircuit_num {
+                        code_config.exclude_outputs
+                    } else {
+                        None
                     }),
             );
         }

@@ -1175,6 +1175,7 @@ struct CircuitEntry {
     populated_from_buffer: bool,
     pop_input_len: Option<usize>,
     pop_input_len_from_buffer: Option<usize>,
+    exclude_outputs_len: Option<usize>,
 }
 
 pub struct CPUBuilder<'a> {
@@ -1293,6 +1294,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             } else {
                 None
             },
+            exclude_outputs_len: code_config.exclude_outputs.map(|x| x.len()),
         });
         generate_code_with_config(
             &mut self.writer,
@@ -1326,7 +1328,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                         .output_placement
                         .as_ref()
                         .map(|x| x.1)
-                        .unwrap_or(e.output_len),
+                        .unwrap_or(e.output_len - e.exclude_outputs_len.unwrap_or(0)),
                     words_per_real_word,
                     arg_input_len: e.arg_input_len,
                     elem_input_num: e.elem_input_len.unwrap_or(0),
