@@ -140,7 +140,7 @@ fn gen_var_allocs<T>(
     input_map: Option<&HashMap<usize, usize>>,
     keep_output_vars: Option<&[usize]>,
     pop_inputs: Option<&[usize]>,
-    excluded_outputs: Option<&HashMap<usize, usize>>,
+    output_map: Option<&HashMap<usize, usize>>,
 ) -> (
     Vec<T>,
     usize,
@@ -486,6 +486,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
     pop_inputs: Option<&[usize]>,
     store_output_vars_always: bool,
+    output_map: Option<&HashMap<usize, usize>>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -712,6 +713,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
     pop_inputs: Option<&[usize]>,
     store_output_vars_always: bool,
+    output_map: Option<&HashMap<usize, usize>>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -1062,6 +1064,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             output_vars.as_ref(),
             pop_inputs,
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+            output_map.as_ref(),
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -1088,6 +1091,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             output_vars.as_ref(),
             pop_inputs,
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+            output_map.as_ref(),
         );
     }
 
