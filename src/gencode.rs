@@ -56,8 +56,16 @@ fn single_var_use<T>(
 }
 
 #[inline]
-fn get_bit_place(placement: Option<(&[usize], usize)>, bit: usize) -> usize {
-    placement.map(|(p, _)| p[bit]).unwrap_or(bit)
+fn get_bit_place(
+    placement: Option<(&[usize], usize)>,
+    output_map: Option<&HashMap<usize, usize>>,
+    bit: usize,
+) -> usize {
+    if let Some(output_map) = output_map {
+        placement.map(|(p, _)| p[bit]).unwrap_or(output_map[&bit])
+    } else {
+        placement.map(|(p, _)| p[bit]).unwrap_or(bit)
+    }
 }
 
 fn get_input_orig_index_map(
@@ -281,7 +289,7 @@ where
                     if single_buffer {
                         for oi in outlist {
                             // check output mapping to not already inputs
-                            let out_p = get_bit_place(output_placement, *oi);
+                            let out_p = get_bit_place(output_placement, output_map, *oi);
                             if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                                 // if input_bit under output placement is not read
                                 if !input_already_read[*input_bit] {
@@ -303,6 +311,11 @@ where
                             }
                         }
                     }
+                    let outlist_not_excluded = if let Some(output_map) = output_map {
+                        outlist.iter().any(|x| output_map.contains_key(x))
+                    } else {
+                        true
+                    };
                     // use output at this point
                     if let Some(output_vars) = output_vars.as_mut() {
                         let mut use_normal = false;
@@ -348,9 +361,11 @@ where
                         }
                         if !output_used_later {
                             // if this output not used later then use in this
-                            single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
+                            if outlist_not_excluded {
+                                single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
+                            }
                         }
-                    } else {
+                    } else if outlist_not_excluded {
                         single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
                     }
                 }
@@ -367,7 +382,7 @@ where
             if single_buffer {
                 for oi in outlist {
                     // check output mapping to not already inputs
-                    let out_p = get_bit_place(output_placement, *oi);
+                    let out_p = get_bit_place(output_placement, output_map, *oi);
                     if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                         // if input_bit under output placement is not read
                         if !input_already_read[*input_bit] {
@@ -390,6 +405,11 @@ where
                 }
             }
 
+            let outlist_not_excluded = if let Some(output_map) = output_map {
+                outlist.iter().any(|x| output_map.contains_key(x))
+            } else {
+                true
+            };
             if let Some(output_vars) = output_vars.as_mut() {
                 let mut use_normal = false;
                 let mut use_neg = false;
@@ -432,9 +452,11 @@ where
                 }
                 if !output_used_later {
                     // if this output not used later then use in this
-                    single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
+                    if outlist_not_excluded {
+                        single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
+                    }
                 }
-            } else {
+            } else if outlist_not_excluded {
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
             }
         }
@@ -522,6 +544,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
     if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
@@ -622,7 +645,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
-                            let out_p = get_bit_place(output_placement, *oi);
+                            let out_p = get_bit_place(output_placement, output_map, *oi);
                             if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                                 // if input_bit under output placement is not read
                                 if !used_inputs[*input_bit] {
@@ -635,7 +658,9 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                             }
                         }
                         // if output then store
-                        if store_output_vars_always || output_vars.is_none() {
+                        if is_in_output_map(*oi)
+                            && (store_output_vars_always || output_vars.is_none())
+                        {
                             writer.gen_store(
                                 *on,
                                 *oi,
@@ -655,7 +680,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         if *o < input_len_t {
             if single_buffer {
                 // check output mapping to not already inputs
-                let out_p = get_bit_place(output_placement, oi);
+                let out_p = get_bit_place(output_placement, output_map, oi);
                 if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                     // if input_bit under output placement is not read
                     if !used_inputs[*input_bit] {
@@ -671,7 +696,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
                 used_inputs[ou] = true;
             }
-            if store_output_vars_always || output_vars.is_none() {
+            if is_in_output_map(oi) && (store_output_vars_always || output_vars.is_none()) {
                 writer.gen_store(
                     *on,
                     oi,
@@ -749,6 +774,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
     if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
@@ -846,7 +872,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                     for (oi, on) in outlist {
                         if single_buffer {
                             // check output mapping to not already inputs
-                            let out_p = get_bit_place(output_placement, *oi);
+                            let out_p = get_bit_place(output_placement, output_map, *oi);
                             if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                                 // if input_bit under output placement is not read
                                 if !used_inputs[*input_bit] {
@@ -859,7 +885,9 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                             }
                         }
                         // if output then store
-                        if store_output_vars_always || output_vars.is_none() {
+                        if is_in_output_map(*oi)
+                            && (store_output_vars_always || output_vars.is_none())
+                        {
                             writer.gen_store(
                                 *on,
                                 *oi,
@@ -879,7 +907,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         if *o < input_len_t {
             if single_buffer {
                 // check output mapping to not already inputs
-                let out_p = get_bit_place(output_placement, oi);
+                let out_p = get_bit_place(output_placement, output_map, oi);
                 if let Some(input_bit) = input_orig_index_map.get(&out_p) {
                     // if input_bit under output placement is not read
                     if !used_inputs[*input_bit] {
@@ -894,7 +922,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
                 used_inputs[ou] = true;
             }
-            if store_output_vars_always || output_vars.is_none() {
+            if is_in_output_map(oi) && (store_output_vars_always || output_vars.is_none()) {
                 writer.gen_store(
                     *on,
                     oi,
