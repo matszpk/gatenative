@@ -311,11 +311,6 @@ where
                             }
                         }
                     }
-                    let outlist_not_excluded = if let Some(output_map) = output_map {
-                        outlist.iter().any(|x| output_map.contains_key(x))
-                    } else {
-                        true
-                    };
                     // use output at this point
                     if let Some(output_vars) = output_vars.as_mut() {
                         let mut use_normal = false;
@@ -361,11 +356,9 @@ where
                         }
                         if !output_used_later {
                             // if this output not used later then use in this
-                            if outlist_not_excluded {
-                                single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
-                            }
+                            single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
                         }
-                    } else if outlist_not_excluded {
+                    } else {
                         single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
                     }
                 }
@@ -405,11 +398,6 @@ where
                 }
             }
 
-            let outlist_not_excluded = if let Some(output_map) = output_map {
-                outlist.iter().any(|x| output_map.contains_key(x))
-            } else {
-                true
-            };
             if let Some(output_vars) = output_vars.as_mut() {
                 let mut use_normal = false;
                 let mut use_neg = false;
@@ -452,11 +440,9 @@ where
                 }
                 if !output_used_later {
                     // if this output not used later then use in this
-                    if outlist_not_excluded {
-                        single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
-                    }
+                    single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
                 }
-            } else if outlist_not_excluded {
+            } else {
                 single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
             }
         }
