@@ -1603,7 +1603,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             let excl_set = HashSet::<usize>::from_iter(excl_outputs.iter().copied());
             let mut count = 0;
             for i in 0..output_len {
-                if excl_set.contains(&i) {
+                if !excl_set.contains(&i) {
                     output_map.insert(i, count);
                     count += 1;
                 }
