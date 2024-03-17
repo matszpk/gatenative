@@ -1339,13 +1339,14 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             } else {
                 "input"
             };
-            // TODO: FIX for pop_input
             let input = if let Some(real_input) = self.input_map.get(&input) {
                 self.input_placement
                     .map(|(p, _)| p[*real_input])
                     .unwrap_or(*real_input)
-            } else {
+            } else if self.input_map.is_empty() {
                 self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
+            } else {
+                panic!("Unexpected input in gen_load!");
             };
             let (dst, r) = if self.writer.config.init_index.is_some() {
                 if self.writer.config.init_local_index.is_some() {
@@ -1417,10 +1418,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.output_placement
                 .map(|(p, _)| p[*real_output])
                 .unwrap_or(*real_output)
-        } else {
+        } else if self.output_map.is_empty() {
             self.output_placement
                 .map(|(p, _)| p[output])
                 .unwrap_or(output)
+        } else {
+            panic!("Unexpected output in gen_store!");
         };
         let arg = CLangWriter::<'a>::format_neg_arg(self.writer.config, neg, reg);
         let (dst, src) = if self.writer.config.init_index.is_some() {
