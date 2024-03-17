@@ -1339,6 +1339,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             } else {
                 "input"
             };
+            // TODO: FIX for pop_input
             let input = if let Some(real_input) = self.input_map.get(&input) {
                 self.input_placement
                     .map(|(p, _)| p[*real_input])
