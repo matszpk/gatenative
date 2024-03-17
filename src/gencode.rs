@@ -1861,22 +1861,39 @@ mod tests {
                 None,
             )
         );
-        // let mut var_usage = gen_var_usage(&circuit);
-        // assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
-        // assert_eq!(
-        //     (vec![3, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
-        //     gen_var_allocs(
-        //         &circuit,
-        //         Some((&[1, 2, 3, 0], 4)),
-        //         Some((&[3, 1], 4)),
-        //         &mut var_usage,
-        //         true,
-        //         None,
-        //         None,
-        //         None,
-        //         Some(&HashMap::from_iter([(0, 0), (3, 1)])),
-        //     )
-        // );
+        // with output_map
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[3, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None,
+                Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![4, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 5, None),
+            gen_var_allocs(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[1, 3], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None,
+                Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+            )
+        );
         // testcase with placements and with input_map (some input are used as arg_input)
         let mut var_usage = gen_var_usage(&circuit);
         assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
