@@ -380,4 +380,146 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+
+    // aggr_output with aggr_to_buffer
+    let circuit = Circuit::new(
+        3,
+        [
+            Gate::new_xor(0, 1),
+            Gate::new_xor(2, 3),
+            Gate::new_and(2, 3),
+            Gate::new_and(0, 1),
+            Gate::new_nor(5, 6),
+        ],
+        [(4, false), (7, true), (4, true)],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2]))
+            .exclude_outputs(Some(&[0, 2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[0] = ~v0;
+    v0 = ~v4;
+#define o0 (v4)
+#define o2 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2]))
+            .exclude_outputs(Some(&[0, 2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const __m128i* input,
+    __m128i* output, void* buffer, size_t idx) {
+    const __m128i one = *((const __m128i*)one_value);
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    unsigned int xxx = 1111;
+    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
+    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
+    v2 = _mm_xor_si128(v0, v1);
+    v3 = _mm_loadu_si128((const __m128i*)&input[2]);
+    v4 = _mm_xor_si128(v3, v2);
+    v2 = _mm_and_si128(v3, v2);
+    v0 = _mm_and_si128(v0, v1);
+    v0 = _mm_or_si128(v2, v0);
+    _mm_storeu_si128((__m128i*)&output[0], v0);
+    v0 = _mm_xor_si128(v4, one);
+#define o0 (v4)
+#define o2 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2]))
+            .exclude_outputs(Some(&[0, 2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + input_shift;
+    const size_t ovn = 1 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    unsigned int xxx = 1111;
+    v0 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v2 = (v0 ^ v1);
+    v3 = input[ivn + 2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[ovn + 0] = ~v0;
+    v0 = ~v4;
+#define o0 (v4)
+#define o2 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+}
+"##
+    );
 }
