@@ -165,6 +165,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    //println!("Start");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -386,7 +387,7 @@ where
                             if !input_already_read[*input_bit] {
                                 // println!(
                                 //     "Not already alloc: {}, {} {}: {}",
-                                //     node_index + input_len,
+                                //     usize::try_from(*o).unwrap(),
                                 //     *oi,
                                 //     input_bit,
                                 //     input_already_read[*input_bit]
