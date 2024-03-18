@@ -851,28 +851,34 @@ fn test_clang_writer_exclude_output() {
     uint32_t v2;
     uint32_t v3;
     uint32_t v4;
+    uint32_t v5;
     unsigned int xxx = 1111;
-    v0 = output[0];
-    v1 = output[1];
-    v2 = (v0 ^ v1);
+#define i1 (v0)
+#define i4 (v1)
+    ((TYPE_NAME*)input)[0] |= i0 ^ i2;
+#define i1
+#define i4
+    v2 = output[1];
     v3 = output[2];
-    v4 = (v3 ^ v2);
-    v2 = (v3 & v2);
-    v0 = (v0 & v1);
-    v0 = ~(v2 | v0);
-    output[0] = ~v0;
-    output[1] = v0;
-    output[2] = ~v0;
-    v1 = ~v4;
-#define o0 (v4)
-#define o2 (v1)
-#define o3 (v0)
-#define o5 (v4)
+    v4 = (v2 & v3);
+    v5 = output[0];
+    v5 = ~(v5 | v3);
+    v5 = (v4 & ~v5);
+    output[1] = ~v5;
+    v2 = (v2 ^ v3);
+    v3 = (v4 & v2);
+    v2 = (v2 ^ v3);
+    v3 = (v5 ^ v2);
+    output[2] = v3;
+    v0 = (v2 & ~v0);
+    v3 = output[3];
+    output[3] = ~v0;
+    output[0] = ~v3;
+#define o0 (v1)
+#define o3 (v2)
     ((TYPE_NAME*)output)[0] |= o0 ^ o2;
 #undef o0
-#undef o2
 #undef o3
-#undef o5
 }
 "##
     );

@@ -165,13 +165,15 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    //println!("Start");
+    println!("Start");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(keep_output_vars.is_some() && pop_inputs.is_some());
+    let single_buffer = single_buffer
+        && !(keep_output_vars.map(|x| x.is_empty()).unwrap_or(false)
+            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let output_len = circuit.outputs().len();
@@ -514,7 +516,9 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(output_vars.is_some() && pop_inputs.is_some());
+    let single_buffer = single_buffer
+        && !(output_vars.map(|x| x.is_empty()).unwrap_or(false)
+            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -748,7 +752,9 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
-    let single_buffer = single_buffer && !(output_vars.is_some() && pop_inputs.is_some());
+    let single_buffer = single_buffer
+        && !(output_vars.map(|x| x.is_empty()).unwrap_or(false)
+            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
