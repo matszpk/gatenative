@@ -165,7 +165,6 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("Start");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -516,8 +515,10 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
+    // store_output_vars_always - aggr_to_buffer
     let single_buffer = single_buffer
-        && !(output_vars.map(|x| x.is_empty()).unwrap_or(false)
+        && !(output_vars.is_some()
+            && !store_output_vars_always
             && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
@@ -752,8 +753,10 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         node: usize,
         way: usize,
     }
+    // store_output_vars_always - aggr_to_buffer
     let single_buffer = single_buffer
-        && !(output_vars.map(|x| x.is_empty()).unwrap_or(false)
+        && !(output_vars.is_some()
+            && !store_output_vars_always
             && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
