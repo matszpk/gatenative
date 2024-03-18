@@ -638,4 +638,171 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+
+    let circuit = Circuit::new(
+        3,
+        [
+            Gate::new_xor(0, 1),
+            Gate::new_xor(2, 3),
+            Gate::new_and(2, 3),
+            Gate::new_and(0, 1),
+            Gate::new_nor(5, 6),
+        ],
+        [
+            (4, false),
+            (7, true),
+            (4, true),
+            (7, false),
+            (7, true),
+            (4, false),
+        ],
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 5]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = output[0];
+    v1 = output[1];
+    v2 = (v0 ^ v1);
+    v3 = output[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[0] = ~v0;
+    output[1] = v0;
+    output[2] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 5]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(__m128* output, void* buffer, size_t idx) {
+    const __m128 one = *((const __m128*)one_value);
+    __m128 v0;
+    __m128 v1;
+    __m128 v2;
+    __m128 v3;
+    __m128 v4;
+    unsigned int xxx = 1111;
+    v0 = _mm_loadu_ps((const float*)&output[0]);
+    v1 = _mm_loadu_ps((const float*)&output[1]);
+    v2 = _mm_xor_ps(v0, v1);
+    v3 = _mm_loadu_ps((const float*)&output[2]);
+    v4 = _mm_xor_ps(v3, v2);
+    v2 = _mm_and_ps(v3, v2);
+    v0 = _mm_and_ps(v0, v1);
+    v0 = _mm_or_ps(v2, v0);
+    _mm_storeu_ps((float*)&output[0], v0);
+    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v0, one));
+    _mm_storeu_ps((float*)&output[2], v0);
+    v1 = _mm_xor_ps(v4, one);
+    v0 = _mm_xor_ps(v0, one);
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 5]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long output_shift,
+    unsigned long buffer_shift, global uint* output, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + output_shift;
+    const size_t ovn = 3 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    unsigned int xxx = 1111;
+    v0 = output[ivn + 0];
+    v1 = output[ivn + 1];
+    v2 = (v0 ^ v1);
+    v3 = output[ivn + 2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[ovn + 0] = ~v0;
+    output[ovn + 1] = v0;
+    output[ovn + 2] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
 }
