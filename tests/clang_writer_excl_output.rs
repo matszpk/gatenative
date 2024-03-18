@@ -882,4 +882,59 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_INTEL_SSE2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .pop_input_code(Some("    ((TYPE_NAME*)input)[0] |= i0 ^ i2;"))
+            .pop_from_buffer(Some(&[1, 4]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 3]))
+            .exclude_outputs(Some(&[0, 3]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(__m128i* output, void* buffer, size_t idx) {
+    const __m128i one = *((const __m128i*)one_value);
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    __m128i v5;
+    unsigned int xxx = 1111;
+#define i1 (v0)
+#define i4 (v1)
+    ((TYPE_NAME*)input)[0] |= i0 ^ i2;
+#define i1
+#define i4
+    v2 = _mm_loadu_si128((const __m128i*)&output[1]);
+    v3 = _mm_loadu_si128((const __m128i*)&output[2]);
+    v4 = _mm_and_si128(v2, v3);
+    v5 = _mm_loadu_si128((const __m128i*)&output[0]);
+    v5 = _mm_or_si128(v5, v3);
+    v5 = _mm_and_si128(v4, v5);
+    _mm_storeu_si128((__m128i*)&output[1], _mm_xor_si128(v5, one));
+    v2 = _mm_xor_si128(v2, v3);
+    v3 = _mm_and_si128(v4, v2);
+    v2 = _mm_xor_si128(v2, v3);
+    v3 = _mm_xor_si128(v5, v2);
+    _mm_storeu_si128((__m128i*)&output[2], v3);
+    v0 = _mm_andnot_si128(v0, v2);
+    v3 = _mm_loadu_si128((const __m128i*)&output[3]);
+    _mm_storeu_si128((__m128i*)&output[3], _mm_xor_si128(v0, one));
+    _mm_storeu_si128((__m128i*)&output[0], _mm_xor_si128(v3, one));
+#define o0 (v1)
+#define o3 (v2)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o3
+}
+"##
+    );
 }
