@@ -178,6 +178,57 @@ kernel void gate_sys_testcirc(unsigned long n,
 }
 "##
     );
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    writer.prolog();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new().pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];")),
+    );
+    writer.epilog();
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+#define GET_U32(D,X,I) { (D) = (X); }
+#define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
+kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global void* input,
+    global uint* output) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (3 * idx) + input_shift;
+    const size_t ovn = llen * (2 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    input = (const global void*)(((const global char*)input) + 4*input_shift);
+#define i0 (v0)
+#define i1 (v1)
+#define i2 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i2
+    v3 = (v0 ^ v1);
+    v4 = (v2 ^ v3);
+    output[ovn + llen*0 + lidx] = v4;
+    v2 = (v2 & v3);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[ovn + llen*1 + lidx] = ~v0;
+}
+"##
+    );
 
     let circuit = Circuit::new(
         4,
@@ -1478,6 +1529,57 @@ fn test_clang_writer_populate_input_from_buffer() {
     output[ovn + 2] = v2;
     v0 = (v1 & v0);
     output[ovn + 3] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .pop_input_code(Some("    i0 = ((TYPE_NAME*)input)[0];"))
+            .pop_from_buffer(Some(&[0, 1, 3])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, global void* buffer) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (1 * idx) + input_shift;
+    const size_t ovn = llen * (4 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+#define i0 (v0)
+#define i1 (v1)
+#define i3 (v2)
+    i0 = ((TYPE_NAME*)input)[0];
+#define i0
+#define i1
+#define i3
+    v3 = input[ivn + llen*0 + lidx];
+    v4 = (v0 & v3);
+    output[ovn + llen*0 + lidx] = v4;
+    v3 = (v1 & v3);
+    v0 = (v0 & v2);
+    v4 = (v3 ^ v0);
+    output[ovn + llen*1 + lidx] = ~v4;
+    v1 = (v1 & v2);
+    v0 = (v3 & v0);
+    v2 = (v1 ^ v0);
+    output[ovn + llen*2 + lidx] = v2;
+    v0 = (v1 & v0);
+    output[ovn + llen*3 + lidx] = ~v0;
 }
 "##
     );

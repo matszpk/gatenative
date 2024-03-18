@@ -1917,4 +1917,126 @@ fn test_clang_writer_aggregate_output_to_buffer() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 4, 5, 6, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 4 * idx + input_shift;
+    const size_t ovn = 9 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    unsigned int xxx = 1111;
+    v0 = input[ivn + 0];
+    output[ovn + 0] = v0;
+    v0 = input[ivn + 1];
+    output[ovn + 1] = ~v0;
+    v1 = input[ivn + 2];
+    output[ovn + 2] = v1;
+    v2 = input[ivn + 3];
+    output[ovn + 3] = ~v2;
+    output[ovn + 4] = v0;
+    output[ovn + 5] = ~v1;
+    output[ovn + 6] = ~v2;
+    output[ovn + 7] = v1;
+    output[ovn + 8] = ~v0;
+    v0 = ~v0;
+    v3 = ~v0;
+    v1 = ~v1;
+    v2 = ~v2;
+#define o1 (v0)
+#define o4 (v3)
+#define o5 (v1)
+#define o6 (v2)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o4
+#undef o5
+#undef o6
+#undef o8
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some(
+                "    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;",
+            ))
+            .aggr_to_buffer(Some(&[1, 4, 5, 6, 8])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    unsigned long buffer_shift, const global uint* input,
+    global uint* output, global void* buffer) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (4 * idx) + input_shift;
+    const size_t ovn = llen * (9 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    unsigned int xxx = 1111;
+    v0 = input[ivn + llen*0 + lidx];
+    output[ovn + llen*0 + lidx] = v0;
+    v0 = input[ivn + llen*1 + lidx];
+    output[ovn + llen*1 + lidx] = ~v0;
+    v1 = input[ivn + llen*2 + lidx];
+    output[ovn + llen*2 + lidx] = v1;
+    v2 = input[ivn + llen*3 + lidx];
+    output[ovn + llen*3 + lidx] = ~v2;
+    output[ovn + llen*4 + lidx] = v0;
+    output[ovn + llen*5 + lidx] = ~v1;
+    output[ovn + llen*6 + lidx] = ~v2;
+    output[ovn + llen*7 + lidx] = v1;
+    output[ovn + llen*8 + lidx] = ~v0;
+    v0 = ~v0;
+    v3 = ~v0;
+    v1 = ~v1;
+    v2 = ~v2;
+#define o1 (v0)
+#define o4 (v3)
+#define o5 (v1)
+#define o6 (v2)
+#define o8 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o1 ^ o2 & o3 ^ o4 ^ o5;
+#undef o1
+#undef o4
+#undef o5
+#undef o6
+#undef o8
+}
+"##
+    );
 }

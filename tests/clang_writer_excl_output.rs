@@ -81,6 +81,43 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer();
+    generate_code_with_config(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        CodeConfig::new().exclude_outputs(Some(&[0])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_testcirc(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (3 * idx) + input_shift;
+    const size_t ovn = llen * (1 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v0 = input[ivn + llen*0 + lidx];
+    v1 = input[ivn + llen*1 + lidx];
+    v2 = (v0 ^ v1);
+    v3 = input[ivn + llen*2 + lidx];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[ovn + llen*0 + lidx] = ~v0;
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
     generate_code_with_config(
         &mut writer,
