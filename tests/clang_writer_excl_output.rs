@@ -937,4 +937,65 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .pop_input_code(Some("    ((TYPE_NAME*)input)[0] |= i0 ^ i2;"))
+            .pop_from_buffer(Some(&[1, 4]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 3]))
+            .exclude_outputs(Some(&[0, 3]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_xor(unsigned long n, 
+    unsigned long output_shift,
+    unsigned long buffer_shift, global uint* output, global void* buffer) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 4 * idx + output_shift;
+    const size_t ovn = 4 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    if (idx >= n) return;
+    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    unsigned int xxx = 1111;
+#define i1 (v0)
+#define i4 (v1)
+    ((TYPE_NAME*)input)[0] |= i0 ^ i2;
+#define i1
+#define i4
+    v2 = output[ivn + 1];
+    v3 = output[ivn + 2];
+    v4 = (v2 & v3);
+    v5 = output[ivn + 0];
+    v5 = ~(v5 | v3);
+    v5 = (v4 & ~v5);
+    output[ovn + 1] = ~v5;
+    v2 = (v2 ^ v3);
+    v3 = (v4 & v2);
+    v2 = (v2 ^ v3);
+    v3 = (v5 ^ v2);
+    output[ovn + 2] = v3;
+    v0 = (v2 & ~v0);
+    v3 = output[ivn + 3];
+    output[ovn + 3] = ~v0;
+    output[ovn + 0] = ~v3;
+#define o0 (v1)
+#define o3 (v2)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o3
+}
+"##
+    );
 }
