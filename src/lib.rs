@@ -181,11 +181,13 @@ pub trait FuncWriter {
 }
 
 fn check_placements(
+    input_len: usize,
+    output_len: usize,
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
 ) -> bool {
     if let Some((placement, len)) = input_placement {
-        if placement.len() == 0 {
+        if placement.len() != input_len {
             return false;
         }
         if placement.iter().any(|x| *x >= len) {
@@ -197,7 +199,7 @@ fn check_placements(
         assert_eq!(psorted.len(), placement.len());
     }
     if let Some((placement, len)) = output_placement {
-        if placement.len() == 0 {
+        if placement.len() != output_len {
             return false;
         }
         if placement.iter().any(|x| *x >= len) {
@@ -254,18 +256,21 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             assert!(code_config.pop_from_buffer.is_some() == code_config.aggr_to_buffer.is_some());
         }
         // for checking requirements for single_buffer
+        let input_len_after_removal = input_len
+            - code_config.arg_inputs.map(|x| x.len()).unwrap_or(0)
+            - code_config.elem_inputs.map(|x| x.len()).unwrap_or(0)
+            - code_config.pop_from_buffer.map(|x| x.len()).unwrap_or(0);
         let real_input_len = if let Some((_, len)) = code_config.input_placement {
             len
         } else {
-            input_len
-                - code_config.arg_inputs.map(|x| x.len()).unwrap_or(0)
-                - code_config.elem_inputs.map(|x| x.len()).unwrap_or(0)
-                - code_config.pop_from_buffer.map(|x| x.len()).unwrap_or(0)
+            input_len_after_removal
         };
+        let output_len_after_removal =
+            output_len - code_config.exclude_outputs.map(|x| x.len()).unwrap_or(0);
         let real_output_len = if let Some((_, len)) = code_config.output_placement {
             len
         } else {
-            output_len - code_config.exclude_outputs.map(|x| x.len()).unwrap_or(0)
+            output_len_after_removal
         };
         let pop_input_same =
             code_config.pop_input_code.is_some() && code_config.pop_from_buffer.is_none();
@@ -276,6 +281,8 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             assert!(!code_config.single_buffer || real_input_len == real_output_len);
         }
         assert!(check_placements(
+            input_len_after_removal,
+            output_len_after_removal,
             code_config.input_placement,
             code_config.output_placement
         ));
