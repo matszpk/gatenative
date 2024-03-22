@@ -2307,16 +2307,21 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             assert!(exec.input_is_populated(), "{}: {}", config_num, i);
             assert_eq!(exec.pop_input_len(), Some(3), "{}: {}", config_num, i);
         }
+        assert_eq!(execs[5].input_data_len(12 * 512), 131, "{}", config_num);
+        assert!(execs[5].input_is_populated(), "{}", config_num);
+        assert_eq!(execs[5].pop_input_len(), Some(131), "{}", config_num);
         assert_eq!(execs[0].elem_count(111), 1 << 20);
         assert_eq!(execs[1].elem_count(111), 1 << 20);
         assert_eq!(execs[2].elem_count(111), 1 << 16);
         assert_eq!(execs[3].elem_count(111), 1 << 16);
         assert_eq!(execs[4].elem_count(111), 1 << 20);
+        assert_eq!(execs[5].elem_count(111), 1 << 20);
         assert_eq!(execs[0].output_data_len(12 * 512), 2304);
         assert_eq!(execs[1].output_data_len(12 * 512), 2304);
         assert_eq!(execs[2].output_data_len(12 * 512), 2304);
         assert_eq!(execs[3].output_data_len(12 * 512), 2304);
         assert_eq!(execs[4].output_data_len(12 * 512), 128);
+        assert_eq!(execs[5].output_data_len(12 * 512), 131);
 
         // tests
         let mut ot = execs[0]
