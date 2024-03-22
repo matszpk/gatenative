@@ -2885,9 +2885,20 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
                 .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
+        let expected_counts = [
+            (512, 1536, 8192),
+            (1, 1536, 65536),
+            (1, 1536, 1048576),
+            (1536, 1536, 2720),
+            (1, 1536, 65536),
+            (1536, 1536, 2720),
+        ];
         for (i, exec) in execs.iter().enumerate() {
             assert!(exec.input_is_populated(), "{}: {}", config_num, i);
             assert!(exec.is_populated_from_buffer(), "{}: {}", config_num, i);
+            assert_eq!(expected_counts[i].0, exec.input_data_len(4096));
+            assert_eq!(expected_counts[i].1, exec.output_data_len(4096));
+            assert_eq!(expected_counts[i].2, exec.elem_count(1024));
         }
         // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
