@@ -138,6 +138,11 @@ impl<'a> CodeConfig<'a> {
         self.exclude_outputs = excl;
         self
     }
+    pub fn aggr_only_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
+        self.aggr_to_buffer = aggr;
+        self.exclude_outputs = aggr;
+        self
+    }
 }
 
 pub fn default_aggr_output_len(word_len: u32) -> usize {
