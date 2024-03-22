@@ -1105,6 +1105,7 @@ fn test_cpu_builder_and_exec_with_aggr_output() {
                 i
             );
             assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert!(!exec.is_aggregated_to_buffer(), "{}: {}", config_num, i);
             assert_eq!(
                 exec.aggr_output_len(),
                 Some(1 << (12 - 5)),
@@ -1590,6 +1591,10 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
                 .exclude_outputs(Some(&[0, 3, 4, 8, 9, 10, 11])),
         );
         let mut execs = builder.build().unwrap();
+        for (i, exec) in execs.iter().enumerate() {
+            assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
+            assert!(exec.is_aggregated_to_buffer(), "{}: {}", config_num, i);
+        }
         let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
             .input_transformer(32, &(0..16).collect::<Vec<_>>())
@@ -2306,10 +2311,12 @@ fn test_cpu_builder_and_exec_with_pop_input() {
             assert_eq!(exec.input_data_len(12 * 512), 3, "{}: {}", config_num, i);
             assert!(exec.input_is_populated(), "{}: {}", config_num, i);
             assert_eq!(exec.pop_input_len(), Some(3), "{}: {}", config_num, i);
+            assert!(!exec.is_populated_from_buffer(), "{}: {}", config_num, i);
         }
         assert_eq!(execs[5].input_data_len(12 * 512), 131, "{}", config_num);
         assert!(execs[5].input_is_populated(), "{}", config_num);
         assert_eq!(execs[5].pop_input_len(), Some(131), "{}", config_num);
+        assert!(!execs[5].is_populated_from_buffer(), "{}", config_num);
         assert_eq!(execs[0].elem_count(111), 1 << 20);
         assert_eq!(execs[1].elem_count(111), 1 << 20);
         assert_eq!(execs[2].elem_count(111), 1 << 16);
@@ -2700,6 +2707,10 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
                 .single_buffer(true),
         );
         let mut execs = builder.build().unwrap();
+        for (i, exec) in execs.iter().enumerate() {
+            assert!(exec.input_is_populated(), "{}: {}", config_num, i);
+            assert!(exec.is_populated_from_buffer(), "{}: {}", config_num, i);
+        }
         // first exec
         let mut it = execs[0].input_transformer(32, &[0, 1, 2, 3]).unwrap();
         let mut ot = execs[0]
