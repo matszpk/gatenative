@@ -1591,9 +1591,23 @@ fn test_cpu_builder_and_exec_with_aggr_output_to_buffer() {
                 .exclude_outputs(Some(&[0, 3, 4, 8, 9, 10, 11])),
         );
         let mut execs = builder.build().unwrap();
+        let expected_counts = [
+            (2048, 1536, 2048),
+            (2048, 1536, 2048),
+            (1, 1536, 65536),
+            (2048, 3072, 2048),
+            (3072, 3072, 1344),
+            (1536, 1536, 2720),
+            (1536, 1536, 2720),
+            (1536, 1536, 2720),
+            (2048, 640, 2048),
+        ];
         for (i, exec) in execs.iter().enumerate() {
             assert!(exec.output_is_aggregated(), "{}: {}", config_num, i);
             assert!(exec.is_aggregated_to_buffer(), "{}: {}", config_num, i);
+            assert_eq!(expected_counts[i].0, exec.input_data_len(4096));
+            assert_eq!(expected_counts[i].1, exec.output_data_len(4096));
+            assert_eq!(expected_counts[i].2, exec.elem_count(1024));
         }
         let expected_buffer = AGGR_OUTPUT_EXPECTED;
         let mut it = execs[0]
