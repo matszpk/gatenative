@@ -426,8 +426,8 @@ where
                 // It is using first occurred sign in output list ordered by
                 // circuit outputs index. Main goal is keeping sign of output
                 // if it can be changed by circuit conversion.
-                let mut output_used_later = false;
                 let mut first_neg = None;
+                let mut output_used_later = false;
                 for oi in outlist {
                     if let Some(out_var_entry) = output_vars.get_mut(oi) {
                         if first_neg.is_none() {
@@ -692,7 +692,6 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                     }
                 }
             }
-
             let ou = usize::try_from(*o).unwrap();
             if !used_inputs[ou] {
                 writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
