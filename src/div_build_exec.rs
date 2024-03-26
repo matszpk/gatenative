@@ -655,6 +655,11 @@ where
     }
 
     #[inline]
+    fn type_len(&self) -> u32 {
+        self.builder.type_len()
+    }
+
+    #[inline]
     fn is_empty(&self) -> bool {
         self.circuit_infos.is_empty()
     }

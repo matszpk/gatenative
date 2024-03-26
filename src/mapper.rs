@@ -276,6 +276,11 @@ where
     }
 
     #[inline]
+    fn type_len(&self) -> u32 {
+        self.builder.type_len()
+    }
+
+    #[inline]
     fn is_data_holder_global() -> bool {
         B::is_data_holder_global()
     }
@@ -574,6 +579,11 @@ where
     #[inline]
     fn word_len(&self) -> u32 {
         self.builder.word_len()
+    }
+
+    #[inline]
+    fn type_len(&self) -> u32 {
+        self.builder.type_len()
     }
 
     #[inline]

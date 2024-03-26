@@ -654,6 +654,8 @@ where
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
     /// word length in bits
     fn word_len(&self) -> u32;
+    /// type length in bits (includes only type length not word length if group_vec enabled).
+    fn type_len(&self) -> u32;
     // if no added circuit to built
     fn is_empty(&self) -> bool;
     /// executor can be used per thread
@@ -846,6 +848,8 @@ where
 
     /// word length in bits
     fn word_len(&self) -> u32;
+    /// type length in bits (includes only type length not word length if group_vec enabled).
+    fn type_len(&self) -> u32;
 
     /// data holder can be used between any executor
     fn is_data_holder_global() -> bool;
@@ -999,6 +1003,8 @@ where
 
     /// word length in bits
     fn word_len(&self) -> u32;
+    /// type length in bits (includes only type length not word length if group_vec enabled).
+    fn type_len(&self) -> u32;
 
     /// data holder can be used between any executor
     fn is_data_holder_global() -> bool;

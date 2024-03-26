@@ -953,6 +953,13 @@ where
         }
     }
 
+    pub fn type_len(&self, sel: ParSeqSelection) -> u32 {
+        match sel {
+            ParSeqSelection::Par => self.par.type_len(),
+            ParSeqSelection::Seq(i) => self.seqs[i].type_len(),
+        }
+    }
+
     pub fn seq_builder_num(&self) -> usize {
         self.seqs.len()
     }

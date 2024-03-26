@@ -1354,6 +1354,11 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
     }
 
     #[inline]
+    fn type_len(&self) -> u32 {
+        self.writer.word_len()
+    }
+
+    #[inline]
     fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
