@@ -65,6 +65,9 @@ pub struct CodeConfig<'a> {
     pub aggr_to_buffer: Option<&'a [usize]>,
     // exclude outputs
     pub exclude_outputs: Option<&'a [usize]>,
+    // applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
+    // will not be cleared before single execution (to save time) and content of this buffer
+    // will be kept to later use.
     pub dont_clear_outputs: bool,
 }
 
