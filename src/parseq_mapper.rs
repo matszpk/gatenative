@@ -236,6 +236,15 @@ where
     {
         let arg_count = Arc::new(AtomicU64::new(0));
         let do_stop = Arc::new(AtomicBool::new(false));
+        let seq_outputs = self
+            .seqs
+            .iter()
+            .map(|seq| {
+                let mut seq = seq.lock().unwrap();
+                let elem_count = seq.elem_count(input.len());
+                Mutex::new(seq.new_data_output_elems(elem_count))
+            })
+            .collect::<Vec<_>>();
         let results = self.thread_pool.broadcast(|ctx| {
             let mut thread_result = Ok(init.clone());
             loop {
@@ -263,19 +272,21 @@ where
                         .map_err(|e| ParSeqMapperExecutorError::ParError(e))
                 } else {
                     let i = thread_idx - self.num_threads;
-                    self.seqs[i]
-                        .lock()
-                        .unwrap()
-                        .execute(&input.seqs[i], arg_u64)
-                        .map(|output| {
-                            f(
-                                ParSeqSelection::Seq(i),
-                                input,
-                                ParSeqObject::Seq(&output),
-                                arg_u64,
-                            )
-                        })
-                        .map_err(|e| ParSeqMapperExecutorError::SeqError(i, e))
+                    let mut output = seq_outputs[i].lock().unwrap();
+                    output.fill(0);
+                    match self.seqs[i].lock().unwrap().execute_reuse(
+                        &input.seqs[i],
+                        arg_u64,
+                        &mut output,
+                    ) {
+                        Ok(()) => Ok(f(
+                            ParSeqSelection::Seq(i),
+                            input,
+                            ParSeqObject::Seq(&output),
+                            arg_u64,
+                        )),
+                        Err(e) => Err(ParSeqMapperExecutorError::SeqError(i, e)),
+                    }
                 };
                 if let Ok(a) = thread_result {
                     do_stop.fetch_or(stop(&a), atomic::Ordering::SeqCst);

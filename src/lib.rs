@@ -12,8 +12,6 @@ use std::ops::{Range, RangeFrom};
 // TODO: Add ability to build once circuits for many these same builders.
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
 // TODO: exclude some circuit outputs from outputs.
-// TODO: reuse dataholders for OpenCL in all mappers including parseq mappers.
-// TODO: add cleaning dataholders.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
