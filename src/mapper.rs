@@ -63,8 +63,11 @@ where
         let mut output = self
             .executor
             .new_data_output_elems(self.executor.elem_count(input.len()));
+        let need_clear_output = self.executor.need_clear_outputs();
         for arg in 0..=self.arg_input_max {
-            output.fill(0);
+            if need_clear_output {
+                output.fill(0);
+            }
             self.executor.execute_reuse(input, arg, &mut output)?;
             out = f(out, input, &output, arg);
             if stop(&out) {
@@ -91,8 +94,11 @@ where
         let mut output = self
             .executor
             .new_data_output_elems(self.executor.elem_count(input.len()));
+        let need_clear_output = self.executor.need_clear_outputs();
         for arg in 0..=self.arg_input_max {
-            output.fill(0);
+            if need_clear_output {
+                output.fill(0);
+            }
             self.executor
                 .execute_buffer_reuse(input, arg, &mut output, buffer)?;
             out = f(out, input, &output, &buffer, arg);

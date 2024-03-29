@@ -273,12 +273,11 @@ where
                 } else {
                     let i = thread_idx - self.num_threads;
                     let mut output = seq_outputs[i].lock().unwrap();
-                    output.fill(0);
-                    match self.seqs[i].lock().unwrap().execute_reuse(
-                        &input.seqs[i],
-                        arg_u64,
-                        &mut output,
-                    ) {
+                    let mut seq = self.seqs[i].lock().unwrap();
+                    if seq.need_clear_outputs() {
+                        output.fill(0);
+                    }
+                    match seq.execute_reuse(&input.seqs[i], arg_u64, &mut output) {
                         Ok(()) => Ok(f(
                             ParSeqSelection::Seq(i),
                             input,
@@ -692,6 +691,7 @@ pub struct ParSeqDynamicConfig<'a> {
     pub aggr_output_len: Option<usize>,
     // exclude outputs
     pub exclude_outputs: Option<&'a [usize]>,
+    pub is_ignore_previous_outputs: bool,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
@@ -703,6 +703,7 @@ impl<'a> ParSeqDynamicConfig<'a> {
             aggr_output_code: None,
             aggr_output_len: None,
             exclude_outputs: None,
+            is_ignore_previous_outputs: false,
         }
     }
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
@@ -728,6 +729,10 @@ impl<'a> ParSeqDynamicConfig<'a> {
 
     pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
         self.exclude_outputs = excl;
+        self
+    }
+    pub fn is_ignore_previous_outputs(mut self, ignore: bool) -> Self {
+        self.is_ignore_previous_outputs = ignore;
         self
     }
 }
@@ -872,7 +877,8 @@ where
                 .pop_input_len(dyncfg.pop_input_len)
                 .aggr_output_code(dyncfg.aggr_output_code)
                 .aggr_output_len(dyncfg.aggr_output_len)
-                .exclude_outputs(dyncfg.exclude_outputs),
+                .exclude_outputs(dyncfg.exclude_outputs)
+                .is_ignore_previous_outputs(dyncfg.is_ignore_previous_outputs),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
             let dyncfg = dyn_config(ParSeqSelection::Seq(i));
@@ -887,7 +893,8 @@ where
                     .pop_input_len(dyncfg.pop_input_len)
                     .aggr_output_code(dyncfg.aggr_output_code)
                     .aggr_output_len(dyncfg.aggr_output_len)
-                    .exclude_outputs(dyncfg.exclude_outputs),
+                    .exclude_outputs(dyncfg.exclude_outputs)
+                    .is_ignore_previous_outputs(dyncfg.is_ignore_previous_outputs),
             );
         }
     }

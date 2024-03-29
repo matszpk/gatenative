@@ -415,6 +415,11 @@ where
     fn is_populated_from_buffer(&self) -> bool {
         self.executors.first().unwrap().is_populated_from_buffer()
     }
+
+    #[inline]
+    fn is_ignore_previous_outputs(&self) -> bool {
+        self.executors.last().unwrap().is_ignore_previous_outputs()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
