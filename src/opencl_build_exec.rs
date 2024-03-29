@@ -229,6 +229,7 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
                 )
                 .unwrap();
         }
+        self.cmd_queue.finish().unwrap();
     }
     fn release(self) -> Vec<u32> {
         let mut out = vec![0u32; self.len()];
