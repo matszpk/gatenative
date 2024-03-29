@@ -312,6 +312,9 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
     fn copy(&self) -> Self {
         Self::new_from_slice(&self.buffer[self.range.clone()])
     }
+    fn fill(&mut self, value: u32) {
+        self.buffer[self.range.clone()].fill(value);
+    }
     fn release(self) -> Vec<u32> {
         self.buffer[self.range.clone()].to_vec()
     }

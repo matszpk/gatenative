@@ -60,8 +60,12 @@ where
     {
         let mut out = init;
         // just execute
+        let mut output = self
+            .executor
+            .new_data_output_elems(self.executor.elem_count(input.len()));
         for arg in 0..=self.arg_input_max {
-            let output = self.executor.execute(input, arg)?;
+            output.fill(0);
+            self.executor.execute_reuse(input, arg, &mut output)?;
             out = f(out, input, &output, arg);
             if stop(&out) {
                 break;
@@ -84,8 +88,13 @@ where
     {
         let mut out = init;
         // just execute
+        let mut output = self
+            .executor
+            .new_data_output_elems(self.executor.elem_count(input.len()));
         for arg in 0..=self.arg_input_max {
-            let output = self.executor.execute_buffer(input, arg, buffer)?;
+            output.fill(0);
+            self.executor
+                .execute_buffer_reuse(input, arg, &mut output, buffer)?;
             out = f(out, input, &output, &buffer, arg);
             if stop(&out) {
                 break;

@@ -217,6 +217,19 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
         self.cmd_queue.finish().unwrap();
         new
     }
+    fn fill(&mut self, value: u32) {
+        unsafe {
+            self.cmd_queue
+                .enqueue_fill_buffer(
+                    &mut self.buffer,
+                    &[value],
+                    self.range.start * 4,
+                    self.range.end * 4,
+                    &[],
+                )
+                .unwrap();
+        }
+    }
     fn release(self) -> Vec<u32> {
         let mut out = vec![0u32; self.len()];
         unsafe {
