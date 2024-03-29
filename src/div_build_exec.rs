@@ -417,8 +417,8 @@ where
     }
 
     #[inline]
-    fn is_ignore_previous_outputs(&self) -> bool {
-        self.executors.last().unwrap().is_ignore_previous_outputs()
+    fn dont_clear_outputs(&self) -> bool {
+        self.executors.last().unwrap().dont_clear_outputs()
     }
 }
 

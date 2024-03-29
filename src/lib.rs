@@ -65,7 +65,7 @@ pub struct CodeConfig<'a> {
     pub aggr_to_buffer: Option<&'a [usize]>,
     // exclude outputs
     pub exclude_outputs: Option<&'a [usize]>,
-    pub is_ignore_previous_outputs: bool,
+    pub dont_clear_outputs: bool,
 }
 
 impl<'a> CodeConfig<'a> {
@@ -84,7 +84,7 @@ impl<'a> CodeConfig<'a> {
             pop_from_buffer: None,
             aggr_to_buffer: None,
             exclude_outputs: None,
-            is_ignore_previous_outputs: false,
+            dont_clear_outputs: false,
         }
     }
 
@@ -145,8 +145,8 @@ impl<'a> CodeConfig<'a> {
         self.exclude_outputs = aggr;
         self
     }
-    pub fn is_ignore_previous_outputs(mut self, ignore: bool) -> Self {
-        self.is_ignore_previous_outputs = ignore;
+    pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
+        self.dont_clear_outputs = ignore;
         self
     }
 }
@@ -600,12 +600,12 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         self.new_data(self.output_data_len(elem_num))
     }
 
-    fn is_ignore_previous_outputs(&self) -> bool;
+    fn dont_clear_outputs(&self) -> bool;
 
     fn need_clear_outputs(&self) -> bool {
         self.output_is_aggregated()
             && !self.is_aggregated_to_buffer()
-            && !self.is_ignore_previous_outputs()
+            && !self.dont_clear_outputs()
     }
 }
 

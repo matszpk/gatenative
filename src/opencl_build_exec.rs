@@ -280,7 +280,7 @@ pub struct OpenCLExecutor {
     populated_from_buffer: bool,
     pop_input_len: Option<usize>,
     pop_input_len_from_buffer: Option<usize>,
-    is_ignore_previous_outputs: bool,
+    dont_clear_outputs: bool,
 }
 
 impl OpenCLExecutor {
@@ -795,7 +795,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             populated_from_buffer: self.populated_from_buffer,
             pop_input_len: self.pop_input_len,
             pop_input_len_from_buffer: self.pop_input_len_from_buffer,
-            is_ignore_previous_outputs: self.is_ignore_previous_outputs,
+            dont_clear_outputs: self.dont_clear_outputs,
         })
     }
 
@@ -840,8 +840,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     }
 
     #[inline]
-    fn is_ignore_previous_outputs(&self) -> bool {
-        self.is_ignore_previous_outputs
+    fn dont_clear_outputs(&self) -> bool {
+        self.dont_clear_outputs
     }
 }
 
@@ -945,7 +945,7 @@ struct CircuitEntry {
     pop_input_len: Option<usize>,
     pop_input_len_from_buffer: Option<usize>,
     exclude_outputs_len: Option<usize>,
-    is_ignore_previous_outputs: bool,
+    dont_clear_outputs: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -1078,7 +1078,7 @@ impl<'b, 'a>
                 None
             },
             exclude_outputs_len: code_config.exclude_outputs.map(|x| x.len()),
-            is_ignore_previous_outputs: code_config.is_ignore_previous_outputs,
+            dont_clear_outputs: code_config.dont_clear_outputs,
         });
         generate_code_with_config(
             &mut self.writer,
@@ -1134,7 +1134,7 @@ impl<'b, 'a>
                     populated_from_buffer: e.populated_from_buffer,
                     pop_input_len: e.pop_input_len,
                     pop_input_len_from_buffer: e.pop_input_len_from_buffer,
-                    is_ignore_previous_outputs: e.is_ignore_previous_outputs,
+                    dont_clear_outputs: e.dont_clear_outputs,
                 })
             })
             .collect::<Result<Vec<_>, _>>()
