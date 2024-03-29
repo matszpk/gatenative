@@ -606,9 +606,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn dont_clear_outputs(&self) -> bool;
 
     fn need_clear_outputs(&self) -> bool {
-        self.output_is_aggregated()
-            && !self.is_aggregated_to_buffer()
-            && !self.dont_clear_outputs()
+        self.output_is_aggregated() && !self.is_aggregated_to_buffer() && !self.dont_clear_outputs()
     }
 }
 

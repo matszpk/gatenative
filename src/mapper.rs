@@ -615,3 +615,44 @@ where
         self.builder.preferred_input_count()
     }
 }
+
+use crate::cpu_build_exec::*;
+use crate::opencl_build_exec::*;
+
+pub type CPUBasicMapperExecutor<'a> =
+    BasicMapperExecutor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CPUExecutor>;
+pub type CPUBasicMapperBuilder<'a> = BasicMapperBuilder<
+    'a,
+    CPUDataReader<'a>,
+    CPUDataWriter<'a>,
+    CPUDataHolder,
+    CPUExecutor,
+    CPUBuilder<'a>,
+>;
+
+pub type OpenCLBasicMapperExecutor<'a> = BasicMapperExecutor<
+    'a,
+    OpenCLDataReader<'a>,
+    OpenCLDataWriter<'a>,
+    OpenCLDataHolder,
+    OpenCLExecutor,
+>;
+pub type OpenCLBasicMapperBuilder<'a> = BasicMapperBuilder<
+    'a,
+    OpenCLDataReader<'a>,
+    OpenCLDataWriter<'a>,
+    OpenCLDataHolder,
+    OpenCLExecutor,
+    OpenCLBuilder<'a>,
+>;
+
+pub type CPUParBasicMapperExecutor<'a> =
+    ParBasicMapperExecutor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CPUExecutor>;
+pub type CPUParBasicMapperBuilder<'a> = ParBasicMapperBuilder<
+    'a,
+    CPUDataReader<'a>,
+    CPUDataWriter<'a>,
+    CPUDataHolder,
+    CPUExecutor,
+    CPUBuilder<'a>,
+>;

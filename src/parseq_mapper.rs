@@ -999,3 +999,31 @@ where
         )
     }
 }
+
+use crate::cpu_build_exec::*;
+use crate::opencl_build_exec::*;
+
+pub type CPUOpenCLParSeqMapperExecutor<'a> = ParSeqMapperExecutor<
+    'a,
+    CPUDataReader<'a>,
+    CPUDataWriter<'a>,
+    CPUDataHolder,
+    CPUExecutor,
+    OpenCLDataReader<'a>,
+    OpenCLDataWriter<'a>,
+    OpenCLDataHolder,
+    OpenCLExecutor,
+>;
+pub type CPUOpenCLParSeqMapperBuilder<'a> = ParSeqMapperBuilder<
+    'a,
+    CPUDataReader<'a>,
+    CPUDataWriter<'a>,
+    CPUDataHolder,
+    CPUExecutor,
+    CPUBuilder<'a>,
+    OpenCLDataReader<'a>,
+    OpenCLDataWriter<'a>,
+    OpenCLDataHolder,
+    OpenCLExecutor,
+    OpenCLBuilder<'a>,
+>;
