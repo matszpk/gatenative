@@ -505,6 +505,17 @@ where
             ParSeqSelection::Seq(i) => self.seqs[i].lock().unwrap().pop_input_len(),
         }
     }
+
+    pub fn with_executor<F>(&self, f: F)
+    where
+        F: Fn(ParSeqObject<&PE, (usize, &SE)>),
+    {
+        f(ParSeqObject::Par(&self.par));
+        for (i, seq) in self.seqs.iter().enumerate() {
+            let s = seq.lock().unwrap();
+            f(ParSeqObject::Seq((i, &s)));
+        }
+    }
 }
 
 #[derive(Error, Debug)]

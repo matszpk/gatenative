@@ -201,6 +201,18 @@ where
     }
 }
 
+impl<'a, DR, DW, D, E> BasicMapperExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW>,
+    E: Executor<'a, DR, DW, D>,
+{
+    pub fn executor(&self) -> &E {
+        &self.executor
+    }
+}
+
 pub struct BasicMapperBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader,
@@ -500,6 +512,19 @@ where
     ) -> Result<ODT, Self::ErrorType> {
         self.executor
             .output_transformer(output_elem_len, bit_mapping)
+    }
+}
+
+impl<'a, DR, DW, D, E> ParBasicMapperExecutor<'a, DR, DW, D, E>
+where
+    DR: DataReader + Send + Sync,
+    DW: DataWriter + Send + Sync,
+    D: DataHolder<'a, DR, DW> + Send + Sync,
+    E: Executor<'a, DR, DW, D> + Send + Sync,
+    E::ErrorType: Send,
+{
+    pub fn executor(&self) -> &E {
+        &self.executor
     }
 }
 
