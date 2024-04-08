@@ -316,7 +316,11 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
         self.buffer[self.range.clone()].fill(value);
     }
     fn release(self) -> Vec<u32> {
-        self.buffer[self.range.clone()].to_vec()
+        if self.range.start == 0 && self.range.end == self.buffer.len() {
+            self.buffer
+        } else {
+            self.buffer[self.range.clone()].to_vec()
+        }
     }
     fn free(self) {}
 }
