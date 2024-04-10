@@ -290,6 +290,9 @@ impl OpenCLExecutor {
     pub unsafe fn command_queue(&self) -> Arc<CommandQueue> {
         self.cmd_queue.clone()
     }
+    pub unsafe fn group_len(&self) -> usize {
+        self.group_len
+    }
 }
 
 impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHolder>
