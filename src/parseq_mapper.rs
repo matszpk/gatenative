@@ -516,6 +516,13 @@ where
             f(ParSeqObject::Seq((i, &s)));
         }
     }
+
+    pub fn is_sequential_execution(&self, sel: ParSeqSelection) -> bool {
+        match sel {
+            ParSeqSelection::Par => self.par.is_sequential_execution(),
+            ParSeqSelection::Seq(i) => self.seqs[i].lock().unwrap().is_sequential_execution(),
+        }
+    }
 }
 
 #[derive(Error, Debug)]

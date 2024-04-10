@@ -608,6 +608,9 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn need_clear_outputs(&self) -> bool {
         self.output_is_aggregated() && !self.is_aggregated_to_buffer() && !self.dont_clear_outputs()
     }
+
+    // return true if sequential execution
+    fn is_sequential_execution(&self) -> bool;
 }
 
 pub trait Builder<'a, DR, DW, D, E>
@@ -805,6 +808,9 @@ where
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;
+
+    // return true if sequential execution in single execution call of inner executor
+    fn is_sequential_execution(&self) -> bool;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -960,6 +966,9 @@ where
 
     fn aggr_output_len(&self) -> Option<usize>;
     fn pop_input_len(&self) -> Option<usize>;
+
+    // return true if sequential execution in single execution call of inner executor
+    fn is_sequential_execution(&self) -> bool;
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

@@ -170,6 +170,10 @@ where
     fn pop_input_len(&self) -> Option<usize> {
         self.executor.pop_input_len()
     }
+
+    fn is_sequential_execution(&self) -> bool {
+        self.executor.is_sequential_execution()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
@@ -481,6 +485,10 @@ where
     #[inline]
     fn pop_input_len(&self) -> Option<usize> {
         self.executor.pop_input_len()
+    }
+
+    fn is_sequential_execution(&self) -> bool {
+        self.executor.is_sequential_execution()
     }
 }
 

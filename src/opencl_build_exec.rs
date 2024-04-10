@@ -846,6 +846,10 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     fn dont_clear_outputs(&self) -> bool {
         self.dont_clear_outputs
     }
+
+    fn is_sequential_execution(&self) -> bool {
+        false
+    }
 }
 
 impl Clone for OpenCLExecutor {

@@ -1130,6 +1130,10 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn dont_clear_outputs(&self) -> bool {
         self.dont_clear_outputs
     }
+
+    fn is_sequential_execution(&self) -> bool {
+        self.parallel.is_none()
+    }
 }
 
 impl<'a>

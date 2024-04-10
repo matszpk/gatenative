@@ -420,6 +420,10 @@ where
     fn dont_clear_outputs(&self) -> bool {
         self.executors.last().unwrap().dont_clear_outputs()
     }
+
+    fn is_sequential_execution(&self) -> bool {
+        self.executors.first().unwrap().is_sequential_execution()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
