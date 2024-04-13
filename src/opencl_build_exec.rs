@@ -373,7 +373,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
@@ -439,7 +439,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
@@ -499,7 +499,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
@@ -561,7 +561,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
@@ -627,7 +627,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
@@ -691,7 +691,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let (num, group_len) = if self.group_vec {
             (num * self.group_len, self.group_len)
         } else {
-            // fix group_len for avoid problems with OpenCL barriers
+            // optimize group_len to number of work
             (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
