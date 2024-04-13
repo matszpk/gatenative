@@ -370,10 +370,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -385,10 +386,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
@@ -397,10 +396,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
@@ -439,10 +436,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_input_start = cl_ulong::try_from(input.range.start).unwrap();
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -454,10 +452,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
@@ -466,10 +462,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_output_start)
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
@@ -502,10 +496,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_arg_input_2 = cl_uint::try_from(arg_input >> 32).unwrap();
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -515,20 +510,16 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&output.buffer)
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
                     .set_arg(&cl_num)
                     .set_arg(&cl_output_start)
                     .set_arg(&output.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
@@ -567,10 +558,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -584,10 +576,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
@@ -598,10 +588,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
@@ -636,10 +624,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -653,10 +642,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
@@ -667,10 +654,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&input.buffer)
                     .set_arg(&output.buffer)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
@@ -703,10 +688,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
         let cl_output_start = cl_ulong::try_from(output.range.start).unwrap();
         let cl_buffer_start = cl_ulong::try_from(buffer.range.start).unwrap();
         // kernel worksize: if group_vec: group_len*num
-        let num = if self.group_vec {
-            num * self.group_len
+        let (num, group_len) = if self.group_vec {
+            (num * self.group_len, self.group_len)
         } else {
-            num
+            // fix group_len for avoid problems with OpenCL barriers
+            (num, std::cmp::min(num, self.group_len))
         };
         unsafe {
             if self.arg_input_len.is_some() {
@@ -718,10 +704,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_arg_input)
                     .set_arg(&cl_arg_input_2)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             } else {
                 ExecuteKernel::new(&self.kernel)
@@ -730,10 +714,8 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
                     .set_arg(&cl_buffer_start)
                     .set_arg(&output.buffer)
                     .set_arg(&buffer.buffer)
-                    .set_local_work_size(self.group_len)
-                    .set_global_work_size(
-                        ((num + self.group_len - 1) / self.group_len) * self.group_len,
-                    )
+                    .set_local_work_size(group_len)
+                    .set_global_work_size(((num + group_len - 1) / group_len) * group_len)
                     .enqueue_nd_range(&self.cmd_queue)?;
             }
             self.cmd_queue.finish()?;
