@@ -37,7 +37,6 @@ kernel void xxx_gate_input_transform(ulong n, ulong input_start, ulong output_st
         uint word_len, uint input_elem_len, uint output_elem_len, uint bit_mapping_len,
         const global uint* bit_mapping, const global uint* input, global uint* output) {
     const size_t i = get_global_id(0);
-    if (i >= n) return;
     const size_t li = get_local_id(0);
     uint ibi;
     local uint local_data[64];
@@ -56,10 +55,12 @@ kernel void xxx_gate_input_transform(ulong n, ulong input_start, ulong output_st
     barrier(CLK_LOCAL_MEM_FENCE);
     for (ibi = 0; ibi < bit_mapping_len; ibi++) {
         const uint inbit = bit_mapping[ibi];
-        const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
-        atomic_or(&local_data[lvi], (inbit_val << sbit));
+        if (i < n) {
+            const uint inbit_val = (input_elem[inbit >> 5] >> (inbit & 31)) & 1;
+            atomic_or(&local_data[lvi], (inbit_val << sbit));
+        }
         barrier(CLK_LOCAL_MEM_FENCE);
-        if (sbit == 0) {
+        if (i < n && sbit == 0) {
             output_group[word_w*ibi] = local_data[lvi];
             local_data[lvi] = 0;
         }
