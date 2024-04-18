@@ -506,9 +506,9 @@ where
         }
     }
 
-    pub fn with_executor<F>(&self, f: F)
+    pub fn with_executor<F>(&self, mut f: F)
     where
-        F: Fn(ParSeqObject<&PE, (usize, &SE)>),
+        F: FnMut(ParSeqObject<&PE, (usize, &SE)>),
     {
         f(ParSeqObject::Par(&self.par));
         for (i, seq) in self.seqs.iter().enumerate() {
