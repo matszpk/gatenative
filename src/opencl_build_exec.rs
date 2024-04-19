@@ -1,7 +1,7 @@
 use crate::clang_writer::*;
 use crate::gencode::generate_code_with_config;
 use crate::opencl_data_transform::*;
-use crate::utils::get_timestamp;
+use crate::utils::{dump_source_code, get_timestamp};
 use crate::*;
 
 use opencl3::command_queue::CommandQueue;
@@ -1084,9 +1084,11 @@ impl<'b, 'a>
         let device = self.context.devices()[0];
         #[allow(deprecated)]
         let cmd_queue = Arc::new(unsafe { CommandQueue::create(&self.context, device, 0)? });
+        let source = self.writer.out();
+        dump_source_code("OpenCL Functions", &source);
         let program = Arc::new(Program::create_and_build_from_source(
             &self.context,
-            &String::from_utf8(self.writer.out()).unwrap(),
+            &String::from_utf8(source).unwrap(),
             "",
         )?);
         self.entries

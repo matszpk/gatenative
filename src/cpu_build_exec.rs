@@ -1,7 +1,7 @@
 use crate::clang_writer::*;
 use crate::cpu_data_transform::*;
 use crate::gencode::generate_code_with_config;
-use crate::utils::get_timestamp;
+use crate::utils::{dump_source_code, get_timestamp};
 use crate::*;
 use libloading::{Library, Symbol};
 use rayon::prelude::*;
@@ -1328,7 +1328,9 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
         self.writer.epilog();
         let words_per_real_word = usize::try_from(self.writer.word_len() >> 5).unwrap();
         let shlib = SharedLib::new_with_cpu_ext(self.cpu_ext);
-        let lib = Arc::new(shlib.build(&self.writer.out())?);
+        let source = self.writer.out();
+        dump_source_code("CPU Functions", &source);
+        let lib = Arc::new(shlib.build(&source)?);
         Ok(self
             .entries
             .iter()

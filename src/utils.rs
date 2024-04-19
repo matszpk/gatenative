@@ -5,6 +5,7 @@ use std::fmt::Debug;
 
 use static_init::dynamic;
 use std::collections::BinaryHeap;
+use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Clone)]
@@ -195,6 +196,33 @@ where
 
     pub fn alloc_var_num(&self, var_type: usize) -> usize {
         self.var_allocs[var_type].len()
+    }
+}
+
+#[dynamic]
+pub(crate) static GATE_SYS_DUMP_SOURCE: bool = match env::var("GATE_SYS_DUMP_SOURCE")
+    .unwrap_or("0".to_string())
+    .to_lowercase()
+    .as_str()
+{
+    "0" => false,
+    "1" => true,
+    "false" => false,
+    "true" => true,
+    "off" => false,
+    "on" => true,
+    "no" => false,
+    "yes" => true,
+    _ => false,
+};
+
+pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
+    if *GATE_SYS_DUMP_SOURCE {
+        eprintln!(
+            "------ SOURCE: {0} ------\n{1}\n-- END OF SOURCE: {0} ---\n",
+            name,
+            std::str::from_utf8(source).unwrap_or("UNKNOWN!!!!")
+        );
     }
 }
 
