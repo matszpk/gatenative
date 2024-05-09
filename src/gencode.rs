@@ -496,6 +496,25 @@ where
     )
 }
 
+fn gen_copy_to_input<FW: FuncWriter, T>(
+    writer: &mut FW,
+    circuit: &VCircuit<T>,
+    input_placement: Option<(&[usize], usize)>,
+    output_placement: Option<(&[usize], usize)>,
+    var_allocs: &[T],
+    input_map: Option<&HashMap<usize, usize>>,
+    output_map: Option<&HashMap<usize, usize>>,
+    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    // conversion map:
+}
+
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     writer: &mut FW,
     circuit: &VCircuit<T>,
@@ -510,6 +529,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     store_output_vars_always: bool,
     output_map: Option<&HashMap<usize, usize>>,
     inner_loop: bool,
+    have_aggr_code: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -733,6 +753,15 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                     }
                 }
             }
+            // if inner loop and if (not aggr_output_code without list)
+            //   and if not excluded
+            if inner_loop && (!have_aggr_code || store_output_vars_always) && is_in_output_map(oi) {
+                writer.gen_store(
+                    false,
+                    oi,
+                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
+                );
+            }
         }
     }
 }
@@ -751,6 +780,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     store_output_vars_always: bool,
     output_map: Option<&HashMap<usize, usize>>,
     inner_loop: bool,
+    have_aggr_code: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -971,6 +1001,15 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                     }
                 }
             }
+            // if inner loop and if (not aggr_output_code without list)
+            //   and if not excluded
+            if inner_loop && (!have_aggr_code || store_output_vars_always) && is_in_output_map(oi) {
+                writer.gen_store(
+                    false,
+                    oi,
+                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
+                );
+            }
         }
     }
 }
@@ -1124,6 +1163,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
             output_map.as_ref(),
             code_config.inner_loop.is_some(),
+            code_config.aggr_output_code.is_some(),
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -1152,6 +1192,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
             output_map.as_ref(),
             code_config.inner_loop.is_some(),
+            code_config.aggr_output_code.is_some(),
         );
     }
 

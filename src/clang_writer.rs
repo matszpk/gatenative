@@ -1316,6 +1316,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
+        if self.inner_loop.is_some() {
+            self.writer.out.extend(b"    if (iter == 0) {\n");
+        }
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             if *arg_bit < 32 {
                 writeln!(
@@ -1395,6 +1398,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
             }
         }
+        if self.inner_loop.is_some() {
+            self.writer.out.extend(b"    }\n");
+        }
     }
 
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
@@ -1439,6 +1445,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
+        if self.inner_loop.is_some() {
+            self.writer.out.extend(b"    if (iter == ITER_MAX - 1) {\n");
+        }
         let output = if let Some(real_output) = self.output_map.get(&output) {
             self.output_placement
                 .map(|(p, _)| p[*real_output])
@@ -1473,6 +1482,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.extend(b";\n");
         } else {
             writeln!(self.writer.out, "    {} = {};", dst, src).unwrap();
+        }
+        if self.inner_loop.is_some() {
+            self.writer.out.extend(b"    }\n");
         }
     }
 

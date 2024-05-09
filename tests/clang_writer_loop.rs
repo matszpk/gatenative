@@ -29,9 +29,9 @@ fn test_clang_writer_loop_basic() {
         false,
         CodeConfig::new().inner_loop(Some(10)),
     );
-    //     assert_eq!(
-    //         &String::from_utf8(writer.out()).unwrap(),
-    //         r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    // assert_eq!(
+    //     &String::from_utf8(writer.out()).unwrap(),
+    //     r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     //     const uint32_t zero = 0;
     //     const uint32_t one = 0xffffffff;
     //     uint32_t v0;
@@ -56,5 +56,5 @@ fn test_clang_writer_loop_basic() {
     //     output[0] = ~v0;
     // }
     // "##
-    //     );
+    // );
 }
