@@ -194,6 +194,8 @@ where
 
     let mut visited = vec![false; gate_num];
 
+    // out_map is list of circuit nodes with list of connected circuit outputs.
+    // key - node index (wire index), value - list of connected circuit outputs.
     let out_map = {
         let mut out_map = HashMap::<T, Vec<usize>>::new();
         for (i, (o, _)) in circuit.outputs().iter().enumerate() {
@@ -525,6 +527,8 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     let gate_num = circuit.gates.len();
     let gates = &circuit.gates;
 
+    // out_map is list of circuit nodes with list of connected circuit outputs.
+    // key - node index (wire index), value - list of connected circuit outputs.
     let out_map = {
         let mut out_map = HashMap::<T, Vec<(usize, bool)>>::new();
         for (i, (o, n)) in circuit.outputs.iter().enumerate() {
@@ -762,6 +766,8 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     let gate_num = circuit.gates.len();
     let gates = &circuit.gates;
 
+    // out_map is list of circuit nodes with list of connected circuit outputs.
+    // key - node index (wire index), value - list of connected circuit outputs.
     let out_map = {
         let mut out_map = HashMap::<T, Vec<(usize, bool)>>::new();
         for (i, (o, n)) in circuit.outputs.iter().enumerate() {
@@ -1030,6 +1036,9 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             &[]
         }
     });
+    // output_map - circuit output index map: key - original output index,
+    // value - output index after excluding circuit's outputs.
+    // destination is same order as key.
     let output_map = if let Some(excls) = code_config.exclude_outputs {
         let mut excls = excls.to_vec();
         excls.sort();
