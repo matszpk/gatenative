@@ -1274,7 +1274,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if self.inner_loop.is_some() {
             self.writer
                 .out
-                .extend(b"    for (iter = 0; iter < ITER_MAX && !stop; iter++)\n");
+                .extend(b"    for (iter = 0; iter < ITER_MAX && stop == 0; iter++) {\n");
         }
         if let Some(pop_input_code) = self.pop_input_code {
             let pop_inputs = if !self.pop_input_map.is_empty() {
@@ -1477,8 +1477,19 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_set(&mut self, dst_arg: usize, arg: usize) {
-        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
-        writeln!(self.writer.out, "v{};", arg).unwrap();
+        write!(self.writer.out, "    v{} = v{};", dst_arg, arg).unwrap();
+    }
+    fn gen_swap(&mut self, arg1: usize, arg2: usize) {
+        if self.inner_loop.is_some() {
+            write!(
+                self.writer.out,
+                "    swap_temp = v{0};\n    v{0} = v{1};\n    v{1} = swap_temp;\n",
+                arg1, arg2
+            )
+            .unwrap();
+        } else {
+            panic!("Unsupported if no inner loop!");
+        }
     }
 }
 

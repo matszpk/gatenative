@@ -206,6 +206,8 @@ pub trait FuncWriter {
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
     /// Generates copy to register
     fn gen_set(&mut self, dst_arg: usize, arg: usize);
+    /// Generates swap between registers (only for loop)
+    fn gen_swap(&mut self, arg1: usize, arg2: usize);
 }
 
 fn check_placements(
