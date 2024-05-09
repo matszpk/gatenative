@@ -281,6 +281,7 @@ pub struct OpenCLExecutor {
     pop_input_len: Option<usize>,
     pop_input_len_from_buffer: Option<usize>,
     dont_clear_outputs: bool,
+    inner_loop: Option<u32>,
 }
 
 impl OpenCLExecutor {
@@ -781,6 +782,7 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
             pop_input_len: self.pop_input_len,
             pop_input_len_from_buffer: self.pop_input_len_from_buffer,
             dont_clear_outputs: self.dont_clear_outputs,
+            inner_loop: self.inner_loop,
         })
     }
 
@@ -935,6 +937,7 @@ struct CircuitEntry {
     pop_input_len_from_buffer: Option<usize>,
     exclude_outputs_len: Option<usize>,
     dont_clear_outputs: bool,
+    inner_loop: Option<u32>,
 }
 
 #[derive(Clone, Debug)]
@@ -1068,6 +1071,7 @@ impl<'b, 'a>
             },
             exclude_outputs_len: code_config.exclude_outputs.map(|x| x.len()),
             dont_clear_outputs: code_config.dont_clear_outputs,
+            inner_loop: code_config.inner_loop,
         });
         generate_code_with_config(
             &mut self.writer,
@@ -1126,6 +1130,7 @@ impl<'b, 'a>
                     pop_input_len: e.pop_input_len,
                     pop_input_len_from_buffer: e.pop_input_len_from_buffer,
                     dont_clear_outputs: e.dont_clear_outputs,
+                    inner_loop: e.inner_loop,
                 })
             })
             .collect::<Result<Vec<_>, _>>()

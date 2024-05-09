@@ -533,6 +533,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
+        assert!(code_config.inner_loop.is_none());
         let subcircuits = divide_circuit_traverse(circuit, self.max_gates);
         let subcircuit_num = subcircuits.len();
         let buffer_len = subcircuits[0]

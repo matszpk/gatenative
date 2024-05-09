@@ -369,6 +369,7 @@ pub struct CPUExecutor {
     // parallel chunk length
     parallel: Option<usize>,
     dont_clear_outputs: bool,
+    inner_loop: Option<u32>,
 }
 
 impl CPUExecutor {
@@ -1194,6 +1195,7 @@ struct CircuitEntry {
     pop_input_len_from_buffer: Option<usize>,
     exclude_outputs_len: Option<usize>,
     dont_clear_outputs: bool,
+    inner_loop: Option<u32>,
 }
 
 pub struct CPUBuilder<'a> {
@@ -1314,6 +1316,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             },
             exclude_outputs_len: code_config.exclude_outputs.map(|x| x.len()),
             dont_clear_outputs: code_config.dont_clear_outputs,
+            inner_loop: code_config.inner_loop,
         });
         generate_code_with_config(
             &mut self.writer,
@@ -1365,6 +1368,7 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     pop_input_len: e.pop_input_len,
                     parallel: self.parallel,
                     dont_clear_outputs: e.dont_clear_outputs,
+                    inner_loop: e.inner_loop,
                 }
             })
             .collect::<Vec<_>>())

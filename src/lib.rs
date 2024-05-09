@@ -69,6 +69,13 @@ pub struct CodeConfig<'a> {
     // will not be cleared before single execution (to save time) and content of this buffer
     // will be kept to later use.
     pub dont_clear_outputs: bool,
+    // Enable inner loop. pop_input_code and aggr_output_code are inside loop.
+    // Loop adds stop and iter variables to code:
+    // stop - can be set by user supplied code. If have nonzero value then
+    //   loop should be stopped.
+    // iter - current loop iteration number starts from 0.
+    // Supplied parameter is max iteration number.
+    pub inner_loop: Option<u32>,
 }
 
 impl<'a> CodeConfig<'a> {
@@ -88,6 +95,7 @@ impl<'a> CodeConfig<'a> {
             aggr_to_buffer: None,
             exclude_outputs: None,
             dont_clear_outputs: false,
+            inner_loop: None,
         }
     }
 
@@ -150,6 +158,10 @@ impl<'a> CodeConfig<'a> {
     }
     pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
         self.dont_clear_outputs = ignore;
+        self
+    }
+    pub fn inner_loop(mut self, l: Option<u32>) -> Self {
+        self.inner_loop = l;
         self
     }
 }
@@ -369,6 +381,28 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
             );
         } else if pop_input_same || aggr_output_same {
             assert!(!code_config.single_buffer);
+        }
+
+        // inner loop checking
+        if let Some(max_iter) = code_config.inner_loop {
+            assert!(max_iter >= 1);
+            assert_eq!(input_len_after_removal, output_len_after_removal);
+            // check mathing placements
+            if let Some((input_p, _)) = code_config.input_placement {
+                if let Some((output_p, _)) = code_config.output_placement {
+                    for idx in input_p.iter() {
+                        assert!(output_p.iter().find(|oidx| **oidx == *idx).is_some());
+                    }
+                } else {
+                    for idx in 0..input_len_after_removal {
+                        assert!(input_p.iter().find(|iidx| **iidx == idx).is_some());
+                    }
+                }
+            } else if let Some((output_p, _)) = code_config.output_placement {
+                for idx in 0..input_len_after_removal {
+                    assert!(output_p.iter().find(|oidx| **oidx == idx).is_some());
+                }
+            }
         }
 
         unsafe { self.func_writer_internal(name, input_len, output_len, code_config, output_vars) }
