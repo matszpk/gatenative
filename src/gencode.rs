@@ -513,7 +513,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     var_allocs: &[T],
     input_map: Option<&HashMap<usize, usize>>,
     output_map: Option<&HashMap<usize, usize>>,
-    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
+    output_vars: &BTreeMap<usize, (usize, Option<usize>)>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -579,10 +579,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         HashMap::from_iter(input_output_map.iter().map(|(oi, ii)| {
             (
                 *oi,
-                (
-                    usize::try_from(var_allocs[*oi]).unwrap(),
-                    usize::try_from(var_allocs[*ii]).unwrap(),
-                ),
+                (output_vars[oi].0, usize::try_from(var_allocs[*ii]).unwrap()),
             )
         }));
     // conversion map:
@@ -833,15 +830,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                         out_negs_2.insert(o);
                     }
                 }
-            }
-            // if inner loop and if (not aggr_output_code without list)
-            //   and if not excluded
-            if inner_loop && (!have_aggr_code || store_output_vars_always) && is_in_output_map(oi) {
-                writer.gen_store(
-                    false,
-                    oi,
-                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
-                );
+                // if inner loop and if (not aggr_output_code without list)
+                //   and if not excluded
+                if inner_loop
+                    && (!have_aggr_code || store_output_vars_always)
+                    && is_in_output_map(oi)
+                {
+                    writer.gen_store(false, oi, out_var_entry.0);
+                }
             }
         }
     }
@@ -1090,15 +1086,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                         out_negs_2.insert(o);
                     }
                 }
-            }
-            // if inner loop and if (not aggr_output_code without list)
-            //   and if not excluded
-            if inner_loop && (!have_aggr_code || store_output_vars_always) && is_in_output_map(oi) {
-                writer.gen_store(
-                    false,
-                    oi,
-                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
-                );
+                // if inner loop and if (not aggr_output_code without list)
+                //   and if not excluded
+                if inner_loop
+                    && (!have_aggr_code || store_output_vars_always)
+                    && is_in_output_map(oi)
+                {
+                    writer.gen_store(false, oi, out_var_entry.0);
+                }
             }
         }
     }
