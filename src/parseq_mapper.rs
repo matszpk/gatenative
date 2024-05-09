@@ -523,6 +523,11 @@ where
             ParSeqSelection::Seq(i) => self.seqs[i].lock().unwrap().is_sequential_execution(),
         }
     }
+
+    #[inline]
+    pub fn inner_loop(&self) -> Option<u32> {
+        self.par.inner_loop()
+    }
 }
 
 #[derive(Error, Debug)]
@@ -710,6 +715,7 @@ pub struct ParSeqDynamicConfig<'a> {
     // exclude outputs
     pub exclude_outputs: Option<&'a [usize]>,
     pub dont_clear_outputs: bool,
+    pub inner_loop: Option<u32>,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
@@ -722,6 +728,7 @@ impl<'a> ParSeqDynamicConfig<'a> {
             aggr_output_len: None,
             exclude_outputs: None,
             dont_clear_outputs: false,
+            inner_loop: None,
         }
     }
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
@@ -751,6 +758,10 @@ impl<'a> ParSeqDynamicConfig<'a> {
     }
     pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
         self.dont_clear_outputs = ignore;
+        self
+    }
+    pub fn inner_loop(mut self, l: Option<u32>) -> Self {
+        self.inner_loop = l;
         self
     }
 }
@@ -896,7 +907,8 @@ where
                 .aggr_output_code(dyncfg.aggr_output_code)
                 .aggr_output_len(dyncfg.aggr_output_len)
                 .exclude_outputs(dyncfg.exclude_outputs)
-                .dont_clear_outputs(dyncfg.dont_clear_outputs),
+                .dont_clear_outputs(dyncfg.dont_clear_outputs)
+                .inner_loop(dyncfg.inner_loop),
         );
         for (i, s) in self.seqs.iter_mut().enumerate() {
             let dyncfg = dyn_config(ParSeqSelection::Seq(i));
@@ -912,7 +924,8 @@ where
                     .aggr_output_code(dyncfg.aggr_output_code)
                     .aggr_output_len(dyncfg.aggr_output_len)
                     .exclude_outputs(dyncfg.exclude_outputs)
-                    .dont_clear_outputs(dyncfg.dont_clear_outputs),
+                    .dont_clear_outputs(dyncfg.dont_clear_outputs)
+                    .inner_loop(dyncfg.inner_loop),
             );
         }
     }

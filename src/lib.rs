@@ -645,6 +645,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
     // return true if sequential execution
     fn is_sequential_execution(&self) -> bool;
+
+    fn inner_loop(&self) -> Option<u32>;
 }
 
 pub trait Builder<'a, DR, DW, D, E>
@@ -845,6 +847,8 @@ where
 
     // return true if sequential execution in single execution call of inner executor
     fn is_sequential_execution(&self) -> bool;
+
+    fn inner_loop(&self) -> Option<u32>;
 }
 
 pub trait MapperBuilder<'a, DR, DW, D, E>
@@ -1003,6 +1007,8 @@ where
 
     // return true if sequential execution in single execution call of inner executor
     fn is_sequential_execution(&self) -> bool;
+
+    fn inner_loop(&self) -> Option<u32>;
 }
 
 pub trait ParMapperBuilder<'a, DR, DW, D, E>

@@ -834,6 +834,11 @@ impl<'a> Executor<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>, OpenCLDataHold
     fn is_sequential_execution(&self) -> bool {
         false
     }
+
+    #[inline]
+    fn inner_loop(&self) -> Option<u32> {
+        self.inner_loop
+    }
 }
 
 impl Clone for OpenCLExecutor {

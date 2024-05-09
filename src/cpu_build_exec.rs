@@ -1135,6 +1135,11 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
     fn is_sequential_execution(&self) -> bool {
         self.parallel.is_none()
     }
+
+    #[inline]
+    fn inner_loop(&self) -> Option<u32> {
+        self.inner_loop
+    }
 }
 
 impl<'a>

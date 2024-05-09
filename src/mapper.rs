@@ -174,6 +174,11 @@ where
     fn is_sequential_execution(&self) -> bool {
         self.executor.is_sequential_execution()
     }
+
+    #[inline]
+    fn inner_loop(&self) -> Option<u32> {
+        self.executor.inner_loop()
+    }
 }
 
 impl<'a, DR, DW, D, E, IDT, ODT> DataTransforms<'a, DR, DW, D, IDT, ODT>
@@ -489,6 +494,11 @@ where
 
     fn is_sequential_execution(&self) -> bool {
         self.executor.is_sequential_execution()
+    }
+
+    #[inline]
+    fn inner_loop(&self) -> Option<u32> {
+        self.executor.inner_loop()
     }
 }
 
