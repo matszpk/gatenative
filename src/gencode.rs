@@ -172,8 +172,9 @@ where
         way: usize,
     }
     let single_buffer = single_buffer
-        && !(keep_output_vars.map(|x| x.is_empty()).unwrap_or(false)
-            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
+        && !(inner_loop
+            || (keep_output_vars.map(|x| x.is_empty()).unwrap_or(false)
+                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
     let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
     let output_len = circuit.outputs().len();
@@ -189,6 +190,8 @@ where
                 vars.into_iter().map(|i| (*i, (0, None))),
             ))
         }
+    } else if inner_loop {
+        Some(BTreeMap::from_iter((0..output_len).map(|i| (i, (0, None)))))
     } else {
         None
     };
@@ -521,9 +524,10 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     }
     // store_output_vars_always - aggr_to_buffer
     let single_buffer = single_buffer
-        && !(output_vars.is_some()
-            && !store_output_vars_always
-            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
+        && !(inner_loop
+            || (output_vars.is_some()
+                && !store_output_vars_always
+                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -761,9 +765,10 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     }
     // store_output_vars_always - aggr_to_buffer
     let single_buffer = single_buffer
-        && !(output_vars.is_some()
-            && !store_output_vars_always
-            && pop_inputs.map(|x| x.is_empty()).unwrap_or(false));
+        && !(inner_loop
+            || (output_vars.is_some()
+                && !store_output_vars_always
+                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gate_num = circuit.gates.len();
@@ -1065,7 +1070,10 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         &mut gen_var_usage(&circuit),
         code_config.single_buffer,
         input_map.as_ref(),
-        if code_config.aggr_output_code.is_some() {
+        if code_config.inner_loop.is_some() {
+            // enable all outputs as used after gate calculation
+            Some(&[])
+        } else if code_config.aggr_output_code.is_some() {
             if code_config.aggr_to_buffer.is_some() {
                 code_config.aggr_to_buffer
             } else {
