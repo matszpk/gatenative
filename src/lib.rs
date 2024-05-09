@@ -204,6 +204,8 @@ pub trait FuncWriter {
     fn gen_not(&mut self, dst_arg: usize, arg: usize);
     /// Generates Store instruction into output.
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
+    /// Generates copy to register
+    fn gen_set(&mut self, dst_arg: usize, arg: usize);
 }
 
 fn check_placements(

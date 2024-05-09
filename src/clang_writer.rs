@@ -1450,6 +1450,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(self.writer.out, "    {} = {};", dst, src).unwrap();
         }
     }
+
+    fn gen_set(&mut self, dst_arg: usize, arg: usize) {
+        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
+        writeln!(self.writer.out, "v{};", arg).unwrap();
+    }
 }
 
 impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {

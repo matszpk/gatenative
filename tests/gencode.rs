@@ -91,6 +91,9 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
         )
         .unwrap();
     }
+    fn gen_set(&mut self, dst_arg: usize, arg: usize) {
+        writeln!(self.writer.out, "    v{} = v{}", dst_arg, arg).unwrap();
+    }
 }
 
 struct TestCodeWriter {
