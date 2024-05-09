@@ -506,7 +506,8 @@ where
 
 fn gen_copy_to_input<FW: FuncWriter, T>(
     writer: &mut FW,
-    circuit: &VCircuit<T>,
+    input_len: usize,
+    output_len: usize,
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
     var_allocs: &[T],
@@ -520,6 +521,42 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    // output to input map
+    let input_place_map: HashMap<usize, usize> = if let Some((input_p, _)) = input_placement {
+        HashMap::from_iter(input_p.iter().enumerate().map(|(i, p)| (*p, i)))
+    } else {
+        HashMap::from_iter((0..input_len).map(|i| (i, i)))
+    };
+    let output_place_map: HashMap<usize, usize> = if let Some((output_p, _)) = output_placement {
+        HashMap::from_iter(output_p.iter().enumerate().map(|(i, p)| (i, *p)))
+    } else {
+        HashMap::from_iter((0..output_len).map(|i| (i, i)))
+    };
+    // key - original output index, value - original input index
+    let input_output_map = if let Some(output_map) = output_map {
+        output_map
+            .iter()
+            .map(|(bit, real_bit)| {
+                let place = if let Some((output_p, _)) = output_placement {
+                    output_p[*real_bit]
+                } else {
+                    *real_bit
+                };
+                (*bit, input_place_map[&place])
+            })
+            .collect::<HashMap<_, _>>()
+    } else {
+        (0..output_len)
+            .map(|bit| {
+                let place = if let Some((output_p, _)) = output_placement {
+                    output_p[bit]
+                } else {
+                    bit
+                };
+                (bit, input_place_map[&place])
+            })
+            .collect::<HashMap<_, _>>()
+    };
     // conversion map:
     // if let Some((input_p, _)) = input_placement {
     //     if let Some(input_map) = input_map {
