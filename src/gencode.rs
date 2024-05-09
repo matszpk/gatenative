@@ -521,17 +521,33 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    // output to input map
     let input_place_map: HashMap<usize, usize> = if let Some((input_p, _)) = input_placement {
-        HashMap::from_iter(input_p.iter().enumerate().map(|(i, p)| (*p, i)))
+        if let Some(input_map) = input_map {
+            HashMap::from_iter((0..input_len).filter_map(|i| {
+                if let Some(index) = input_map.get(&i) {
+                    Some((input_p[*index], i))
+                } else {
+                    None
+                }
+            }))
+        } else {
+            HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
+        }
     } else {
-        HashMap::from_iter((0..input_len).map(|i| (i, i)))
+        HashMap::from_iter((0..input_len).filter_map(|i| {
+            if let Some(input_map) = input_map {
+                if let Some(index) = input_map.get(&i) {
+                    Some((*index, i))
+                } else {
+                    // if not found then ignore, becuase is arg_inputs or elem_inputs
+                    None
+                }
+            } else {
+                Some((i, i))
+            }
+        }))
     };
-    let output_place_map: HashMap<usize, usize> = if let Some((output_p, _)) = output_placement {
-        HashMap::from_iter(output_p.iter().enumerate().map(|(i, p)| (i, *p)))
-    } else {
-        HashMap::from_iter((0..output_len).map(|i| (i, i)))
-    };
+    // output to input map
     // key - original output index, value - original input index
     let input_output_map = if let Some(output_map) = output_map {
         output_map
@@ -557,33 +573,8 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             })
             .collect::<HashMap<_, _>>()
     };
+    // to map: output_register to input register
     // conversion map:
-    // if let Some((input_p, _)) = input_placement {
-    //     if let Some(input_map) = input_map {
-    //         HashMap::from_iter((0..input_len).filter_map(|i| {
-    //             if let Some(index) = input_map.get(&i) {
-    //                 Some((input_p[*index], i))
-    //             } else {
-    //                 None
-    //             }
-    //         }))
-    //     } else {
-    //         HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
-    //     }
-    // } else {
-    //     HashMap::from_iter((0..input_len).filter_map(|i| {
-    //         if let Some(input_map) = input_map {
-    //             if let Some(index) = input_map.get(&i) {
-    //                 Some((*index, i))
-    //             } else {
-    //                 // if not found then ignore, becuase is arg_inputs or elem_inputs
-    //                 None
-    //             }
-    //         } else {
-    //             Some((i, i))
-    //         }
-    //     }))
-    // }
 }
 
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
