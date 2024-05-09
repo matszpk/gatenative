@@ -583,6 +583,8 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             )
         }));
     // conversion map:
+    // TODO: solve straightforward paths in output variable.
+    //       solve cycles as last in output set for variable.
 }
 
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
