@@ -222,7 +222,15 @@ where
 
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
-    if let Some(pop_inputs) = pop_inputs {
+    // if inner_loop allocate all variables as first to allow initialization
+    if inner_loop {
+        for i in 0..input_len {
+            if is_in_input_map(i) {
+                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+                input_already_read[i] = true;
+            }
+        }
+    } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
                 single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(*i).unwrap());
@@ -281,14 +289,14 @@ where
                 // allocate circuit inputs now if not allocated
                 if gates[node_index].i0 < input_len_t {
                     let gi0 = usize::try_from(gates[node_index].i0).unwrap();
-                    if load_input_later(input_map, pop_inputs, gi0) {
+                    if load_input_later(input_map, pop_inputs, gi0) && !input_already_read[gi0] {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
                         input_already_read[gi0] = true;
                     }
                 }
                 if gates[node_index].i1 < input_len_t {
                     let gi1 = usize::try_from(gates[node_index].i1).unwrap();
-                    if load_input_later(input_map, pop_inputs, gi1) {
+                    if load_input_later(input_map, pop_inputs, gi1) && !input_already_read[gi1] {
                         single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
                         input_already_read[gi1] = true;
                     }
@@ -513,6 +521,32 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     <usize as TryFrom<T>>::Error: Debug,
 {
     // conversion map:
+    // if let Some((input_p, _)) = input_placement {
+    //     if let Some(input_map) = input_map {
+    //         HashMap::from_iter((0..input_len).filter_map(|i| {
+    //             if let Some(index) = input_map.get(&i) {
+    //                 Some((input_p[*index], i))
+    //             } else {
+    //                 None
+    //             }
+    //         }))
+    //     } else {
+    //         HashMap::from_iter(input_p.iter().enumerate().map(|(i, x)| (*x, i)))
+    //     }
+    // } else {
+    //     HashMap::from_iter((0..input_len).filter_map(|i| {
+    //         if let Some(input_map) = input_map {
+    //             if let Some(index) = input_map.get(&i) {
+    //                 Some((*index, i))
+    //             } else {
+    //                 // if not found then ignore, becuase is arg_inputs or elem_inputs
+    //                 None
+    //             }
+    //         } else {
+    //             Some((i, i))
+    //         }
+    //     }))
+    // }
 }
 
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
@@ -574,7 +608,15 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
     // if populated input then allocate variables as first to avoid next allocations
-    if let Some(pop_inputs) = pop_inputs {
+    // if inner_loop allocate all variables as first to allow initialization
+    if inner_loop {
+        for i in 0..input_len {
+            if is_in_input_map(i) {
+                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                used_inputs[i] = true;
+            }
+        }
+    } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
                 used_inputs[*i] = true;
@@ -824,7 +866,16 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     let mut used_inputs = vec![false; input_len];
     let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
     let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
-    if let Some(pop_inputs) = pop_inputs {
+    // if populated input then allocate variables as first to avoid next allocations
+    // if inner_loop allocate all variables as first to allow initialization
+    if inner_loop {
+        for i in 0..input_len {
+            if is_in_input_map(i) {
+                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                used_inputs[i] = true;
+            }
+        }
+    } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
                 used_inputs[*i] = true;
