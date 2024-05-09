@@ -574,11 +574,15 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             .collect::<HashMap<_, _>>()
     };
     // to map: output_register to input register
-    let inreg_outreg_map: HashMap<usize, usize> =
+    // key - circuit output index, value - (circuit output reg, circuit input reg)
+    let out_outreg_inreg_map: HashMap<usize, (usize, usize)> =
         HashMap::from_iter(input_output_map.iter().map(|(oi, ii)| {
             (
-                usize::try_from(var_allocs[*oi]).unwrap(),
-                usize::try_from(var_allocs[*ii]).unwrap(),
+                *oi,
+                (
+                    usize::try_from(var_allocs[*oi]).unwrap(),
+                    usize::try_from(var_allocs[*ii]).unwrap(),
+                ),
             )
         }));
     // conversion map:
