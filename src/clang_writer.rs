@@ -1170,7 +1170,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 .out
                 .extend(b"    const unsigned int idxh = idx >> 32;\n");
         }
-        if self.inner_loop.is_some() {
+        if let Some(iter_max) = self.inner_loop {
+            writeln!(self.writer.out, "#define ITER_MAX ({}U)", iter_max).unwrap();
             self.writer
                 .out
                 .extend(b"    unsigned int iter;\n    unsigned int stop = 0;\n");
@@ -1203,6 +1204,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
         if self.inner_loop.is_some() {
             self.writer.out.extend(b"    } // loop\n");
+            self.writer.out.extend(b"#undef ITER_MAX\n");
         }
         self.writer.out.extend(b"}\n");
     }
@@ -1269,13 +1271,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer.out.extend(init_code.as_bytes());
             self.writer.out.push(b'\n');
         }
-        if let Some(iter_max) = self.inner_loop {
-            writeln!(
-                self.writer.out,
-                "    for (iter = 0; iter < {}U && !stop; iter++) {{\n",
-                iter_max
-            )
-            .unwrap();
+        if self.inner_loop.is_some() {
+            self.writer
+                .out
+                .extend(b"    for (iter = 0; iter < ITER_MAX && !stop; iter++)\n");
         }
         if let Some(pop_input_code) = self.pop_input_code {
             let pop_inputs = if !self.pop_input_map.is_empty() {
@@ -1397,6 +1396,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             }
         }
     }
+
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
         let arg0 = format!("v{}", arg0);
         let arg1 =
