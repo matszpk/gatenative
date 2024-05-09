@@ -153,6 +153,7 @@ fn gen_var_allocs<T>(
     keep_output_vars: Option<&[usize]>,
     pop_inputs: Option<&[usize]>,
     output_map: Option<&HashMap<usize, usize>>,
+    inner_loop: bool,
 ) -> (
     Vec<T>,
     usize,
@@ -505,6 +506,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     pop_inputs: Option<&[usize]>,
     store_output_vars_always: bool,
     output_map: Option<&HashMap<usize, usize>>,
+    inner_loop: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -744,6 +746,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     pop_inputs: Option<&[usize]>,
     store_output_vars_always: bool,
     output_map: Option<&HashMap<usize, usize>>,
+    inner_loop: bool,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -1073,6 +1076,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         },
         pop_inputs,
         output_map.as_ref(),
+        code_config.inner_loop.is_some(),
     );
 
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -1111,6 +1115,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             pop_inputs,
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
             output_map.as_ref(),
+            code_config.inner_loop.is_some(),
         );
     } else {
         let mut vcircuit = VBinOpCircuit::from(circuit.clone());
@@ -1138,6 +1143,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             pop_inputs,
             code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
             output_map.as_ref(),
+            code_config.inner_loop.is_some(),
         );
     }
 
@@ -1202,6 +1208,7 @@ mod tests {
             keep_output_vars,
             pop_inputs,
             None,
+            false,
         );
         (v, l, m.map(|x| x.values().copied().collect::<Vec<_>>()))
     }
@@ -1330,6 +1337,7 @@ mod tests {
                 Some(&[0, 2]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1350,6 +1358,7 @@ mod tests {
                 Some(&[1, 2]),
                 None,
                 None,
+                false,
             )
         );
         // keep outputs with double outputs (with both normal and negated)
@@ -1455,6 +1464,7 @@ mod tests {
                 Some(&[0, 2, 3, 5]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1480,6 +1490,7 @@ mod tests {
                 Some(&[2, 3, 4, 5]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1504,6 +1515,7 @@ mod tests {
                 Some(&[0, 2, 5]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1528,6 +1540,7 @@ mod tests {
                 Some(&[1, 3, 4]),
                 None,
                 None,
+                false,
             )
         );
 
@@ -1894,6 +1907,7 @@ mod tests {
                 None,
                 None,
                 Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -1910,6 +1924,7 @@ mod tests {
                 None,
                 None,
                 Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+                false,
             )
         );
         // testcase with placements and with input_map (some input are used as arg_input)
@@ -2020,6 +2035,7 @@ mod tests {
                 Some(&[]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -2046,6 +2062,7 @@ mod tests {
                 Some(&[1, 2, 4, 7, 8]),
                 None,
                 None,
+                false,
             )
         );
         let mut var_usage = gen_var_usage(&circuit);
@@ -2072,6 +2089,7 @@ mod tests {
                 Some(&[1, 4, 5, 6, 8]),
                 None,
                 None,
+                false,
             )
         );
     }
