@@ -883,6 +883,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     aggr_output_code: Option<&'c str>,
     output_vars: Option<Vec<(usize, usize)>>,
     aggr_to_buffer: bool,
+    inner_loop: Option<u32>,
 }
 
 pub struct CLangWriter<'a> {
@@ -1169,7 +1170,19 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 .out
                 .extend(b"    const unsigned int idxh = idx >> 32;\n");
         }
+        if self.inner_loop.is_some() {
+            self.writer
+                .out
+                .extend(b"    unsigned int iter;\n    unsigned int stop = 0;\n");
+            writeln!(
+                self.writer.out,
+                "    {} swap_temp;",
+                self.writer.config.type_name
+            )
+            .unwrap();
+        }
     }
+
     fn func_end(&mut self) {
         if let Some(aggr_output_code) = self.aggr_output_code {
             if let Some(output_vars) = self.output_vars.as_ref() {
@@ -1186,10 +1199,14 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             }
         }
         if let Some(func_finish) = self.writer.config.func_finish {
-            writeln!(&mut self.writer.out, "    {}", func_finish).unwrap();
+            writeln!(self.writer.out, "    {}", func_finish).unwrap();
+        }
+        if self.inner_loop.is_some() {
+            self.writer.out.extend(b"    } // loop\n");
         }
         self.writer.out.extend(b"}\n");
     }
+
     fn alloc_vars(&mut self, var_num: usize) {
         for i in 0..var_num {
             writeln!(
@@ -1251,6 +1268,14 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         if let Some(init_code) = self.init_code {
             self.writer.out.extend(init_code.as_bytes());
             self.writer.out.push(b'\n');
+        }
+        if let Some(iter_max) = self.inner_loop {
+            writeln!(
+                self.writer.out,
+                "    for (iter = 0; iter < {}U && !stop; iter++) {{\n",
+                iter_max
+            )
+            .unwrap();
         }
         if let Some(pop_input_code) = self.pop_input_code {
             let pop_inputs = if !self.pop_input_map.is_empty() {
@@ -1637,6 +1662,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             output_vars,
             aggr_to_buffer: code_config.aggr_output_code.is_some()
                 && code_config.aggr_to_buffer.is_some(),
+            inner_loop: code_config.inner_loop,
         }
     }
 
