@@ -1222,7 +1222,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
     );
     func_writer.func_start();
-    func_writer.alloc_vars(var_num);
+    func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
 
     if impl_op || nimpl_op {
         let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);

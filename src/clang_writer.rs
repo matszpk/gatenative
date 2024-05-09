@@ -1180,12 +1180,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             self.writer
                 .out
                 .extend(b"    unsigned int iter;\n    unsigned int stop = 0;\n");
-            writeln!(
-                self.writer.out,
-                "    {} swap_temp;",
-                self.writer.config.type_name
-            )
-            .unwrap();
         }
     }
 
@@ -1494,18 +1488,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
 
     fn gen_set(&mut self, dst_arg: usize, arg: usize) {
         write!(self.writer.out, "    v{} = v{};", dst_arg, arg).unwrap();
-    }
-    fn gen_swap(&mut self, arg1: usize, arg2: usize) {
-        if self.inner_loop.is_some() {
-            write!(
-                self.writer.out,
-                "    swap_temp = v{0};\n    v{0} = v{1};\n    v{1} = swap_temp;\n",
-                arg1, arg2
-            )
-            .unwrap();
-        } else {
-            panic!("Unsupported if no inner loop!");
-        }
     }
 }
 
