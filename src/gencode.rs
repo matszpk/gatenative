@@ -522,6 +522,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    println!("CopyToInput Start");
     let input_place_map: HashMap<usize, usize> = if let Some((input_p, _)) = input_placement {
         if let Some(input_map) = input_map {
             HashMap::from_iter((0..input_len).filter_map(|i| {
