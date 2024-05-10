@@ -628,6 +628,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         }
         let dep_tree: Vec<Entry> = vec![];
         let stack: Vec<StackEntry> = vec![];
+        // 1. collect tree of dependencies between output var and input var
         for oi in output_list {
             // if var_output_map.get(var).iter().any(|x| *x == oi) {
             // let mut stack = vec![];
@@ -655,6 +656,8 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             //     }
             // }
         }
+        // 2. move to end path where is cycle
+        // 3. make store operation in order of dep tree.
     }
 }
 
