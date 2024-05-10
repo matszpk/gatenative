@@ -673,7 +673,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                         let cycle_detected = new_invar == var && top.invar != new_invar;
                         if cycle_detected {
                             // detected cycle
-                            cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
+                            cycle_path = Some(stack.iter().map(|e| e.way - 1).collect::<Vec<_>>());
                         }
                         stack.push(ConstructStackEntry {
                             outvar: Some(top_invar),
@@ -719,6 +719,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         // // 2. move to end path where is cycle
         let have_cycle = cycle_path.is_some();
         if let Some(cycle_path) = cycle_path {
+            println!("Cycle path: {:?}", cycle_path);
             let way0 = *cycle_path.first().unwrap();
             // swap last element and choosen cycle element
             let t = dep_tree.swap_remove(way0);
@@ -731,8 +732,11 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                 entry = entry.entries.last_mut().unwrap();
             }
         }
+        // DEBUG
+        println!("NewTree: {:?}", dep_tree);
+        // DEBUG
         // // 3. make store operation in order of dep tree.
-        #[derive(Clone)]
+        #[derive(Clone, Debug)]
         struct StackEntry<'a> {
             entry: Option<&'a Entry>,
             way: usize,
@@ -765,7 +769,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                             writer.gen_set(extra_swap_var, entry.invar);
                         }
                         // if output var and input are not same
-                        if !stack.is_empty() || !have_cycle {
+                        if stack.len() != 1 || !have_cycle || top.way != dep_tree.len() {
                             // normal store operation
                             writer.gen_set(entry.invar, entry.outvar);
                         } else {
