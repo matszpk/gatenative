@@ -618,44 +618,73 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         // outvar0 = outvar
         #[derive(Clone)]
         struct Entry {
-            var: usize,
+            outvar: usize,
+            invar: Option<usize>,
             entries: Vec<Entry>,
         }
         #[derive(Clone)]
         struct StackEntry {
-            entry: Rc<Entry>,
+            entry: Option<Rc<Entry>>,
             way: usize,
         }
-        let dep_tree: Vec<Entry> = vec![];
-        let stack: Vec<StackEntry> = vec![];
-        // 1. collect tree of dependencies between output var and input var
-        for oi in output_list {
-            // if var_output_map.get(var).iter().any(|x| *x == oi) {
-            // let mut stack = vec![];
-            // if var_output_map.get(var).iter().any(|x| *x == oi) {
-            //     // if is not processed
-            //     let mut oi = *oi;
-            //     loop {
-            //         let (outvar, invar) = out_outvar_invar_map[oi];
-            //         // check whether invar is
-            //         let mut do_flush_stack = false;
-            //         if var_output_map.contains_key(invar) {
-            //             // conflict with some unprocessed output var and input var
-            //             if stack.is_empty() || stack[0].0 != out_var {
-            //                 stack.push((outvar, invar));
-            //                 *oi =
-            //             } else {
-            //                 do_flush_stack = true;
-            //                 break;
-            //             }
-            //         } else {
-            //             // flush stack
-            //             do_flush_stack = true;
-            //             break;
-            //         }
-            //     }
-            // }
+        let mut dep_tree: Vec<Entry> = if var_output_map.contains_key(&var) {
+            output_list
+                .iter()
+                .map(|oi| Entry {
+                    outvar: var,
+                    invar: Some(out_outvar_invar_map[oi].1),
+                    entries: vec![],
+                })
+                .collect::<Vec<_>>()
+        } else {
+            vec![]
+        };
+        let mut stack: Vec<StackEntry> = vec![StackEntry {
+            entry: None,
+            way: 0,
+        }];
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let children = if let Some(entry) = top.entry.as_ref() {
+                &entry.entries
+            } else {
+                &dep_tree
+            };
+            if top.way == 0 {}
+            if top.way != children.len() {
+                top.way += 1;
+            } else {
+                stack.pop();
+            }
         }
+        // 1. collect tree of dependencies between output var and input var
+        // for oi in output_list {
+        // if var_output_map.get(var).iter().any(|x| *x == oi) {
+        // let mut stack = vec![];
+        // if var_output_map.get(var).iter().any(|x| *x == oi) {
+        //     // if is not processed
+        //     let mut oi = *oi;
+        //     loop {
+        //         let (outvar, invar) = out_outvar_invar_map[oi];
+        //         // check whether invar is
+        //         let mut do_flush_stack = false;
+        //         if var_output_map.contains_key(invar) {
+        //             // conflict with some unprocessed output var and input var
+        //             if stack.is_empty() || stack[0].0 != out_var {
+        //                 stack.push((outvar, invar));
+        //                 *oi =
+        //             } else {
+        //                 do_flush_stack = true;
+        //                 break;
+        //             }
+        //         } else {
+        //             // flush stack
+        //             do_flush_stack = true;
+        //             break;
+        //         }
+        //     }
+        // }
+        // }
         // 2. move to end path where is cycle
         // 3. make store operation in order of dep tree.
     }
