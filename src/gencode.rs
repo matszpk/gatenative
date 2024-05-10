@@ -837,14 +837,17 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             }
         }
     }
-    if inner_loop && (!have_aggr_code || store_output_vars_always) {
+    if inner_loop {
+        writer.gen_aggr_output_code();
         writer.gen_if_loop_end();
-        for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
-            // if inner loop and if (not aggr_output_code without list)
-            //   and if not excluded
-            if let Some(output_vars) = output_vars {
-                if let Some(out_var_entry) = output_vars.get(&oi) {
-                    writer.gen_store(false, oi, out_var_entry.0);
+        if !have_aggr_code || store_output_vars_always {
+            for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+                // if inner loop and if (not aggr_output_code without list)
+                //   and if not excluded
+                if let Some(output_vars) = output_vars {
+                    if let Some(out_var_entry) = output_vars.get(&oi) {
+                        writer.gen_store(false, oi, out_var_entry.0);
+                    }
                 }
             }
         }
@@ -1101,14 +1104,17 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
             }
         }
     }
-    if inner_loop && (!have_aggr_code || store_output_vars_always) {
+    if inner_loop {
+        writer.gen_aggr_output_code();
         writer.gen_if_loop_end();
-        for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
-            // if inner loop and if (not aggr_output_code without list)
-            //   and if not excluded
-            if let Some(output_vars) = output_vars {
-                if let Some(out_var_entry) = output_vars.get(&oi) {
-                    writer.gen_store(false, oi, out_var_entry.0);
+        if !have_aggr_code || store_output_vars_always {
+            for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+                // if inner loop and if (not aggr_output_code without list)
+                //   and if not excluded
+                if let Some(output_vars) = output_vars {
+                    if let Some(out_var_entry) = output_vars.get(&oi) {
+                        writer.gen_store(false, oi, out_var_entry.0);
+                    }
                 }
             }
         }

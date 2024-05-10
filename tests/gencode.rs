@@ -39,6 +39,7 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
             .unwrap();
         }
     }
+    fn gen_aggr_output_code(&mut self) {}
     fn func_end(&mut self) {
         writeln!(self.writer.out, "EndFunc").unwrap();
     }

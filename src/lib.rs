@@ -215,6 +215,8 @@ pub trait FuncWriter {
     fn gen_else(&mut self);
     /// Generates end of conditional
     fn gen_end_if(&mut self);
+    /// Generates aggr_output_code
+    fn gen_aggr_output_code(&mut self);
 }
 
 fn check_placements(

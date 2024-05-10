@@ -1185,8 +1185,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         }
     }
 
-    fn func_end(&mut self) {
-        assert_eq!(self.cond_nesting, 0, "Conditional nesting");
+    fn gen_aggr_output_code(&mut self) {
         if let Some(aggr_output_code) = self.aggr_output_code {
             if let Some(output_vars) = self.output_vars.as_ref() {
                 for (i, v) in output_vars {
@@ -1200,6 +1199,13 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     writeln!(self.writer.out, "#undef o{}", i).unwrap();
                 }
             }
+        }
+    }
+
+    fn func_end(&mut self) {
+        assert_eq!(self.cond_nesting, 0, "Conditional nesting");
+        if self.inner_loop.is_none() {
+            self.gen_aggr_output_code();
         }
         if let Some(func_finish) = self.writer.config.func_finish {
             writeln!(self.writer.out, "    {}", func_finish).unwrap();
@@ -1482,10 +1488,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_if_loop_start(&mut self) {
+        assert!(self.inner_loop.is_some());
         self.writer.out.extend(b"    if (iter == 0) {\n");
         self.cond_nesting += 1;
     }
     fn gen_if_loop_end(&mut self) {
+        assert!(self.inner_loop.is_some());
         self.writer.out.extend(b"    if (iter == iter_max - 1) {\n");
         self.cond_nesting += 1;
     }
