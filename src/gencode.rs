@@ -511,7 +511,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
     var_allocs: &[T],
-    var_num: usize,
+    extra_swap_var: usize,
     input_map: Option<&HashMap<usize, usize>>,
     output_map: Option<&HashMap<usize, usize>>,
     output_vars: &BTreeMap<usize, (usize, Option<usize>)>,
@@ -627,6 +627,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             invar: usize,
             entry: Option<Entry>,
             way: usize,
+            cycle: bool,
         }
         // 1. collect tree of dependencies between output var and input var
         let mut dep_tree: Vec<Entry> = vec![];
@@ -635,12 +636,16 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             invar: var,   // in root node is connection to child nodes
             entry: None,
             way: 0,
+            cycle: false,
         }];
         let mut cycle_path = None;
         while !stack.is_empty() {
             let top = stack.last_mut().unwrap();
             let mut do_pop = false;
-            if var_output_map.contains_key(&top.outvar.unwrap_or(var)) {
+            if top.cycle {
+                // skip cycle
+                do_pop = true;
+            } else if var_output_map.contains_key(&top.outvar.unwrap_or(var)) {
                 // it is not already processed
                 let output_list = if top.outvar.is_some() {
                     if let Some(output_list) = var_output_map.get(&top.invar) {
@@ -664,18 +669,17 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                             // detected cycle
                             cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
                         }
-                        else {
-                            stack.push(ConstructStackEntry {
-                                outvar: Some(top_invar),
-                                invar: new_invar,
-                                entry: Some(Entry {
-                                    outvar: 0,
-                                    invar: 0,
-                                    entries: vec![],
-                                }),
-                                way: 0,
-                            });
-                        }
+                        stack.push(ConstructStackEntry {
+                            outvar: Some(top_invar),
+                            invar: new_invar,
+                            entry: Some(Entry {
+                                outvar: 0,
+                                invar: 0,
+                                entries: vec![],
+                            }),
+                            way: 0,
+                            cycle: new_invar == var,
+                        });
                     } else {
                         do_pop = true;
                     }
@@ -704,6 +708,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             }
         }
         // // 2. move to end path where is cycle
+        let have_cycle = cycle_path.is_some();
         if let Some(cycle_path) = cycle_path {
             let way0 = *cycle_path.first().unwrap();
             // swap last element and choosen cycle element
@@ -718,25 +723,50 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             }
         }
         // // 3. make store operation in order of dep tree.
-        // stack = vec![StackEntry {
-        //     entry: None,
-        //     way: 0,
-        // }];
-        // while !stack.is_empty() {
-        //     let top = stack.last_mut().unwrap();
-        //     let children = if let Some(entry) = top.entry.as_ref() {
-        //         &entry.entries
-        //     } else {
-        //         &dep_tree
-        //     };
-        //     if top.way != children.len() {
-        //         // stack.push(StackEntry {
-        //         // });
-        //         top.way += 1;
-        //     } else {
-        //         stack.pop();
-        //     }
-        // }
+        #[derive(Clone)]
+        struct StackEntry<'a> {
+            entry: Option<&'a Entry>,
+            way: usize,
+        }
+        let mut stack = vec![StackEntry {
+            entry: None,
+            way: 0,
+        }];
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let children = if let Some(entry) = top.entry.as_ref() {
+                &entry.entries
+            } else {
+                &dep_tree
+            };
+            if top.way < children.len() {
+                let top_way = top.way;
+                top.way += 1;
+                stack.push(StackEntry {
+                    entry: Some(&children[top_way]),
+                    way: 0,
+                });
+            } else if let Some(top) = stack.pop() {
+                if let Some(entry) = top.entry {
+                    if entry.outvar != entry.invar {
+                        var_output_map.remove(&entry.outvar);
+                        if entry.invar == var {
+                            // if cycle detected and last store
+                            // then store input var to extra swap
+                            writer.gen_store(false, extra_swap_var, entry.invar);
+                        }
+                        // if output var and input are not same
+                        if !stack.is_empty() || !have_cycle {
+                            // normal store operation
+                            writer.gen_store(false, entry.invar, entry.outvar);
+                        } else {
+                            // if last operation to store and cycle detected
+                            writer.gen_store(false, entry.invar, extra_swap_var);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
