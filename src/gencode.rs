@@ -769,7 +769,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                             writer.gen_set(extra_swap_var, entry.invar);
                         }
                         // if output var and input are not same
-                        if stack.len() != 1 || !have_cycle || top.way != dep_tree.len() {
+                        if stack.len() != 1 || !have_cycle || stack[0].way != dep_tree.len() {
                             // normal store operation
                             writer.gen_set(entry.invar, entry.outvar);
                         } else {
