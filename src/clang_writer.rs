@@ -1205,6 +1205,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_end(&mut self) {
         assert_eq!(self.cond_nesting, 0, "Conditional nesting");
         if self.inner_loop.is_none() {
+            // generate aggr output code only if no inner loop.
+            // in inner loop aggr output precedes storing circuit output.
             self.gen_aggr_output_code();
         }
         if let Some(func_finish) = self.writer.config.func_finish {
@@ -1494,7 +1496,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
     fn gen_if_loop_end(&mut self) {
         assert!(self.inner_loop.is_some());
-        self.writer.out.extend(b"    if (iter == iter_max - 1) {\n");
+        self.writer
+            .out
+            .extend(b"    if (iter == iter_max - 1 || stop != 0) {\n");
         self.cond_nesting += 1;
     }
     fn gen_else(&mut self) {

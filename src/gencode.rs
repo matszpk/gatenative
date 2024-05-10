@@ -841,7 +841,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         writer.gen_aggr_output_code();
         writer.gen_if_loop_end();
         if !have_aggr_code || store_output_vars_always {
-            for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+            for oi in 0..circuit.outputs.len() {
                 // if inner loop and if (not aggr_output_code without list)
                 //   and if not excluded
                 if let Some(output_vars) = output_vars {
@@ -1108,7 +1108,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
         writer.gen_aggr_output_code();
         writer.gen_if_loop_end();
         if !have_aggr_code || store_output_vars_always {
-            for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+            for oi in 0..circuit.outputs.len() {
                 // if inner loop and if (not aggr_output_code without list)
                 //   and if not excluded
                 if let Some(output_vars) = output_vars {
