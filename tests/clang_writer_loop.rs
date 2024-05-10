@@ -29,6 +29,7 @@ fn test_clang_writer_loop_basic() {
         false,
         CodeConfig::new().inner_loop(Some(10)),
     );
+    println!("Code: {}", String::from_utf8(writer.out()).unwrap());
     // assert_eq!(
     //     &String::from_utf8(writer.out()).unwrap(),
     //     r##"void gate_sys_xor(uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {

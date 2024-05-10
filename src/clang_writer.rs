@@ -884,6 +884,8 @@ pub struct CLangFuncWriter<'a, 'c> {
     output_vars: Option<Vec<(usize, usize)>>,
     aggr_to_buffer: bool,
     inner_loop: Option<u32>,
+    // handling conditionals
+    cond_nesting: usize,
 }
 
 pub struct CLangWriter<'a> {
@@ -1184,6 +1186,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn func_end(&mut self) {
+        assert_eq!(self.cond_nesting, 0, "Conditional nesting");
         if let Some(aggr_output_code) = self.aggr_output_code {
             if let Some(output_vars) = self.output_vars.as_ref() {
                 for (i, v) in output_vars {
@@ -1314,9 +1317,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
-        if self.inner_loop.is_some() {
-            self.writer.out.extend(b"    if (iter == 0) {\n");
-        }
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             if *arg_bit < 32 {
                 writeln!(
@@ -1396,9 +1396,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
             }
         }
-        if self.inner_loop.is_some() {
-            self.writer.out.extend(b"    }\n");
-        }
     }
 
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
@@ -1443,9 +1440,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
-        if self.inner_loop.is_some() {
-            self.writer.out.extend(b"    if (iter == iter_max - 1) {\n");
-        }
         let output = if let Some(real_output) = self.output_map.get(&output) {
             self.output_placement
                 .map(|(p, _)| p[*real_output])
@@ -1481,13 +1475,28 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             writeln!(self.writer.out, "    {} = {};", dst, src).unwrap();
         }
-        if self.inner_loop.is_some() {
-            self.writer.out.extend(b"    }\n");
-        }
     }
 
     fn gen_set(&mut self, dst_arg: usize, arg: usize) {
         write!(self.writer.out, "    v{} = v{};", dst_arg, arg).unwrap();
+    }
+
+    fn gen_if_loop_start(&mut self) {
+        self.writer.out.extend(b"    if (iter == 0) {\n");
+        self.cond_nesting += 1;
+    }
+    fn gen_if_loop_end(&mut self) {
+        self.writer.out.extend(b"    if (iter == iter_max - 1) {\n");
+        self.cond_nesting += 1;
+    }
+    fn gen_else(&mut self) {
+        assert!(self.cond_nesting > 0);
+        self.writer.out.extend(b"    } else {\n");
+    }
+    fn gen_end_if(&mut self) {
+        assert!(self.cond_nesting > 0);
+        self.writer.out.extend(b"    }\n");
+        self.cond_nesting -= 1;
     }
 }
 
@@ -1672,6 +1681,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             aggr_to_buffer: code_config.aggr_output_code.is_some()
                 && code_config.aggr_to_buffer.is_some(),
             inner_loop: code_config.inner_loop,
+            cond_nesting: 0,
         }
     }
 

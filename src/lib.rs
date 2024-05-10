@@ -206,6 +206,15 @@ pub trait FuncWriter {
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
     /// Generates copy to register
     fn gen_set(&mut self, dst_arg: usize, arg: usize);
+
+    /// Generates conditional for start of loop
+    fn gen_if_loop_start(&mut self);
+    /// Generates conditional for end of loop
+    fn gen_if_loop_end(&mut self);
+    /// Generates conditional for end of loop
+    fn gen_else(&mut self);
+    /// Generates end of conditional
+    fn gen_end_if(&mut self);
 }
 
 fn check_placements(

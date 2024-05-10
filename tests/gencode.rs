@@ -94,6 +94,18 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
     fn gen_set(&mut self, dst_arg: usize, arg: usize) {
         writeln!(self.writer.out, "    v{} = v{}", dst_arg, arg).unwrap();
     }
+    fn gen_if_loop_start(&mut self) {
+        self.writer.out.extend(b"    if (iter == 0) {\n");
+    }
+    fn gen_if_loop_end(&mut self) {
+        self.writer.out.extend(b"    if (iter == iter_max - 1) {\n");
+    }
+    fn gen_else(&mut self) {
+        self.writer.out.extend(b"    } else {\n");
+    }
+    fn gen_end_if(&mut self) {
+        self.writer.out.extend(b"    }\n");
+    }
 }
 
 struct TestCodeWriter {

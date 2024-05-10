@@ -648,12 +648,14 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     // if populated input then allocate variables as first to avoid next allocations
     // if inner_loop allocate all variables as first to allow initialization
     if inner_loop {
+        writer.gen_if_loop_start();
         for i in 0..input_len {
             if is_in_input_map(i) {
                 writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
                 used_inputs[i] = true;
             }
         }
+        writer.gen_end_if();
     } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
@@ -832,16 +834,22 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                         out_negs_2.insert(o);
                     }
                 }
-                // if inner loop and if (not aggr_output_code without list)
-                //   and if not excluded
-                if inner_loop
-                    && (!have_aggr_code || store_output_vars_always)
-                    && is_in_output_map(oi)
-                {
+            }
+        }
+    }
+    if inner_loop && (!have_aggr_code || store_output_vars_always) {
+        writer.gen_if_loop_end();
+        for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+            // if inner loop and if (not aggr_output_code without list)
+            //   and if not excluded
+            if let Some(output_vars) = output_vars {
+                if let Some(out_var_entry) = output_vars.get(&oi) {
                     writer.gen_store(false, oi, out_var_entry.0);
                 }
             }
         }
+        writer.gen_else();
+        writer.gen_end_if();
     }
 }
 
@@ -906,12 +914,14 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     // if populated input then allocate variables as first to avoid next allocations
     // if inner_loop allocate all variables as first to allow initialization
     if inner_loop {
+        writer.gen_if_loop_start();
         for i in 0..input_len {
             if is_in_input_map(i) {
                 writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
                 used_inputs[i] = true;
             }
         }
+        writer.gen_end_if();
     } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
@@ -1088,16 +1098,22 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                         out_negs_2.insert(o);
                     }
                 }
-                // if inner loop and if (not aggr_output_code without list)
-                //   and if not excluded
-                if inner_loop
-                    && (!have_aggr_code || store_output_vars_always)
-                    && is_in_output_map(oi)
-                {
+            }
+        }
+    }
+    if inner_loop && (!have_aggr_code || store_output_vars_always) {
+        writer.gen_if_loop_end();
+        for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+            // if inner loop and if (not aggr_output_code without list)
+            //   and if not excluded
+            if let Some(output_vars) = output_vars {
+                if let Some(out_var_entry) = output_vars.get(&oi) {
                     writer.gen_store(false, oi, out_var_entry.0);
                 }
             }
         }
+        writer.gen_else();
+        writer.gen_end_if();
     }
 }
 
