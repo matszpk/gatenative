@@ -1486,7 +1486,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_set(&mut self, dst_arg: usize, arg: usize) {
-        write!(self.writer.out, "    v{} = v{};", dst_arg, arg).unwrap();
+        writeln!(self.writer.out, "    v{} = v{};", dst_arg, arg).unwrap();
     }
 
     fn gen_if_loop_start(&mut self) {

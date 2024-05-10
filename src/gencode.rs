@@ -593,6 +593,10 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             var_output_map.insert(*var, vec![*oi]);
         }
     }
+    // DEBUG
+    println!("VarOutputMap: {:?}", var_output_map);
+    println!("OutOutVarInVarMap: {:?}", out_outvar_invar_map);
+    // DEBUG
     let var_output_map_initial = var_output_map.clone();
     // process outputs
     for (var, root_output_list) in var_output_map_initial {
@@ -615,7 +619,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         // outvar2 = outvar
         // outvar1 = outvar
         // outvar0 = outvar
-        #[derive(Clone)]
+        #[derive(Clone, Debug)]
         struct Entry {
             outvar: usize,
             invar: usize,
@@ -665,7 +669,8 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                         let oi = output_list[top_way];
                         let top_invar = top.invar;
                         let new_invar = out_outvar_invar_map[&oi].1;
-                        if new_invar == var {
+                        let cycle_detected = new_invar == var && top.invar != new_invar;
+                        if cycle_detected {
                             // detected cycle
                             cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
                         }
@@ -707,6 +712,9 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                 }
             }
         }
+        // DEBUG
+        println!("Tree: {:?}", dep_tree);
+        // DEBUG
         // // 2. move to end path where is cycle
         let have_cycle = cycle_path.is_some();
         if let Some(cycle_path) = cycle_path {
@@ -753,15 +761,15 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                         if entry.invar == var {
                             // if cycle detected and last store
                             // then store input var to extra swap
-                            writer.gen_store(false, extra_swap_var, entry.invar);
+                            writer.gen_set(extra_swap_var, entry.invar);
                         }
                         // if output var and input are not same
                         if !stack.is_empty() || !have_cycle {
                             // normal store operation
-                            writer.gen_store(false, entry.invar, entry.outvar);
+                            writer.gen_set(entry.invar, entry.outvar);
                         } else {
                             // if last operation to store and cycle detected
-                            writer.gen_store(false, entry.invar, extra_swap_var);
+                            writer.gen_set(entry.invar, extra_swap_var);
                         }
                     }
                 }
@@ -1036,6 +1044,18 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             }
         }
         writer.gen_else();
+        gen_copy_to_input(
+            writer,
+            input_len,
+            circuit.outputs.len(),
+            input_placement,
+            output_placement,
+            var_allocs,
+            var_num,
+            input_map,
+            output_map,
+            output_vars.unwrap(),
+        );
         writer.gen_end_if();
     }
 }
@@ -1304,6 +1324,18 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
             }
         }
         writer.gen_else();
+        gen_copy_to_input(
+            writer,
+            input_len,
+            circuit.outputs.len(),
+            input_placement,
+            output_placement,
+            var_allocs,
+            var_num,
+            input_map,
+            output_map,
+            output_vars.unwrap(),
+        );
         writer.gen_end_if();
     }
 }
