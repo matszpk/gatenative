@@ -620,7 +620,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         struct Entry {
             outvar: usize,
             invar: usize,
-            entries: Vec<Entry>,
+            entries: Vec<Rc<Entry>>,
         }
         #[derive(Clone)]
         struct StackEntry {
@@ -628,67 +628,89 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             way: usize,
         }
         // 1. collect tree of dependencies between output var and input var
-        let mut dep_tree: Vec<Entry> = if var_output_map.contains_key(&var) {
-            output_list
-                .iter()
-                .map(|oi| Entry {
-                    outvar: var,
-                    invar: out_outvar_invar_map[oi].1,
-                    entries: vec![],
-                })
-                .collect::<Vec<_>>()
-        } else {
-            vec![]
-        };
-        let mut stack: Vec<StackEntry> = vec![StackEntry {
-            entry: None,
-            way: 0,
-        }];
-        let mut cycle_path = None;
-        while !stack.is_empty() {
-            let top = stack.last_mut().unwrap();
-            let children = if let Some(entry) = top.entry.as_mut() {
-                &mut Rc::get_mut(entry).unwrap().entries
-            } else {
-                &mut dep_tree
-            };
-            if top.way == 0 {}
-            if top.way != children.len() {
-                let child = &mut children[top.way];
-                if let Some(output_list) = var_output_map.get(&child.invar) {
-                    if child.invar != var {
-                        child.entries = output_list
-                            .iter()
-                            .map(|oi| Entry {
-                                outvar: child.invar,
-                                invar: out_outvar_invar_map[oi].1,
-                                entries: vec![],
-                            })
-                            .collect::<Vec<_>>();
-                    } else {
-                        cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
-                    }
-                }
-                stack.last_mut().unwrap().way += 1;
-            } else {
-                stack.pop();
-            }
-        }
-        // 2. move to end path where is cycle
-        if let Some(cycle_path) = cycle_path {
-            let way0 = *cycle_path.first().unwrap();
-            // swap last element and choosen cycle element
-            let t = dep_tree.swap_remove(way0);
-            dep_tree.push(t);
-            let mut entry = dep_tree.last_mut().unwrap();
-            for way in cycle_path.into_iter().skip(1) {
-                // swap last element and choosen cycle element
-                let t = entry.entries.swap_remove(way);
-                entry.entries.push(t);
-                entry = entry.entries.last_mut().unwrap();
-            }
-        }
-        // 3. make store operation in order of dep tree.
+        // let mut dep_tree: Vec<Rc<Entry>> = if var_output_map.contains_key(&var) {
+        //     output_list
+        //         .iter()
+        //         .map(|oi| Rc::new(Entry {
+        //             outvar: var,
+        //             invar: out_outvar_invar_map[oi].1,
+        //             entries: vec![],
+        //         }))
+        //         .collect::<Vec<_>>()
+        // } else {
+        //     vec![]
+        // };
+        // let mut stack: Vec<StackEntry> = vec![StackEntry {
+        //     entry: None,
+        //     way: 0,
+        // }];
+        // let mut cycle_path = None;
+        // while !stack.is_empty() {
+        //     let top = stack.last_mut().unwrap();
+        //     let children = if let Some(entry) = top.entry.as_mut() {
+        //         &mut Rc::get_mut(entry).unwrap().entries
+        //     } else {
+        //         &mut dep_tree
+        //     };
+        //     if top.way != children.len() {
+        //         let child = &mut children[top.way];
+        //         if let Some(output_list) = var_output_map.get(&child.invar) {
+        //             if child.invar != var {
+        //                 child.entries = output_list
+        //                     .iter()
+        //                     .map(|oi| Rc::new(Entry {
+        //                         outvar: child.invar,
+        //                         invar: out_outvar_invar_map[oi].1,
+        //                         entries: vec![],
+        //                     }))
+        //                     .collect::<Vec<_>>();
+        //             } else {
+        //                 cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
+        //             }
+        //         }
+        //         stack.last_mut().unwrap().way += 1;
+        //         // stack.push(StackEntry {
+        //         //     entry: Some(children[0]),
+        //         //     way: 0,
+        //         // });
+        //     } else {
+        //         stack.pop();
+        //     }
+        // }
+        // // 2. move to end path where is cycle
+        // if let Some(cycle_path) = cycle_path {
+        //     let way0 = *cycle_path.first().unwrap();
+        //     // swap last element and choosen cycle element
+        //     let t = dep_tree.swap_remove(way0);
+        //     dep_tree.push(t);
+        //     let mut entry = dep_tree.last_mut().unwrap();
+        //     for way in cycle_path.into_iter().skip(1) {
+        //         // swap last element and choosen cycle element
+        //         let t = entry.entries.swap_remove(way);
+        //         entry.entries.push(t);
+        //         entry = entry.entries.last_mut().unwrap();
+        //     }
+        // }
+        // // 3. make store operation in order of dep tree.
+        // stack = vec![StackEntry {
+        //     entry: None,
+        //     way: 0,
+        // }];
+        // while !stack.is_empty() {
+        //     let top = stack.last_mut().unwrap();
+        //     let children = if let Some(entry) = top.entry.as_ref() {
+        //         &entry.entries
+        //     } else {
+        //         &dep_tree
+        //     };
+        //     if top.way != children.len() {
+        //         // stack.push(StackEntry {
+        //         // });
+        //         top.way += 1;
+        //     } else {
+        //         stack.pop();
+        //     }
+        // }
     }
 }
 
