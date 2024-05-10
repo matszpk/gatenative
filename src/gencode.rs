@@ -6,6 +6,7 @@ use int_enum::IntEnum;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::rc::Rc;
 
 use crate::*;
 
@@ -618,10 +619,15 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         #[derive(Clone)]
         struct Entry {
             var: usize,
-            way: usize,
             entries: Vec<Entry>,
         }
+        #[derive(Clone)]
+        struct StackEntry {
+            entry: Rc<Entry>,
+            way: usize,
+        }
         let dep_tree: Vec<Entry> = vec![];
+        let stack: Vec<StackEntry> = vec![];
         for oi in output_list {
             // if var_output_map.get(var).iter().any(|x| *x == oi) {
             // let mut stack = vec![];
