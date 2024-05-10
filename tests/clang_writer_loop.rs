@@ -29,7 +29,6 @@ fn test_clang_writer_loop_basic() {
         false,
         CodeConfig::new().inner_loop(Some(10)),
     );
-    // println!("Code: {}", String::from_utf8(writer.out()).unwrap());
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
@@ -83,7 +82,6 @@ fn test_clang_writer_loop_basic() {
         false,
         CodeConfig::new().inner_loop(Some(10)),
     );
-    // println!("Code: {}", String::from_utf8(writer.out()).unwrap());
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m128i* input,
@@ -121,6 +119,65 @@ fn test_clang_writer_loop_basic() {
     _mm_storeu_si128((__m128i*)&output[1], v3);
     _mm_storeu_si128((__m128i*)&output[2], v2);
     _mm_storeu_si128((__m128i*)&output[3], v0);
+    } else {
+    v1 = v3;
+    v3 = v0;
+    v0 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_OPENCL_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new().inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"kernel void gate_sys_mulxx(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global void* output) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 4 * idx + input_shift;
+    const size_t ovn = 4 * idx + output_shift;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    uint v6;
+    if (idx >= n) return;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v2 = input[ivn + 2];
+    v3 = input[ivn + 3];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v5 = (v4 & v2);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v3 ^ v0);
+    v0 = (v0 & ~v1);
+    v3 = ~v3;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[ovn + 0] = v5;
+    output[ovn + 1] = v3;
+    output[ovn + 2] = v2;
+    output[ovn + 3] = v0;
     } else {
     v1 = v3;
     v3 = v0;
