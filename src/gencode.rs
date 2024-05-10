@@ -597,30 +597,33 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     // process outputs
     for (var, output_list) in var_output_map_initial {
         //let last_to_process = None;
+        // instead stack construct tree:
+        //                    /---> outvar3
+        //       /---> outvar0----> outvar4
+        //       |            /---> outvar5
+        // outvar----> outvar1----> outvar6
+        //       |            \---> outvar7
+        //       \---> outvar2----> outvar8
+        //                    \---> outvar9
+        // outvar9 = outvar2
+        // outvar8 = outvar2
+        // outvar7 = outvar1
+        // outvar6 = outvar1
+        // outvar5 = outvar1
+        // outvar4 = outvar0
+        // outvar3 = outvar0
+        // outvar2 = outvar
+        // outvar1 = outvar
+        // outvar0 = outvar
+        #[derive(Clone)]
+        struct Entry {
+            var: usize,
+            way: usize,
+            entries: Vec<Entry>,
+        }
+        let dep_tree: Vec<Entry> = vec![];
         for oi in output_list {
-            // instead stack construct tree:
-            //                    /---> outvar3
-            //       /---> outvar0----> outvar4
-            //       |            /---> outvar5
-            // outvar----> outvar1----> outvar6
-            //       |            \---> outvar7
-            //       \---> outvar2----> outvar8
-            //                    \---> outvar9
-            // outvar9 = outvar2
-            // outvar8 = outvar2
-            // outvar7 = outvar1
-            // outvar6 = outvar1
-            // outvar5 = outvar1
-            // outvar4 = outvar0
-            // outvar3 = outvar0
-            // outvar2 = outvar
-            // outvar1 = outvar
-            // outvar0 = outvar
-            struct Entry {
-                var: usize,
-                way: usize,
-                entries: Vec<Entry>,
-            }
+            // if var_output_map.get(var).iter().any(|x| *x == oi) {
             // let mut stack = vec![];
             // if var_output_map.get(var).iter().any(|x| *x == oi) {
             //     // if is not processed
