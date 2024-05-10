@@ -511,6 +511,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
     var_allocs: &[T],
+    var_num: usize,
     input_map: Option<&HashMap<usize, usize>>,
     output_map: Option<&HashMap<usize, usize>>,
     output_vars: &BTreeMap<usize, (usize, Option<usize>)>,
@@ -549,7 +550,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     };
     // output to input map
     // key - original output index, value - original input index
-    let input_output_map = if let Some(output_map) = output_map {
+    let output_input_map = if let Some(output_map) = output_map {
         output_map
             .iter()
             .map(|(bit, real_bit)| {
@@ -573,18 +574,79 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             })
             .collect::<HashMap<_, _>>()
     };
-    // to map: output_register to input register
-    // key - circuit output index, value - (circuit output reg, circuit input reg)
-    let out_outreg_inreg_map: HashMap<usize, (usize, usize)> =
-        HashMap::from_iter(input_output_map.iter().map(|(oi, ii)| {
+    // to map: output_variable to input variable
+    // key - circuit output index, value - (circuit output var, circuit input var)
+    let out_outvar_invar_map: HashMap<usize, (usize, usize)> =
+        HashMap::from_iter(output_input_map.iter().map(|(oi, ii)| {
             (
                 *oi,
                 (output_vars[oi].0, usize::try_from(var_allocs[*ii]).unwrap()),
             )
         }));
-    // conversion map:
     // TODO: solve straightforward paths in output variable.
     //       solve cycles as last in output set for variable.
+    let mut var_output_map = HashMap::<usize, Vec<usize>>::new();
+    for (oi, (var, _)) in output_vars.iter() {
+        if let Some(oilist) = var_output_map.get_mut(&var) {
+            oilist.push(*oi);
+        } else {
+            var_output_map.insert(*var, vec![*oi]);
+        }
+    }
+    let var_output_map_initial = var_output_map.clone();
+    // process outputs
+    for (var, output_list) in var_output_map_initial {
+        //let last_to_process = None;
+        for oi in output_list {
+            // instead stack construct tree:
+            //                    /---> outvar3
+            //       /---> outvar0----> outvar4
+            //       |            /---> outvar5
+            // outvar----> outvar1----> outvar6
+            //       |            \---> outvar7
+            //       \---> outvar2----> outvar8
+            //                    \---> outvar9
+            // outvar9 = outvar2
+            // outvar8 = outvar2
+            // outvar7 = outvar1
+            // outvar6 = outvar1
+            // outvar5 = outvar1
+            // outvar4 = outvar0
+            // outvar3 = outvar0
+            // outvar2 = outvar
+            // outvar1 = outvar
+            // outvar0 = outvar
+            struct Entry {
+                var: usize,
+                way: usize,
+                entries: Vec<Entry>,
+            }
+            // let mut stack = vec![];
+            // if var_output_map.get(var).iter().any(|x| *x == oi) {
+            //     // if is not processed
+            //     let mut oi = *oi;
+            //     loop {
+            //         let (outvar, invar) = out_outvar_invar_map[oi];
+            //         // check whether invar is
+            //         let mut do_flush_stack = false;
+            //         if var_output_map.contains_key(invar) {
+            //             // conflict with some unprocessed output var and input var
+            //             if stack.is_empty() || stack[0].0 != out_var {
+            //                 stack.push((outvar, invar));
+            //                 *oi =
+            //             } else {
+            //                 do_flush_stack = true;
+            //                 break;
+            //             }
+            //         } else {
+            //             // flush stack
+            //             do_flush_stack = true;
+            //             break;
+            //         }
+            //     }
+            // }
+        }
+    }
 }
 
 fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
@@ -594,6 +656,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     output_placement: Option<(&[usize], usize)>,
     swap_args: &[bool],
     var_allocs: &[T],
+    var_num: usize,
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
@@ -863,6 +926,7 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     output_placement: Option<(&[usize], usize)>,
     swap_args: &[bool],
     var_allocs: &[T],
+    var_num: usize,
     single_buffer: bool,
     input_map: Option<&HashMap<usize, usize>>,
     output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
@@ -1265,6 +1329,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.output_placement,
             &swap_args,
             &var_allocs,
+            var_num,
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref(),
@@ -1294,6 +1359,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.output_placement,
             &swap_args,
             &var_allocs,
+            var_num,
             code_config.single_buffer,
             input_map.as_ref(),
             output_vars.as_ref(),
