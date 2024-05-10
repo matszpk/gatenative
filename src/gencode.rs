@@ -619,7 +619,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         #[derive(Clone)]
         struct Entry {
             outvar: usize,
-            invar: Option<usize>,
+            invar: usize,
             entries: Vec<Entry>,
         }
         #[derive(Clone)]
@@ -627,12 +627,13 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             entry: Option<Rc<Entry>>,
             way: usize,
         }
+        // 1. collect tree of dependencies between output var and input var
         let mut dep_tree: Vec<Entry> = if var_output_map.contains_key(&var) {
             output_list
                 .iter()
                 .map(|oi| Entry {
                     outvar: var,
-                    invar: Some(out_outvar_invar_map[oi].1),
+                    invar: out_outvar_invar_map[oi].1,
                     entries: vec![],
                 })
                 .collect::<Vec<_>>()
@@ -643,49 +644,50 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             entry: None,
             way: 0,
         }];
+        let mut cycle_path = None;
         while !stack.is_empty() {
             let top = stack.last_mut().unwrap();
-            let children = if let Some(entry) = top.entry.as_ref() {
-                &entry.entries
+            let children = if let Some(entry) = top.entry.as_mut() {
+                &mut Rc::get_mut(entry).unwrap().entries
             } else {
-                &dep_tree
+                &mut dep_tree
             };
             if top.way == 0 {}
             if top.way != children.len() {
-                top.way += 1;
+                let child = &mut children[top.way];
+                if let Some(output_list) = var_output_map.get(&child.invar) {
+                    if child.invar != var {
+                        child.entries = output_list
+                            .iter()
+                            .map(|oi| Entry {
+                                outvar: child.invar,
+                                invar: out_outvar_invar_map[oi].1,
+                                entries: vec![],
+                            })
+                            .collect::<Vec<_>>();
+                    } else {
+                        cycle_path = Some(stack.iter().map(|e| e.way).collect::<Vec<_>>());
+                    }
+                }
+                stack.last_mut().unwrap().way += 1;
             } else {
                 stack.pop();
             }
         }
-        // 1. collect tree of dependencies between output var and input var
-        // for oi in output_list {
-        // if var_output_map.get(var).iter().any(|x| *x == oi) {
-        // let mut stack = vec![];
-        // if var_output_map.get(var).iter().any(|x| *x == oi) {
-        //     // if is not processed
-        //     let mut oi = *oi;
-        //     loop {
-        //         let (outvar, invar) = out_outvar_invar_map[oi];
-        //         // check whether invar is
-        //         let mut do_flush_stack = false;
-        //         if var_output_map.contains_key(invar) {
-        //             // conflict with some unprocessed output var and input var
-        //             if stack.is_empty() || stack[0].0 != out_var {
-        //                 stack.push((outvar, invar));
-        //                 *oi =
-        //             } else {
-        //                 do_flush_stack = true;
-        //                 break;
-        //             }
-        //         } else {
-        //             // flush stack
-        //             do_flush_stack = true;
-        //             break;
-        //         }
-        //     }
-        // }
-        // }
         // 2. move to end path where is cycle
+        if let Some(cycle_path) = cycle_path {
+            let way0 = *cycle_path.first().unwrap();
+            // swap last element and choosen cycle element
+            let t = dep_tree.swap_remove(way0);
+            dep_tree.push(t);
+            let mut entry = dep_tree.last_mut().unwrap();
+            for way in cycle_path.into_iter().skip(1) {
+                // swap last element and choosen cycle element
+                let t = entry.entries.swap_remove(way);
+                entry.entries.push(t);
+                entry = entry.entries.last_mut().unwrap();
+            }
+        }
         // 3. make store operation in order of dep tree.
     }
 }
