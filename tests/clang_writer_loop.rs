@@ -1587,4 +1587,97 @@ fn test_clang_writer_loop_copy_to_input() {
 }
 "##
     );
+    // with negations
+    let circuit = Circuit::new(
+        10,
+        (0..5).map(|i| Gate::new_xor(2 * i, 2 * i + 1)),
+        (0..10).map(|i| {
+            if i < 5 {
+                (10 + i, (i & 1) != 0)
+            } else {
+                (10 + i - 5, (i & 1) != 0)
+            }
+        }),
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "cpx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .output_placement(Some((&[0, 2, 4, 6, 8, 1, 3, 5, 7, 9], 10)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_cpx(const uint32_t* input,
+    void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v6 = input[6];
+    v7 = input[7];
+    v8 = input[8];
+    v9 = input[9];
+    }
+    v0 = (v0 ^ v1);
+    v1 = (v2 ^ v3);
+    v2 = (v4 ^ v5);
+    v3 = (v6 ^ v7);
+    v4 = (v8 ^ v9);
+    v1 = ~v1;
+    v3 = ~v3;
+    v5 = ~v0;
+    v6 = ~v1;
+    v7 = ~v2;
+    v8 = ~v3;
+    v9 = ~v4;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v0;
+    output[2] = v1;
+    output[4] = v2;
+    output[6] = v3;
+    output[8] = v4;
+    output[1] = v5;
+    output[3] = v6;
+    output[5] = v7;
+    output[7] = v8;
+    output[9] = v9;
+    } else {
+    v10 = v1;
+    v1 = v5;
+    v5 = v7;
+    v7 = v8;
+    v8 = v4;
+    v4 = v2;
+    v2 = v10;
+    v10 = v3;
+    v3 = v6;
+    v6 = v10;
+    }
+    } // loop
+}
+"##
+    );
 }
