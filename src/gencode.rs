@@ -542,7 +542,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                 if let Some(index) = input_map.get(&i) {
                     Some((*index, i))
                 } else {
-                    // if not found then ignore, becuase is arg_inputs or elem_inputs
+                    // if not found then ignore, because is arg_inputs or elem_inputs
                     None
                 }
             } else {
