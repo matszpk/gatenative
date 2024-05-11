@@ -668,23 +668,27 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                         top.way += 1;
                         let oi = output_list[top_way];
                         let top_invar = top.invar;
-                        let new_invar = out_outvar_invar_map[&oi].1;
-                        let cycle_detected = new_invar == var && top.invar != new_invar;
-                        if cycle_detected {
-                            // detected cycle
-                            cycle_path = Some(stack.iter().map(|e| e.way - 1).collect::<Vec<_>>());
+                        if let Some((_, new_invar)) = out_outvar_invar_map.get(&oi) {
+                            let cycle_detected = *new_invar == var && top.invar != *new_invar;
+                            if cycle_detected {
+                                // detected cycle
+                                cycle_path =
+                                    Some(stack.iter().map(|e| e.way - 1).collect::<Vec<_>>());
+                            }
+                            stack.push(ConstructStackEntry {
+                                outvar: Some(top_invar),
+                                invar: *new_invar,
+                                entry: Some(Entry {
+                                    outvar: 0,
+                                    invar: 0,
+                                    entries: vec![],
+                                }),
+                                way: 0,
+                                cycle: *new_invar == var,
+                            });
+                        } else {
+                            do_pop = true;
                         }
-                        stack.push(ConstructStackEntry {
-                            outvar: Some(top_invar),
-                            invar: new_invar,
-                            entry: Some(Entry {
-                                outvar: 0,
-                                invar: 0,
-                                entries: vec![],
-                            }),
-                            way: 0,
-                            cycle: new_invar == var,
-                        });
                     } else {
                         do_pop = true;
                     }
@@ -1042,7 +1046,9 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 //   and if not excluded
                 if let Some(output_vars) = output_vars {
                     if let Some(out_var_entry) = output_vars.get(&oi) {
-                        writer.gen_store(false, oi, out_var_entry.0);
+                        if is_in_output_map(oi) {
+                            writer.gen_store(false, oi, out_var_entry.0);
+                        }
                     }
                 }
             }
@@ -1322,7 +1328,9 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
                 //   and if not excluded
                 if let Some(output_vars) = output_vars {
                     if let Some(out_var_entry) = output_vars.get(&oi) {
-                        writer.gen_store(false, oi, out_var_entry.0);
+                        if is_in_output_map(oi) {
+                            writer.gen_store(false, oi, out_var_entry.0);
+                        }
                     }
                 }
             }
