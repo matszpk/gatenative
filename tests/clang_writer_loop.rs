@@ -1001,4 +1001,149 @@ fn test_clang_writer_loop_copy_to_input() {
 }
 "##
     );
+    // more outputs
+    let outputs = [20, 22, 24, 27, 29, 32, 33];
+    let ranges = [2, 3, 3, 4, 3, 4, 1];
+    let circuit = Circuit::new(
+        20,
+        [
+            Gate::new_xor(0, 1),     // 20
+            Gate::new_xor(2, 3),     // 21
+            Gate::new_xor(21, 4),    // 22
+            Gate::new_xor(5, 6),     // 23
+            Gate::new_xor(23, 7),    // 24
+            Gate::new_xor(8, 9),     // 25
+            Gate::new_xor(25, 10),   // 26
+            Gate::new_xor(26, 11),   // 27
+            Gate::new_xor(12, 13),   // 28
+            Gate::new_xor(28, 14),   // 29
+            Gate::new_xor(15, 16),   // 30
+            Gate::new_xor(30, 17),   // 31
+            Gate::new_xor(31, 18),   // 32
+            Gate::new_nimpl(19, 19), // 33
+        ],
+        (0..7)
+            .map(|i| (0..ranges[i]).map(move |_| (outputs[i], false)))
+            .flatten(),
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "cpx2",
+        circuit.clone(),
+        false,
+        CodeConfig::new().inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_cpx2(const uint32_t* input,
+    void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
+    uint32_t v20;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v6 = input[6];
+    v7 = input[7];
+    v8 = input[8];
+    v9 = input[9];
+    v10 = input[10];
+    v11 = input[11];
+    v12 = input[12];
+    v13 = input[13];
+    v14 = input[14];
+    v15 = input[15];
+    v16 = input[16];
+    v17 = input[17];
+    v18 = input[18];
+    v19 = input[19];
+    }
+    v0 = (v0 ^ v1);
+    v1 = (v2 ^ v3);
+    v1 = (v1 ^ v4);
+    v2 = (v5 ^ v6);
+    v2 = (v2 ^ v7);
+    v3 = (v8 ^ v9);
+    v3 = (v3 ^ v10);
+    v3 = (v3 ^ v11);
+    v4 = (v12 ^ v13);
+    v4 = (v4 ^ v14);
+    v5 = (v15 ^ v16);
+    v5 = (v5 ^ v17);
+    v5 = (v5 ^ v18);
+    v6 = (v19 & ~v19);
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v0;
+    output[1] = v0;
+    output[2] = v1;
+    output[3] = v1;
+    output[4] = v1;
+    output[5] = v2;
+    output[6] = v2;
+    output[7] = v2;
+    output[8] = v3;
+    output[9] = v3;
+    output[10] = v3;
+    output[11] = v3;
+    output[12] = v4;
+    output[13] = v4;
+    output[14] = v4;
+    output[15] = v5;
+    output[16] = v5;
+    output[17] = v5;
+    output[18] = v5;
+    output[19] = v6;
+    } else {
+    v15 = v5;
+    v16 = v5;
+    v17 = v5;
+    v18 = v5;
+    v5 = v2;
+    v19 = v6;
+    v6 = v2;
+    v7 = v2;
+    v2 = v1;
+    v8 = v3;
+    v9 = v3;
+    v10 = v3;
+    v11 = v3;
+    v3 = v1;
+    v12 = v4;
+    v13 = v4;
+    v14 = v4;
+    v4 = v1;
+    v1 = v0;
+    }
+    } // loop
+}
+"##
+    );
 }
