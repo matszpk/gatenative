@@ -3,6 +3,8 @@ use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
 
+use std::str::FromStr;
+
 #[test]
 fn test_clang_writer_loop_config() {
     let circuit = Circuit::new(
@@ -826,6 +828,289 @@ fn test_clang_writer_loop_config() {
     v3 = v2;
     v2 = v6;
     v1 = v5;
+    }
+    } // loop
+}
+"##
+    );
+
+    // arg input and elem_input
+    let circuit = Circuit::<u32>::from_str(
+        r##"{
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        10
+        11
+        12
+        13
+        14
+        15
+        xor(0,4):0
+        xor(1,5)
+        and(0,4)
+        xor(17,18):1
+        xor(2,6)
+        and(17,18)
+        and(1,5)
+        nor(21,22)
+        xor(20,23):2n
+        xor(3,7)
+        nimpl(20,23)
+        and(2,6)
+        nor(26,27)
+        xor(25,28):3n
+        xor(8,12):4
+        xor(9,13)
+        nimpl(8,12)
+        nimpl(30,32)
+        xor(31,33):5
+        xor(10,14)
+        nor(31,33)
+        nimpl(9,13)
+        nor(36,37)
+        xor(35,38):6
+        xor(11,15)
+        nor(35,38)
+        nimpl(10,14)
+        nor(41,42)
+        xor(40,43):7
+    }(16)
+"##,
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 6, 7]))
+            .elem_inputs(Some(&[10, 11, 12, 13]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const uint32_t* input,
+    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v6 = input[6];
+    v7 = input[7];
+    }
+    v8 = ((arg & 1) != 0) ? one : zero;
+    v9 = (v8 ^ v2);
+    v10 = ((arg & 2) != 0) ? one : zero;
+    v11 = (v10 ^ v3);
+    v2 = (v8 & v2);
+    v8 = (v11 ^ v2);
+    v12 = ((arg & 4) != 0) ? one : zero;
+    v13 = (v0 ^ v12);
+    v2 = (v11 & v2);
+    v3 = (v10 & v3);
+    v2 = ~(v2 | v3);
+    v3 = (v13 ^ v2);
+    v10 = ((arg & 8) != 0) ? one : zero;
+    v1 = (v1 ^ v10);
+    v2 = (v13 & ~v2);
+    v0 = (v0 & v12);
+    v0 = ~(v2 | v0);
+    v0 = (v1 ^ v0);
+    v1 = elem_low_bit2;
+    v2 = (v4 ^ v1);
+    v10 = elem_low_bit3;
+    v11 = (v5 ^ v10);
+    v1 = (v4 & ~v1);
+    v1 = (v2 & ~v1);
+    v4 = (v11 ^ v1);
+    v12 = elem_low_bit0;
+    v13 = (v12 ^ v6);
+    v1 = ~(v11 | v1);
+    v5 = (v5 & ~v10);
+    v1 = ~(v1 | v5);
+    v5 = (v13 ^ v1);
+    v10 = elem_low_bit1;
+    v7 = (v10 ^ v7);
+    v1 = ~(v13 | v1);
+    v6 = (v12 & ~v6);
+    v1 = ~(v1 | v6);
+    v1 = (v7 ^ v1);
+    v3 = ~v3;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v9;
+    output[1] = v8;
+    output[2] = v3;
+    output[3] = v0;
+    output[4] = v2;
+    output[5] = v4;
+    output[6] = v5;
+    output[7] = v1;
+    } else {
+    v6 = v5;
+    v5 = v4;
+    v4 = v2;
+    v2 = v3;
+    v3 = v0;
+    v7 = v1;
+    v1 = v8;
+    v0 = v9;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 6, 7]))
+            .elem_inputs(Some(&[10, 11, 12, 13]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const __m128i* input,
+    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    const __m128i zero = *((const __m128i*)zero_value);
+    const __m128i one = *((const __m128i*)one_value);
+    const __m128i elem_low_bit0 = *((const __m128i*)elem_index_low_tbl);
+    const __m128i elem_low_bit1 = *((const __m128i*)(elem_index_low_tbl + 4));
+    const __m128i elem_low_bit2 = *((const __m128i*)(elem_index_low_tbl + 8));
+    const __m128i elem_low_bit3 = *((const __m128i*)(elem_index_low_tbl + 12));
+    const __m128i elem_low_bit4 = *((const __m128i*)(elem_index_low_tbl + 16));
+    const __m128i elem_low_bit5 = *((const __m128i*)(elem_index_low_tbl + 20));
+    const __m128i elem_low_bit6 = *((const __m128i*)(elem_index_low_tbl + 24));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    __m128i v5;
+    __m128i v6;
+    __m128i v7;
+    __m128i v8;
+    __m128i v9;
+    __m128i v10;
+    __m128i v11;
+    __m128i v12;
+    __m128i v13;
+    __m128i v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
+    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
+    v2 = _mm_loadu_si128((const __m128i*)&input[2]);
+    v3 = _mm_loadu_si128((const __m128i*)&input[3]);
+    v4 = _mm_loadu_si128((const __m128i*)&input[4]);
+    v5 = _mm_loadu_si128((const __m128i*)&input[5]);
+    v6 = _mm_loadu_si128((const __m128i*)&input[6]);
+    v7 = _mm_loadu_si128((const __m128i*)&input[7]);
+    }
+    v8 = ((arg & 1) != 0) ? one : zero;
+    v9 = _mm_xor_si128(v8, v2);
+    v10 = ((arg & 2) != 0) ? one : zero;
+    v11 = _mm_xor_si128(v10, v3);
+    v2 = _mm_and_si128(v8, v2);
+    v8 = _mm_xor_si128(v11, v2);
+    v12 = ((arg & 4) != 0) ? one : zero;
+    v13 = _mm_xor_si128(v0, v12);
+    v2 = _mm_and_si128(v11, v2);
+    v3 = _mm_and_si128(v10, v3);
+    v2 = _mm_or_si128(v2, v3);
+    v3 = _mm_xor_si128(v13, v2);
+    v10 = ((arg & 8) != 0) ? one : zero;
+    v1 = _mm_xor_si128(v1, v10);
+    v2 = _mm_and_si128(v13, v2);
+    v0 = _mm_and_si128(v0, v12);
+    v0 = _mm_or_si128(v2, v0);
+    v0 = _mm_xor_si128(v1, v0);
+    v1 = elem_low_bit2;
+    v2 = _mm_xor_si128(v4, v1);
+    v10 = elem_low_bit3;
+    v11 = _mm_xor_si128(v5, v10);
+    v1 = _mm_andnot_si128(v1, v4);
+    v1 = _mm_andnot_si128(v1, v2);
+    v4 = _mm_xor_si128(v11, v1);
+    v12 = elem_low_bit0;
+    v13 = _mm_xor_si128(v12, v6);
+    v1 = _mm_or_si128(v11, v1);
+    v5 = _mm_andnot_si128(v10, v5);
+    v1 = _mm_andnot_si128(v5, v1);
+    v5 = _mm_xor_si128(v13, v1);
+    v10 = elem_low_bit1;
+    v7 = _mm_xor_si128(v10, v7);
+    v1 = _mm_or_si128(v13, v1);
+    v6 = _mm_andnot_si128(v6, v12);
+    v1 = _mm_andnot_si128(v6, v1);
+    v1 = _mm_xor_si128(v7, v1);
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm_storeu_si128((__m128i*)&output[0], v9);
+    _mm_storeu_si128((__m128i*)&output[1], v8);
+    _mm_storeu_si128((__m128i*)&output[2], v3);
+    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_storeu_si128((__m128i*)&output[4], v2);
+    _mm_storeu_si128((__m128i*)&output[5], v4);
+    _mm_storeu_si128((__m128i*)&output[6], v5);
+    _mm_storeu_si128((__m128i*)&output[7], v1);
+    } else {
+    v6 = v5;
+    v5 = v4;
+    v4 = v2;
+    v2 = v3;
+    v3 = v0;
+    v7 = v1;
+    v1 = v8;
+    v0 = v9;
     }
     } // loop
 }
