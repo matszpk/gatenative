@@ -585,8 +585,6 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                 (output_vars[oi].0, usize::try_from(var_allocs[*ii]).unwrap()),
             )
         }));
-    // TODO: solve straightforward paths in output variable.
-    //       solve cycles as last in output set for variable.
     let mut var_output_map = BTreeMap::<usize, Vec<usize>>::new();
     for (oi, (var, _)) in output_vars.iter() {
         if let Some(oilist) = var_output_map.get_mut(&var) {
