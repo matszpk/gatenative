@@ -359,6 +359,225 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    // single buffer
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new().inner_loop(Some(10)).single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = output[0];
+    v1 = output[1];
+    v2 = output[2];
+    v3 = output[3];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v5 = (v4 & v2);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v3 ^ v0);
+    v0 = (v0 & ~v1);
+    v3 = ~v3;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v5;
+    output[1] = v3;
+    output[2] = v2;
+    output[3] = v0;
+    } else {
+    v1 = v3;
+    v3 = v0;
+    v0 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_SSE2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new().inner_loop(Some(10)).single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(void* output, size_t idx) {
+    const __m128i one = *((const __m128i*)one_value);
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    __m128i v5;
+    __m128i v6;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = _mm_loadu_si128((const __m128i*)&output[0]);
+    v1 = _mm_loadu_si128((const __m128i*)&output[1]);
+    v2 = _mm_loadu_si128((const __m128i*)&output[2]);
+    v3 = _mm_loadu_si128((const __m128i*)&output[3]);
+    }
+    v4 = _mm_and_si128(v2, v3);
+    v2 = _mm_xor_si128(v2, v3);
+    v5 = _mm_and_si128(v4, v2);
+    v0 = _mm_or_si128(v0, v3);
+    v3 = _mm_and_si128(v4, v0);
+    v0 = _mm_xor_si128(v2, v0);
+    v2 = _mm_xor_si128(v3, v0);
+    v0 = _mm_or_si128(v0, v1);
+    v3 = _mm_xor_si128(v3, one);
+    v2 = _mm_xor_si128(v2, one);
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm_storeu_si128((__m128i*)&output[0], v5);
+    _mm_storeu_si128((__m128i*)&output[1], v3);
+    _mm_storeu_si128((__m128i*)&output[2], v2);
+    _mm_storeu_si128((__m128i*)&output[3], v0);
+    } else {
+    v1 = v3;
+    v3 = v0;
+    v0 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .input_placement(Some((&[3, 0, 1, 2], 4)))
+            .output_placement(Some((&[1, 2, 3, 0], 4)))
+            .single_buffer(true)
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = output[3];
+    v1 = output[0];
+    v2 = output[1];
+    v3 = output[2];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v5 = (v4 & v2);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v3 ^ v0);
+    v0 = (v0 & ~v1);
+    v3 = ~v3;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[1] = v5;
+    output[2] = v3;
+    output[3] = v2;
+    output[0] = v0;
+    } else {
+    v1 = v0;
+    v0 = v2;
+    v2 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_AVX2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .input_placement(Some((&[3, 0, 1, 2], 4)))
+            .output_placement(Some((&[1, 2, 3, 0], 4)))
+            .single_buffer(true)
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(void* output, size_t idx) {
+    const __m256i one = *((const __m256i*)one_value);
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m256i v0;
+    __m256i v1;
+    __m256i v2;
+    __m256i v3;
+    __m256i v4;
+    __m256i v5;
+    __m256i v6;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = _mm256_loadu_si256((const float*)&output[3]);
+    v1 = _mm256_loadu_si256((const float*)&output[0]);
+    v2 = _mm256_loadu_si256((const float*)&output[1]);
+    v3 = _mm256_loadu_si256((const float*)&output[2]);
+    }
+    v4 = _mm256_and_si256(v2, v3);
+    v2 = _mm256_xor_si256(v2, v3);
+    v5 = _mm256_and_si256(v4, v2);
+    v0 = _mm256_or_si256(v0, v3);
+    v3 = _mm256_and_si256(v4, v0);
+    v0 = _mm256_xor_si256(v2, v0);
+    v2 = _mm256_xor_si256(v3, v0);
+    v0 = _mm256_or_si256(v0, v1);
+    v3 = _mm256_xor_si256(v3, one);
+    v2 = _mm256_xor_si256(v2, one);
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm256_storeu_si256((float*)&output[1], v5);
+    _mm256_storeu_si256((float*)&output[2], v3);
+    _mm256_storeu_si256((float*)&output[3], v2);
+    _mm256_storeu_si256((float*)&output[0], v0);
+    } else {
+    v1 = v0;
+    v0 = v2;
+    v2 = v5;
+    }
+    } // loop
+}
+"##
+    );
 
     // with excluded output
     let circuit = Circuit::new(
