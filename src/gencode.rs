@@ -523,7 +523,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("CopyToInput Start");
+    // println!("CopyToInput Start");
     let input_place_map: HashMap<usize, usize> = if let Some((input_p, _)) = input_placement {
         if let Some(input_map) = input_map {
             HashMap::from_iter((0..input_len).filter_map(|i| {
@@ -596,8 +596,8 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
         }
     }
     // DEBUG
-    println!("VarOutputMap: {:?}", var_output_map);
-    println!("OutOutVarInVarMap: {:?}", out_outvar_invar_map);
+    // println!("VarOutputMap: {:?}", var_output_map);
+    // println!("OutOutVarInVarMap: {:?}", out_outvar_invar_map);
     // DEBUG
     let var_output_map_initial = var_output_map.clone();
     // process outputs
@@ -715,12 +715,12 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             }
         }
         // DEBUG
-        println!("Tree: {:?}", dep_tree);
+        // println!("Tree: {:?}", dep_tree);
         // DEBUG
         // // 2. move to end path where is cycle
         let have_cycle = cycle_path.is_some();
         if let Some(cycle_path) = cycle_path {
-            println!("Cycle path: {:?}", cycle_path);
+            // println!("Cycle path: {:?}", cycle_path);
             let way0 = *cycle_path.first().unwrap();
             // swap last element and choosen cycle element
             let t = dep_tree.swap_remove(way0);
@@ -734,7 +734,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             }
         }
         // DEBUG
-        println!("NewTree: {:?}", dep_tree);
+        // println!("NewTree: {:?}", dep_tree);
         // DEBUG
         // // 3. make store operation in order of dep tree.
         #[derive(Clone, Debug)]
