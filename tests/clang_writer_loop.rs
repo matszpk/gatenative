@@ -3,6 +3,8 @@ use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
 
+use std::str::FromStr;
+
 #[test]
 fn test_clang_writer_loop_basic() {
     let circuit = Circuit::new(
@@ -1675,6 +1677,366 @@ fn test_clang_writer_loop_copy_to_input() {
     v10 = v3;
     v3 = v6;
     v6 = v10;
+    }
+    } // loop
+}
+"##
+    );
+    // fullmul
+    let circuit = Circuit::<u32>::from_str(
+        r##"
+    {
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        and(0,4):0
+        and(0,5)
+        and(1,4)
+        xor(9,10):1
+        and(0,6)
+        and(1,5)
+        and(2,4)
+        xor(13,14)
+        xor(12,15)
+        and(9,10)
+        xor(16,17):2
+        and(0,7)
+        and(1,6)
+        xor(19,20)
+        and(2,5)
+        and(3,4)
+        xor(22,23)
+        xor(21,24)
+        and(13,14)
+        xor(25,26)
+        and(16,17)
+        and(12,15)
+        nor(28,29)
+        xor(27,30):3n
+        and(1,7)
+        and(2,6)
+        and(3,5)
+        xor(33,34)
+        xor(32,35)
+        and(22,23)
+        xor(36,37)
+        and(21,24)
+        and(19,20)
+        nor(39,40)
+        xor(38,41)
+        nimpl(27,30)
+        and(25,26)
+        nor(43,44)
+        xor(42,45):4
+        and(2,7)
+        and(3,6)
+        xor(47,48)
+        and(33,34)
+        xor(49,50)
+        and(36,37)
+        and(32,35)
+        nor(52,53)
+        xor(51,54)
+        nor(42,45)
+        nimpl(38,41)
+        nor(56,57)
+        xor(55,58):5
+        and(3,7)
+        and(49,50)
+        and(47,48)
+        nor(61,62)
+        xor(60,63)
+        nor(55,58)
+        nimpl(51,54)
+        nor(65,66)
+        xor(64,67):6
+        nor(64,67)
+        nimpl(60,63)
+        nor(69,70):7n
+    }(8)
+"##,
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "fullmul",
+        circuit.clone(),
+        false,
+        CodeConfig::new().inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_fullmul(const uint32_t* input,
+    void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
+    uint32_t v20;
+    uint32_t v21;
+    uint32_t v22;
+    uint32_t v23;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v6 = input[6];
+    v7 = input[7];
+    }
+    v8 = (v0 & v4);
+    v9 = (v0 & v5);
+    v10 = (v1 & v4);
+    v11 = (v9 ^ v10);
+    v12 = (v0 & v6);
+    v13 = (v1 & v5);
+    v14 = (v2 & v4);
+    v15 = (v13 ^ v14);
+    v16 = (v12 ^ v15);
+    v9 = (v9 & v10);
+    v10 = (v16 ^ v9);
+    v0 = (v0 & v7);
+    v17 = (v1 & v6);
+    v18 = (v0 ^ v17);
+    v19 = (v2 & v5);
+    v4 = (v3 & v4);
+    v20 = (v19 ^ v4);
+    v21 = (v18 ^ v20);
+    v13 = (v13 & v14);
+    v14 = (v21 ^ v13);
+    v9 = (v16 & v9);
+    v12 = (v12 & v15);
+    v9 = ~(v9 | v12);
+    v12 = (v14 ^ v9);
+    v1 = (v1 & v7);
+    v15 = (v2 & v6);
+    v5 = (v3 & v5);
+    v16 = (v15 ^ v5);
+    v22 = (v1 ^ v16);
+    v4 = (v19 & v4);
+    v19 = (v22 ^ v4);
+    v18 = (v18 & v20);
+    v0 = (v0 & v17);
+    v0 = ~(v18 | v0);
+    v17 = (v19 ^ v0);
+    v9 = (v14 & ~v9);
+    v13 = (v21 & v13);
+    v9 = ~(v9 | v13);
+    v13 = (v17 ^ v9);
+    v2 = (v2 & v7);
+    v6 = (v3 & v6);
+    v14 = (v2 ^ v6);
+    v5 = (v15 & v5);
+    v15 = (v14 ^ v5);
+    v4 = (v22 & v4);
+    v1 = (v1 & v16);
+    v1 = ~(v4 | v1);
+    v4 = (v15 ^ v1);
+    v9 = ~(v17 | v9);
+    v0 = (v19 & ~v0);
+    v0 = ~(v9 | v0);
+    v9 = (v4 ^ v0);
+    v3 = (v3 & v7);
+    v5 = (v14 & v5);
+    v2 = (v2 & v6);
+    v2 = ~(v5 | v2);
+    v5 = (v3 ^ v2);
+    v0 = ~(v4 | v0);
+    v1 = (v15 & ~v1);
+    v0 = ~(v0 | v1);
+    v1 = (v5 ^ v0);
+    v0 = ~(v5 | v0);
+    v2 = (v3 & ~v2);
+    v0 = ~(v0 | v2);
+    v12 = ~v12;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v8;
+    output[1] = v11;
+    output[2] = v10;
+    output[3] = v12;
+    output[4] = v13;
+    output[5] = v9;
+    output[6] = v1;
+    output[7] = v0;
+    } else {
+    v7 = v0;
+    v6 = v1;
+    v0 = v8;
+    v5 = v9;
+    v2 = v10;
+    v1 = v11;
+    v3 = v12;
+    v4 = v13;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "fullmul",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .output_placement(Some((&[0, 4, 6, 2, 1, 7, 5, 3], 8)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_fullmul(const uint32_t* input,
+    void* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
+    uint32_t v20;
+    uint32_t v21;
+    uint32_t v22;
+    uint32_t v23;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v6 = input[6];
+    v7 = input[7];
+    }
+    v8 = (v0 & v4);
+    v9 = (v0 & v5);
+    v10 = (v1 & v4);
+    v11 = (v9 ^ v10);
+    v12 = (v0 & v6);
+    v13 = (v1 & v5);
+    v14 = (v2 & v4);
+    v15 = (v13 ^ v14);
+    v16 = (v12 ^ v15);
+    v9 = (v9 & v10);
+    v10 = (v16 ^ v9);
+    v0 = (v0 & v7);
+    v17 = (v1 & v6);
+    v18 = (v0 ^ v17);
+    v19 = (v2 & v5);
+    v4 = (v3 & v4);
+    v20 = (v19 ^ v4);
+    v21 = (v18 ^ v20);
+    v13 = (v13 & v14);
+    v14 = (v21 ^ v13);
+    v9 = (v16 & v9);
+    v12 = (v12 & v15);
+    v9 = ~(v9 | v12);
+    v12 = (v14 ^ v9);
+    v1 = (v1 & v7);
+    v15 = (v2 & v6);
+    v5 = (v3 & v5);
+    v16 = (v15 ^ v5);
+    v22 = (v1 ^ v16);
+    v4 = (v19 & v4);
+    v19 = (v22 ^ v4);
+    v18 = (v18 & v20);
+    v0 = (v0 & v17);
+    v0 = ~(v18 | v0);
+    v17 = (v19 ^ v0);
+    v9 = (v14 & ~v9);
+    v13 = (v21 & v13);
+    v9 = ~(v9 | v13);
+    v13 = (v17 ^ v9);
+    v2 = (v2 & v7);
+    v6 = (v3 & v6);
+    v14 = (v2 ^ v6);
+    v5 = (v15 & v5);
+    v15 = (v14 ^ v5);
+    v4 = (v22 & v4);
+    v1 = (v1 & v16);
+    v1 = ~(v4 | v1);
+    v4 = (v15 ^ v1);
+    v9 = ~(v17 | v9);
+    v0 = (v19 & ~v0);
+    v0 = ~(v9 | v0);
+    v9 = (v4 ^ v0);
+    v3 = (v3 & v7);
+    v5 = (v14 & v5);
+    v2 = (v2 & v6);
+    v2 = ~(v5 | v2);
+    v5 = (v3 ^ v2);
+    v0 = ~(v4 | v0);
+    v1 = (v15 & ~v1);
+    v0 = ~(v0 | v1);
+    v1 = (v5 ^ v0);
+    v0 = ~(v5 | v0);
+    v2 = (v3 & ~v2);
+    v0 = ~(v0 | v2);
+    v12 = ~v12;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v8;
+    output[4] = v11;
+    output[6] = v10;
+    output[2] = v12;
+    output[1] = v13;
+    output[7] = v9;
+    output[5] = v1;
+    output[3] = v0;
+    } else {
+    v3 = v0;
+    v5 = v1;
+    v0 = v8;
+    v7 = v9;
+    v6 = v10;
+    v4 = v11;
+    v2 = v12;
+    v1 = v13;
     }
     } // loop
 }
