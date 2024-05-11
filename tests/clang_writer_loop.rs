@@ -717,10 +717,10 @@ fn test_clang_writer_loop_copy_to_input() {
         CodeConfig::new()
             .output_placement(Some((
                 &[
-                    2, // 0
-                    5, // 1
-                    9, // 2
-                    1, // 3
+                    2,  // 0
+                    5,  // 1
+                    9,  // 2
+                    1,  // 3
                     10, // 4
                     11, // 5
                     12, // 6
@@ -731,13 +731,15 @@ fn test_clang_writer_loop_copy_to_input() {
                     17, // 11
                     18, // 12
                     19, // 13
-                    3, // 14
-                    4, // 15
-                    6, // 16
-                    7, // 17
-                    8, // 18
-                    0, // 19
-                ], 20)))
+                    3,  // 14
+                    4,  // 15
+                    6,  // 16
+                    7,  // 17
+                    8,  // 18
+                    0,  // 19
+                ],
+                20,
+            )))
             .inner_loop(Some(10)),
     );
     assert_eq!(
