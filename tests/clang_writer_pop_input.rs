@@ -3,6 +3,8 @@ use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
 
+use std::str::FromStr;
+
 #[test]
 fn test_clang_writer_populate_input() {
     let circuit = Circuit::new(
@@ -2304,6 +2306,147 @@ fn test_clang_writer_populate_input_from_buffer() {
     output[ovn + 0] = v0;
     v0 = input[ivn + 1];
     output[ovn + 1] = ~v0;
+}
+"##
+    );
+    // more complex
+    let circuit = Circuit::<u32>::from_str(
+        r##"{
+        0
+        1
+        2
+        3
+        4
+        5
+        6
+        7
+        8
+        9
+        10
+        11
+        12
+        13
+        14
+        15
+        xor(0,4):0
+        xor(1,5)
+        and(0,4)
+        xor(17,18):1
+        xor(2,6)
+        and(17,18)
+        and(1,5)
+        nor(21,22)
+        xor(20,23):2n
+        xor(3,7)
+        nimpl(20,23)
+        and(2,6)
+        nor(26,27)
+        xor(25,28):3n
+        xor(8,12):4
+        xor(9,13)
+        nimpl(8,12)
+        nimpl(30,32)
+        xor(31,33):5
+        xor(10,14)
+        nor(31,33)
+        nimpl(9,13)
+        nor(36,37)
+        xor(35,38):6
+        xor(11,15)
+        nor(35,38)
+        nimpl(10,14)
+        nor(41,42)
+        xor(40,43):7
+    }(16)
+"##,
+    )
+    .unwrap();
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const uint32_t* input,
+    uint32_t* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+#define i10 (v0)
+#define i11 (v1)
+#define i12 (v2)
+#define i13 (v3)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#define i10
+#define i11
+#define i12
+#define i13
+    v4 = ((arg & 1) != 0) ? one : zero;
+    v5 = input[2];
+    v6 = (v4 ^ v5);
+    output[0] = v6;
+    v6 = ((arg & 2) != 0) ? one : zero;
+    v7 = ((arg & 4) != 0) ? one : zero;
+    v8 = (v6 ^ v7);
+    v4 = (v4 & v5);
+    v5 = (v8 ^ v4);
+    output[1] = v5;
+    v5 = input[0];
+    v9 = ((arg & 8) != 0) ? one : zero;
+    v10 = (v5 ^ v9);
+    v4 = (v8 & v4);
+    v6 = (v6 & v7);
+    v4 = ~(v4 | v6);
+    v6 = (v10 ^ v4);
+    output[2] = ~v6;
+    v6 = input[1];
+    v7 = input[3];
+    v6 = (v6 ^ v7);
+    v4 = (v10 & ~v4);
+    v5 = (v5 & v9);
+    v4 = ~(v4 | v5);
+    v4 = (v6 ^ v4);
+    output[3] = ~v4;
+    v4 = input[4];
+    v5 = (v4 ^ v2);
+    output[4] = v5;
+    v6 = input[5];
+    v7 = (v6 ^ v3);
+    v2 = (v4 & ~v2);
+    v2 = (v5 & ~v2);
+    v4 = (v7 ^ v2);
+    output[5] = v4;
+    v4 = input[6];
+    v5 = (v0 ^ v4);
+    v2 = ~(v7 | v2);
+    v3 = (v6 & ~v3);
+    v2 = ~(v2 | v3);
+    v3 = (v5 ^ v2);
+    output[6] = v3;
+    v3 = input[7];
+    v1 = (v1 ^ v3);
+    v2 = ~(v5 | v2);
+    v0 = (v0 & ~v4);
+    v0 = ~(v2 | v0);
+    v0 = (v1 ^ v0);
+    output[7] = v0;
 }
 "##
     );
