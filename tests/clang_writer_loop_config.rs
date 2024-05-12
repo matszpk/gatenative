@@ -2050,4 +2050,130 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const __m64* input,
+    void* output, void* buffer, size_t idx) {
+    const __m64 zero = *((const __m64*)zero_value);
+    const __m64 one = *((const __m64*)one_value);
+    const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
+    const __m64 elem_low_bit1 = *((const __m64*)(elem_index_low_tbl + 2));
+    const __m64 elem_low_bit2 = *((const __m64*)(elem_index_low_tbl + 4));
+    const __m64 elem_low_bit3 = *((const __m64*)(elem_index_low_tbl + 6));
+    const __m64 elem_low_bit4 = *((const __m64*)(elem_index_low_tbl + 8));
+    const __m64 elem_low_bit5 = *((const __m64*)(elem_index_low_tbl + 10));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    __m64 v5;
+    __m64 v6;
+    __m64 v7;
+    __m64 v8;
+    __m64 v9;
+    __m64 v10;
+    __m64 v11;
+    __m64 v12;
+    __m64 v13;
+    __m64 v14;
+    __m64 v15;
+    __m64 v16;
+    __m64 v17;
+    __m64 v18;
+    __m64 v19;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#undef i10
+#undef i11
+#undef i12
+#undef i13
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v10 = input[6];
+    v11 = input[7];
+    }
+    v12 = elem_low_bit0;
+    v13 = _m_pxor(v12, v2);
+    v14 = elem_low_bit1;
+    v15 = elem_low_bit2;
+    v16 = _m_pxor(v14, v15);
+    v2 = _m_pand(v12, v2);
+    v12 = _m_pxor(v16, v2);
+    v17 = elem_low_bit3;
+    v18 = _m_pxor(v0, v17);
+    v2 = _m_pand(v16, v2);
+    v14 = _m_pand(v14, v15);
+    v2 = _m_por(v2, v14);
+    v14 = _m_pxor(v18, v2);
+    v1 = _m_pxor(v1, v3);
+    v2 = _m_pand(v18, v2);
+    v0 = _m_pand(v0, v17);
+    v0 = _m_por(v2, v0);
+    v0 = _m_pxor(v1, v0);
+    v1 = _m_pxor(v4, v8);
+    v2 = _m_pxor(v5, v9);
+    v3 = _m_pandn(v8, v4);
+    v3 = _m_pandn(v3, v1);
+    v4 = _m_pxor(v2, v3);
+    v8 = _m_pxor(v6, v10);
+    v2 = _m_por(v2, v3);
+    v3 = _m_pandn(v9, v5);
+    v2 = _m_pandn(v3, v2);
+    v3 = _m_pxor(v8, v2);
+    v5 = _m_pxor(v7, v11);
+    v2 = _m_por(v8, v2);
+    v6 = _m_pandn(v10, v6);
+    v2 = _m_pandn(v6, v2);
+    v2 = _m_pxor(v5, v2);
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v13;
+    output[1] = v12;
+    output[2] = v14;
+    output[3] = v0;
+    output[4] = v1;
+    output[5] = v4;
+    output[6] = v3;
+    output[7] = v2;
+    } else {
+    v10 = v3;
+    v3 = v0;
+    v5 = v4;
+    v4 = v1;
+    v11 = v2;
+    v1 = v12;
+    v0 = v13;
+    v2 = v14;
+    }
+    _m_empty();
+    } // loop
+}
+"##
+    );
 }
