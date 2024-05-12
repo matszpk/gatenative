@@ -1807,4 +1807,121 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_INTEL_AVX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const __m256* input,
+    void* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const __m256 zero = *((const __m256*)zero_value);
+    const __m256 one = *((const __m256*)one_value);
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m256 v0;
+    __m256 v1;
+    __m256 v2;
+    __m256 v3;
+    __m256 v4;
+    __m256 v5;
+    __m256 v6;
+    __m256 v7;
+    __m256 v8;
+    __m256 v9;
+    __m256 v10;
+    __m256 v11;
+    __m256 v12;
+    __m256 v13;
+    __m256 v14;
+    __m256 v15;
+    __m256 v16;
+    __m256 v17;
+    __m256 v18;
+    __m256 v19;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#define i10
+#define i11
+#define i12
+#define i13
+    if (iter == 0) {
+    v0 = _mm256_loadu_ps((const float*)&input[0]);
+    v1 = _mm256_loadu_ps((const float*)&input[1]);
+    v2 = _mm256_loadu_ps((const float*)&input[2]);
+    v3 = _mm256_loadu_ps((const float*)&input[3]);
+    v4 = _mm256_loadu_ps((const float*)&input[4]);
+    v5 = _mm256_loadu_ps((const float*)&input[5]);
+    v10 = _mm256_loadu_ps((const float*)&input[6]);
+    v11 = _mm256_loadu_ps((const float*)&input[7]);
+    }
+    v12 = ((arg & 1) != 0) ? one : zero;
+    v13 = _mm256_xor_ps(v12, v2);
+    v14 = ((arg & 2) != 0) ? one : zero;
+    v15 = ((arg & 4) != 0) ? one : zero;
+    v16 = _mm256_xor_ps(v14, v15);
+    v2 = _mm256_and_ps(v12, v2);
+    v12 = _mm256_xor_ps(v16, v2);
+    v17 = ((arg & 8) != 0) ? one : zero;
+    v18 = _mm256_xor_ps(v0, v17);
+    v2 = _mm256_and_ps(v16, v2);
+    v14 = _mm256_and_ps(v14, v15);
+    v2 = _mm256_or_ps(v2, v14);
+    v14 = _mm256_xor_ps(v18, v2);
+    v1 = _mm256_xor_ps(v1, v3);
+    v2 = _mm256_and_ps(v18, v2);
+    v0 = _mm256_and_ps(v0, v17);
+    v0 = _mm256_or_ps(v2, v0);
+    v0 = _mm256_xor_ps(v1, v0);
+    v1 = _mm256_xor_ps(v4, v8);
+    v2 = _mm256_xor_ps(v5, v9);
+    v3 = _mm256_andnot_ps(v8, v4);
+    v3 = _mm256_andnot_ps(v3, v1);
+    v4 = _mm256_xor_ps(v2, v3);
+    v8 = _mm256_xor_ps(v6, v10);
+    v2 = _mm256_or_ps(v2, v3);
+    v3 = _mm256_andnot_ps(v9, v5);
+    v2 = _mm256_andnot_ps(v3, v2);
+    v3 = _mm256_xor_ps(v8, v2);
+    v5 = _mm256_xor_ps(v7, v11);
+    v2 = _mm256_or_ps(v8, v2);
+    v6 = _mm256_andnot_ps(v10, v6);
+    v2 = _mm256_andnot_ps(v6, v2);
+    v2 = _mm256_xor_ps(v5, v2);
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm256_storeu_ps((float*)&output[0], v13);
+    _mm256_storeu_ps((float*)&output[1], v12);
+    _mm256_storeu_ps((float*)&output[2], v14);
+    _mm256_storeu_ps((float*)&output[3], v0);
+    _mm256_storeu_ps((float*)&output[4], v1);
+    _mm256_storeu_ps((float*)&output[5], v4);
+    _mm256_storeu_ps((float*)&output[6], v3);
+    _mm256_storeu_ps((float*)&output[7], v2);
+    } else {
+    v10 = v3;
+    v3 = v0;
+    v5 = v4;
+    v4 = v1;
+    v11 = v2;
+    v1 = v12;
+    v0 = v13;
+    v2 = v14;
+    }
+    } // loop
+}
+"##
+    );
 }
