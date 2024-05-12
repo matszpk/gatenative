@@ -1340,4 +1340,232 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 5, 6, 7]))
+            .elem_inputs(Some(&[10, 11, 12, 13, 14]))
+            .exclude_outputs(Some(&[6, 7]))
+            .input_placement(Some((&[1, 3, 0, 4, 2, 5], 6)))
+            .output_placement(Some((&[4, 0, 3, 5, 1, 2], 6)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const uint32_t* input,
+    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[1];
+    v1 = input[3];
+    v2 = input[0];
+    v3 = input[4];
+    v4 = input[2];
+    v5 = input[5];
+    }
+    v6 = ((arg & 1) != 0) ? one : zero;
+    v7 = (v6 ^ v2);
+    v8 = ((arg & 2) != 0) ? one : zero;
+    v9 = ((arg & 4) != 0) ? one : zero;
+    v10 = (v8 ^ v9);
+    v2 = (v6 & v2);
+    v6 = (v10 ^ v2);
+    v11 = ((arg & 8) != 0) ? one : zero;
+    v12 = (v0 ^ v11);
+    v2 = (v10 & v2);
+    v8 = (v8 & v9);
+    v2 = ~(v2 | v8);
+    v8 = (v12 ^ v2);
+    v9 = ((arg & 16) != 0) ? one : zero;
+    v1 = (v1 ^ v9);
+    v2 = (v12 & ~v2);
+    v0 = (v0 & v11);
+    v0 = ~(v2 | v0);
+    v0 = (v1 ^ v0);
+    v1 = elem_low_bit2;
+    v2 = (v3 ^ v1);
+    v9 = elem_low_bit3;
+    v10 = (v4 ^ v9);
+    v1 = (v3 & ~v1);
+    v1 = (v2 & ~v1);
+    v3 = (v10 ^ v1);
+    v11 = elem_low_bit0;
+    v12 = elem_low_bit4;
+    v13 = (v11 ^ v12);
+    v1 = ~(v10 | v1);
+    v4 = (v4 & ~v9);
+    v1 = ~(v1 | v4);
+    v4 = (v13 ^ v1);
+    v9 = elem_low_bit1;
+    v5 = (v9 ^ v5);
+    v1 = ~(v13 | v1);
+    v9 = (v11 & ~v12);
+    v1 = ~(v1 | v9);
+    v1 = (v5 ^ v1);
+    v8 = ~v8;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[4] = v7;
+    output[0] = v6;
+    output[3] = v8;
+    output[5] = v0;
+    output[1] = v2;
+    output[2] = v3;
+    } else {
+    v5 = v0;
+    v0 = v2;
+    v4 = v3;
+    v2 = v6;
+    v3 = v7;
+    v1 = v8;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_MMX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[0, 1, 5, 6, 7]))
+            .elem_inputs(Some(&[10, 11, 12, 13, 14]))
+            .exclude_outputs(Some(&[6, 7]))
+            .input_placement(Some((&[1, 3, 0, 4, 2, 5], 6)))
+            .output_placement(Some((&[4, 0, 3, 5, 1, 2], 6)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const __m64* input,
+    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    const __m64 zero = *((const __m64*)zero_value);
+    const __m64 one = *((const __m64*)one_value);
+    const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
+    const __m64 elem_low_bit1 = *((const __m64*)(elem_index_low_tbl + 2));
+    const __m64 elem_low_bit2 = *((const __m64*)(elem_index_low_tbl + 4));
+    const __m64 elem_low_bit3 = *((const __m64*)(elem_index_low_tbl + 6));
+    const __m64 elem_low_bit4 = *((const __m64*)(elem_index_low_tbl + 8));
+    const __m64 elem_low_bit5 = *((const __m64*)(elem_index_low_tbl + 10));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m64 v0;
+    __m64 v1;
+    __m64 v2;
+    __m64 v3;
+    __m64 v4;
+    __m64 v5;
+    __m64 v6;
+    __m64 v7;
+    __m64 v8;
+    __m64 v9;
+    __m64 v10;
+    __m64 v11;
+    __m64 v12;
+    __m64 v13;
+    __m64 v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[1];
+    v1 = input[3];
+    v2 = input[0];
+    v3 = input[4];
+    v4 = input[2];
+    v5 = input[5];
+    }
+    v6 = ((arg & 1) != 0) ? one : zero;
+    v7 = _m_pxor(v6, v2);
+    v8 = ((arg & 2) != 0) ? one : zero;
+    v9 = ((arg & 4) != 0) ? one : zero;
+    v10 = _m_pxor(v8, v9);
+    v2 = _m_pand(v6, v2);
+    v6 = _m_pxor(v10, v2);
+    v11 = ((arg & 8) != 0) ? one : zero;
+    v12 = _m_pxor(v0, v11);
+    v2 = _m_pand(v10, v2);
+    v8 = _m_pand(v8, v9);
+    v2 = _m_por(v2, v8);
+    v8 = _m_pxor(v12, v2);
+    v9 = ((arg & 16) != 0) ? one : zero;
+    v1 = _m_pxor(v1, v9);
+    v2 = _m_pand(v12, v2);
+    v0 = _m_pand(v0, v11);
+    v0 = _m_por(v2, v0);
+    v0 = _m_pxor(v1, v0);
+    v1 = elem_low_bit2;
+    v2 = _m_pxor(v3, v1);
+    v9 = elem_low_bit3;
+    v10 = _m_pxor(v4, v9);
+    v1 = _m_pandn(v1, v3);
+    v1 = _m_pandn(v1, v2);
+    v3 = _m_pxor(v10, v1);
+    v11 = elem_low_bit0;
+    v12 = elem_low_bit4;
+    v13 = _m_pxor(v11, v12);
+    v1 = _m_por(v10, v1);
+    v4 = _m_pandn(v9, v4);
+    v1 = _m_pandn(v4, v1);
+    v4 = _m_pxor(v13, v1);
+    v9 = elem_low_bit1;
+    v5 = _m_pxor(v9, v5);
+    v1 = _m_por(v13, v1);
+    v9 = _m_pandn(v12, v11);
+    v1 = _m_pandn(v9, v1);
+    v1 = _m_pxor(v5, v1);
+    if (iter == iter_max - 1 || stop != 0) {
+    output[4] = v7;
+    output[0] = v6;
+    output[3] = v8;
+    output[5] = v0;
+    output[1] = v2;
+    output[2] = v3;
+    } else {
+    v5 = v0;
+    v0 = v2;
+    v4 = v3;
+    v2 = v6;
+    v3 = v7;
+    v1 = v8;
+    }
+    _m_empty();
+    } // loop
+}
+"##
+    );
 }
