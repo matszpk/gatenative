@@ -859,4 +859,252 @@ fn test_clang_writer_loop_config_2() {
 }
 "##
     );
+    // aggr_output to buffer with output exclusion
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[2, 3, 6, 7, 8, 9, 12, 13]))
+            .elem_inputs(Some(&[0, 1, 14, 15]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[1] = o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 3, 5]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const uint32_t* input,
+    uint32_t* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    }
+    v4 = elem_low_bit0;
+    v5 = (v4 ^ v0);
+    v6 = elem_low_bit1;
+    v7 = (v6 ^ v1);
+    v0 = (v4 & v0);
+    v4 = (v7 ^ v0);
+    output[0] = v4;
+    v8 = ((arg & 1) != 0) ? one : zero;
+    v9 = ((arg & 4) != 0) ? one : zero;
+    v10 = (v8 ^ v9);
+    v0 = (v7 & v0);
+    v1 = (v6 & v1);
+    v0 = ~(v0 | v1);
+    v1 = (v10 ^ v0);
+    v6 = ((arg & 2) != 0) ? one : zero;
+    v7 = ((arg & 8) != 0) ? one : zero;
+    v6 = (v6 ^ v7);
+    v0 = (v10 & ~v0);
+    v7 = (v8 & v9);
+    v0 = ~(v0 | v7);
+    v0 = (v6 ^ v0);
+    v6 = ((arg & 16) != 0) ? one : zero;
+    v7 = ((arg & 64) != 0) ? one : zero;
+    v8 = (v6 ^ v7);
+    output[1] = v8;
+    v9 = ((arg & 32) != 0) ? one : zero;
+    v10 = ((arg & 128) != 0) ? one : zero;
+    v11 = (v9 ^ v10);
+    v6 = (v6 & ~v7);
+    v6 = (v8 & ~v6);
+    v7 = (v11 ^ v6);
+    v12 = elem_low_bit2;
+    v13 = (v2 ^ v12);
+    v6 = ~(v11 | v6);
+    v9 = (v9 & ~v10);
+    v6 = ~(v6 | v9);
+    v9 = (v13 ^ v6);
+    output[2] = v9;
+    v10 = elem_low_bit3;
+    v3 = (v3 ^ v10);
+    v6 = ~(v13 | v6);
+    v2 = (v2 & ~v12);
+    v2 = ~(v6 | v2);
+    v2 = (v3 ^ v2);
+    output[3] = v2;
+    v1 = ~v1;
+    v0 = ~v0;
+#define o0 (v5)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v7)
+    ((TYPE_NAME*)output)[1] = o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v4;
+    output[1] = v8;
+    output[2] = v9;
+    output[3] = v2;
+    } else {
+    v3 = v2;
+    v0 = v4;
+    v1 = v8;
+    v2 = v9;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_AVX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[2, 3, 6, 7, 8, 9, 12, 13]))
+            .elem_inputs(Some(&[0, 1, 14, 15]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[1] = o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 3, 5]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const __m256* input,
+    __m256* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const __m256 zero = *((const __m256*)zero_value);
+    const __m256 one = *((const __m256*)one_value);
+    const __m256 elem_low_bit0 = *((const __m256*)elem_index_low_tbl);
+    const __m256 elem_low_bit1 = *((const __m256*)(elem_index_low_tbl + 8));
+    const __m256 elem_low_bit2 = *((const __m256*)(elem_index_low_tbl + 16));
+    const __m256 elem_low_bit3 = *((const __m256*)(elem_index_low_tbl + 24));
+    const __m256 elem_low_bit4 = *((const __m256*)(elem_index_low_tbl + 32));
+    const __m256 elem_low_bit5 = *((const __m256*)(elem_index_low_tbl + 40));
+    const __m256 elem_low_bit6 = *((const __m256*)(elem_index_low_tbl + 48));
+    const __m256 elem_low_bit7 = *((const __m256*)(elem_index_low_tbl + 56));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m256 v0;
+    __m256 v1;
+    __m256 v2;
+    __m256 v3;
+    __m256 v4;
+    __m256 v5;
+    __m256 v6;
+    __m256 v7;
+    __m256 v8;
+    __m256 v9;
+    __m256 v10;
+    __m256 v11;
+    __m256 v12;
+    __m256 v13;
+    __m256 v14;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = _mm256_loadu_ps((const float*)&input[0]);
+    v1 = _mm256_loadu_ps((const float*)&input[1]);
+    v2 = _mm256_loadu_ps((const float*)&input[2]);
+    v3 = _mm256_loadu_ps((const float*)&input[3]);
+    }
+    v4 = elem_low_bit0;
+    v5 = _mm256_xor_ps(v4, v0);
+    v6 = elem_low_bit1;
+    v7 = _mm256_xor_ps(v6, v1);
+    v0 = _mm256_and_ps(v4, v0);
+    v4 = _mm256_xor_ps(v7, v0);
+    _mm256_storeu_ps((float*)&output[0], v4);
+    v8 = ((arg & 1) != 0) ? one : zero;
+    v9 = ((arg & 4) != 0) ? one : zero;
+    v10 = _mm256_xor_ps(v8, v9);
+    v0 = _mm256_and_ps(v7, v0);
+    v1 = _mm256_and_ps(v6, v1);
+    v0 = _mm256_or_ps(v0, v1);
+    v1 = _mm256_xor_ps(v10, v0);
+    v6 = ((arg & 2) != 0) ? one : zero;
+    v7 = ((arg & 8) != 0) ? one : zero;
+    v6 = _mm256_xor_ps(v6, v7);
+    v0 = _mm256_and_ps(v10, v0);
+    v7 = _mm256_and_ps(v8, v9);
+    v0 = _mm256_or_ps(v0, v7);
+    v0 = _mm256_xor_ps(v6, v0);
+    v6 = ((arg & 16) != 0) ? one : zero;
+    v7 = ((arg & 64) != 0) ? one : zero;
+    v8 = _mm256_xor_ps(v6, v7);
+    _mm256_storeu_ps((float*)&output[1], v8);
+    v9 = ((arg & 32) != 0) ? one : zero;
+    v10 = ((arg & 128) != 0) ? one : zero;
+    v11 = _mm256_xor_ps(v9, v10);
+    v6 = _mm256_andnot_ps(v7, v6);
+    v6 = _mm256_andnot_ps(v6, v8);
+    v7 = _mm256_xor_ps(v11, v6);
+    v12 = elem_low_bit2;
+    v13 = _mm256_xor_ps(v2, v12);
+    v6 = _mm256_or_ps(v11, v6);
+    v9 = _mm256_andnot_ps(v10, v9);
+    v6 = _mm256_andnot_ps(v9, v6);
+    v9 = _mm256_xor_ps(v13, v6);
+    _mm256_storeu_ps((float*)&output[2], v9);
+    v10 = elem_low_bit3;
+    v3 = _mm256_xor_ps(v3, v10);
+    v6 = _mm256_or_ps(v13, v6);
+    v2 = _mm256_andnot_ps(v12, v2);
+    v2 = _mm256_andnot_ps(v2, v6);
+    v2 = _mm256_xor_ps(v3, v2);
+    _mm256_storeu_ps((float*)&output[3], v2);
+#define o0 (v5)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v7)
+    ((TYPE_NAME*)output)[1] = o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm256_storeu_ps((float*)&output[0], v4);
+    _mm256_storeu_ps((float*)&output[1], v8);
+    _mm256_storeu_ps((float*)&output[2], v9);
+    _mm256_storeu_ps((float*)&output[3], v2);
+    } else {
+    v3 = v2;
+    v0 = v4;
+    v1 = v8;
+    v2 = v9;
+    }
+    } // loop
+}
+"##
+    );
 }
