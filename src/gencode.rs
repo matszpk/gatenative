@@ -29,7 +29,8 @@ where
     if alloc_vars[var_u].is_none() {
         alloc_vars[var_u] = Some(var_alloc.alloc());
     }
-    //println!("  Alloc: {:?} {:?}", var, alloc_vars[var_u]);
+    // println!("  Alloc: {:?} {:?}", usize::try_from(var).unwrap(),
+    //          alloc_vars[var_u].map(|x| usize::try_from(x).unwrap()));
 }
 
 // single variable use - just mark that variable has been used by decreasing its usage.
@@ -48,7 +49,7 @@ fn single_var_use<T>(
     let var_u = usize::try_from(var).unwrap();
     let mut vu = usize::try_from(var_usage[var_u]).unwrap();
     vu -= 1;
-    //println!("  VarUsage: {:?} {:?}", var, vu);
+    // println!("  VarUsage: {:?} {:?}", usize::try_from(var).unwrap(), vu);
     var_usage[var_u] = T::try_from(vu).unwrap();
     if vu == 0 {
         // if no further usage
@@ -225,8 +226,9 @@ where
     // if populated input then allocate variables as first to avoid next allocations
     // if inner_loop allocate all variables as first to allow initialization
     if inner_loop {
+        let pop_inputs = pop_inputs.unwrap_or(&[]);
         for i in 0..input_len {
-            if is_in_input_map(i) {
+            if is_in_input_map(i) || pop_inputs.iter().any(|x| *x == i) {
                 single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
                 input_already_read[i] = true;
             }
