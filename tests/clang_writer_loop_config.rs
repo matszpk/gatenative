@@ -2424,4 +2424,253 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13]))
+            .input_placement(Some((&[3, 4, 1, 0, 5, 6, 7, 2], 8)))
+            .inner_loop(Some(10))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(uint32_t* output, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#undef i10
+#undef i11
+#undef i12
+#undef i13
+    if (iter == 0) {
+    v0 = output[3];
+    v1 = output[4];
+    v2 = output[1];
+    v3 = output[0];
+    v4 = output[5];
+    v5 = output[6];
+    v10 = output[7];
+    v11 = output[2];
+    }
+    v12 = elem_low_bit0;
+    v13 = (v12 ^ v2);
+    v14 = elem_low_bit1;
+    v15 = elem_low_bit2;
+    v16 = (v14 ^ v15);
+    v2 = (v12 & v2);
+    v12 = (v16 ^ v2);
+    v17 = elem_low_bit3;
+    v18 = (v0 ^ v17);
+    v2 = (v16 & v2);
+    v14 = (v14 & v15);
+    v2 = ~(v2 | v14);
+    v14 = (v18 ^ v2);
+    v1 = (v1 ^ v3);
+    v2 = (v18 & ~v2);
+    v0 = (v0 & v17);
+    v0 = ~(v2 | v0);
+    v0 = (v1 ^ v0);
+    v1 = (v4 ^ v8);
+    v2 = (v5 ^ v9);
+    v3 = (v4 & ~v8);
+    v3 = (v1 & ~v3);
+    v4 = (v2 ^ v3);
+    v8 = (v6 ^ v10);
+    v2 = ~(v2 | v3);
+    v3 = (v5 & ~v9);
+    v2 = ~(v2 | v3);
+    v3 = (v8 ^ v2);
+    v5 = (v7 ^ v11);
+    v2 = ~(v8 | v2);
+    v6 = (v6 & ~v10);
+    v2 = ~(v2 | v6);
+    v2 = (v5 ^ v2);
+    v14 = ~v14;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v13;
+    output[1] = v12;
+    output[2] = v14;
+    output[3] = v0;
+    output[4] = v1;
+    output[5] = v4;
+    output[6] = v3;
+    output[7] = v2;
+    } else {
+    v10 = v2;
+    v5 = v3;
+    v2 = v12;
+    v3 = v13;
+    v11 = v14;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_AVX.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13]))
+            .input_placement(Some((&[3, 4, 1, 0, 5, 6, 7, 2], 8)))
+            .inner_loop(Some(10))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(__m256* output, void* buffer, size_t idx) {
+    const __m256 zero = *((const __m256*)zero_value);
+    const __m256 one = *((const __m256*)one_value);
+    const __m256 elem_low_bit0 = *((const __m256*)elem_index_low_tbl);
+    const __m256 elem_low_bit1 = *((const __m256*)(elem_index_low_tbl + 8));
+    const __m256 elem_low_bit2 = *((const __m256*)(elem_index_low_tbl + 16));
+    const __m256 elem_low_bit3 = *((const __m256*)(elem_index_low_tbl + 24));
+    const __m256 elem_low_bit4 = *((const __m256*)(elem_index_low_tbl + 32));
+    const __m256 elem_low_bit5 = *((const __m256*)(elem_index_low_tbl + 40));
+    const __m256 elem_low_bit6 = *((const __m256*)(elem_index_low_tbl + 48));
+    const __m256 elem_low_bit7 = *((const __m256*)(elem_index_low_tbl + 56));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    __m256 v0;
+    __m256 v1;
+    __m256 v2;
+    __m256 v3;
+    __m256 v4;
+    __m256 v5;
+    __m256 v6;
+    __m256 v7;
+    __m256 v8;
+    __m256 v9;
+    __m256 v10;
+    __m256 v11;
+    __m256 v12;
+    __m256 v13;
+    __m256 v14;
+    __m256 v15;
+    __m256 v16;
+    __m256 v17;
+    __m256 v18;
+    __m256 v19;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#undef i10
+#undef i11
+#undef i12
+#undef i13
+    if (iter == 0) {
+    v0 = _mm256_loadu_ps((const float*)&output[3]);
+    v1 = _mm256_loadu_ps((const float*)&output[4]);
+    v2 = _mm256_loadu_ps((const float*)&output[1]);
+    v3 = _mm256_loadu_ps((const float*)&output[0]);
+    v4 = _mm256_loadu_ps((const float*)&output[5]);
+    v5 = _mm256_loadu_ps((const float*)&output[6]);
+    v10 = _mm256_loadu_ps((const float*)&output[7]);
+    v11 = _mm256_loadu_ps((const float*)&output[2]);
+    }
+    v12 = elem_low_bit0;
+    v13 = _mm256_xor_ps(v12, v2);
+    v14 = elem_low_bit1;
+    v15 = elem_low_bit2;
+    v16 = _mm256_xor_ps(v14, v15);
+    v2 = _mm256_and_ps(v12, v2);
+    v12 = _mm256_xor_ps(v16, v2);
+    v17 = elem_low_bit3;
+    v18 = _mm256_xor_ps(v0, v17);
+    v2 = _mm256_and_ps(v16, v2);
+    v14 = _mm256_and_ps(v14, v15);
+    v2 = _mm256_or_ps(v2, v14);
+    v14 = _mm256_xor_ps(v18, v2);
+    v1 = _mm256_xor_ps(v1, v3);
+    v2 = _mm256_and_ps(v18, v2);
+    v0 = _mm256_and_ps(v0, v17);
+    v0 = _mm256_or_ps(v2, v0);
+    v0 = _mm256_xor_ps(v1, v0);
+    v1 = _mm256_xor_ps(v4, v8);
+    v2 = _mm256_xor_ps(v5, v9);
+    v3 = _mm256_andnot_ps(v8, v4);
+    v3 = _mm256_andnot_ps(v3, v1);
+    v4 = _mm256_xor_ps(v2, v3);
+    v8 = _mm256_xor_ps(v6, v10);
+    v2 = _mm256_or_ps(v2, v3);
+    v3 = _mm256_andnot_ps(v9, v5);
+    v2 = _mm256_andnot_ps(v3, v2);
+    v3 = _mm256_xor_ps(v8, v2);
+    v5 = _mm256_xor_ps(v7, v11);
+    v2 = _mm256_or_ps(v8, v2);
+    v6 = _mm256_andnot_ps(v10, v6);
+    v2 = _mm256_andnot_ps(v6, v2);
+    v2 = _mm256_xor_ps(v5, v2);
+    if (iter == iter_max - 1 || stop != 0) {
+    _mm256_storeu_ps((float*)&output[0], v13);
+    _mm256_storeu_ps((float*)&output[1], v12);
+    _mm256_storeu_ps((float*)&output[2], v14);
+    _mm256_storeu_ps((float*)&output[3], v0);
+    _mm256_storeu_ps((float*)&output[4], v1);
+    _mm256_storeu_ps((float*)&output[5], v4);
+    _mm256_storeu_ps((float*)&output[6], v3);
+    _mm256_storeu_ps((float*)&output[7], v2);
+    } else {
+    v10 = v2;
+    v5 = v3;
+    v2 = v12;
+    v3 = v13;
+    v11 = v14;
+    }
+    } // loop
+}
+"##
+    );
 }
