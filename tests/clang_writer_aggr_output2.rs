@@ -874,4 +874,233 @@ fn test_clang_writer_aggregate_output_to_buffer_2() {
 }
 "##
     );
+    // pop_from_buffer, aggr_to_buffer with output exclusion, arg_inputs and elem_inputs
+    // with placements with single_buffer
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[12, 13]))
+            .elem_inputs(Some(&[4, 5, 7, 8]))
+            .pop_input_code(Some("    i2 = ((TYPE_NAME*)buffer)[1];"))
+            .pop_from_buffer(Some(&[2, 3, 6, 10]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)buffer)[1] = o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 5]))
+            .input_placement(Some((&[0, 2, 1, 3, 5, 7], 8)))
+            .output_placement(Some((&[5, 7, 3, 2, 0, 1], 8)))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(uint32_t* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+#define i2 (v0)
+#define i3 (v1)
+#define i6 (v2)
+#define i10 (v3)
+    i2 = ((TYPE_NAME*)buffer)[1];
+#undef i2
+#undef i3
+#undef i6
+#undef i10
+    v4 = output[0];
+    v5 = elem_low_bit0;
+    v6 = (v4 ^ v5);
+    v7 = output[2];
+    v8 = elem_low_bit1;
+    v9 = (v7 ^ v8);
+    v4 = (v4 & v5);
+    v5 = (v9 ^ v4);
+    v10 = output[5];
+    output[5] = v5;
+    v5 = (v0 ^ v2);
+    v4 = (v9 & v4);
+    v7 = (v7 & v8);
+    v4 = ~(v4 | v7);
+    v7 = (v5 ^ v4);
+    v8 = output[7];
+    output[7] = ~v7;
+    v9 = elem_low_bit2;
+    v1 = (v1 ^ v9);
+    v4 = (v5 & ~v4);
+    v0 = (v0 & v2);
+    v0 = ~(v4 | v0);
+    v0 = (v1 ^ v0);
+    v1 = output[3];
+    output[3] = ~v0;
+    v2 = elem_low_bit3;
+    v4 = ((arg & 1) != 0) ? one : zero;
+    v5 = (v2 ^ v4);
+    output[2] = v5;
+    v9 = output[1];
+    v11 = ((arg & 2) != 0) ? one : zero;
+    v12 = (v9 ^ v11);
+    v2 = (v2 & ~v4);
+    v2 = (v5 & ~v2);
+    v4 = (v12 ^ v2);
+    v5 = (v3 ^ v10);
+    v2 = ~(v12 | v2);
+    v9 = (v9 & ~v11);
+    v2 = ~(v2 | v9);
+    v9 = (v5 ^ v2);
+    output[0] = v9;
+    v1 = (v1 ^ v8);
+    v2 = ~(v5 | v2);
+    v3 = (v3 & ~v10);
+    v2 = ~(v2 | v3);
+    v1 = (v1 ^ v2);
+    output[1] = v1;
+    v7 = ~v7;
+    v0 = ~v0;
+#define o0 (v6)
+#define o2 (v7)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)buffer)[1] = o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_INTEL_AVX2.writer();
+    generate_code_with_config(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .arg_inputs(Some(&[12, 13]))
+            .elem_inputs(Some(&[4, 5, 7, 8]))
+            .pop_input_code(Some("    i2 = ((TYPE_NAME*)buffer)[1];"))
+            .pop_from_buffer(Some(&[2, 3, 6, 10]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)buffer)[1] = o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 5]))
+            .input_placement(Some((&[0, 2, 1, 3, 5, 7], 8)))
+            .output_placement(Some((&[5, 7, 3, 2, 0, 1], 8)))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(__m256i* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    const __m256i zero = *((const __m256i*)zero_value);
+    const __m256i one = *((const __m256i*)one_value);
+    const __m256i elem_low_bit0 = *((const __m256i*)elem_index_low_tbl);
+    const __m256i elem_low_bit1 = *((const __m256i*)(elem_index_low_tbl + 8));
+    const __m256i elem_low_bit2 = *((const __m256i*)(elem_index_low_tbl + 16));
+    const __m256i elem_low_bit3 = *((const __m256i*)(elem_index_low_tbl + 24));
+    const __m256i elem_low_bit4 = *((const __m256i*)(elem_index_low_tbl + 32));
+    const __m256i elem_low_bit5 = *((const __m256i*)(elem_index_low_tbl + 40));
+    const __m256i elem_low_bit6 = *((const __m256i*)(elem_index_low_tbl + 48));
+    const __m256i elem_low_bit7 = *((const __m256i*)(elem_index_low_tbl + 56));
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    __m256i v0;
+    __m256i v1;
+    __m256i v2;
+    __m256i v3;
+    __m256i v4;
+    __m256i v5;
+    __m256i v6;
+    __m256i v7;
+    __m256i v8;
+    __m256i v9;
+    __m256i v10;
+    __m256i v11;
+    __m256i v12;
+#define i2 (v0)
+#define i3 (v1)
+#define i6 (v2)
+#define i10 (v3)
+    i2 = ((TYPE_NAME*)buffer)[1];
+#undef i2
+#undef i3
+#undef i6
+#undef i10
+    v4 = _mm256_loadu_si256((const float*)&output[0]);
+    v5 = elem_low_bit0;
+    v6 = _mm256_xor_si256(v4, v5);
+    v7 = _mm256_loadu_si256((const float*)&output[2]);
+    v8 = elem_low_bit1;
+    v9 = _mm256_xor_si256(v7, v8);
+    v4 = _mm256_and_si256(v4, v5);
+    v5 = _mm256_xor_si256(v9, v4);
+    v10 = _mm256_loadu_si256((const float*)&output[5]);
+    _mm256_storeu_si256((float*)&output[5], v5);
+    v5 = _mm256_xor_si256(v0, v2);
+    v4 = _mm256_and_si256(v9, v4);
+    v7 = _mm256_and_si256(v7, v8);
+    v4 = _mm256_or_si256(v4, v7);
+    v7 = _mm256_xor_si256(v5, v4);
+    v8 = _mm256_loadu_si256((const float*)&output[7]);
+    _mm256_storeu_si256((float*)&output[7], v7);
+    v9 = elem_low_bit2;
+    v1 = _mm256_xor_si256(v1, v9);
+    v4 = _mm256_and_si256(v5, v4);
+    v0 = _mm256_and_si256(v0, v2);
+    v0 = _mm256_or_si256(v4, v0);
+    v0 = _mm256_xor_si256(v1, v0);
+    v1 = _mm256_loadu_si256((const float*)&output[3]);
+    _mm256_storeu_si256((float*)&output[3], v0);
+    v2 = elem_low_bit3;
+    v4 = ((arg & 1) != 0) ? one : zero;
+    v5 = _mm256_xor_si256(v2, v4);
+    _mm256_storeu_si256((float*)&output[2], v5);
+    v9 = _mm256_loadu_si256((const float*)&output[1]);
+    v11 = ((arg & 2) != 0) ? one : zero;
+    v12 = _mm256_xor_si256(v9, v11);
+    v2 = _mm256_andnot_si256(v4, v2);
+    v2 = _mm256_andnot_si256(v2, v5);
+    v4 = _mm256_xor_si256(v12, v2);
+    v5 = _mm256_xor_si256(v3, v10);
+    v2 = _mm256_or_si256(v12, v2);
+    v9 = _mm256_andnot_si256(v11, v9);
+    v2 = _mm256_andnot_si256(v9, v2);
+    v9 = _mm256_xor_si256(v5, v2);
+    _mm256_storeu_si256((float*)&output[0], v9);
+    v1 = _mm256_xor_si256(v1, v8);
+    v2 = _mm256_or_si256(v5, v2);
+    v3 = _mm256_andnot_si256(v10, v3);
+    v2 = _mm256_andnot_si256(v3, v2);
+    v1 = _mm256_xor_si256(v1, v2);
+    _mm256_storeu_si256((float*)&output[1], v1);
+#define o0 (v6)
+#define o2 (v7)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)buffer)[1] = o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
 }
