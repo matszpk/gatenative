@@ -848,14 +848,18 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     // if populated input then allocate variables as first to avoid next allocations
     // if inner_loop allocate all variables as first to allow initialization
     if inner_loop {
-        writer.gen_if_loop_start();
-        for i in 0..input_len {
-            if is_in_input_map(i) {
-                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
-                used_inputs[i] = true;
+        let pop_input_empty = pop_inputs.map(|x| x.is_empty()).unwrap_or(false);
+        if !pop_input_empty {
+            // only if pop_input map is not empty (if not all pop_input from input)
+            writer.gen_if_loop_start();
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                    used_inputs[i] = true;
+                }
             }
+            writer.gen_end_if();
         }
-        writer.gen_end_if();
     } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
@@ -1132,14 +1136,18 @@ fn gen_func_code_for_binop<FW: FuncWriter, T>(
     // if populated input then allocate variables as first to avoid next allocations
     // if inner_loop allocate all variables as first to allow initialization
     if inner_loop {
-        writer.gen_if_loop_start();
-        for i in 0..input_len {
-            if is_in_input_map(i) {
-                writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
-                used_inputs[i] = true;
+        let pop_input_empty = pop_inputs.map(|x| x.is_empty()).unwrap_or(false);
+        if !pop_input_empty {
+            // only if pop_input map is not empty (if not all pop_input from input)
+            writer.gen_if_loop_start();
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                    used_inputs[i] = true;
+                }
             }
+            writer.gen_end_if();
         }
-        writer.gen_end_if();
     } else if let Some(pop_inputs) = pop_inputs {
         if !pop_inputs.is_empty() {
             for i in pop_inputs {
