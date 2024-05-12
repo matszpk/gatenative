@@ -1635,7 +1635,21 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             };
             let pop_input_map = if code_config.pop_input_code.is_some() {
                 if let Some(pop_inputs) = code_config.pop_from_buffer {
-                    HashMap::from_iter(pop_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+                    if code_config.inner_loop.is_some() {
+                        let mut pop_input_map = HashMap::new();
+                        let mut count = 0;
+                        for i in 0..input_len {
+                            if !arg_input_map.contains_key(&i) && !elem_input_map.contains_key(&i) {
+                                if pop_inputs.iter().any(|x| *x == i) {
+                                    pop_input_map.insert(i, count);
+                                }
+                                count += 1;
+                            }
+                        }
+                        pop_input_map
+                    } else {
+                        HashMap::from_iter(pop_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+                    }
                 } else {
                     HashMap::new()
                 }

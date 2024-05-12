@@ -1703,16 +1703,9 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    void* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
-    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
-    const uint32_t elem_low_bit1 = 0xcccccccc;
-    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
-    const uint32_t elem_low_bit3 = 0xff00ff00;
-    const uint32_t elem_low_bit4 = 0xffff0000;
-    const unsigned int idxl = idx & 0xffffffff;
-    const unsigned int idxh = idx >> 32;
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1731,7 +1724,21 @@ fn test_clang_writer_loop_config() {
     uint32_t v12;
     uint32_t v13;
     uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#define i10
+#define i11
+#define i12
+#define i13
     if (iter == 0) {
     v0 = input[0];
     v1 = input[1];
@@ -1739,62 +1746,62 @@ fn test_clang_writer_loop_config() {
     v3 = input[3];
     v4 = input[4];
     v5 = input[5];
+    v10 = input[6];
+    v11 = input[7];
     }
-    v6 = ((arg & 1) != 0) ? one : zero;
-    v7 = (v6 ^ v2);
-    v8 = ((arg & 2) != 0) ? one : zero;
-    v9 = ((arg & 4) != 0) ? one : zero;
-    v10 = (v8 ^ v9);
-    v2 = (v6 & v2);
-    v6 = (v10 ^ v2);
-    v11 = ((arg & 8) != 0) ? one : zero;
-    v12 = (v0 ^ v11);
-    v2 = (v10 & v2);
-    v8 = (v8 & v9);
-    v2 = ~(v2 | v8);
-    v8 = (v12 ^ v2);
-    v9 = ((arg & 16) != 0) ? one : zero;
-    v1 = (v1 ^ v9);
-    v2 = (v12 & ~v2);
-    v0 = (v0 & v11);
+    v12 = ((arg & 1) != 0) ? one : zero;
+    v13 = (v12 ^ v2);
+    v14 = ((arg & 2) != 0) ? one : zero;
+    v15 = ((arg & 4) != 0) ? one : zero;
+    v16 = (v14 ^ v15);
+    v2 = (v12 & v2);
+    v12 = (v16 ^ v2);
+    v17 = ((arg & 8) != 0) ? one : zero;
+    v18 = (v0 ^ v17);
+    v2 = (v16 & v2);
+    v14 = (v14 & v15);
+    v2 = ~(v2 | v14);
+    v14 = (v18 ^ v2);
+    v1 = (v1 ^ v3);
+    v2 = (v18 & ~v2);
+    v0 = (v0 & v17);
     v0 = ~(v2 | v0);
     v0 = (v1 ^ v0);
-    v1 = elem_low_bit2;
-    v2 = (v3 ^ v1);
-    v9 = elem_low_bit3;
-    v10 = (v4 ^ v9);
-    v1 = (v3 & ~v1);
-    v1 = (v2 & ~v1);
-    v3 = (v10 ^ v1);
-    v11 = elem_low_bit0;
-    v12 = elem_low_bit4;
-    v13 = (v11 ^ v12);
-    v1 = ~(v10 | v1);
-    v4 = (v4 & ~v9);
-    v1 = ~(v1 | v4);
-    v4 = (v13 ^ v1);
-    v9 = elem_low_bit1;
-    v5 = (v9 ^ v5);
-    v1 = ~(v13 | v1);
-    v9 = (v11 & ~v12);
-    v1 = ~(v1 | v9);
-    v1 = (v5 ^ v1);
-    v8 = ~v8;
+    v1 = (v4 ^ v8);
+    v2 = (v5 ^ v9);
+    v3 = (v4 & ~v8);
+    v3 = (v1 & ~v3);
+    v4 = (v2 ^ v3);
+    v8 = (v6 ^ v10);
+    v2 = ~(v2 | v3);
+    v3 = (v5 & ~v9);
+    v2 = ~(v2 | v3);
+    v3 = (v8 ^ v2);
+    v5 = (v7 ^ v11);
+    v2 = ~(v8 | v2);
+    v6 = (v6 & ~v10);
+    v2 = ~(v2 | v6);
+    v2 = (v5 ^ v2);
+    v14 = ~v14;
     v0 = ~v0;
     if (iter == iter_max - 1 || stop != 0) {
-    output[0] = v7;
-    output[1] = v6;
-    output[2] = v8;
+    output[0] = v13;
+    output[1] = v12;
+    output[2] = v14;
     output[3] = v0;
-    output[4] = v2;
-    output[5] = v3;
+    output[4] = v1;
+    output[5] = v4;
+    output[6] = v3;
+    output[7] = v2;
     } else {
-    v5 = v3;
+    v10 = v3;
     v3 = v0;
-    v4 = v2;
-    v1 = v6;
-    v0 = v7;
-    v2 = v8;
+    v5 = v4;
+    v4 = v1;
+    v11 = v2;
+    v1 = v12;
+    v0 = v13;
+    v2 = v14;
     }
     } // loop
 }
