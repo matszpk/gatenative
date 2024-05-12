@@ -606,7 +606,6 @@ fn test_clang_writer_loop_config() {
     uint32_t v5;
     uint32_t v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
-    if (iter == 0) {
 #define i0 (v0)
 #define i1 (v1)
 #define i2 (v2)
@@ -616,7 +615,6 @@ fn test_clang_writer_loop_config() {
 #define i1
 #define i2
 #define i3
-    }
     v4 = (v2 & v3);
     v2 = (v2 ^ v3);
     v5 = (v4 & v2);
@@ -668,7 +666,6 @@ fn test_clang_writer_loop_config() {
     __m128i v5;
     __m128i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
-    if (iter == 0) {
 #define i0 (v0)
 #define i1 (v1)
 #define i2 (v2)
@@ -678,7 +675,6 @@ fn test_clang_writer_loop_config() {
 #define i1
 #define i2
 #define i3
-    }
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
     v5 = _mm_and_si128(v4, v2);

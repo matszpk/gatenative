@@ -1286,9 +1286,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 .extend(b"    for (iter = 0; iter < iter_max && stop == 0; iter++) {\n");
         }
         if let Some(pop_input_code) = self.pop_input_code {
-            if self.inner_loop.is_some() && self.pop_input_map.is_empty() {
-                self.gen_if_loop_start();
-            }
             let pop_inputs = if !self.pop_input_map.is_empty() {
                 let mut map = self
                     .pop_input_map
@@ -1323,9 +1320,6 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 {
                     writeln!(self.writer.out, "#define i{0}", i).unwrap();
                 }
-            }
-            if self.inner_loop.is_some() && self.pop_input_map.is_empty() {
-                self.gen_end_if();
             }
         }
     }
