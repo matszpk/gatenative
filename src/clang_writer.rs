@@ -1687,6 +1687,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             HashMap::new()
         };
 
+        let aggr_to_buffer =
+            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some();
         CLangFuncWriter::<'a, 'c> {
             writer: self,
             name,
@@ -1703,9 +1705,22 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             init_code: code_config.init_code,
             pop_input_code: code_config.pop_input_code,
             aggr_output_code: code_config.aggr_output_code,
-            output_vars,
-            aggr_to_buffer: code_config.aggr_output_code.is_some()
-                && code_config.aggr_to_buffer.is_some(),
+            output_vars: if code_config.inner_loop.is_some() && aggr_to_buffer {
+                Some(
+                    code_config
+                        .aggr_to_buffer
+                        .unwrap()
+                        .iter()
+                        .map(|v| {
+                            let output_vars = output_vars.as_ref().unwrap();
+                            *output_vars.iter().find(|x| x.0 == *v).unwrap()
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            } else {
+                output_vars
+            },
+            aggr_to_buffer,
             inner_loop: code_config.inner_loop,
             cond_nesting: 0,
         }
