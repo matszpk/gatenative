@@ -1318,7 +1318,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     || self.input_map.contains_key(&i)
                     || self.pop_input_map.contains_key(&i)
                 {
-                    writeln!(self.writer.out, "#define i{0}", i).unwrap();
+                    writeln!(self.writer.out, "#undef i{0}", i).unwrap();
                 }
             }
         }

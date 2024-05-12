@@ -611,10 +611,10 @@ fn test_clang_writer_loop_config() {
 #define i2 (v2)
 #define i3 (v3)
     i1 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
+#undef i0
+#undef i1
+#undef i2
+#undef i3
     v4 = (v2 & v3);
     v2 = (v2 ^ v3);
     v5 = (v4 & v2);
@@ -671,10 +671,10 @@ fn test_clang_writer_loop_config() {
 #define i2 (v2)
 #define i3 (v3)
     i1 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
+#undef i0
+#undef i1
+#undef i2
+#undef i3
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
     v5 = _mm_and_si128(v4, v2);
@@ -1735,10 +1735,10 @@ fn test_clang_writer_loop_config() {
 #define i12 (v8)
 #define i13 (v9)
     i10 = ((TYPE_NAME*)buffer)[0];
-#define i10
-#define i11
-#define i12
-#define i13
+#undef i10
+#undef i11
+#undef i12
+#undef i13
     if (iter == 0) {
     v0 = input[0];
     v1 = input[1];
@@ -1854,10 +1854,10 @@ fn test_clang_writer_loop_config() {
 #define i12 (v8)
 #define i13 (v9)
     i10 = ((TYPE_NAME*)buffer)[0];
-#define i10
-#define i11
-#define i12
-#define i13
+#undef i10
+#undef i11
+#undef i12
+#undef i13
     if (iter == 0) {
     v0 = _mm256_loadu_ps((const float*)&input[0]);
     v1 = _mm256_loadu_ps((const float*)&input[1]);
@@ -1910,6 +1910,132 @@ fn test_clang_writer_loop_config() {
     _mm256_storeu_ps((float*)&output[5], v4);
     _mm256_storeu_ps((float*)&output[6], v3);
     _mm256_storeu_ps((float*)&output[7], v2);
+    } else {
+    v10 = v3;
+    v3 = v0;
+    v5 = v4;
+    v4 = v1;
+    v11 = v2;
+    v1 = v12;
+    v0 = v13;
+    v2 = v14;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config(
+        &mut writer,
+        "addsub",
+        circuit.clone(),
+        false,
+        CodeConfig::new()
+            .elem_inputs(Some(&[0, 1, 5, 6]))
+            .pop_input_code(Some("    i10 = ((TYPE_NAME*)buffer)[0];"))
+            .pop_from_buffer(Some(&[10, 11, 12, 13]))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_addsub(const uint32_t* input,
+    void* output, void* buffer, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    uint32_t v6;
+    uint32_t v7;
+    uint32_t v8;
+    uint32_t v9;
+    uint32_t v10;
+    uint32_t v11;
+    uint32_t v12;
+    uint32_t v13;
+    uint32_t v14;
+    uint32_t v15;
+    uint32_t v16;
+    uint32_t v17;
+    uint32_t v18;
+    uint32_t v19;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i10 (v6)
+#define i11 (v7)
+#define i12 (v8)
+#define i13 (v9)
+    i10 = ((TYPE_NAME*)buffer)[0];
+#undef i10
+#undef i11
+#undef i12
+#undef i13
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    v4 = input[4];
+    v5 = input[5];
+    v10 = input[6];
+    v11 = input[7];
+    }
+    v12 = elem_low_bit0;
+    v13 = (v12 ^ v2);
+    v14 = elem_low_bit1;
+    v15 = elem_low_bit2;
+    v16 = (v14 ^ v15);
+    v2 = (v12 & v2);
+    v12 = (v16 ^ v2);
+    v17 = elem_low_bit3;
+    v18 = (v0 ^ v17);
+    v2 = (v16 & v2);
+    v14 = (v14 & v15);
+    v2 = ~(v2 | v14);
+    v14 = (v18 ^ v2);
+    v1 = (v1 ^ v3);
+    v2 = (v18 & ~v2);
+    v0 = (v0 & v17);
+    v0 = ~(v2 | v0);
+    v0 = (v1 ^ v0);
+    v1 = (v4 ^ v8);
+    v2 = (v5 ^ v9);
+    v3 = (v4 & ~v8);
+    v3 = (v1 & ~v3);
+    v4 = (v2 ^ v3);
+    v8 = (v6 ^ v10);
+    v2 = ~(v2 | v3);
+    v3 = (v5 & ~v9);
+    v2 = ~(v2 | v3);
+    v3 = (v8 ^ v2);
+    v5 = (v7 ^ v11);
+    v2 = ~(v8 | v2);
+    v6 = (v6 & ~v10);
+    v2 = ~(v2 | v6);
+    v2 = (v5 ^ v2);
+    v14 = ~v14;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v13;
+    output[1] = v12;
+    output[2] = v14;
+    output[3] = v0;
+    output[4] = v1;
+    output[5] = v4;
+    output[6] = v3;
+    output[7] = v2;
     } else {
     v10 = v3;
     v3 = v0;

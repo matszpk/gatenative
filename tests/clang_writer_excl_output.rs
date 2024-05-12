@@ -856,8 +856,8 @@ fn test_clang_writer_exclude_output() {
 #define i1 (v0)
 #define i4 (v1)
     ((TYPE_NAME*)input)[0] |= i0 ^ i2;
-#define i1
-#define i4
+#undef i1
+#undef i4
     v2 = output[1];
     v3 = output[2];
     v4 = (v2 & v3);
@@ -911,8 +911,8 @@ fn test_clang_writer_exclude_output() {
 #define i1 (v0)
 #define i4 (v1)
     ((TYPE_NAME*)input)[0] |= i0 ^ i2;
-#define i1
-#define i4
+#undef i1
+#undef i4
     v2 = _mm_loadu_si128((const __m128i*)&output[1]);
     v3 = _mm_loadu_si128((const __m128i*)&output[2]);
     v4 = _mm_and_si128(v2, v3);
@@ -972,8 +972,8 @@ fn test_clang_writer_exclude_output() {
 #define i1 (v0)
 #define i4 (v1)
     ((TYPE_NAME*)input)[0] |= i0 ^ i2;
-#define i1
-#define i4
+#undef i1
+#undef i4
     v2 = output[ivn + 1];
     v3 = output[ivn + 2];
     v4 = (v2 & v3);

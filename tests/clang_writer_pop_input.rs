@@ -51,9 +51,9 @@ void gate_sys_testcirc(const void* input,
 #define i1 (v1)
 #define i2 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
+#undef i0
+#undef i1
+#undef i2
     v3 = (v0 ^ v1);
     v4 = (v2 ^ v3);
     output[0] = v4;
@@ -118,9 +118,9 @@ void gate_sys_testcirc(const void* input,
 #define i1 (v1)
 #define i2 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
+#undef i0
+#undef i1
+#undef i2
     v3 = _mm_xor_ps(v0, v1);
     v4 = _mm_xor_ps(v2, v3);
     _mm_storeu_ps((float*)&output[0], v4);
@@ -167,9 +167,9 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i1 (v1)
 #define i2 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
+#undef i0
+#undef i1
+#undef i2
     v3 = (v0 ^ v1);
     v4 = (v2 ^ v3);
     output[ovn + 0] = v4;
@@ -218,9 +218,9 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i1 (v1)
 #define i2 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
+#undef i0
+#undef i1
+#undef i2
     v3 = (v0 ^ v1);
     v4 = (v2 ^ v3);
     output[ovn + llen*0 + lidx] = v4;
@@ -271,10 +271,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i2 (v2)
 #define i3 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
+#undef i0
+#undef i1
+#undef i2
+#undef i3
     v4 = (v0 & v2);
     output[0] = v4;
     v2 = (v1 & v2);
@@ -313,10 +313,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i2 (v2)
 #define i3 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
+#undef i0
+#undef i1
+#undef i2
+#undef i3
     v4 = _mm_and_ps(v0, v2);
     _mm_storeu_ps((float*)&output[0], v4);
     v2 = _mm_and_ps(v1, v2);
@@ -361,10 +361,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i2 (v2)
 #define i3 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
+#undef i0
+#undef i1
+#undef i2
+#undef i3
     v4 = (v0 & v2);
     output[ovn + 0] = v4;
     v2 = (v1 & v2);
@@ -406,8 +406,8 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i0 (v0)
 #define i3 (v1)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i3
+#undef i0
+#undef i3
     v2 = ((arg & 2) != 0) ? one : zero;
     v3 = (v0 & v2);
     output[0] = v3;
@@ -449,8 +449,8 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i0 (v0)
 #define i3 (v1)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i3
+#undef i0
+#undef i3
     v2 = ((arg & 2) != 0) ? one : zero;
     v3 = _mm_and_ps(v0, v2);
     _mm_storeu_ps((float*)&output[0], v3);
@@ -499,8 +499,8 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i0 (v0)
 #define i3 (v1)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i3
+#undef i0
+#undef i3
     v2 = elem_low_bit1;
     v3 = (v0 & v2);
     output[0] = v3;
@@ -560,12 +560,12 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v4)
 #define i5 (v5)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
-#define i4
-#define i5
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+#undef i4
+#undef i5
     v6 = (v2 & v3);
     v0 = ~(v0 | v3);
     v0 = (v6 & ~v0);
@@ -608,12 +608,12 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v4)
 #define i5 (v5)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i2
-#define i3
-#define i4
-#define i5
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+#undef i4
+#undef i5
     v6 = _mm_and_ps(v2, v3);
     v0 = _mm_or_ps(v0, v3);
     v0 = _mm_and_ps(v6, v0);
@@ -665,10 +665,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = (v4 & v1);
     v6 = elem_low_bit0;
@@ -723,10 +723,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = _mm_and_ps(v4, v1);
     v6 = elem_low_bit0;
@@ -781,10 +781,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = (v4 & v1);
     v6 = elem_low_bit0;
@@ -847,10 +847,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = _mm_and_ps(v4, v1);
     v6 = elem_low_bit0;
@@ -914,10 +914,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = (v4 & v1);
     v6 = elem_low_bit0;
@@ -983,10 +983,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = _mm_and_ps(v4, v1);
     v6 = elem_low_bit0;
@@ -1073,10 +1073,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = (v4 & v1);
     v6 = elem_low_bit0;
@@ -1145,10 +1145,10 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v2)
 #define i5 (v3)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
-#define i4
-#define i5
+#undef i1
+#undef i3
+#undef i4
+#undef i5
     v4 = elem_low_bit1;
     v5 = _mm_and_ps(v4, v1);
     v6 = elem_low_bit0;
@@ -1210,12 +1210,12 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v4)
 #define i5 (v5)
     i0 = ((TYPE_NAME*)output)[0];
-#define i0
-#define i1
-#define i2
-#define i3
-#define i4
-#define i5
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+#undef i4
+#undef i5
     v6 = (v2 & v3);
     v7 = ~(v0 | v3);
     v7 = (v6 & ~v7);
@@ -1275,12 +1275,12 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v4)
 #define i5 (v5)
     i0 = ((TYPE_NAME*)output)[0];
-#define i0
-#define i1
-#define i2
-#define i3
-#define i4
-#define i5
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+#undef i4
+#undef i5
     v6 = _mm_and_ps(v2, v3);
     v7 = _mm_or_ps(v0, v3);
     v7 = _mm_and_ps(v6, v7);
@@ -1346,12 +1346,12 @@ kernel void gate_sys_testcirc(unsigned long n,
 #define i4 (v4)
 #define i5 (v5)
     i0 = ((TYPE_NAME*)output)[0];
-#define i0
-#define i1
-#define i2
-#define i3
-#define i4
-#define i5
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+#undef i4
+#undef i5
     v6 = (v2 & v3);
     v7 = ~(v0 | v3);
     v7 = (v6 & ~v7);
@@ -1423,9 +1423,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = input[0];
     v4 = (v0 & v3);
     output[0] = v4;
@@ -1466,9 +1466,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = _mm_loadu_ps((const float*)&input[0]);
     v4 = _mm_and_ps(v0, v3);
     _mm_storeu_ps((float*)&output[0], v4);
@@ -1515,9 +1515,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = input[ivn + 0];
     v4 = (v0 & v3);
     output[ovn + 0] = v4;
@@ -1566,9 +1566,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = input[ivn + llen*0 + lidx];
     v4 = (v0 & v3);
     output[ovn + llen*0 + lidx] = v4;
@@ -1608,9 +1608,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i0 (v1)
 #define i1 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i3
-#define i0
-#define i1
+#undef i3
+#undef i0
+#undef i1
     v3 = input[0];
     v4 = (v1 & v3);
     output[0] = v4;
@@ -1651,9 +1651,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i0 (v1)
 #define i1 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i3
-#define i0
-#define i1
+#undef i3
+#undef i0
+#undef i1
     v3 = _mm_loadu_ps((const float*)&input[0]);
     v4 = _mm_and_ps(v1, v3);
     _mm_storeu_ps((float*)&output[0], v4);
@@ -1710,9 +1710,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = input[0];
     v4 = (v3 & v2);
     v3 = (v3 ^ v2);
@@ -1754,9 +1754,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = input[0];
     v4 = _m_pand(v3, v2);
     v3 = _m_pxor(v3, v2);
@@ -1796,8 +1796,8 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v0)
 #define i3 (v1)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
+#undef i1
+#undef i3
     v2 = input[1];
     v3 = (v2 & v1);
     v2 = (v2 ^ v1);
@@ -1838,8 +1838,8 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v0)
 #define i3 (v1)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i3
+#undef i1
+#undef i3
     v2 = input[1];
     v3 = _m_pand(v2, v1);
     v2 = _m_pxor(v2, v1);
@@ -1898,9 +1898,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = input[1];
     v4 = (v1 & v3);
     v5 = input[0];
@@ -1944,9 +1944,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = input[1];
     v4 = _m_pand(v1, v3);
     v5 = input[0];
@@ -1991,9 +1991,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = output[1];
     v4 = (v1 & v3);
     v5 = output[0];
@@ -2038,9 +2038,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = output[1];
     v4 = _m_pand(v1, v3);
     v5 = output[0];
@@ -2092,9 +2092,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = output[ivn + 1];
     v4 = (v1 & v3);
     v5 = output[ivn + 0];
@@ -2138,9 +2138,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = output[1];
     v4 = (v1 & v3);
     v5 = output[3];
@@ -2185,9 +2185,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i2 (v1)
 #define i4 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i1
-#define i2
-#define i4
+#undef i1
+#undef i2
+#undef i4
     v3 = output[1];
     v4 = _m_pand(v1, v3);
     v5 = output[3];
@@ -2234,9 +2234,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = ((arg & 1) != 0) ? one : zero;
     v4 = (v3 & v2);
     v0 = ~(v0 | v2);
@@ -2288,9 +2288,9 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i1 (v1)
 #define i3 (v2)
     i0 = ((TYPE_NAME*)input)[0];
-#define i0
-#define i1
-#define i3
+#undef i0
+#undef i1
+#undef i3
     v3 = ((arg & 1) != 0) ? one : zero;
     v4 = (v3 & v2);
     v0 = ~(v0 | v2);
@@ -2394,10 +2394,10 @@ fn test_clang_writer_populate_input_from_buffer() {
 #define i12 (v2)
 #define i13 (v3)
     i10 = ((TYPE_NAME*)buffer)[0];
-#define i10
-#define i11
-#define i12
-#define i13
+#undef i10
+#undef i11
+#undef i12
+#undef i13
     v4 = ((arg & 1) != 0) ? one : zero;
     v5 = input[2];
     v6 = (v4 ^ v5);
