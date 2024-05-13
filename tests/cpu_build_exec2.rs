@@ -169,8 +169,8 @@ fn test_cpu_builder_and_exec_inner_loop() {
         let output = ot.transform(&output_circ).unwrap().release();
         assert_eq!(output.len(), 1 << 16);
         // check results
-        for i in 0..1 << 16 {
-            let expv = u32::try_from((i + (12 * 77)) & ((1 << 16) - 1)).unwrap();
+        for i in 0usize..1 << 16 {
+            let expv = (u32::try_from(i).unwrap() + (ITER_NUM * 77)) & ((1 << 16) - 1);
             assert_eq!(expv, output[i], "{}: {}", config_num, i);
         }
     }
