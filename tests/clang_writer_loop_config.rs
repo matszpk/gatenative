@@ -36,7 +36,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -91,7 +91,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m128i* input,
-    void* output, size_t idx) {
+    __m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -147,7 +147,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -203,7 +203,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m128* input,
-    void* output, size_t idx) {
+    __m128* output, size_t idx) {
     const __m128 one = *((const __m128*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -261,7 +261,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -317,7 +317,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m64* input,
-    void* output, size_t idx) {
+    __m64* output, size_t idx) {
     const __m64 one = *((const __m64*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -372,7 +372,7 @@ fn test_clang_writer_loop_config() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_mulxx(void* output, size_t idx) {
+        r##"void gate_sys_mulxx(uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -424,7 +424,7 @@ fn test_clang_writer_loop_config() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_mulxx(void* output, size_t idx) {
+        r##"void gate_sys_mulxx(__m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -481,7 +481,7 @@ fn test_clang_writer_loop_config() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_mulxx(void* output, size_t idx) {
+        r##"void gate_sys_mulxx(uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -537,7 +537,7 @@ fn test_clang_writer_loop_config() {
     );
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
-        r##"void gate_sys_mulxx(void* output, size_t idx) {
+        r##"void gate_sys_mulxx(__m256i* output, size_t idx) {
     const __m256i one = *((const __m256i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -594,7 +594,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const void* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -653,7 +653,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const void* input,
-    void* output, size_t idx) {
+    __m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -730,7 +730,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -786,7 +786,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m128i* input,
-    void* output, size_t idx) {
+    __m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -846,7 +846,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -906,7 +906,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m256* input,
-    void* output, size_t idx) {
+    __m256* output, size_t idx) {
     const __m256 one = *((const __m256*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -1019,7 +1019,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1134,7 +1134,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m128i* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    __m128i* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m128i zero = *((const __m128i*)zero_value);
     const __m128i one = *((const __m128i*)one_value);
     const __m128i elem_low_bit0 = *((const __m128i*)elem_index_low_tbl);
@@ -1250,7 +1250,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1362,7 +1362,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m64* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    __m64* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
@@ -1476,7 +1476,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -1590,7 +1590,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m64* input,
-    void* output, unsigned int arg, unsigned int arg2, size_t idx) {
+    __m64* output, unsigned int arg, unsigned int arg2, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
@@ -1703,7 +1703,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    uint32_t* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const unsigned int iter_max = 10U;
@@ -1822,7 +1822,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m256* input,
-    void* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
+    __m256* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
     const __m256 zero = *((const __m256*)zero_value);
     const __m256 one = *((const __m256*)one_value);
     const unsigned int iter_max = 10U;
@@ -1939,7 +1939,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, void* buffer, size_t idx) {
+    uint32_t* output, void* buffer, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -2065,7 +2065,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m64* input,
-    void* output, void* buffer, size_t idx) {
+    __m64* output, void* buffer, size_t idx) {
     const __m64 zero = *((const __m64*)zero_value);
     const __m64 one = *((const __m64*)one_value);
     const __m64 elem_low_bit0 = *((const __m64*)elem_index_low_tbl);
@@ -2192,7 +2192,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const uint32_t* input,
-    void* output, void* buffer, size_t idx) {
+    uint32_t* output, void* buffer, size_t idx) {
     const uint32_t zero = 0;
     const uint32_t one = 0xffffffff;
     const uint32_t elem_low_bit0 = 0xaaaaaaaa;
@@ -2316,7 +2316,7 @@ fn test_clang_writer_loop_config() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_addsub(const __m128* input,
-    void* output, void* buffer, size_t idx) {
+    __m128* output, void* buffer, size_t idx) {
     const __m128 zero = *((const __m128*)zero_value);
     const __m128 one = *((const __m128*)one_value);
     const __m128 elem_low_bit0 = *((const __m128*)elem_index_low_tbl);

@@ -34,7 +34,7 @@ fn test_clang_writer_loop_basic() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -87,7 +87,7 @@ fn test_clang_writer_loop_basic() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_mulxx(const __m128i* input,
-    void* output, size_t idx) {
+    __m128i* output, size_t idx) {
     const __m128i one = *((const __m128i*)one_value);
     const unsigned int iter_max = 10U;
     unsigned int iter;
@@ -143,7 +143,7 @@ fn test_clang_writer_loop_basic() {
         r##"kernel void gate_sys_mulxx(unsigned long n, 
     unsigned long input_shift, unsigned long output_shift,
     const global uint* input,
-    global void* output) {
+    global uint* output) {
     const size_t idx = get_global_id(0);
     const size_t ivn = 4 * idx + input_shift;
     const size_t ovn = 4 * idx + output_shift;
@@ -217,7 +217,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -285,7 +285,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -357,7 +357,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -431,7 +431,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -505,7 +505,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -601,7 +601,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -747,7 +747,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -892,7 +892,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1040,7 +1040,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx2(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1185,7 +1185,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx2(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1332,7 +1332,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx2(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1479,7 +1479,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx2(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1615,7 +1615,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_cpx(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1773,7 +1773,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_fullmul(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
@@ -1914,7 +1914,7 @@ fn test_clang_writer_loop_copy_to_input() {
     assert_eq!(
         &String::from_utf8(writer.out()).unwrap(),
         r##"void gate_sys_fullmul(const uint32_t* input,
-    void* output, size_t idx) {
+    uint32_t* output, size_t idx) {
     const unsigned int iter_max = 10U;
     unsigned int iter;
     unsigned int stop = 0;
