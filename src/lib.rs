@@ -74,6 +74,7 @@ pub struct CodeConfig<'a> {
     // stop - can be set by user supplied code. If have nonzero value then
     //   loop should be stopped.
     // iter - current loop iteration number starts from 0.
+    // iter_max - read-only - number of iterations
     // Supplied parameter is max iteration number.
     // If pop_input_code and aggr_output_code are executed for all iterations.
     // User should put own code in required conditional blocks if it is needed.
