@@ -133,6 +133,11 @@ fn load_input_later(
     }
 }
 
+// output negations generating:
+// based on difference between first occurrence of output and nexts occurrences.
+// due to differences of final output negations between original Circuit and
+// VCircuit and VBinOpCircuit.
+
 // input_map - input map after filtering arg inputs, elem inputs and other.
 // keep_output_vars - keep output variables to later usage.
 //          if supplied empty array then use all circuits outputs as aggr outputs.
