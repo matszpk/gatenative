@@ -75,6 +75,12 @@ pub struct CodeConfig<'a> {
     //   loop should be stopped.
     // iter - current loop iteration number starts from 0.
     // Supplied parameter is max iteration number.
+    // If pop_input_code and aggr_output_code are executed for all iterations.
+    // User should put own code in required conditional blocks if it is needed.
+    // Aggr_output_code is executed before input update and iteration check and
+    // this code can have modify 'stop' variable to stop iteration.
+    // Because circuit are executed for word unconditionally then any conditional
+    // loop stopping at circuit must be implemented at same circuit.
     pub inner_loop: Option<u32>,
 }
 
