@@ -2,9 +2,7 @@ use gatenative::clang_writer::*;
 use gatenative::cpu_build_exec::*;
 use gatenative::*;
 use gatesim::*;
-use gateutil::*;
 
-use std::collections::HashMap;
 use std::str::FromStr;
 
 const ADDIMMU16_77_CIRCUIT: &str = r##"    {
@@ -143,7 +141,6 @@ fn get_builder_configs() -> Vec<(
 #[test]
 fn test_cpu_builder_and_exec_inner_loop() {
     let configs = get_builder_configs();
-    let mut mul_add_data_map = HashMap::<usize, (CPUDataHolder, Vec<u32>)>::new();
     let addu16_circuit = Circuit::<u32>::from_str(ADDIMMU16_77_CIRCUIT).unwrap();
     for (config_num, (cpu_ext, writer_config, builder_config)) in configs.into_iter().enumerate() {
         const ITER_NUM: u32 = 12;
@@ -155,5 +152,26 @@ fn test_cpu_builder_and_exec_inner_loop() {
             CodeConfig::new().inner_loop(Some(ITER_NUM)),
         );
         let mut execs = builder.build().unwrap();
+
+        let mut it = execs[0]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[0]
+            .output_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[0].new_data_from_vec(
+            (0..1 << 16)
+                .map(|i| i & ((1 << 16) - 1))
+                .collect::<Vec<_>>(),
+        );
+        let input_circ = it.transform(&input).unwrap();
+        let output_circ = execs[0].execute(&input_circ, 0).unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(output.len(), 1 << 16);
+        // check results
+        for i in 0..1 << 16 {
+            let expv = u32::try_from((i + (12 * 77)) & ((1 << 16) - 1)).unwrap();
+            assert_eq!(expv, output[i], "{}: {}", config_num, i);
+        }
     }
 }
