@@ -270,6 +270,13 @@ fn test_cpu_builder_and_exec_inner_loop() {
                 .elem_inputs(Some(&(0..16).collect::<Vec<_>>()))
                 .inner_loop(Some(ITER2_NUM)),
         );
+        builder.add_with_config(
+            "addu16_2",
+            addu16_circuit.clone(),
+            CodeConfig::new()
+                .arg_inputs(Some(&(0..16).collect::<Vec<_>>()))
+                .inner_loop(Some(ITER2_NUM)),
+        );
         let mut execs = builder.build().unwrap();
 
         let mut it = execs[0]
@@ -314,6 +321,31 @@ fn test_cpu_builder_and_exec_inner_loop() {
             let iv = i as u32;
             let iv = ((iv.overflowing_mul(689921).0) % 158591) & ((1 << 16) - 1);
             let expv = (u32::try_from(i).unwrap() * ITER2_NUM + iv) & ((1 << 16) - 1);
+            assert_eq!(expv, output[i], "{}: {}", config_num, i);
+        }
+
+        // arg inputs
+        let arg: u32 = 481;
+        let mut it = execs[2]
+            .input_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let mut ot = execs[2]
+            .output_transformer(32, &(0..16).collect::<Vec<_>>())
+            .unwrap();
+        let input = execs[2].new_data_from_vec(
+            (0..1u32 << 16)
+                .map(|i| ((i.overflowing_mul(689921).0) % 158591) & ((1 << 16) - 1))
+                .collect::<Vec<_>>(),
+        );
+        let input_circ = it.transform(&input).unwrap();
+        let output_circ = execs[2].execute(&input_circ, arg as u64).unwrap();
+        let output = ot.transform(&output_circ).unwrap().release();
+        assert_eq!(output.len(), 1 << 16);
+        // check results
+        for i in 0usize..1 << 16 {
+            let iv = i as u32;
+            let iv = ((iv.overflowing_mul(689921).0) % 158591) & ((1 << 16) - 1);
+            let expv = (arg * ITER2_NUM + iv) & ((1 << 16) - 1);
             assert_eq!(expv, output[i], "{}: {}", config_num, i);
         }
     }
