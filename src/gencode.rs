@@ -650,6 +650,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
             let mut do_pop = false;
             if top.cycle {
                 // skip cycle
+                // cycle or if this same variable in next step
                 do_pop = true;
             } else if var_output_map.contains_key(&top.outvar.unwrap_or(var)) {
                 // it is not already processed
@@ -671,9 +672,9 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                         let oi = output_list[top_way];
                         let top_invar = top.invar;
                         if let Some((_, new_invar)) = out_outvar_invar_map.get(&oi) {
-                            let cycle_detected = *new_invar == var && top.invar != *new_invar;
-                            if cycle_detected {
-                                // detected cycle
+                            if *new_invar == var && top_invar != *new_invar {
+                                // detected only real cycle, not case if same variable
+                                // in next step.
                                 cycle_path =
                                     Some(stack.iter().map(|e| e.way - 1).collect::<Vec<_>>());
                             }
@@ -686,6 +687,7 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
                                     entries: vec![],
                                 }),
                                 way: 0,
+                                // cycle or if this same variable in next step
                                 cycle: *new_invar == var,
                             });
                         } else {
