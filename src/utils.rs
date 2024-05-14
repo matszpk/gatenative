@@ -69,7 +69,10 @@ pub(crate) trait CircuitTrait<T> {
     fn input_len(&self) -> T;
     fn len(&self) -> usize;
     fn gate_input_num(&self, gate: usize) -> usize;
+    // SPECIAL INFO: get gate input for tree traversal to keep tree traversal order
+    // between various circuit forms used in gencode.
     fn gate_input(&self, gate: usize, input: usize) -> T;
+    // SPECIAL INFO: get gate input for operation setup.
     fn gate_op_input(&self, gate: usize, input: usize) -> T;
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs);
     fn outputs(&self) -> &[(T, bool)];
