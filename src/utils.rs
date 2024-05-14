@@ -1,5 +1,10 @@
 use gatesim::*;
 
+use crate::*;
+
+use crate::vbinopcircuit::*;
+use crate::vcircuit::*;
+
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -56,6 +61,152 @@ where
         } else {
             false
         }
+    }
+}
+
+// trait for Circuits
+trait CircuitTrait<T> {
+    fn input_len(&self) -> T;
+    fn len(&self) -> usize;
+    fn gate_input_num(&self, gate: usize) -> usize;
+    fn gate_input(&self, gate: usize, input: usize) -> T;
+    fn gate_op(&self, gate: usize) -> (InstrOp, VNegs);
+    fn outputs(&self) -> &[(T, bool)];
+}
+
+impl<T> CircuitTrait<T> for Circuit<T>
+where
+    T: Clone + Copy,
+{
+    fn input_len(&self) -> T {
+        self.input_len()
+    }
+    fn len(&self) -> usize {
+        self.len()
+    }
+    fn gate_input_num(&self, _gate: usize) -> usize {
+        2
+    }
+    fn gate_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.gates()[gate].i0,
+            1 => self.gates()[gate].i1,
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op(&self, _gate: usize) -> (InstrOp, VNegs) {
+        panic!("Unsupported");
+    }
+    fn outputs(&self) -> &[(T, bool)] {
+        self.outputs()
+    }
+}
+
+impl<T> CircuitTrait<T> for (VCircuit<T>, &[bool])
+where
+    T: Clone + Copy,
+{
+    fn input_len(&self) -> T {
+        self.0.input_len
+    }
+    fn len(&self) -> usize {
+        self.0.gates.len()
+    }
+    fn gate_input_num(&self, _gate: usize) -> usize {
+        2
+    }
+    fn gate_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => {
+                if self.1[gate] {
+                    self.0.gates[gate].i1
+                } else {
+                    self.0.gates[gate].i0
+                }
+            }
+            1 => {
+                if self.1[gate] {
+                    self.0.gates[gate].i0
+                } else {
+                    self.0.gates[gate].i1
+                }
+            }
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
+        (
+            match self.0.gates[gate].func {
+                VGateFunc::And => InstrOp::And,
+                VGateFunc::Or => InstrOp::Or,
+                VGateFunc::Impl => InstrOp::Impl,
+                VGateFunc::Nimpl => InstrOp::Nimpl,
+                VGateFunc::Xor => InstrOp::Xor,
+                _ => {
+                    panic!("Unsupported InstrOp")
+                }
+            },
+            VNegs::NoNegs,
+        )
+    }
+    fn outputs(&self) -> &[(T, bool)] {
+        &self.0.outputs
+    }
+}
+
+impl<T> CircuitTrait<T> for (VBinOpCircuit<T>, &[bool])
+where
+    T: Clone + Copy,
+{
+    fn input_len(&self) -> T {
+        self.0.input_len
+    }
+    fn len(&self) -> usize {
+        self.0.gates.len()
+    }
+    fn gate_input_num(&self, _gate: usize) -> usize {
+        2
+    }
+    fn gate_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => {
+                if self.1[gate] {
+                    self.0.gates[gate].0.i1
+                } else {
+                    self.0.gates[gate].0.i0
+                }
+            }
+            1 => {
+                if self.1[gate] {
+                    self.0.gates[gate].0.i0
+                } else {
+                    self.0.gates[gate].0.i1
+                }
+            }
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
+        (
+            match self.0.gates[gate].0.func {
+                VGateFunc::And => InstrOp::And,
+                VGateFunc::Or => InstrOp::Or,
+                VGateFunc::Xor => InstrOp::Xor,
+                _ => {
+                    panic!("Unsupported InstrOp")
+                }
+            },
+            self.0.gates[gate].1,
+        )
+    }
+    fn outputs(&self) -> &[(T, bool)] {
+        &self.0.outputs
     }
 }
 
