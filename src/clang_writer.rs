@@ -161,7 +161,7 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: None,
+    nimpl_op: Some("({} & ~{})"),
     not_op: Some("~{}"),
     lop3_op: Some(
         r##"((~{0} & ~{1} & ~{2} & (0ULL - ({3} & 1))) |
