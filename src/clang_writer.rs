@@ -29,6 +29,7 @@ pub struct CLangWriterConfig<'a> {
     impl_op: Option<&'a str>,
     nimpl_op: Option<&'a str>,
     not_op: Option<&'a str>,
+    lop3_op: Option<&'a str>,
     zero_value: (&'a str, &'a str), // for arg_input
     one_value: (&'a str, &'a str),  // for emulate NOT and arg_input
     elem_index: ElemIndexConfig<'a>,
@@ -59,6 +60,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
     elem_index: ElemIndexConfig {
@@ -109,6 +111,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
     elem_index: ElemIndexConfig {
@@ -160,6 +163,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     impl_op: Some("(~{} | {})"),
     nimpl_op: None,
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
     elem_index: ElemIndexConfig {
@@ -211,6 +215,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     impl_op: None,
     nimpl_op: Some("({} & ~{})"),
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
     elem_index: ElemIndexConfig {
@@ -262,6 +267,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_m_pandn({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[2] = { 0, 0 };"##,
         "*((const __m64*)zero_value)",
@@ -328,6 +334,7 @@ pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm_andnot_ps({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[4] __attribute__((aligned(16))) =
     { 0, 0, 0, 0 };"##,
@@ -402,6 +409,7 @@ pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm_andnot_si128({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[4] __attribute__((aligned(16))) =
     { 0, 0, 0, 0 };"##,
@@ -476,6 +484,7 @@ pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm256_andnot_ps({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
     0, 0, 0, 0, 0, 0, 0, 0
@@ -554,6 +563,7 @@ pub const CLANG_WRITER_INTEL_AVX2: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm256_andnot_si256({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
     0, 0, 0, 0, 0, 0, 0, 0
@@ -632,6 +642,7 @@ pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: Some("_mm512_andnot_epi64({1}, {0})"),
     not_op: None,
+    lop3_op: None,
     zero_value: (
         r##"static const unsigned int zero_value[16] __attribute__((aligned(64))) = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -722,6 +733,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: Some("vornq_u32({1}, {0})"),
     nimpl_op: None,
     not_op: Some("vmvnq_u32({})"),
+    lop3_op: None,
     zero_value: ("", "{ 0, 0, 0, 0 }"),
     one_value: ("", "{ 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }"),
     elem_index: ElemIndexConfig {
@@ -779,6 +791,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
     elem_index: ElemIndexConfig {
@@ -832,6 +845,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     impl_op: None,
     nimpl_op: None,
     not_op: Some("~{}"),
+    lop3_op: None,
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
     elem_index: ElemIndexConfig {
@@ -1430,6 +1444,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 self.writer.config.nimpl_op.unwrap(),
                 &args,
             ),
+            _ => {
+                panic!("This is not 2-argument operation");
+            }
         };
         write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
         if negs == VNegs::NegOutput {
@@ -1437,6 +1454,25 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             self.writer.out.extend(op_vec);
         }
+        self.writer.out.extend(b";\n");
+    }
+
+    fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize) {
+        let arg0 = format!("v{}", arg0);
+        let arg1 = format!("v{}", arg1);
+        let arg2 = format!("v{}", arg2);
+        let mut op_vec = vec![];
+        let args = [arg0.as_bytes(), arg1.as_bytes(), arg2.as_bytes()];
+        match op {
+            InstrOp::Lop3 => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.lop3_op.unwrap(), &args)
+            }
+            _ => {
+                panic!("This is not 3-argument operation");
+            }
+        };
+        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
+        self.writer.out.extend(op_vec);
         self.writer.out.extend(b";\n");
     }
 

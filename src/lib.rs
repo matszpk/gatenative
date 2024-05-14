@@ -190,6 +190,7 @@ pub enum InstrOp {
     Impl = 2,
     Nimpl = 3,
     Xor = 4,
+    Lop3 = 5,
 }
 
 pub const INSTR_OP_VALUE_AND: u64 = 0;
@@ -197,6 +198,7 @@ pub const INSTR_OP_VALUE_OR: u64 = 1;
 pub const INSTR_OP_VALUE_IMPL: u64 = 2;
 pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
 pub const INSTR_OP_VALUE_XOR: u64 = 4;
+pub const INSTR_OP_VALUE_LOP3: u64 = 5;
 
 pub trait FuncWriter {
     fn func_start(&mut self);
@@ -209,6 +211,8 @@ pub trait FuncWriter {
     fn gen_load(&mut self, reg: usize, input: usize);
     /// Generates operation.
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
+    /// Generates operation.
+    fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize);
     /// Generates NOT operation.
     fn gen_not(&mut self, dst_arg: usize, arg: usize);
     /// Generates Store instruction into output.
