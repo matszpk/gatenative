@@ -65,7 +65,7 @@ where
 }
 
 // trait for Circuits
-trait CircuitTrait<T> {
+pub(crate) trait CircuitTrait<T> {
     fn input_len(&self) -> T;
     fn len(&self) -> usize;
     fn gate_input_num(&self, gate: usize) -> usize;
