@@ -146,6 +146,68 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    init_local_index: None,
+    buffer_shift: false,
+    include_name: Some("stdint.h"),
+    include_name_2: Some("stddef.h"),
+    include_name_3: None,
+    type_name: "uint64_t",
+    type_bit_len: 64,
+    arg_modifier: None,
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: None,
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    lop3_op: Some(
+        r##"((~{0} & ~{1} & ~{2} & (0ULL - ({3} & 1))) |
+({0} & ~{1} & ~{2} & (0ULL - (({3} >> 1) & 1))) |
+(~{0} & {1} & ~{2} & (0ULL - (({3} >> 2) & 1))) |
+({0} & {1} & ~{2} & (0ULL - (({3} >> 3) & 1))) |
+(~{0} & ~{1} & {2} & (0ULL - (({3} >> 4) & 1))) |
+({0} & ~{1} & {2} & (0ULL - (({3} >> 5) & 1))) |
+(~{0} & {1} & {2} & (0ULL - (({3} >> 6) & 1))) |
+({0} & {1} & {2} & (0ULL - (({3} >> 7) & 1))))
+"##,
+    ),
+    zero_value: ("", "0ULL"),
+    one_value: ("", "0xffffffffffffffffULL"),
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
+            "0xaaaaaaaaaaaaaaaaULL",
+            "0xccccccccccccccccULL",
+            "0xf0f0f0f0f0f0f0f0ULL",
+            "0xff00ff00ff00ff00ULL",
+            "0xffff0000ffff0000ULL",
+            "0xffffffff00000000ULL",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: None,
+    store_op: None,
+    get_u32_op: "{ (D) = ((X) >> ((I)<<5)); }",
+    get_u32_all_op: "{ (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }",
+    set_u32_op: r##"{ uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }"##,
+    set_u32_all_op: "{ (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }",
+    func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U64,
+};
+
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
