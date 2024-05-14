@@ -937,19 +937,33 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
                     }
                 }
                 let (instr_op, vnegs) = circuit.gate_op(node_index);
-                writer.gen_op(
-                    instr_op,
-                    vnegs,
-                    usize::try_from(var_allocs[input_len + node_index]).unwrap(),
-                    usize::try_from(
-                        var_allocs[usize::try_from(circuit.gate_op_input(node_index, 0)).unwrap()],
-                    )
-                    .unwrap(),
-                    usize::try_from(
-                        var_allocs[usize::try_from(circuit.gate_op_input(node_index, 1)).unwrap()],
-                    )
-                    .unwrap(),
-                );
+                // dst and arg
+                let dst = usize::try_from(var_allocs[input_len + node_index]).unwrap();
+                let arg0 = usize::try_from(
+                    var_allocs[usize::try_from(circuit.gate_op_input(node_index, 0)).unwrap()],
+                )
+                .unwrap();
+                let arg1 = usize::try_from(
+                    var_allocs[usize::try_from(circuit.gate_op_input(node_index, 1)).unwrap()],
+                )
+                .unwrap();
+                if instr_op.arg_num() == 2 {
+                    writer.gen_op(instr_op, vnegs, dst, arg0, arg1);
+                } else if instr_op.arg_num() == 3 {
+                    writer.gen_op3(
+                        instr_op,
+                        dst,
+                        arg0,
+                        arg1,
+                        usize::try_from(
+                            var_allocs
+                                [usize::try_from(circuit.gate_op_input(node_index, 2)).unwrap()],
+                        )
+                        .unwrap(),
+                    );
+                } else {
+                    panic!("Unsupported!");
+                }
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
                     for (oi, on) in outlist {

@@ -69,9 +69,29 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
                 InstrOp::Xor => "xor",
                 InstrOp::Impl => "impl",
                 InstrOp::Nimpl => "nimpl",
+                _ => {
+                    panic!("Unsupported!");
+                }
             },
             if negs == VNegs::NegInput1 { "~" } else { "" },
             arg1
+        )
+        .unwrap();
+    }
+    fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize) {
+        writeln!(
+            self.writer.out,
+            "    v{} = {}(v{} v{} v{})",
+            dst_arg,
+            match op {
+                InstrOp::Lop3 => "lop3",
+                _ => {
+                    panic!("Unsupported!");
+                }
+            },
+            arg0,
+            arg1,
+            arg2,
         )
         .unwrap();
     }

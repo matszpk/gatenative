@@ -193,6 +193,16 @@ pub enum InstrOp {
     Lop3 = 5,
 }
 
+impl InstrOp {
+    pub fn arg_num(self) -> usize {
+        if self == InstrOp::Lop3 {
+            3
+        } else {
+            2
+        }
+    }
+}
+
 pub const INSTR_OP_VALUE_AND: u64 = 0;
 pub const INSTR_OP_VALUE_OR: u64 = 1;
 pub const INSTR_OP_VALUE_IMPL: u64 = 2;
