@@ -957,7 +957,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfi
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: Some("(lop3({}, {1}, {1}, 0x22))"),
+    nimpl_op: Some("lop3({}, {1}, {1}, 0x22)"),
     not_op: Some("~{}"),
     // definition from:
     // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
@@ -972,7 +972,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfi
     return r;
 }
 "##,
-        "(lop3({}, {}, {}, {}))",
+        "lop3({}, {}, {}, {})",
     )),
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
@@ -1025,7 +1025,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangW
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: Some("(lop3({}, {1}, {1}, 0x22))"),
+    nimpl_op: Some("lop3({}, {1}, {1}, 0x22)"),
     not_op: Some("~{}"),
     // definition from:
     // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
@@ -1040,7 +1040,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangW
     return r;
 }
 "##,
-        "(lop3({}, {}, {}, {}))",
+        "lop3({}, {}, {}, {})",
     )),
     zero_value: ("", "0"),
     one_value: ("", "0xffffffff"),
