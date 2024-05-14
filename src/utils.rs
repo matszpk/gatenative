@@ -70,6 +70,7 @@ pub(crate) trait CircuitTrait<T> {
     fn len(&self) -> usize;
     fn gate_input_num(&self, gate: usize) -> usize;
     fn gate_input(&self, gate: usize, input: usize) -> T;
+    fn gate_op_input(&self, gate: usize, input: usize) -> T;
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs);
     fn outputs(&self) -> &[(T, bool)];
 }
@@ -96,6 +97,15 @@ where
             }
         }
     }
+    fn gate_op_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.gates()[gate].i0,
+            1 => self.gates()[gate].i1,
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
     fn gate_op(&self, _gate: usize) -> (InstrOp, VNegs) {
         panic!("Unsupported");
     }
@@ -105,7 +115,7 @@ where
 }
 
 // vcircuit with swap_args - vcircuit with table of swapping arguments
-impl<T> CircuitTrait<T> for (VCircuit<T>, &[bool])
+impl<T> CircuitTrait<T> for (VCircuit<T>, Vec<bool>)
 where
     T: Clone + Copy,
 {
@@ -139,6 +149,15 @@ where
             }
         }
     }
+    fn gate_op_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.0.gates[gate].i0,
+            1 => self.0.gates[gate].i1,
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
         (
             match self.0.gates[gate].func {
@@ -160,7 +179,7 @@ where
 }
 
 // vbinopcircuit with swap_args - vcircuit with table of swapping arguments
-impl<T> CircuitTrait<T> for (VBinOpCircuit<T>, &[bool])
+impl<T> CircuitTrait<T> for (VBinOpCircuit<T>, Vec<bool>)
 where
     T: Clone + Copy,
 {
@@ -189,6 +208,15 @@ where
                     self.0.gates[gate].0.i1
                 }
             }
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.0.gates[gate].0.i0,
+            1 => self.0.gates[gate].0.i1,
             _ => {
                 panic!("No more input");
             }

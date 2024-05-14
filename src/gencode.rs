@@ -799,12 +799,11 @@ fn gen_copy_to_input<FW: FuncWriter, T>(
     }
 }
 
-fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
+fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
     writer: &mut FW,
-    circuit: &VCircuit<T>,
+    circuit: &CT,
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
-    swap_args: &[bool],
     var_allocs: &[T],
     var_num: usize,
     single_buffer: bool,
@@ -816,6 +815,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     inner_loop: bool,
     have_aggr_code: bool,
 ) where
+    CT: CircuitTrait<T>,
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
@@ -833,16 +833,15 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             || (output_vars.is_some()
                 && !store_output_vars_always
                 && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
-    let input_len_t = circuit.input_len;
+    let input_len_t = circuit.input_len();
     let input_len = usize::try_from(input_len_t).unwrap();
-    let gate_num = circuit.gates.len();
-    let gates = &circuit.gates;
+    let gate_num = circuit.len();
 
     // out_map is list of circuit nodes with list of connected circuit outputs.
     // key - node index (wire index), value - list of connected circuit outputs.
     let out_map = {
         let mut out_map = HashMap::<T, Vec<(usize, bool)>>::new();
-        for (i, (o, n)) in circuit.outputs.iter().enumerate() {
+        for (i, (o, n)) in circuit.outputs().iter().enumerate() {
             if let Some(outlist) = out_map.get_mut(o) {
                 outlist.push((i, *n));
             } else {
@@ -888,7 +887,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
     }
 
     let mut visited = vec![false; gate_num];
-    for (o, _) in circuit.outputs.iter() {
+    for (o, _) in circuit.outputs().iter() {
         if *o < input_len_t {
             continue;
         }
@@ -900,6 +899,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             let top = stack.last_mut().unwrap();
             let node_index = top.node;
             let way = top.way;
+            let gi_num = circuit.gate_input_num(node_index);
 
             if way == 0 {
                 if !visited[node_index] {
@@ -910,24 +910,16 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                 }
 
                 top.way += 1;
-                let gi0 = if swap_args[node_index] {
-                    gates[node_index].i1
-                } else {
-                    gates[node_index].i0
-                };
+                let gi0 = circuit.gate_input(node_index, 0);
                 if gi0 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi0).unwrap() - input_len,
                         way: 0,
                     });
                 }
-            } else if way == 1 {
+            } else if way < gi_num {
                 top.way += 1;
-                let gi1 = if swap_args[node_index] {
-                    gates[node_index].i0
-                } else {
-                    gates[node_index].i1
-                };
+                let gi1 = circuit.gate_input(node_index, way);
                 if gi1 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi1).unwrap() - input_len,
@@ -935,37 +927,28 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
                     });
                 }
             } else {
-                let gi0 = usize::try_from(gates[node_index].i0).unwrap();
-                let gi1 = usize::try_from(gates[node_index].i1).unwrap();
-                if gi0 < input_len && !used_inputs[gi0] {
-                    if load_input_later(input_map, pop_inputs, gi0) {
-                        writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
-                        used_inputs[gi0] = true;
-                    }
-                }
-                if gi1 < input_len && !used_inputs[gi1] {
-                    if load_input_later(input_map, pop_inputs, gi1) {
-                        writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
-                        used_inputs[gi1] = true;
-                    }
-                }
-                writer.gen_op(
-                    match gates[node_index].func {
-                        VGateFunc::And => InstrOp::And,
-                        VGateFunc::Or => InstrOp::Or,
-                        VGateFunc::Impl => InstrOp::Impl,
-                        VGateFunc::Nimpl => InstrOp::Nimpl,
-                        VGateFunc::Xor => InstrOp::Xor,
-                        _ => {
-                            panic!("Unsupported InstrOp")
+                for ii in 0..gi_num {
+                    let gi0 = usize::try_from(circuit.gate_input(node_index, ii)).unwrap();
+                    if gi0 < input_len && !used_inputs[gi0] {
+                        if load_input_later(input_map, pop_inputs, gi0) {
+                            writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
+                            used_inputs[gi0] = true;
                         }
-                    },
-                    VNegs::NoNegs,
+                    }
+                }
+                let (instr_op, vnegs) = circuit.gate_op(node_index);
+                writer.gen_op(
+                    instr_op,
+                    vnegs,
                     usize::try_from(var_allocs[input_len + node_index]).unwrap(),
-                    usize::try_from(var_allocs[usize::try_from(gates[node_index].i0).unwrap()])
-                        .unwrap(),
-                    usize::try_from(var_allocs[usize::try_from(gates[node_index].i1).unwrap()])
-                        .unwrap(),
+                    usize::try_from(
+                        var_allocs[usize::try_from(circuit.gate_op_input(node_index, 0)).unwrap()],
+                    )
+                    .unwrap(),
+                    usize::try_from(
+                        var_allocs[usize::try_from(circuit.gate_op_input(node_index, 1)).unwrap()],
+                    )
+                    .unwrap(),
                 );
                 let tnode = T::try_from(input_len + node_index).unwrap();
                 if let Some(outlist) = out_map.get(&tnode) {
@@ -1004,7 +987,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
 
     let mut out_negs = HashSet::new();
     let mut out_negs_2 = HashSet::new();
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+    for (oi, (o, on)) in circuit.outputs().iter().enumerate() {
         if *o < input_len_t {
             if single_buffer {
                 // check output mapping to not already inputs
@@ -1035,7 +1018,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
             }
         }
     }
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
+    for (oi, (o, on)) in circuit.outputs().iter().enumerate() {
         if let Some(output_vars) = output_vars {
             if let Some(out_var_entry) = output_vars.get(&oi) {
                 if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
@@ -1058,7 +1041,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         writer.gen_aggr_output_code();
         writer.gen_if_loop_end();
         if !have_aggr_code || store_output_vars_always {
-            for oi in 0..circuit.outputs.len() {
+            for oi in 0..circuit.outputs().len() {
                 // if inner loop and if (not aggr_output_code without list)
                 //   and if not excluded
                 if let Some(output_vars) = output_vars {
@@ -1074,293 +1057,7 @@ fn gen_func_code_for_ximpl<FW: FuncWriter, T>(
         gen_copy_to_input(
             writer,
             input_len,
-            circuit.outputs.len(),
-            input_placement,
-            output_placement,
-            var_allocs,
-            var_num,
-            input_map,
-            output_map,
-            output_vars.unwrap(),
-        );
-        writer.gen_end_if();
-    }
-}
-
-fn gen_func_code_for_binop<FW: FuncWriter, T>(
-    writer: &mut FW,
-    circuit: &VBinOpCircuit<T>,
-    input_placement: Option<(&[usize], usize)>,
-    output_placement: Option<(&[usize], usize)>,
-    swap_args: &[bool],
-    var_allocs: &[T],
-    var_num: usize,
-    single_buffer: bool,
-    input_map: Option<&HashMap<usize, usize>>,
-    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
-    pop_inputs: Option<&[usize]>,
-    store_output_vars_always: bool,
-    output_map: Option<&HashMap<usize, usize>>,
-    inner_loop: bool,
-    have_aggr_code: bool,
-) where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    #[derive(Clone, Copy)]
-    struct StackEntry {
-        node: usize,
-        way: usize,
-    }
-    // store_output_vars_always - aggr_to_buffer
-    let single_buffer = single_buffer
-        && !(inner_loop
-            || (output_vars.is_some()
-                && !store_output_vars_always
-                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
-    let input_len_t = circuit.input_len;
-    let input_len = usize::try_from(input_len_t).unwrap();
-    let gate_num = circuit.gates.len();
-    let gates = &circuit.gates;
-
-    // out_map is list of circuit nodes with list of connected circuit outputs.
-    // key - node index (wire index), value - list of connected circuit outputs.
-    let out_map = {
-        let mut out_map = HashMap::<T, Vec<(usize, bool)>>::new();
-        for (i, (o, n)) in circuit.outputs.iter().enumerate() {
-            if let Some(outlist) = out_map.get_mut(o) {
-                outlist.push((i, *n));
-            } else {
-                out_map.insert(*o, vec![(i, *n)]);
-            }
-        }
-        out_map
-    };
-
-    // conversion from input placement to original input bit
-    let input_orig_index_map =
-        get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
-    let mut used_inputs = vec![false; input_len];
-    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
-    let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
-    // if populated input then allocate variables as first to avoid next allocations
-    // if inner_loop allocate all variables as first to allow initialization
-    if inner_loop {
-        let pop_input_empty = pop_inputs.map(|x| x.is_empty()).unwrap_or(false);
-        if !pop_input_empty {
-            // only if pop_input map is not empty (if not all pop_input from input)
-            writer.gen_if_loop_start();
-            for i in 0..input_len {
-                if is_in_input_map(i) {
-                    writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
-                    used_inputs[i] = true;
-                }
-            }
-            writer.gen_end_if();
-        }
-    } else if let Some(pop_inputs) = pop_inputs {
-        if !pop_inputs.is_empty() {
-            for i in pop_inputs {
-                used_inputs[*i] = true;
-            }
-        } else {
-            for i in 0..input_len {
-                if is_in_input_map(i) {
-                    used_inputs[i] = true;
-                }
-            }
-        }
-    }
-
-    let mut visited = vec![false; gate_num];
-    for (o, _) in circuit.outputs.iter() {
-        if *o < input_len_t {
-            continue;
-        }
-        let oidx = usize::try_from(*o).unwrap() - input_len;
-        let mut stack = Vec::new();
-        stack.push(StackEntry { node: oidx, way: 0 });
-
-        while !stack.is_empty() {
-            let top = stack.last_mut().unwrap();
-            let node_index = top.node;
-            let way = top.way;
-
-            if way == 0 {
-                if !visited[node_index] {
-                    visited[node_index] = true;
-                } else {
-                    stack.pop();
-                    continue;
-                }
-
-                top.way += 1;
-                let gi0 = if swap_args[node_index] {
-                    gates[node_index].0.i1
-                } else {
-                    gates[node_index].0.i0
-                };
-                if gi0 >= input_len_t {
-                    stack.push(StackEntry {
-                        node: usize::try_from(gi0).unwrap() - input_len,
-                        way: 0,
-                    });
-                }
-            } else if way == 1 {
-                top.way += 1;
-                let gi1 = if swap_args[node_index] {
-                    gates[node_index].0.i0
-                } else {
-                    gates[node_index].0.i1
-                };
-                if gi1 >= input_len_t {
-                    stack.push(StackEntry {
-                        node: usize::try_from(gi1).unwrap() - input_len,
-                        way: 0,
-                    });
-                }
-            } else {
-                let gi0 = usize::try_from(gates[node_index].0.i0).unwrap();
-                let gi1 = usize::try_from(gates[node_index].0.i1).unwrap();
-                if gi0 < input_len && !used_inputs[gi0] {
-                    if load_input_later(input_map, pop_inputs, gi0) {
-                        writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
-                        used_inputs[gi0] = true;
-                    }
-                }
-                if gi1 < input_len && !used_inputs[gi1] {
-                    if load_input_later(input_map, pop_inputs, gi1) {
-                        writer.gen_load(usize::try_from(var_allocs[gi1]).unwrap(), gi1);
-                        used_inputs[gi1] = true;
-                    }
-                }
-                writer.gen_op(
-                    match gates[node_index].0.func {
-                        VGateFunc::And => InstrOp::And,
-                        VGateFunc::Or => InstrOp::Or,
-                        VGateFunc::Xor => InstrOp::Xor,
-                        _ => {
-                            panic!("Unsupported InstrOp")
-                        }
-                    },
-                    gates[node_index].1,
-                    usize::try_from(var_allocs[input_len + node_index]).unwrap(),
-                    usize::try_from(var_allocs[usize::try_from(gates[node_index].0.i0).unwrap()])
-                        .unwrap(),
-                    usize::try_from(var_allocs[usize::try_from(gates[node_index].0.i1).unwrap()])
-                        .unwrap(),
-                );
-                let tnode = T::try_from(input_len + node_index).unwrap();
-                if let Some(outlist) = out_map.get(&tnode) {
-                    for (oi, on) in outlist {
-                        if single_buffer {
-                            // check output mapping to not already inputs
-                            if let Some(out_p) = get_bit_place(output_placement, output_map, *oi) {
-                                if let Some(input_bit) = input_orig_index_map.get(&out_p) {
-                                    // if input_bit under output placement is not read
-                                    if !used_inputs[*input_bit] {
-                                        writer.gen_load(
-                                            usize::try_from(var_allocs[*input_bit]).unwrap(),
-                                            *input_bit,
-                                        );
-                                        used_inputs[*input_bit] = true;
-                                    }
-                                }
-                            }
-                        }
-                        // if output then store
-                        if is_in_output_map(*oi)
-                            && (store_output_vars_always || output_vars.is_none())
-                        {
-                            writer.gen_store(
-                                *on,
-                                *oi,
-                                usize::try_from(var_allocs[input_len + node_index]).unwrap(),
-                            );
-                        }
-                    }
-                }
-                stack.pop();
-            }
-        }
-    }
-
-    let mut out_negs = HashSet::new();
-    let mut out_negs_2 = HashSet::new();
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
-        if *o < input_len_t {
-            if single_buffer {
-                // check output mapping to not already inputs
-                if let Some(out_p) = get_bit_place(output_placement, output_map, oi) {
-                    if let Some(input_bit) = input_orig_index_map.get(&out_p) {
-                        // if input_bit under output placement is not read
-                        if !used_inputs[*input_bit] {
-                            writer.gen_load(
-                                usize::try_from(var_allocs[*input_bit]).unwrap(),
-                                *input_bit,
-                            );
-                            used_inputs[*input_bit] = true;
-                        }
-                    }
-                }
-            }
-            let ou = usize::try_from(*o).unwrap();
-            if !used_inputs[ou] {
-                writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
-                used_inputs[ou] = true;
-            }
-            if is_in_output_map(oi) && (store_output_vars_always || output_vars.is_none()) {
-                writer.gen_store(
-                    *on,
-                    oi,
-                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
-                );
-            }
-        }
-    }
-    for (oi, (o, on)) in circuit.outputs.iter().enumerate() {
-        if let Some(output_vars) = output_vars {
-            if let Some(out_var_entry) = output_vars.get(&oi) {
-                if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
-                    // only if negation neeeded and is first occurred sign.
-                    // negate output
-                    let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
-                    writer.gen_not(v, v);
-                    out_negs.insert(o);
-                }
-                if !out_negs_2.contains(&o) {
-                    if let Some(orig_var) = out_var_entry.1 {
-                        writer.gen_not(out_var_entry.0, orig_var);
-                        out_negs_2.insert(o);
-                    }
-                }
-            }
-        }
-    }
-    if inner_loop {
-        writer.gen_aggr_output_code();
-        writer.gen_if_loop_end();
-        if !have_aggr_code || store_output_vars_always {
-            for oi in 0..circuit.outputs.len() {
-                // if inner loop and if (not aggr_output_code without list)
-                //   and if not excluded
-                if let Some(output_vars) = output_vars {
-                    if let Some(out_var_entry) = output_vars.get(&oi) {
-                        if is_in_output_map(oi) {
-                            writer.gen_store(false, oi, out_var_entry.0);
-                        }
-                    }
-                }
-            }
-        }
-        writer.gen_else();
-        gen_copy_to_input(
-            writer,
-            input_len,
-            circuit.outputs.len(),
+            circuit.outputs().len(),
             input_placement,
             output_placement,
             var_allocs,
@@ -1508,12 +1205,11 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             .enumerate()
             .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
             .collect::<Vec<_>>();
-        gen_func_code_for_ximpl(
+        gen_func_code_for_circuit(
             &mut func_writer,
-            &vcircuit,
+            &(vcircuit, swap_args),
             code_config.input_placement,
             code_config.output_placement,
-            &swap_args,
             &var_allocs,
             var_num,
             code_config.single_buffer,
@@ -1538,12 +1234,11 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             .enumerate()
             .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
             .collect::<Vec<_>>();
-        gen_func_code_for_binop(
+        gen_func_code_for_circuit(
             &mut func_writer,
-            &vcircuit,
+            &(vcircuit, swap_args),
             code_config.input_placement,
             code_config.output_placement,
-            &swap_args,
             &var_allocs,
             var_num,
             code_config.single_buffer,
