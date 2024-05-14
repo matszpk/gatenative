@@ -980,7 +980,7 @@ impl OpenCLBuilderConfig {
     }
 }
 
-const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
+pub const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
     group_vec: false,
     group_len: None,
