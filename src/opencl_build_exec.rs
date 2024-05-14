@@ -950,12 +950,41 @@ pub struct OpenCLBuilderConfig {
     pub optimize_negs: bool,
     pub group_vec: bool,
     pub group_len: Option<usize>,
+    pub lop3: bool,
+}
+
+impl OpenCLBuilderConfig {
+    pub fn new() -> Self {
+        Self {
+            optimize_negs: false,
+            group_vec: false,
+            group_len: None,
+            lop3: false,
+        }
+    }
+    pub fn optimize_negs(mut self, optimize_negs: bool) -> Self {
+        self.optimize_negs = optimize_negs;
+        self
+    }
+    pub fn group_vec(mut self, group_vec: bool) -> Self {
+        self.group_vec = group_vec;
+        self
+    }
+    pub fn group_len(mut self, group_len: Option<usize>) -> Self {
+        self.group_len = group_len;
+        self
+    }
+    pub fn lop3(mut self, lop3: bool) -> Self {
+        self.lop3 = lop3;
+        self
+    }
 }
 
 const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
     group_vec: false,
     group_len: None,
+    lop3: false, // now is disabled in default config
 };
 
 pub struct OpenCLBuilder<'a> {

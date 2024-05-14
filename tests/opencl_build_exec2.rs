@@ -170,16 +170,8 @@ const ADDU16_CIRCUIT: &str = r##"    {
 
 #[test]
 fn test_opencl_builder_and_exec_inner_loop() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
     let device = Device::new(*get_all_devices(CL_DEVICE_TYPE_GPU).unwrap().get(0).unwrap());
 
     let addu16imm77_circuit = Circuit::<u32>::from_str(ADDIMMU16_77_CIRCUIT).unwrap();

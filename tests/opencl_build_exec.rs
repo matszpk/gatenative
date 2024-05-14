@@ -232,16 +232,8 @@ fn gen_mul_add_input(word_len: usize) -> (Vec<u32>, Vec<u32>) {
 
 #[test]
 fn test_opencl_builder_and_exec() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -566,16 +558,8 @@ fn test_opencl_builder_and_exec() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_arg_input() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -661,16 +645,8 @@ fn test_opencl_builder_and_exec_with_arg_input() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_elem_input() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -872,11 +848,9 @@ fn test_opencl_builder_and_exec_with_elem_input() {
 
 #[test]
 fn test_opencl_builder_and_exec_group_vec() {
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: true,
-        group_len: None,
-    };
+    let opt_neg_config = OpenCLBuilderConfig::new()
+        .optimize_negs(true)
+        .group_vec(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1067,16 +1041,8 @@ const AGGR_OUTPUT_EXPECTED: [u32; 128] = [
 
 #[test]
 fn test_opencl_builder_and_exec_with_aggr_output() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1430,16 +1396,8 @@ const COMB_AGGR_OUTPUT_CODE_WITH_HELPERS: &str = r##"{
 
 #[test]
 fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1478,16 +1436,8 @@ fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2037,16 +1987,8 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_pop_input() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2642,16 +2584,8 @@ fn test_opencl_builder_and_exec_with_pop_input() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2725,16 +2659,8 @@ fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
 
 #[test]
 fn test_opencl_builder_and_exec_with_pop_from_buffer() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -3073,16 +2999,8 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
 
 #[test]
 fn test_opencl_data_holder() {
-    let no_opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: false,
-        group_vec: false,
-        group_len: None,
-    };
-    let opt_neg_config = OpenCLBuilderConfig {
-        optimize_negs: true,
-        group_vec: false,
-        group_len: None,
-    };
+    let no_opt_neg_config = OpenCLBuilderConfig::new();
+    let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
