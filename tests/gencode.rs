@@ -1,7 +1,6 @@
 use gatenative::gencode::*;
 use gatenative::*;
 use gatesim::*;
-use int_enum::IntEnum;
 
 use std::collections::HashMap;
 
@@ -84,7 +83,7 @@ impl<'c> FuncWriter for TestFuncWriter<'c> {
             "    v{} = {}(v{} v{} v{})",
             dst_arg,
             match op {
-                InstrOp::Lop3 => "lop3",
+                InstrOp::Lop3(a) => format!("lop3_{}", a),
                 _ => {
                     panic!("Unsupported!");
                 }

@@ -1,8 +1,6 @@
 use crate::utils::{gen_var_usage, CircuitTrait, VarAllocator};
 use gatesim::*;
 
-use int_enum::IntEnum;
-
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;

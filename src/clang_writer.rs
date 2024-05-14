@@ -1464,7 +1464,9 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         let mut op_vec = vec![];
         let args = [arg0.as_bytes(), arg1.as_bytes(), arg2.as_bytes()];
         match op {
-            InstrOp::Lop3 => {
+            InstrOp::Lop3(comb) => {
+                let comb_str = comb.to_string();
+                let args = [args[0], args[1], args[2], comb_str.as_bytes()];
                 CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.lop3_op.unwrap(), &args)
             }
             _ => {

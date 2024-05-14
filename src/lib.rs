@@ -1,7 +1,5 @@
 use gatesim::Circuit;
 
-use int_enum::IntEnum;
-
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -183,19 +181,29 @@ pub fn default_pop_input_len(word_len: u32) -> usize {
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Eq, IntEnum)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum InstrOp {
-    And = 0,
-    Or = 1,
-    Impl = 2,
-    Nimpl = 3,
-    Xor = 4,
-    Lop3 = 5,
+    And,
+    Or,
+    Impl,
+    Nimpl,
+    Xor,
+    Lop3(u8),
 }
 
 impl InstrOp {
+    pub fn int_value(self) -> usize {
+        match self {
+            InstrOp::And => 0,
+            InstrOp::Or => 1,
+            InstrOp::Impl => 2,
+            InstrOp::Nimpl => 3,
+            InstrOp::Xor => 4,
+            InstrOp::Lop3(_) => 5,
+        }
+    }
     pub fn arg_num(self) -> usize {
-        if self == InstrOp::Lop3 {
+        if matches!(self, InstrOp::Lop3(_)) {
             3
         } else {
             2
