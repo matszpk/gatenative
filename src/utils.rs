@@ -104,6 +104,7 @@ where
     }
 }
 
+// vcircuit with swap_args - vcircuit with table of swapping arguments
 impl<T> CircuitTrait<T> for (VCircuit<T>, &[bool])
 where
     T: Clone + Copy,
@@ -158,6 +159,7 @@ where
     }
 }
 
+// vbinopcircuit with swap_args - vcircuit with table of swapping arguments
 impl<T> CircuitTrait<T> for (VBinOpCircuit<T>, &[bool])
 where
     T: Clone + Copy,
