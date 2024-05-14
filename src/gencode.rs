@@ -297,7 +297,7 @@ where
                 // allocate and use
                 // allocate circuit inputs now if not allocated
                 for ii in 0..gi_num {
-                    let gi0t = circuit.gate_input(node_index, ii);
+                    let gi0t = circuit.gate_op_input(node_index, ii);
                     if gi0t < input_len_t {
                         let gi0 = usize::try_from(gi0t).unwrap();
                         if load_input_later(input_map, pop_inputs, gi0) && !input_already_read[gi0]
@@ -312,7 +312,7 @@ where
                         &mut var_alloc,
                         &alloc_vars,
                         var_usage,
-                        circuit.gate_input(node_index, ii),
+                        circuit.gate_op_input(node_index, ii),
                     );
                 }
                 let tnode = T::try_from(node_index + input_len).unwrap();
@@ -928,7 +928,7 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
                 }
             } else {
                 for ii in 0..gi_num {
-                    let gi0 = usize::try_from(circuit.gate_input(node_index, ii)).unwrap();
+                    let gi0 = usize::try_from(circuit.gate_op_input(node_index, ii)).unwrap();
                     if gi0 < input_len && !used_inputs[gi0] {
                         if load_input_later(input_map, pop_inputs, gi0) {
                             writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
