@@ -29,7 +29,7 @@ pub struct CLangWriterConfig<'a> {
     impl_op: Option<&'a str>,
     nimpl_op: Option<&'a str>,
     not_op: Option<&'a str>,
-    lop3_op: Option<&'a str>,
+    lop3_op: Option<(&'a str, &'a str)>,
     zero_value: (&'a str, &'a str), // for arg_input
     one_value: (&'a str, &'a str),  // for emulate NOT and arg_input
     elem_index: ElemIndexConfig<'a>,
@@ -163,7 +163,8 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
     impl_op: None,
     nimpl_op: Some("({} & ~{})"),
     not_op: Some("~{}"),
-    lop3_op: Some(
+    lop3_op: Some((
+        "",
         r##"((~{0} & ~{1} & ~{2} & (0ULL - ({3} & 1))) |
 ({0} & ~{1} & ~{2} & (0ULL - (({3} >> 1) & 1))) |
 (~{0} & {1} & ~{2} & (0ULL - (({3} >> 2) & 1))) |
@@ -173,7 +174,7 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
 (~{0} & {1} & {2} & (0ULL - (({3} >> 6) & 1))) |
 ({0} & {1} & {2} & (0ULL - (({3} >> 7) & 1))))
 "##,
-    ),
+    )),
     zero_value: ("", "0ULL"),
     one_value: ("", "0xffffffffffffffffULL"),
     elem_index: ElemIndexConfig {
@@ -1529,7 +1530,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             InstrOp::Lop3(comb) => {
                 let comb_str = comb.to_string();
                 let args = [args[0], args[1], args[2], comb_str.as_bytes()];
-                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.lop3_op.unwrap(), &args)
+                CLangWriter::<'a>::write_op(
+                    &mut op_vec,
+                    self.writer.config.lop3_op.unwrap().1,
+                    &args,
+                )
             }
             _ => {
                 panic!("This is not 3-argument operation");
@@ -1689,6 +1694,10 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             self.config.set_u32_all_op
         )
         .unwrap();
+        if let Some((lop3_def, _)) = self.config.lop3_op {
+            self.out.extend(lop3_def.as_bytes());
+            self.out.extend(b"\n");
+        }
     }
 
     fn user_defs(&mut self, user_defs: &str) {
