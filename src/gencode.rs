@@ -1,4 +1,4 @@
-use crate::utils::{gen_var_usage, VarAllocator};
+use crate::utils::{gen_var_usage, CircuitTrait, VarAllocator};
 use gatesim::*;
 
 use int_enum::IntEnum;
@@ -150,8 +150,8 @@ fn load_input_later(
 //                   value - (id of allocated variable for this circuit output,
 //                            optional: original variable for first sign occurred in
 //                            circuit's output list)
-fn gen_var_allocs<T>(
-    circuit: &Circuit<T>,
+fn gen_var_allocs<T, CT>(
+    circuit: &CT,
     input_placement: Option<(&[usize], usize)>,
     output_placement: Option<(&[usize], usize)>,
     var_usage: &mut [T],
@@ -167,6 +167,7 @@ fn gen_var_allocs<T>(
     Option<BTreeMap<usize, (usize, Option<usize>)>>,
 )
 where
+    CT: CircuitTrait<T>,
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
@@ -186,7 +187,6 @@ where
     let input_len = usize::try_from(input_len_t).unwrap();
     let output_len = circuit.outputs().len();
     let gate_num = circuit.len();
-    let gates = circuit.gates();
     let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
     let mut var_alloc = VarAllocator::<T>::new();
     let mut output_vars = if let Some(vars) = keep_output_vars {
@@ -267,6 +267,7 @@ where
             let node_index = top.node;
             let way = top.way;
 
+            let gi_num = circuit.gate_input_num(node_index);
             if way == 0 {
                 if !visited[node_index] {
                     visited[node_index] = true;
@@ -276,16 +277,16 @@ where
                 }
 
                 top.way += 1;
-                let gi0 = gates[node_index].i0;
+                let gi0 = circuit.gate_input(node_index, 0);
                 if gi0 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi0).unwrap() - input_len,
                         way: 0,
                     });
                 }
-            } else if way == 1 {
+            } else if way < gi_num {
                 top.way += 1;
-                let gi1 = gates[node_index].i1;
+                let gi1 = circuit.gate_input(node_index, way);
                 if gi1 >= input_len_t {
                     stack.push(StackEntry {
                         node: usize::try_from(gi1).unwrap() - input_len,
@@ -295,22 +296,25 @@ where
             } else {
                 // allocate and use
                 // allocate circuit inputs now if not allocated
-                if gates[node_index].i0 < input_len_t {
-                    let gi0 = usize::try_from(gates[node_index].i0).unwrap();
-                    if load_input_later(input_map, pop_inputs, gi0) && !input_already_read[gi0] {
-                        single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i0);
-                        input_already_read[gi0] = true;
+                for ii in 0..gi_num {
+                    let gi0t = circuit.gate_input(node_index, ii);
+                    if gi0t < input_len_t {
+                        let gi0 = usize::try_from(gi0t).unwrap();
+                        if load_input_later(input_map, pop_inputs, gi0) && !input_already_read[gi0]
+                        {
+                            single_var_alloc(&mut var_alloc, &mut alloc_vars, gi0t);
+                            input_already_read[gi0] = true;
+                        }
                     }
                 }
-                if gates[node_index].i1 < input_len_t {
-                    let gi1 = usize::try_from(gates[node_index].i1).unwrap();
-                    if load_input_later(input_map, pop_inputs, gi1) && !input_already_read[gi1] {
-                        single_var_alloc(&mut var_alloc, &mut alloc_vars, gates[node_index].i1);
-                        input_already_read[gi1] = true;
-                    }
+                for ii in 0..gi_num {
+                    single_var_use(
+                        &mut var_alloc,
+                        &alloc_vars,
+                        var_usage,
+                        circuit.gate_input(node_index, ii),
+                    );
                 }
-                single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i0);
-                single_var_use(&mut var_alloc, &alloc_vars, var_usage, gates[node_index].i1);
                 let tnode = T::try_from(node_index + input_len).unwrap();
                 single_var_alloc(&mut var_alloc, &mut alloc_vars, tnode);
                 if let Some(outlist) = out_map.get(&tnode) {
