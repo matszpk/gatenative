@@ -37,6 +37,8 @@ pub mod utils;
 mod vbinopcircuit;
 mod vcircuit;
 
+pub use opencl3;
+
 #[derive(Clone, Copy)]
 pub struct CodeConfig<'a> {
     // determine place of circuit input bits in input bits and its length.
