@@ -67,11 +67,15 @@ struct SubTree {
 
 struct Lop3SubTree {
     nodes: [Option<(VLop3Gate<usize>, usize)>; 31],
+    orig_indices: [Option<usize>; 31],
 }
 
 impl SubTree {
     fn optimize(self) -> Lop3SubTree {
-        Lop3SubTree { nodes: [None; 31] }
+        Lop3SubTree {
+            nodes: [None; 31],
+            orig_indices: [None; 31],
+        }
     }
 }
 
