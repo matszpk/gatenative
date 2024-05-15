@@ -54,3 +54,28 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
     pub(crate) gates: Vec<VLop3Gate<T>>,
     pub(crate) outputs: Vec<(T, bool)>,
 }
+
+// impl<T> From<Circuit<T>> for VLop3Circuit<T>
+// where
+//     T: Clone + Copy + Ord + PartialEq + Eq,
+//     T: Default + TryFrom<usize>,
+//     <T as TryFrom<usize>>::Error: Debug,
+//     usize: TryFrom<T>,
+//     <usize as TryFrom<T>>::Error: Debug,
+// {
+//     fn from(circuit: Circuit<T>) -> Self {
+//         Self::from(to_op_and_ximpl_circuit(circuit, true))
+//     }
+// }
+// 
+// impl<T> From<VCircuit<T>> for VLop3Circuit<T>
+// where
+//     T: Clone + Copy + Ord + PartialEq + Eq,
+//     T: Default + TryFrom<usize>,
+//     <T as TryFrom<usize>>::Error: Debug,
+//     usize: TryFrom<T>,
+//     <usize as TryFrom<T>>::Error: Debug,
+// {
+//     fn from(circuit: VCircuit<T>) -> Self {
+//     }
+// }
