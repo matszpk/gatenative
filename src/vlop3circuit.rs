@@ -58,6 +58,7 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
 // IDEA:
 // Use conversion to clauses to find literal duplicates and collect into LOP3.
 // With clauses it possible to better choosing other clauses to collect into LOP3.
+// PREFERRED: Simpler: just use gates and short-trees to optimize to LOP3.
 
 // impl<T> From<Circuit<T>> for VLop3Circuit<T>
 // where
