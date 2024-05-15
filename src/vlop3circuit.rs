@@ -60,27 +60,47 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
 // With clauses it possible to better choosing other clauses to collect into LOP3.
 // PREFERRED: Simpler: just use gates and short-trees to optimize to LOP3.
 
-// impl<T> From<Circuit<T>> for VLop3Circuit<T>
-// where
-//     T: Clone + Copy + Ord + PartialEq + Eq,
-//     T: Default + TryFrom<usize>,
-//     <T as TryFrom<usize>>::Error: Debug,
-//     usize: TryFrom<T>,
-//     <usize as TryFrom<T>>::Error: Debug,
-// {
-//     fn from(circuit: Circuit<T>) -> Self {
-//         Self::from(to_op_and_ximpl_circuit(circuit, true))
-//     }
-// }
-// 
-// impl<T> From<VCircuit<T>> for VLop3Circuit<T>
-// where
-//     T: Clone + Copy + Ord + PartialEq + Eq,
-//     T: Default + TryFrom<usize>,
-//     <T as TryFrom<usize>>::Error: Debug,
-//     usize: TryFrom<T>,
-//     <usize as TryFrom<T>>::Error: Debug,
-// {
-//     fn from(circuit: VCircuit<T>) -> Self {
-//     }
-// }
+struct SubTree {
+    nodes: [Option<VGate<usize>>; 31],
+    extra_cond_node_indices: [Option<usize>; 16],
+}
+
+struct Lop3SubTree {
+    nodes: [Option<(VLop3Gate<usize>, usize)>; 31],
+}
+
+impl SubTree {
+    fn optimize(self) -> Lop3SubTree {
+        Lop3SubTree { nodes: [None; 31] }
+    }
+}
+
+impl<T> From<Circuit<T>> for VLop3Circuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn from(circuit: Circuit<T>) -> Self {
+        Self::from(VCircuit::to_op_and_ximpl_circuit(circuit, true))
+    }
+}
+
+impl<T> From<VCircuit<T>> for VLop3Circuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn from(circuit: VCircuit<T>) -> Self {
+        Self {
+            input_len: T::default(),
+            gates: vec![],
+            outputs: vec![],
+        }
+    }
+}
