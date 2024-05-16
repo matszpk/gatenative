@@ -92,6 +92,10 @@ fn get_lop3_best_variants<T>(node_variants: &[Lop3NodeVariant<T>]) -> Vec<Lop3No
     vec![]
 }
 
+fn calc_length_in_lop3s<T>(root: T, children: &[T]) -> usize {
+    0
+}
+
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
