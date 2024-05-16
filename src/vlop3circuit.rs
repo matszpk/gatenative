@@ -1,8 +1,6 @@
 use gatesim::*;
 
-use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
-use std::hash::Hash;
 
 use crate::vcircuit::*;
 use crate::VNegs::{self, *};
@@ -100,10 +98,9 @@ fn get_lop3_best_variants<T>(
     var_usage: &[(u8, bool)],
     node: T,
     boundaries: Option<&[T]>,
-    circ_outputs: &HashSet<T>,
 ) -> Vec<Lop3NodeVariant<T>>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -114,7 +111,7 @@ where
 
 fn calc_length_in_lop3s<T>(root: T, children: &[T]) -> usize
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
