@@ -88,7 +88,16 @@ struct Lop3NodeVariant<T> {
     next_variant: Option<usize>,
 }
 
-fn get_lop3_best_variants<T>(node_variants: &[Lop3NodeVariant<T>]) -> Vec<Lop3NodeVariant<T>> {
+// var_usage - table of var usage:
+// entry: (count_to_2, circuit_output):
+// count_to_2 - 0, 1 or 2 or more usages
+// circuit_output - if used by circuit's output
+
+fn get_lop3_best_variants<T>(
+    node_variants: &[Lop3NodeVariant<T>],
+    var_usage: &[(u8, bool)],
+    node: T,
+) -> Vec<Lop3NodeVariant<T>> {
     vec![]
 }
 
