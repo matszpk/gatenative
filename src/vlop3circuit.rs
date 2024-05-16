@@ -1,6 +1,8 @@
 use gatesim::*;
 
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use std::hash::Hash;
 
 use crate::vcircuit::*;
 use crate::VNegs::{self, *};
@@ -83,7 +85,7 @@ impl SubTree {
 struct Lop3NodeVariant<T> {
     orig_nodes: [T; 3],
     lop3: u8,
-    cost: usize,
+    total_cost: usize,
     shared_extra_cost: usize,
     next_variant: Option<usize>,
 }
@@ -97,11 +99,27 @@ fn get_lop3_best_variants<T>(
     node_variants: &[Lop3NodeVariant<T>],
     var_usage: &[(u8, bool)],
     node: T,
-) -> Vec<Lop3NodeVariant<T>> {
+    boundaries: Option<&[T]>,
+    circ_outputs: &HashSet<T>,
+) -> Vec<Lop3NodeVariant<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
     vec![]
 }
 
-fn calc_length_in_lop3s<T>(root: T, children: &[T]) -> usize {
+fn calc_length_in_lop3s<T>(root: T, children: &[T]) -> usize
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
     0
 }
 
