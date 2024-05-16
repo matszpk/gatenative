@@ -120,6 +120,19 @@ where
     0
 }
 
+// calculate best connection between multiple used node and farest nodes used by
+// sharing nodes by operations.
+fn calc_best_connections<T>(root: T, children: &[T]) -> Vec<Lop3NodeVariant<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    vec![]
+}
+
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
