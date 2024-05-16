@@ -79,6 +79,16 @@ impl SubTree {
     }
 }
 
+#[derive(Clone, Copy)]
+struct Lop3NodeVariant<T> {
+    orig_nodes: [T; 3],
+    lop3: u8,
+    cost: usize,
+    shared_extra_cost: usize,
+}
+
+type Lop3NodenInfo<T> = [Lop3NodeVariant<T>; 4];
+
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
