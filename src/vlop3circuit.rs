@@ -85,26 +85,11 @@ struct Lop3NodeVariant<T> {
     lop3: u8,
     cost: usize,
     shared_extra_cost: usize,
+    next_variant: Option<usize>,
 }
 
-#[derive(Clone, Copy)]
-struct Lop3NodeInfo<T> {
-    variant_num: usize,
-    variants: [Lop3NodeVariant<T>; 4],
-}
-
-impl<T> Lop3NodeInfo<T> {
-    fn len(&self) -> usize {
-        self.variant_num
-    }
-
-    fn slice(&self) -> &[Lop3NodeVariant<T>] {
-        &self.variants[0..self.variant_num]
-    }
-
-    fn slice_mut(&mut self) -> &mut [Lop3NodeVariant<T>] {
-        &mut self.variants[0..self.variant_num]
-    }
+fn get_lop3_best_variants<T>(node_variants: &[Lop3NodeVariant<T>]) -> Vec<Lop3NodeVariant<T>> {
+    vec![]
 }
 
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
