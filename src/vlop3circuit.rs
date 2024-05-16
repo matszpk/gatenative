@@ -87,7 +87,25 @@ struct Lop3NodeVariant<T> {
     shared_extra_cost: usize,
 }
 
-type Lop3NodenInfo<T> = [Lop3NodeVariant<T>; 4];
+#[derive(Clone, Copy)]
+struct Lop3NodeInfo<T> {
+    variant_num: usize,
+    variants: [Lop3NodeVariant<T>; 4],
+}
+
+impl<T> Lop3NodeInfo<T> {
+    fn len(&self) -> usize {
+        self.variant_num
+    }
+
+    fn slice(&self) -> &[Lop3NodeVariant<T>] {
+        &self.variants[0..self.variant_num]
+    }
+
+    fn slice_mut(&mut self) -> &mut [Lop3NodeVariant<T>] {
+        &mut self.variants[0..self.variant_num]
+    }
+}
 
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
 where
