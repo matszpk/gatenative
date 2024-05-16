@@ -996,6 +996,20 @@ pub struct OpenCLBuilder<'a> {
     context: Arc<Context>,
 }
 
+pub fn get_preferred_work_group_size(device: &Device) -> usize {
+    let group_len = if let Ok(vendor) = device.vendor() {
+        if vendor.starts_with("NVIDIA") {
+            // preferred for bigger kernels
+            256
+        } else {
+            device.max_work_group_size().unwrap()
+        }
+    } else {
+        device.max_work_group_size().unwrap()
+    };
+    usize::try_from(group_len).unwrap()
+}
+
 impl<'a> OpenCLBuilder<'a> {
     pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
@@ -1012,7 +1026,7 @@ impl<'a> OpenCLBuilder<'a> {
             group_vec: config.group_vec,
             group_len: config
                 .group_len
-                .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
+                .unwrap_or(get_preferred_work_group_size(&device)),
             context: Arc::new(Context::from_device(device).unwrap()),
         }
     }
@@ -1033,7 +1047,7 @@ impl<'a> OpenCLBuilder<'a> {
             group_vec: config.group_vec,
             group_len: config
                 .group_len
-                .unwrap_or(usize::try_from(device.max_work_group_size().unwrap()).unwrap()),
+                .unwrap_or(get_preferred_work_group_size(&device)),
             context,
         }
     }
@@ -1211,7 +1225,7 @@ impl<'b, 'a>
             .into_iter()
             .map(|device_id| {
                 let device = Device::new(device_id.clone());
-                let group_len = usize::try_from(device.max_work_group_size().unwrap()).unwrap();
+                let group_len = usize::try_from(get_preferred_work_group_size(&device)).unwrap();
                 let compute_units = usize::try_from(device.max_compute_units().unwrap()).unwrap();
                 compute_units * group_len
             })
