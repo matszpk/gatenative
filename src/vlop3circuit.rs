@@ -72,6 +72,26 @@ struct GraphTouchNode<T> {
     mtu_views: RefCell<Vec<Weak<MTUAreaView<T>>>>,
 }
 
+impl<T> MTUAreaView<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    // update current mtuview with data from new_mtuview
+    // fn update_current(
+    //     self: Rc<MTUAreaView<T>>,
+    //     new_mtu_view: Rc<MTUAreaView<T>>,
+    // ) -> Rc<RefCell<MTUView<T>>> {
+    //     Rc::new(RefCell::new(MTUView {
+    //         touch_nodes: vec![],
+    //         mtu_views: vec![],
+    //     }))
+    // }
+}
+
 #[derive(Clone)]
 struct MTUView<T> {
     touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
