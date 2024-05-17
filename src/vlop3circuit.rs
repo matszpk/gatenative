@@ -74,8 +74,8 @@ struct GraphTouchNode<T> {
 
 #[derive(Clone)]
 struct MTUView<T> {
-    touch_nodes: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
-    mtu_views: RefCell<Vec<Rc<MTUAreaView<T>>>>,
+    touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
+    mtu_views: Vec<Rc<MTUAreaView<T>>>,
 }
 
 impl<T> MTUView<T>
@@ -91,14 +91,15 @@ where
     }
 
     // update current mtuview with data from new_mtuview
-    // fn update_current(self: Rc<MTUView<T>>, new_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
-    //     None
-    // }
-
-    // join parent mtuview with children mtuview
-    // fn join_to_parent(self: Rc<MTUView<T>>, child_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
-    //     None
-    // }
+    fn update_current(
+        self: Rc<MTUView<T>>,
+        new_mtu_view: Rc<MTUView<T>>,
+    ) -> Rc<RefCell<MTUView<T>>> {
+        Rc::new(RefCell::new(MTUView {
+            touch_nodes: vec![],
+            mtu_views: vec![],
+        }))
+    }
 }
 
 #[derive(Clone)]
