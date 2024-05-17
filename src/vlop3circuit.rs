@@ -59,10 +59,8 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
 #[derive(Clone)]
 struct MTUAreaView<T> {
     node: T, // MTU node
-    touch_nodes: Vec<T>,
+    touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
     nodes_in_mtu: Vec<T>,
-    children: Vec<Rc<MTUAreaView<T>>>,
-    parents: Vec<Weak<MTUAreaView<T>>>,
     extra_cost: usize,
 }
 
@@ -73,6 +71,7 @@ struct GraphTouchNode<T> {
     parents: Vec<Weak<GraphTouchNode<T>>>,
     disjoint_cost: usize,
     total_cost: usize,
+    mtu_views: Vec<Rc<MTUAreaView<T>>>,
 }
 
 #[derive(Clone)]
@@ -97,7 +96,7 @@ where
     // fn update_current(self: Rc<MTUView<T>>, new_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
     //     None
     // }
-    
+
     // join parent mtuview with children mtuview
     // fn join_to_parent(self: Rc<MTUView<T>>, child_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
     //     None
@@ -106,7 +105,7 @@ where
 
 #[derive(Clone)]
 struct LOP3Node<T> {
-    node: T, // node in original circuit graph
+    node: T,                    // node in original circuit graph
     mtu_object: Rc<MTUView<T>>, // by default it can be empty MTUView
 }
 
