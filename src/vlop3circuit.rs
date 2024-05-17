@@ -81,6 +81,29 @@ struct MTUView<T> {
     mtu_views: Vec<Rc<MTUAreaView<T>>>,
 }
 
+impl<T> MTUView<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn new(vcircuit: &VCircuit<T>, mtu_view: Rc<MTUView<T>>, node: T) -> Option<Rc<MTUView<T>>> {
+        None
+    }
+
+    // update current mtuview with data from new_mtuview
+    // fn update_current(self: Rc<MTUView<T>>, new_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
+    //     None
+    // }
+    
+    // join parent mtuview with children mtuview
+    // fn join_to_parent(self: Rc<MTUView<T>>, child_mtu_view: Rc<MTUView<T>>) -> Rc<MTUView<T>> {
+    //     None
+    // }
+}
+
 #[derive(Clone)]
 struct LOP3Node<T> {
     node: T, // node in original circuit graph
