@@ -1,6 +1,7 @@
 use gatesim::*;
 
 use std::fmt::Debug;
+use std::rc::{Rc, Weak};
 
 use crate::vcircuit::*;
 use crate::VNegs::{self, *};
@@ -55,82 +56,35 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
     pub(crate) outputs: Vec<(T, bool)>,
 }
 
-// IDEA:
-// Use conversion to clauses to find literal duplicates and collect into LOP3.
-// With clauses it possible to better choosing other clauses to collect into LOP3.
-// PREFERRED: Simpler: just use gates and short-trees to optimize to LOP3.
-
-struct SubTree {
-    nodes: [Option<VGate<usize>>; 31],
-    extra_cond_node_indices: [Option<usize>; 16],
+#[derive(Clone)]
+struct MTUAreaView<T> {
+    node: T, // MTU node
+    touch_nodes: Vec<T>,
+    nodes_in_mtu: Vec<T>,
+    children: Vec<Rc<MTUAreaView<T>>>,
+    parents: Vec<Weak<MTUAreaView<T>>>,
+    extra_cost: usize,
 }
 
-struct Lop3SubTree {
-    nodes: [Option<(VLop3Gate<usize>, usize)>; 31],
-    orig_indices: [Option<usize>; 31],
-}
-
-impl SubTree {
-    fn optimize(self) -> Lop3SubTree {
-        Lop3SubTree {
-            nodes: [None; 31],
-            orig_indices: [None; 31],
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct Lop3NodeVariant<T> {
-    orig_nodes: [T; 3],
-    lop3: u8,
+#[derive(Clone)]
+struct GraphTouchNode<T> {
+    node: T, // touch node
+    children: Vec<Rc<GraphTouchNode<T>>>,
+    parents: Vec<Weak<GraphTouchNode<T>>>,
+    disjoint_cost: usize,
     total_cost: usize,
-    shared_extra_cost: usize,
-    next_variant: Option<usize>,
 }
 
-// var_usage - table of var usage:
-// entry: (count_to_2, circuit_output):
-// count_to_2 - 0, 1 or 2 or more usages
-// circuit_output - if used by circuit's output
-
-fn get_lop3_best_variants<T>(
-    node_variants: &[Lop3NodeVariant<T>],
-    var_usage: &[(u8, bool)],
-    node: T,
-    boundaries: Option<&[T]>,
-) -> Vec<Lop3NodeVariant<T>>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    vec![]
+#[derive(Clone)]
+struct MTUView<T> {
+    touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
+    mtu_views: Vec<Rc<MTUAreaView<T>>>,
 }
 
-fn calc_length_in_lop3s<T>(root: T, children: &[T]) -> usize
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    0
-}
-
-// calculate best connection between multiple used node and farest nodes used by
-// sharing nodes by operations.
-fn calc_best_connections<T>(root: T, children: &[T]) -> Vec<Lop3NodeVariant<T>>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    vec![]
+#[derive(Clone)]
+struct LOP3Node<T> {
+    node: T, // node in original circuit graph
+    mtu_object: Rc<MTUView<T>>,
 }
 
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
