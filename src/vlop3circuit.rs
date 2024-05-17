@@ -138,7 +138,12 @@ struct LOP3Node<T> {
     args: [T; 3],                     // arguments, also leaves of LOP3 subtree
     boundary: LOP3Boundary<T>,        // LOP3 subtree boundary
     mtu_view: Option<Rc<MTUView<T>>>, // by default it can be empty MTUView
+    mtu_cost: usize,
 }
+
+// fn find_best_lop3node<T>(lop3nodes: [&LOP3Node<T>], wire_index: T) -> LOP3Node {
+//     LOP
+// }
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
