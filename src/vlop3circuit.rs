@@ -107,6 +107,9 @@ where
 #[derive(Clone)]
 struct LOP3Node<T> {
     node: T,                  // node in original circuit graph
+    args: [T; 3],             // arguments, also leaves of LOP3 subtree
+    boundaries: [T; 8],       // boundaries are parents of arguments
+    boundary_len: u8,         // boundary length
     mtu_view: Rc<MTUView<T>>, // by default it can be empty MTUView
 }
 
