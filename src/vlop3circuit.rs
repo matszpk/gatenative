@@ -105,11 +105,18 @@ where
 }
 
 #[derive(Clone)]
+struct LOP3Boundary {
+    boundary_levels: [u8; 8], // boundary levels
+    // boundaries from left to right (first to last argument)
+    boundaries: [T; 8], // boundaries are parents of arguments
+    boundary_len: u8,   // boundary length
+}
+
+#[derive(Clone)]
 struct LOP3Node<T> {
     node: T,                          // node in original circuit graph
     args: [T; 3],                     // arguments, also leaves of LOP3 subtree
-    boundaries: [T; 8],               // boundaries are parents of arguments
-    boundary_len: u8,                 // boundary length
+    boundary: LOP3Boundary,           // LOP3 subtree boundary
     mtu_view: Option<Rc<MTUView<T>>>, // by default it can be empty MTUView
 }
 
