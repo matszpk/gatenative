@@ -166,12 +166,12 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
     lop3_op: Some((
         r##"static inline uint64_t lop3_test(uint64_t a, uint64_t b, uint64_t c, uint8_t comb) {
     return ((~a & ~b & ~c & (0ULL - (((uint64_t)comb) & 1))) |
-        (a & ~b & ~c & (0ULL - ((((uint64_t)comb) >> 1) & 1))) |
+        (~a & ~b & c & (0ULL - ((((uint64_t)comb) >> 1) & 1))) |
         (~a & b & ~c & (0ULL - ((((uint64_t)comb) >> 2) & 1))) |
-        (a & b & ~c & (0ULL - ((((uint64_t)comb) >> 3) & 1))) |
-        (~a & ~b & c & (0ULL - ((((uint64_t)comb) >> 4) & 1))) |
+        (~a & b & c & (0ULL - ((((uint64_t)comb) >> 3) & 1))) |
+        (a & ~b & ~c & (0ULL - ((((uint64_t)comb) >> 4) & 1))) |
         (a & ~b & c & (0ULL - ((((uint64_t)comb) >> 5) & 1))) |
-        (~a & b & c & (0ULL - ((((uint64_t)comb) >> 6) & 1))) |
+        (a & b & ~c & (0ULL - ((((uint64_t)comb) >> 6) & 1))) |
         (a & b & c & (0ULL - ((((uint64_t)comb) >> 7) & 1))));
 }"##,
         "lop3_test({}, {}, {}, {})",
