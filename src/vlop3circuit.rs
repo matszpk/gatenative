@@ -1,5 +1,6 @@
 use gatesim::*;
 
+use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use std::rc::{Rc, Weak};
 
@@ -59,25 +60,25 @@ pub(crate) struct VLop3Circuit<T: Clone + Copy> {
 #[derive(Clone)]
 struct MTUAreaView<T> {
     node: T, // MTU node
-    touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
-    nodes_in_mtu: Vec<T>,
-    extra_cost: usize,
+    touch_nodes: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
+    nodes_in_mtu: RefCell<Vec<T>>,
+    extra_cost: Cell<usize>,
 }
 
 #[derive(Clone)]
 struct GraphTouchNode<T> {
     node: T, // touch node
-    children: Vec<Rc<GraphTouchNode<T>>>,
-    parents: Vec<Weak<GraphTouchNode<T>>>,
-    disjoint_cost: usize,
-    total_cost: usize,
-    mtu_views: Vec<Rc<MTUAreaView<T>>>,
+    children: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
+    parents: RefCell<Vec<Weak<GraphTouchNode<T>>>>,
+    disjoint_cost: Cell<usize>,
+    total_cost: Cell<usize>,
+    mtu_views: RefCell<Vec<Rc<MTUAreaView<T>>>>,
 }
 
 #[derive(Clone)]
 struct MTUView<T> {
-    touch_nodes: Vec<Rc<GraphTouchNode<T>>>,
-    mtu_views: Vec<Rc<MTUAreaView<T>>>,
+    touch_nodes: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
+    mtu_views: RefCell<Vec<Rc<MTUAreaView<T>>>>,
 }
 
 impl<T> MTUView<T>
