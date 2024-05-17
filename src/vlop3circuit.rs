@@ -84,7 +84,7 @@ struct MTUView<T> {
 #[derive(Clone)]
 struct LOP3Node<T> {
     node: T, // node in original circuit graph
-    mtu_object: Rc<MTUView<T>>,
+    mtu_object: Rc<MTUView<T>>, // by default it can be empty MTUView
 }
 
 impl<T> From<Circuit<T>> for VLop3Circuit<T>
