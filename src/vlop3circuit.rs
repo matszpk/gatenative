@@ -2,8 +2,10 @@ use gatesim::*;
 
 use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
+use std::hash::Hash;
 use std::rc::{Rc, Weak};
 
+use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 use crate::VNegs::{self, *};
 
@@ -147,26 +149,29 @@ struct LOP3Node<T> {
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
     fn from(circuit: Circuit<T>) -> Self {
-        Self::from(VCircuit::to_op_and_ximpl_circuit(circuit, true))
+        // for especially NVIDIA LOP3 - enabled by default
+        let mut vcircuit = VBinOpCircuit::from(circuit.clone());
+        vcircuit.optimize_negs();
+        Self::from(vcircuit)
     }
 }
 
-impl<T> From<VCircuit<T>> for VLOP3Circuit<T>
+impl<T> From<VBinOpCircuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    fn from(circuit: VCircuit<T>) -> Self {
+    fn from(circuit: VBinOpCircuit<T>) -> Self {
         Self {
             input_len: T::default(),
             gates: vec![],
