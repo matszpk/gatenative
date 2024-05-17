@@ -60,7 +60,7 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 #[derive(Clone)]
 struct MTUAreaView<T> {
     node: T, // MTU node
-    touch_nodes: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
+    touch_nodes: RefCell<Vec<Weak<GraphTouchNode<T>>>>,
     nodes_in_mtu: RefCell<Vec<T>>,
     extra_cost: Cell<usize>,
 }
@@ -69,7 +69,7 @@ struct MTUAreaView<T> {
 struct GraphTouchNode<T> {
     node: T, // touch node
     mtu_cost: Cell<usize>,
-    mtu_views: RefCell<Vec<Rc<MTUAreaView<T>>>>,
+    mtu_views: RefCell<Vec<Weak<MTUAreaView<T>>>>,
 }
 
 #[derive(Clone)]
