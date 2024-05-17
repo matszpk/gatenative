@@ -14,25 +14,10 @@ use crate::VNegs::{self, *};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum VLOP3GateFunc {
-    And,
-    Or,
-    Nimpl,
-    Xor,
+    And(VNegs),
+    Or(VNegs),
+    Xor(VNegs),
     LOP3(u8),
-}
-
-impl TryFrom<VGateFunc> for VLOP3GateFunc {
-    type Error = String;
-    #[inline]
-    fn try_from(gf: VGateFunc) -> Result<Self, Self::Error> {
-        match gf {
-            VGateFunc::And => Ok(VLOP3GateFunc::And),
-            VGateFunc::Or => Ok(VLOP3GateFunc::Or),
-            VGateFunc::Nimpl => Ok(VLOP3GateFunc::Nimpl),
-            VGateFunc::Xor => Ok(VLOP3GateFunc::Xor),
-            _ => Err("Unsupported!".to_string()),
-        }
-    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -41,18 +26,6 @@ pub(crate) struct VLOP3Gate<T: Clone + Copy> {
     pub(crate) i1: T,
     pub(crate) i2: T,
     pub(crate) func: VLOP3GateFunc,
-}
-
-impl<T: Clone + Copy + Default> TryFrom<VGate<T>> for VLOP3Gate<T> {
-    type Error = String;
-    fn try_from(g: VGate<T>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            i0: g.i0,
-            i1: g.i1,
-            i2: T::default(),
-            func: VLOP3GateFunc::try_from(g.func)?,
-        })
-    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
