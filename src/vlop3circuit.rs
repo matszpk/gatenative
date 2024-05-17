@@ -68,10 +68,7 @@ struct MTUAreaView<T> {
 #[derive(Clone)]
 struct GraphTouchNode<T> {
     node: T, // touch node
-    children: RefCell<Vec<Rc<GraphTouchNode<T>>>>,
-    parents: RefCell<Vec<Weak<GraphTouchNode<T>>>>,
-    disjoint_cost: Cell<usize>,
-    total_cost: Cell<usize>,
+    mtu_cost: Cell<usize>,
     mtu_views: RefCell<Vec<Rc<MTUAreaView<T>>>>,
 }
 
