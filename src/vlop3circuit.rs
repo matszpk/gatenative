@@ -11,6 +11,7 @@ use crate::VNegs::{self, *};
 
 // Next idea: after conversion to lop3 with binop: reduce negations by using connection
 // between lop3 and binop - by moving negation into lop3.
+// Idea: always convert to LOP3 two gates. Do not convert to LOP3 single gate even with negation.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum VLOP3GateFunc {
