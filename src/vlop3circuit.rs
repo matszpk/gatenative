@@ -106,7 +106,7 @@ where
 
 #[derive(Clone)]
 struct LOP3Node<T> {
-    node: T,                    // node in original circuit graph
+    node: T,                  // node in original circuit graph
     mtu_view: Rc<MTUView<T>>, // by default it can be empty MTUView
 }
 
