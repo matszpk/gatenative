@@ -103,6 +103,9 @@ where
     }
 }
 
+// instead LOP3Boundary use path penetration form:
+// entry: 0 - nothing, 1 - go left, 2 - go right, 3 - go left and right
+// and encode in bits to save memory.
 #[derive(Clone)]
 struct LOP3Boundary<T> {
     boundary_levels: [u8; 8], // boundary levels
