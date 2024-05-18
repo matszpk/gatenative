@@ -126,7 +126,7 @@ impl PathMove {
     }
     #[inline]
     fn go_first(self) -> Self {
-        if self == Self::GoSecond {
+        if self == Self::GoSecond || self == Self::GoBoth {
             Self::GoBoth
         } else {
             Self::GoFirst
@@ -134,7 +134,7 @@ impl PathMove {
     }
     #[inline]
     fn go_second(self) -> Self {
-        if self == Self::GoFirst {
+        if self == Self::GoFirst || self == Self::GoBoth {
             Self::GoBoth
         } else {
             Self::GoSecond
