@@ -184,6 +184,24 @@ where
         tree
     };
     // algorithm: simple batch of combinations with difference
+    #[derive(Clone)]
+    enum CombBatchEntry {
+        // fields: choice in level 1, choice in level 2, choice in level 3,
+        //         bitmask represents indices that will be enabled or disabled in
+        //         further combinations
+        Combs(u8, u8, u8, u8),
+    };
+    use CombBatchEntry::*;
+    const COMB_BATCH: [CombBatchEntry; 4] = [
+        // (R)
+        Combs(0, 0, 0, 0b0000110),
+        // (R,C0),
+        Combs(0, 1, 0, 0b0011000),
+        // (R,C1),
+        Combs(0, 2, 0, 0b1100000),
+        // (R,C0,C1),
+        Combs(0, 1, 2, 0b1111000),
+    ];
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
