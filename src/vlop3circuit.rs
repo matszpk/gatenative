@@ -146,14 +146,38 @@ struct LOP3Node<T> {
 }
 
 fn find_best_lop3node<T>(
-    input_len: usize,
+    circuit: VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     wire_index: T,
     preferred_leaves: Option<&[T]>,
 ) -> LOP3Node<T>
 where
-    T: Clone + Copy + Default,
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
 {
+    let tree = {
+        let input_len_t = circuit.input_len;
+        let input_len = usize::try_from(input_len_t).unwrap();
+        let gates = &circuit.gates;
+        let mut tree = [T::default(); 15];
+        let mut old_level_start = 0;
+        let mut level_start = 1;
+        tree[0] = wire_index;
+        for level in 1..4 {
+            for pos in 0..level_start - old_level_start {
+                if tree[old_level_start + pos] >= input_len_t {
+                    let gi = usize::try_from(tree[old_level_start + pos]).unwrap();
+                    let g = gates[gi - input_len].0;
+                    tree[level_start + (pos << 1)] = g.i0;
+                    tree[level_start + (pos << 1) + 1] = g.i1;
+                }
+            }
+        }
+        tree
+    };
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
