@@ -110,9 +110,36 @@ where
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum PathMove {
     Nothing,
-    ForwardArg0,
-    ForwardArg1,
-    ForwardBoth,
+    GoFirst,
+    GoSecond,
+    GoBoth,
+}
+
+impl PathMove {
+    #[inline]
+    fn is_first(self) -> bool {
+        self == Self::GoFirst || self == Self::GoBoth
+    }
+    #[inline]
+    fn is_second(self) -> bool {
+        self == Self::GoSecond || self == Self::GoBoth
+    }
+    #[inline]
+    fn go_first(self) -> Self {
+        if self == Self::GoSecond {
+            Self::GoBoth
+        } else {
+            Self::GoFirst
+        }
+    }
+    #[inline]
+    fn go_second(self) -> Self {
+        if self == Self::GoFirst {
+            Self::GoBoth
+        } else {
+            Self::GoSecond
+        }
+    }
 }
 
 // tree moves organization:
