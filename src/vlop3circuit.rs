@@ -184,23 +184,50 @@ where
         tree
     };
     // algorithm: simple batch of combinations with difference
-    #[derive(Clone)]
+    #[derive(Clone, Copy)]
     enum CombBatchEntry {
-        // fields: choice in level 1, choice in level 2, choice in level 3,
-        //         bitmask represents indices that will be enabled or disabled in
-        //         further combinations
-        Combs(u8, u8, u8, u8),
-    };
+        // fields: node to operate, to execute test
+        AddNode(u8, bool),
+        RemoveNode(u8, bool),
+    }
     use CombBatchEntry::*;
-    const COMB_BATCH: [CombBatchEntry; 4] = [
-        // (R)
-        Combs(0, 0, 0, 0b0000110),
-        // (R,C0),
-        Combs(0, 1, 0, 0b0011000),
-        // (R,C1),
-        Combs(0, 2, 0, 0b1100000),
-        // (R,C0,C1),
-        Combs(0, 1, 2, 0b1111000),
+    const COMB_BATCH: [CombBatchEntry; 31] = [
+        AddNode(0, false), // (R) *
+        AddNode(1, true),  // (R,C0)
+        //
+        AddNode(3, true),     // (R,C0,C00)
+        AddNode(4, true),     // (R,C0,C00,C01)
+        RemoveNode(3, true),  // (R,C0,C01)
+        RemoveNode(4, false), // (R,C0) *
+        //
+        AddNode(2, true), // (R,C0,C1)
+        //
+        AddNode(3, true),     // (R,C0,C1,C00)
+        AddNode(4, true),     // (R,C0,C1,C00,C01)
+        RemoveNode(3, true),  // (R,C0,C1,C01)
+        RemoveNode(3, false), // (R,C0,C1) *
+        AddNode(5, true),     // (R,C0,C1,C10)
+        AddNode(3, true),     // (R,C0,C1,C00,C10)
+        AddNode(4, true),     // (R,C0,C1,C00,C01,C10)
+        RemoveNode(3, true),  // (R,C0,C1,C01,C10)
+        RemoveNode(3, false), // (R,C0,C1,C10) *
+        AddNode(6, true),     // (R,C0,C1,C10,C11)
+        AddNode(3, true),     // (R,C0,C1,C00,C10,C11)
+        AddNode(4, true),     // (R,C0,C1,C00,C01,C10,C11)
+        RemoveNode(3, true),  // (R,C0,C1,C01,C10,C11)
+        RemoveNode(3, false), // (R,C0,C1,C10,C11) *
+        RemoveNode(5, true),  // (R,C0,C1,C11)
+        AddNode(3, true),     // (R,C0,C1,C00,C11)
+        AddNode(4, true),     // (R,C0,C1,C00,C01,C11)
+        RemoveNode(3, true),  // (R,C0,C1,C01,C11)
+        RemoveNode(3, false), // (R,C0,C1,C11) *
+        RemoveNode(6, false), // (R,C0,C1) *
+        //
+        RemoveNode(1, true), // (R,C1)
+        //
+        AddNode(5, true),    // (R,C1,C10)
+        AddNode(6, true),    // (R,C1,C10,C11)
+        RemoveNode(5, true), // (R,C1,C11)
     ];
     LOP3Node {
         node: wire_index,
