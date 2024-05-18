@@ -183,6 +183,7 @@ where
         }
         tree
     };
+    // algorithm: brute force with cutting by number of unique leaves (if l>3 then cut way).
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
