@@ -131,12 +131,10 @@ impl PathMove {
 // tree moves organization:
 //       /--------0-------\
 //   /---1---\       /----2---\
-// /-3-\   /-4-\   /-5-\    /-6-\
-// 7   8   9   10  11  12  13   14
-// 0 - root, 1 - first level start, 3 - second level start, 7 - third level start
-// 15 - fourth level start
-// leaves are LOP3 inputs.
-type LOP3SubTreePaths = [PathMove; 31];
+//   3       4       5        6
+// 0 - root, 1 - first level start, 3 - second level start
+// leaves are deepest LOP3 gates.
+type LOP3SubTreePaths = [PathMove; 7];
 
 #[derive(Clone)]
 struct LOP3Node<T> {
@@ -165,11 +163,11 @@ where
         let input_len_t = circuit.input_len;
         let input_len = usize::try_from(input_len_t).unwrap();
         let gates = &circuit.gates;
-        let mut tree = [None; 15];
+        let mut tree = [None; 7];
         let mut old_level_start = 0;
         let mut level_start = 1;
         tree[0] = Some(wire_index);
-        for level in 1..5 {
+        for level in 1..3 {
             for pos in 0..level_start - old_level_start {
                 if let Some(t) = tree[old_level_start + pos] {
                     if t >= input_len_t {
@@ -180,14 +178,16 @@ where
                     }
                 }
             }
+            old_level_start = level_start;
+            level_start += level_start + 1;
         }
         tree
     };
-    // algorithm: brute force with cutting by number of unique leaves (if l>3 then cut way).
+    // algorithm: simple batch of combinations with difference
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
-        tree_paths: [PathMove(0); 31],
+        tree_paths: [PathMove(0); 7],
         mtu_view: None,
         mtu_cost: 0,
     }
