@@ -158,11 +158,11 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    let gates = &circuit.gates;
     // generate tree to explore
     let tree = {
         let input_len_t = circuit.input_len;
         let input_len = usize::try_from(input_len_t).unwrap();
-        let gates = &circuit.gates;
         let mut tree = [None; 7];
         let mut old_level_start = 0;
         let mut level_start = 1;
@@ -229,6 +229,48 @@ where
         AddNode(6, true),    // (R,C1,C10,C11)
         RemoveNode(5, true), // (R,C1,C11)
     ];
+    let mut leaves: Vec<T> = vec![];
+    for instr in COMB_BATCH {
+        let ex = match instr {
+            AddNode(i, ex) => {
+                if let Some(tt) = tree[i as usize] {
+                    let t = usize::try_from(tt).unwrap();
+                    leaves.retain(|x| *x != tt);
+                    let g = gates[t].0;
+                    let a0 = g.i0;
+                    let a1 = g.i1;
+                    if leaves.iter().all(|x| *x != a0) {
+                        leaves.push(a0);
+                    }
+                    if leaves.iter().all(|x| *x != a1) {
+                        leaves.push(a1);
+                    }
+                    ex
+                } else {
+                    false
+                }
+            }
+            RemoveNode(i, ex) => {
+                if let Some(tt) = tree[i as usize] {
+                    let t = usize::try_from(tt).unwrap();
+                    let g = gates[t].0;
+                    let a0 = g.i0;
+                    let a1 = g.i1;
+                    leaves.retain(|x| *x != a0);
+                    leaves.retain(|x| *x != a1);
+                    leaves.push(tt);
+                    ex
+                } else {
+                    false
+                }
+            }
+        };
+        if ex {
+            if leaves.len() <= 3 {
+                // register case
+            }
+        }
+    }
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
