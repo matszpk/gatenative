@@ -163,6 +163,10 @@ where
     }
 }
 
+fn mtu_area_view_calc_costs<T>(mtuaview: &MTUAreaView<T>) -> (Vec<(T, LOP3SubTreePaths)>, usize) {
+    (vec![], 0)
+}
+
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
