@@ -106,19 +106,28 @@ where
 // instead LOP3Boundary use path penetration form:
 // entry: 0 - nothing, 1 - go left, 2 - go right, 3 - go left and right
 // and encode in bits to save memory.
-#[derive(Clone)]
-struct LOP3Boundary<T> {
-    boundary_levels: [u8; 8], // boundary levels
-    // boundaries from left to right (first to last argument)
-    boundaries: [T; 8], // boundaries are parents of arguments
-    boundary_len: u8,   // boundary length
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PathMove {
+    Nothing,
+    ForwardArg0,
+    ForwardArg1,
+    ForwardBoth,
 }
+
+// tree moves organization:
+//       /--------0-------\
+//   /---1---\       /----2---\
+// /-3-\   /-4-\   /-5-\    /-6-\
+// 7   8   9   10  11  12  13   14
+// 0 - root, 1 - first level start, 3 - second level start, 7 - third level start
+type LOP3SubTreePaths = [PathMove; 15];
 
 #[derive(Clone)]
 struct LOP3Node<T> {
     node: T,                          // node in original circuit graph
     args: [T; 3],                     // arguments, also leaves of LOP3 subtree
-    boundary: LOP3Boundary<T>,        // LOP3 subtree boundary
+    tree_paths: LOP3SubTreePaths,     // LOP3 subtree paths
     mtu_view: Option<Rc<MTUView<T>>>, // by default it can be empty MTUView
     mtu_cost: usize,
 }
