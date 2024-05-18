@@ -145,7 +145,7 @@ struct LOP3Node<T> {
     mtu_cost: usize,
 }
 
-// fn find_best_lop3node<T>(lop3nodes: [&LOP3Node<T>], wire_index: T) -> LOP3Node {
+// fn find_best_lop3node<T>(input_len: usize, lop3nodes: [&LOP3Node<T>], wire_index: T) -> LOP3Node {
 //     LOP
 // }
 
