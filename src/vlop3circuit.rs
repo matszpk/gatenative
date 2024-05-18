@@ -106,39 +106,25 @@ where
 // instead LOP3Boundary use path penetration form:
 // entry: 0 - nothing, 1 - go left, 2 - go right, 3 - go left and right
 // and encode in bits to save memory.
-#[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum PathMove {
-    Nothing,
-    GoFirst,
-    GoSecond,
-    GoBoth,
-}
+struct PathMove(u8);
 
 impl PathMove {
     #[inline]
     fn is_first(self) -> bool {
-        self == Self::GoFirst || self == Self::GoBoth
+        (self.0 & 1) != 0
     }
     #[inline]
     fn is_second(self) -> bool {
-        self == Self::GoSecond || self == Self::GoBoth
+        (self.0 & 2) != 0
     }
     #[inline]
     fn go_first(self) -> Self {
-        if self == Self::GoSecond || self == Self::GoBoth {
-            Self::GoBoth
-        } else {
-            Self::GoFirst
-        }
+        Self(self.0 | 1)
     }
     #[inline]
     fn go_second(self) -> Self {
-        if self == Self::GoFirst || self == Self::GoBoth {
-            Self::GoBoth
-        } else {
-            Self::GoSecond
-        }
+        Self(self.0 | 2)
     }
 }
 
