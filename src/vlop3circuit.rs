@@ -134,7 +134,9 @@ impl PathMove {
 // /-3-\   /-4-\   /-5-\    /-6-\
 // 7   8   9   10  11  12  13   14
 // 0 - root, 1 - first level start, 3 - second level start, 7 - third level start
-type LOP3SubTreePaths = [PathMove; 15];
+// 15 - fourth level start
+// leaves are LOP3 inputs.
+type LOP3SubTreePaths = [PathMove; 31];
 
 #[derive(Clone)]
 struct LOP3Node<T> {
@@ -158,21 +160,24 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    // generate tree to explore
     let tree = {
         let input_len_t = circuit.input_len;
         let input_len = usize::try_from(input_len_t).unwrap();
         let gates = &circuit.gates;
-        let mut tree = [T::default(); 15];
+        let mut tree = [None; 15];
         let mut old_level_start = 0;
         let mut level_start = 1;
-        tree[0] = wire_index;
-        for level in 1..4 {
+        tree[0] = Some(wire_index);
+        for level in 1..5 {
             for pos in 0..level_start - old_level_start {
-                if tree[old_level_start + pos] >= input_len_t {
-                    let gi = usize::try_from(tree[old_level_start + pos]).unwrap();
-                    let g = gates[gi - input_len].0;
-                    tree[level_start + (pos << 1)] = g.i0;
-                    tree[level_start + (pos << 1) + 1] = g.i1;
+                if let Some(t) = tree[old_level_start + pos] {
+                    if t >= input_len_t {
+                        let gi = usize::try_from(t).unwrap();
+                        let g = gates[gi - input_len].0;
+                        tree[level_start + (pos << 1)] = Some(g.i0);
+                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                    }
                 }
             }
         }
@@ -181,7 +186,7 @@ where
     LOP3Node {
         node: wire_index,
         args: [T::default(); 3],
-        tree_paths: [PathMove(0); 15],
+        tree_paths: [PathMove(0); 31],
         mtu_view: None,
         mtu_cost: 0,
     }
