@@ -145,9 +145,23 @@ struct LOP3Node<T> {
     mtu_cost: usize,
 }
 
-// fn find_best_lop3node<T>(input_len: usize, lop3nodes: [&LOP3Node<T>], wire_index: T) -> LOP3Node {
-//     LOP
-// }
+fn find_best_lop3node<T>(
+    input_len: usize,
+    lop3nodes: &[LOP3Node<T>],
+    wire_index: T,
+    preferred_leaves: Option<&[T]>,
+) -> LOP3Node<T>
+where
+    T: Clone + Copy + Default,
+{
+    LOP3Node {
+        node: wire_index,
+        args: [T::default(); 3],
+        tree_paths: [PathMove(0); 15],
+        mtu_view: None,
+        mtu_cost: 0,
+    }
+}
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
