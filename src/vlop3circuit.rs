@@ -37,9 +37,7 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 
 #[derive(Clone)]
 struct MTUAreaView<T> {
-    node: T, // MTU node
-    touch_nodes: Vec<T>,
-    nodes_in_mtu: Vec<T>,
+    nodes: Vec<T>,
     extra_cost: usize,
 }
 
@@ -52,45 +50,9 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     // and improve - fix other TouchNodes to make better result if possible
+    fn add_node(&mut self, wire_index: T) {}
 
-    // update current mtuview with data from new_mtuview
-    // fn update_current(
-    //     self: Rc<MTUAreaView<T>>,
-    //     new_mtu_view: Rc<MTUAreaView<T>>,
-    // ) -> Rc<RefCell<MTUView<T>>> {
-    //     Rc::new(RefCell::new(MTUView {
-    //         touch_nodes: vec![],
-    //         mtu_views: vec![],
-    //     }))
-    // }
-
-    // fn get_lop3nodes(&self) -> Vec<(T, LOP3Node)> {
-    // }
-}
-
-#[derive(Clone)]
-struct MTUView<T> {
-    mtu_area_views: Vec<MTUAreaView<T>>,
-}
-
-impl<T> MTUView<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    fn new(vcircuit: &VCircuit<T>, mtu_view: MTUView<T>, node: T) -> Option<MTUView<T>> {
-        None
-    }
-
-    // update current mtuview with data from new_mtuview
-    fn join_to_current(&mut self, new_mtu_view: MTUView<T>) -> MTUView<T> {
-        MTUView {
-            mtu_area_views: vec![],
-        }
-    }
+    fn calc_lop3nodes(&self, lop3nodes: &mut [LOP3Node<T>]) {}
 }
 
 // instead LOP3Boundary use path penetration form:
@@ -130,7 +92,6 @@ type LOP3SubTreePaths = [PathMove; 7];
 struct LOP3Node<T> {
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
     tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
-    mtu_view: Option<MTUView<T>>, // by default it can be empty MTUView
     mtu_cost: usize,
 }
 
@@ -270,7 +231,6 @@ where
     LOP3Node {
         args: [T::default(); 3],
         tree_paths: [PathMove(0); 7],
-        mtu_view: None,
         mtu_cost: 0,
     }
 }
