@@ -3,7 +3,6 @@ use gatesim::*;
 use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::rc::{Rc, Weak};
 
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
@@ -39,16 +38,9 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 #[derive(Clone)]
 struct MTUAreaView<T> {
     node: T, // MTU node
-    touch_nodes: RefCell<Vec<Weak<TouchNode<T>>>>,
-    nodes_in_mtu: RefCell<Vec<T>>,
-    extra_cost: Cell<usize>,
-}
-
-#[derive(Clone)]
-struct TouchNode<T> {
-    node: T, // touch node
-    mtu_cost: Cell<usize>,
-    mtu_views: RefCell<Vec<Weak<MTUAreaView<T>>>>,
+    touch_nodes: Vec<T>,
+    nodes_in_mtu: Vec<T>,
+    extra_cost: usize,
 }
 
 impl<T> MTUAreaView<T>
@@ -75,8 +67,7 @@ where
 
 #[derive(Clone)]
 struct MTUView<T> {
-    touch_nodes: Vec<Rc<TouchNode<T>>>,
-    mtu_views: Vec<Rc<MTUAreaView<T>>>,
+    mtu_area_views: Vec<MTUAreaView<T>>,
 }
 
 impl<T> MTUView<T>
@@ -87,19 +78,15 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    fn new(vcircuit: &VCircuit<T>, mtu_view: Rc<MTUView<T>>, node: T) -> Option<Rc<MTUView<T>>> {
+    fn new(vcircuit: &VCircuit<T>, mtu_view: MTUView<T>, node: T) -> Option<MTUView<T>> {
         None
     }
 
     // update current mtuview with data from new_mtuview
-    fn update_current(
-        self: Rc<MTUView<T>>,
-        new_mtu_view: Rc<MTUView<T>>,
-    ) -> Rc<RefCell<MTUView<T>>> {
-        Rc::new(RefCell::new(MTUView {
-            touch_nodes: vec![],
-            mtu_views: vec![],
-        }))
+    fn join_to_current(&mut self, new_mtu_view: MTUView<T>) -> MTUView<T> {
+        MTUView {
+            mtu_area_views: vec![],
+        }
     }
 }
 
@@ -138,10 +125,10 @@ type LOP3SubTreePaths = [PathMove; 7];
 
 #[derive(Clone)]
 struct LOP3Node<T> {
-    node: T,                          // node in original circuit graph
-    args: [T; 3],                     // arguments, also leaves of LOP3 subtree
-    tree_paths: LOP3SubTreePaths,     // LOP3 subtree paths
-    mtu_view: Option<Rc<MTUView<T>>>, // by default it can be empty MTUView
+    node: T,                      // node in original circuit graph
+    args: [T; 3],                 // arguments, also leaves of LOP3 subtree
+    tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
+    mtu_view: Option<MTUView<T>>, // by default it can be empty MTUView
     mtu_cost: usize,
 }
 
@@ -149,7 +136,6 @@ fn find_best_lop3node<T>(
     circuit: VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     wire_index: T,
-    preferred_leaves: Option<&[T]>,
 ) -> LOP3Node<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
