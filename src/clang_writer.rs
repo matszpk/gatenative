@@ -161,7 +161,7 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: Some("({} & ~{})"),
+    nimpl_op: None,
     not_op: Some("~{}"),
     lop3_op: Some((
         r##"static inline uint64_t lop3_test(uint64_t a, uint64_t b, uint64_t c, uint8_t comb) {
@@ -958,7 +958,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfi
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: Some("lop3({}, {1}, {1}, 0x22)"),
+    nimpl_op: None,
     not_op: Some("~{}"),
     // definition from:
     // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
@@ -1026,7 +1026,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangW
     or_op: "({} | {})",
     xor_op: "({} ^ {})",
     impl_op: None,
-    nimpl_op: Some("lop3({}, {1}, {1}, 0x22)"),
+    nimpl_op: None,
     not_op: Some("~{}"),
     // definition from:
     // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
