@@ -39,7 +39,7 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 struct MTUAreaView<T> {
     node: T, // MTU node
     touch_nodes: Vec<T>,
-    nodes_in_mtu: Vec<(T, LOP3Node<T>)>,
+    nodes_in_mtu: Vec<T>,
     extra_cost: usize,
 }
 
@@ -62,6 +62,9 @@ where
     //         touch_nodes: vec![],
     //         mtu_views: vec![],
     //     }))
+    // }
+
+    // fn get_lop3nodes(&self) -> Vec<LOP3Node> {
     // }
 }
 
