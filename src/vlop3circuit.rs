@@ -64,7 +64,7 @@ where
     //     }))
     // }
 
-    // fn get_lop3nodes(&self) -> Vec<LOP3Node> {
+    // fn get_lop3nodes(&self) -> Vec<(T, LOP3Node)> {
     // }
 }
 
@@ -128,7 +128,6 @@ type LOP3SubTreePaths = [PathMove; 7];
 
 #[derive(Clone)]
 struct LOP3Node<T> {
-    node: T,                      // node in original circuit graph
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
     tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
     mtu_view: Option<MTUView<T>>, // by default it can be empty MTUView
@@ -269,7 +268,6 @@ where
         }
     }
     LOP3Node {
-        node: wire_index,
         args: [T::default(); 3],
         tree_paths: [PathMove(0); 7],
         mtu_view: None,
