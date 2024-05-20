@@ -497,11 +497,15 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         // calculate usage to avoids multiple usages
         let mut usage = vec![0u8; self.gates.len()];
+        let mut usage_by_gates = vec![0u8; self.gates.len()];
         for g in &self.gates {
             if g.i0 >= self.input_len {
                 let i0 = usize::try_from(g.i0).unwrap() - input_len;
                 if usage[i0] < 2 {
                     usage[i0] += 1;
+                }
+                if usage_by_gates[i0] < 2 {
+                    usage_by_gates[i0] += 1;
                 }
             }
             if g.i1 >= self.input_len {
@@ -509,12 +513,18 @@ where
                 if usage[i1] < 2 {
                     usage[i1] += 1;
                 }
+                if usage_by_gates[i1] < 2 {
+                    usage_by_gates[i1] += 1;
+                }
             }
             if matches!(g.func, VLOP3GateFunc::LOP3(_)) {
                 if g.i2 >= self.input_len {
                     let i2 = usize::try_from(g.i2).unwrap() - input_len;
                     if usage[i2] < 2 {
                         usage[i2] += 1;
+                    }
+                    if usage_by_gates[i2] < 2 {
+                        usage_by_gates[i2] += 1;
                     }
                 }
             }
@@ -622,6 +632,10 @@ where
         // optimize negs in outputs
         for (o, (pos, negs)) in node_outputs_negs {
             let o = usize::try_from(o).unwrap();
+            if usage_by_gates[o - input_len] != 0 {
+                // because it changes result on other gates!
+                continue;
+            }
             if let VLOP3GateFunc::LOP3(f) = self.gates[o - input_len].func {
                 // if positive outputs is less than negative outputs
                 if pos.len() < negs.len() {
