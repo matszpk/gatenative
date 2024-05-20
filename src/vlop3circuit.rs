@@ -411,6 +411,19 @@ where
         }
         // filter lop3nodes
         // convert inputs in lop3nodes
+        Self::from_lop3nodes(circuit, lop3nodes)
+    }
+}
+
+impl<T> VLOP3Circuit<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    fn from_lop3nodes(circuit: VBinOpCircuit<T>, lop3nodes: Vec<LOP3Node<T>>) -> VLOP3Circuit<T> {
         Self {
             input_len: T::default(),
             gates: vec![],
