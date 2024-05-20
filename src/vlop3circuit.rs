@@ -429,8 +429,142 @@ where
         }
     }
 
+    // return true if negation of argument is needed
+    fn reduce_neg_from_lop3_input(&mut self, gi0: usize) -> bool {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        let g0 = self.gates[gi0 - input_len];
+        match g0.func {
+            VLOP3GateFunc::And(negs) => {
+                if negs == NegOutput {
+                    self.gates[gi0 - input_len].func = VLOP3GateFunc::And(NoNegs);
+                    true
+                } else if negs == NegInput1 {
+                    // check LOP3(and(LOP3,!v1)) and convert to: LOP3(!or(LOP3_neg,v1))
+                    let g0i0 = usize::try_from(g0.i0).unwrap();
+                    if g0i0 >= input_len {
+                        let g00 = self.gates[gi0 - input_len];
+                        if let VLOP3GateFunc::LOP3(f) = g00.func {
+                            self.gates[gi0 - input_len].func = VLOP3GateFunc::Or(NoNegs);
+                            self.gates[g0i0 - input_len].func = VLOP3GateFunc::LOP3(!f);
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            VLOP3GateFunc::Or(negs) => {
+                if negs == NegOutput {
+                    self.gates[gi0 - input_len].func = VLOP3GateFunc::Or(NoNegs);
+                    true
+                } else if negs == NegInput1 {
+                    // check LOP3(or(LOP3,!v1)) and convert to: LOP3(!and(LOP3_neg,v1))
+                    let g0i0 = usize::try_from(g0.i0).unwrap();
+                    if g0i0 >= input_len {
+                        let g00 = self.gates[gi0 - input_len];
+                        if let VLOP3GateFunc::LOP3(f) = g00.func {
+                            self.gates[gi0 - input_len].func = VLOP3GateFunc::And(NoNegs);
+                            self.gates[g0i0 - input_len].func = VLOP3GateFunc::LOP3(!f);
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            VLOP3GateFunc::Xor(negs) => {
+                if negs == NegOutput || negs == NegInput1 {
+                    self.gates[gi0 - input_len].func = VLOP3GateFunc::Xor(NoNegs);
+                    true
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        }
+    }
+
     // optimize negations in 2-input gates that neighbors with LOP3 gates.
-    fn optimize_negs(&mut self) {}
+    fn optimize_negs(&mut self) {
+        let input_len = usize::try_from(self.input_len).unwrap();
+        for i in 0..self.gates.len() {
+            let g = self.gates[i];
+            // optimizations rules:
+            // and(
+            match g.func {
+                VLOP3GateFunc::And(negs) => {
+                    if negs == NegInput1 {
+                        let gi1 = usize::try_from(g.i1).unwrap();
+                        if gi1 >= input_len {
+                            let g1 = self.gates[gi1 - input_len];
+                            if let VLOP3GateFunc::LOP3(f) = g1.func {
+                                // negate lop3 and remove negation from second input
+                                self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
+                                self.gates[i].func = VLOP3GateFunc::And(NoNegs);
+                            }
+                        }
+                    }
+                }
+                VLOP3GateFunc::Or(negs) => {
+                    if negs == NegInput1 {
+                        let gi1 = usize::try_from(g.i1).unwrap();
+                        if gi1 >= input_len {
+                            let g1 = self.gates[gi1 - input_len];
+                            if let VLOP3GateFunc::LOP3(f) = g1.func {
+                                // negate lop3 and remove negation from second input
+                                self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
+                                self.gates[i].func = VLOP3GateFunc::Or(NoNegs);
+                            }
+                        }
+                    }
+                }
+                VLOP3GateFunc::Xor(negs) => {
+                    if negs == NegInput1 {
+                        let gi1 = usize::try_from(g.i1).unwrap();
+                        if gi1 >= input_len {
+                            let g1 = self.gates[gi1 - input_len];
+                            if let VLOP3GateFunc::LOP3(f) = g1.func {
+                                // negate lop3 and remove negation from second input
+                                self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
+                                self.gates[i].func = VLOP3GateFunc::Xor(NoNegs);
+                            }
+                        }
+                    }
+                }
+                VLOP3GateFunc::LOP3(f) => {
+                    let mut f = f;
+                    let gi0 = usize::try_from(g.i0).unwrap();
+                    if gi0 >= input_len {
+                        if self.reduce_neg_from_lop3_input(gi0) {
+                            f = (f >> 4) | (f << 4);
+                        }
+                    }
+                    let gi1 = usize::try_from(g.i1).unwrap();
+                    if gi1 >= input_len {
+                        if self.reduce_neg_from_lop3_input(gi1) {
+                            f = ((f >> 2) & 0x33) | ((f << 2) & 0xcc);
+                        }
+                    }
+                    let gi2 = usize::try_from(g.i2).unwrap();
+                    if gi2 >= input_len {
+                        if self.reduce_neg_from_lop3_input(gi2) {
+                            f = ((f >> 1) & 0x55) | ((f << 1) & 0xaa);
+                        }
+                    }
+                    self.gates[i].func = VLOP3GateFunc::LOP3(f);
+                }
+            }
+        }
+        // TODO: optimize negs in outputs
+    }
 }
 
 #[cfg(test)]
