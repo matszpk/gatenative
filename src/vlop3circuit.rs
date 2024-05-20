@@ -447,33 +447,22 @@ where
         except2: Option<T>,
     ) -> bool {
         let input_len = usize::try_from(self.input_len).unwrap();
+        let sets = [(successors, arg, except), (successors2, arg2, except2)];
         // do if all is LOP3s except excepted node and if successor is not empty
-        if !successors.is_empty()
-            && successors.iter().all(|x| {
-                let xu = usize::try_from(*x).unwrap();
-                if matches!(self.gates[xu - input_len].func, VLOP3GateFunc::LOP3(_)) {
-                    true
-                } else if let Some(except) = except {
-                    except == *x
-                } else {
-                    false
-                }
-            })
-            && !successors2.is_empty()
-            && successors2.iter().all(|x| {
-                let xu = usize::try_from(*x).unwrap();
-                if matches!(self.gates[xu - input_len].func, VLOP3GateFunc::LOP3(_)) {
-                    true
-                } else if let Some(except) = except2 {
-                    except == *x
-                } else {
-                    false
-                }
-            })
-        {
-            for (successors, arg, except) in
-                [(successors, arg, except), (successors2, arg2, except2)]
-            {
+        if sets.iter().all(|(successor, arg, except)| {
+            !successors.is_empty()
+                && successors.iter().all(|x| {
+                    let xu = usize::try_from(*x).unwrap();
+                    if matches!(self.gates[xu - input_len].func, VLOP3GateFunc::LOP3(_)) {
+                        true
+                    } else if let Some(except) = except {
+                        *except == *x
+                    } else {
+                        false
+                    }
+                })
+        }) {
+            for (successors, arg, except) in sets {
                 for t in successors {
                     if except.map(|x| x == *t).unwrap_or(false) {
                         // skip except
