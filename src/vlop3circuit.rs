@@ -239,6 +239,8 @@ fn mtu_area_view_calc_costs<T>(mtuaview: &MTUAreaView<T>) -> (Vec<(T, LOP3SubTre
     (vec![], 0)
 }
 
+// MTU graph and coverage
+
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,

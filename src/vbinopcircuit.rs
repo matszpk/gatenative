@@ -32,7 +32,7 @@ impl<T: Clone + Copy> From<Circuit<T>> for VBinOpCircuit<T> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-struct SubTree<T> {
+pub(crate) struct SubTree<T> {
     root: T,
     // gates: gate entry: first - index in circuit gates
     // second - index in circuit gates of successor
@@ -80,6 +80,15 @@ where
         } else {
             self.gates.binary_search_by_key(&t, |(x, _)| *x).ok()
         }
+    }
+
+    #[inline]
+    pub(crate) fn gates(&self) -> &[(T, T)] {
+        &self.gates
+    }
+    #[inline]
+    pub(crate) fn root(&self) -> T {
+        self.root
     }
 }
 
@@ -269,7 +278,7 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     // return subtrees
-    fn subtrees(&self) -> Vec<SubTree<T>> {
+    pub(crate) fn subtrees(&self) -> Vec<SubTree<T>> {
         // println!("XorSubtreeStart");
         let input_len = usize::try_from(self.input_len).unwrap();
         let mut usage = vec![0u8; self.gates.len()];
