@@ -36,12 +36,12 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 }
 
 #[derive(Clone)]
-struct MTUAreaView<T> {
+struct MTUArea<T> {
     nodes: Vec<T>,
     extra_cost: usize,
 }
 
-impl<T> Default for MTUAreaView<T> {
+impl<T> Default for MTUArea<T> {
     #[inline]
     fn default() -> Self {
         Self {
@@ -51,7 +51,7 @@ impl<T> Default for MTUAreaView<T> {
     }
 }
 
-impl<T> MTUAreaView<T>
+impl<T> MTUArea<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
@@ -120,9 +120,10 @@ where
 }
 
 fn find_best_lop3node<T>(
-    circuit: VBinOpCircuit<T>,
+    circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     wire_index: T,
+    preferred_nodes: &[T],
 ) -> LOP3Node<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
@@ -259,7 +260,21 @@ where
     }
 }
 
-fn mtu_area_view_calc_costs<T>(mtuaview: &MTUAreaView<T>) -> (Vec<(T, LOP3SubTreePaths)>, usize) {
+fn update_mtuareas_from_lop3node<T>(
+    mtuareas: &mut [MTUArea<T>],
+    circuit: &VBinOpCircuit<T>,
+    subtrees: &[SubTree<T>],
+    lop3node: &LOP3Node<T>,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+}
+
+fn mtu_area_view_calc_costs<T>(mtuaview: &MTUArea<T>) -> (Vec<(T, LOP3SubTreePaths)>, usize) {
     (vec![], 0)
 }
 
@@ -341,7 +356,7 @@ where
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
-        let mut mtuareas = vec![MTUAreaView::<T>::default(); subtrees.len()];
+        let mut mtuareas = vec![MTUArea::<T>::default(); subtrees.len()];
         let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
         let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         // generate lop3nodes
@@ -360,7 +375,10 @@ where
                 .filter(|(_, nidx)| nonfarest_nodes.iter().all(|x| *x != *nidx))
             {
                 let gidx = usize::try_from(nidx).unwrap() - input_len;
-                // lop3nodes[gidx] = generate_lop3node();
+                // get preferred nodes from mtuareas
+                let preferred_nodes = vec![];
+                lop3nodes[gidx] = find_best_lop3node(&circuit, &lop3nodes, nidx, &preferred_nodes);
+                update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
             }
         }
         // filter lop3nodes
