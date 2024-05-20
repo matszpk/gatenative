@@ -14,9 +14,9 @@ use crate::VNegs::{self, *};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum VLOP3GateFunc {
-    And(VNegs),
-    Or(VNegs),
-    Xor(VNegs),
+    And,
+    Or,
+    Xor,
     LOP3(u8),
 }
 
@@ -26,6 +26,7 @@ pub(crate) struct VLOP3Gate<T: Clone + Copy> {
     pub(crate) i1: T,
     pub(crate) i2: T,
     pub(crate) func: VLOP3GateFunc,
+    pub(crate) negs: VNegs,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -470,48 +471,30 @@ where
                 }
             })
         {
-            for t in successors {
-                if except.map(|x| x == *t).unwrap_or(false) {
-                    // skip except
-                    continue;
-                }
-                let t = usize::try_from(*t).unwrap();
-                if let VLOP3GateFunc::LOP3(f) = self.gates[t - input_len].func {
-                    let mut f = f;
-                    if self.gates[t - input_len].i0 == arg {
-                        f = (f << 4) | (f >> 4);
+            for (successors, arg, except) in
+                [(successors, arg, except), (successors2, arg2, except2)]
+            {
+                for t in successors {
+                    if except.map(|x| x == *t).unwrap_or(false) {
+                        // skip except
+                        continue;
                     }
-                    if self.gates[t - input_len].i1 == arg {
-                        f = ((f << 2) & 0xcc) | ((f >> 2) & 0x33);
+                    let t = usize::try_from(*t).unwrap();
+                    if let VLOP3GateFunc::LOP3(f) = self.gates[t - input_len].func {
+                        let mut f = f;
+                        if self.gates[t - input_len].i0 == arg {
+                            f = (f << 4) | (f >> 4);
+                        }
+                        if self.gates[t - input_len].i1 == arg {
+                            f = ((f << 2) & 0xcc) | ((f >> 2) & 0x33);
+                        }
+                        if self.gates[t - input_len].i2 == arg {
+                            f = ((f << 1) & 0xaa) | ((f >> 1) & 0x55);
+                        }
+                        self.gates[t - input_len].func = VLOP3GateFunc::LOP3(f);
+                    } else {
+                        panic!("Unexpected!");
                     }
-                    if self.gates[t - input_len].i2 == arg {
-                        f = ((f << 1) & 0xaa) | ((f >> 1) & 0x55);
-                    }
-                    self.gates[t - input_len].func = VLOP3GateFunc::LOP3(f);
-                } else {
-                    panic!("Unexpected!");
-                }
-            }
-            for t in successors2 {
-                if except2.map(|x| x == *t).unwrap_or(false) {
-                    // skip except
-                    continue;
-                }
-                let t = usize::try_from(*t).unwrap();
-                if let VLOP3GateFunc::LOP3(f) = self.gates[t - input_len].func {
-                    let mut f = f;
-                    if self.gates[t - input_len].i0 == arg2 {
-                        f = (f << 4) | (f >> 4);
-                    }
-                    if self.gates[t - input_len].i1 == arg2 {
-                        f = ((f << 2) & 0xcc) | ((f >> 2) & 0x33);
-                    }
-                    if self.gates[t - input_len].i2 == arg2 {
-                        f = ((f << 1) & 0xaa) | ((f >> 1) & 0x55);
-                    }
-                    self.gates[t - input_len].func = VLOP3GateFunc::LOP3(f);
-                } else {
-                    panic!("Unexpected!");
                 }
             }
             true
@@ -526,12 +509,13 @@ where
         let g0 = self.gates[gi0 - input_len];
         let g0n = T::try_from(gi0).unwrap();
         match g0.func {
-            VLOP3GateFunc::And(negs) => {
-                if negs == NegOutput {
+            VLOP3GateFunc::And | VLOP3GateFunc::Or => {
+                let is_and = matches!(g0.func, VLOP3GateFunc::And);
+                if g0.negs == NegOutput {
                     if self.negate_except(g0n, &successors[gi0 - input_len], None) {
-                        self.gates[gi0 - input_len].func = VLOP3GateFunc::And(NoNegs);
+                        self.gates[gi0 - input_len].negs = NoNegs;
                     }
-                } else if negs == NegInput1 {
+                } else if g0.negs == NegInput1 {
                     // check LOP3(and(LOP3,!v1)) and convert to: LOP3(!or(LOP3_neg,v1))
                     let g0i0 = usize::try_from(g0.i0).unwrap();
                     if g0i0 >= input_len {
@@ -545,43 +529,22 @@ where
                                 Some(g0.i0),
                                 None,
                             ) {
-                                self.gates[gi0 - input_len].func = VLOP3GateFunc::Or(NoNegs);
+                                self.gates[gi0 - input_len].func = if is_and {
+                                    VLOP3GateFunc::Or
+                                } else {
+                                    VLOP3GateFunc::And
+                                };
+                                self.gates[gi0 - input_len].negs = NoNegs;
                                 self.gates[g0i0 - input_len].func = VLOP3GateFunc::LOP3(!f);
                             }
                         }
                     }
                 }
             }
-            VLOP3GateFunc::Or(negs) => {
-                if negs == NegOutput {
+            VLOP3GateFunc::Xor => {
+                if g0.negs == NegOutput || g0.negs == NegInput1 {
                     if self.negate_except(g0n, &successors[gi0 - input_len], None) {
-                        self.gates[gi0 - input_len].func = VLOP3GateFunc::Or(NoNegs);
-                    }
-                } else if negs == NegInput1 {
-                    // check LOP3(or(LOP3,!v1)) and convert to: LOP3(!and(LOP3_neg,v1))
-                    let g0i0 = usize::try_from(g0.i0).unwrap();
-                    if g0i0 >= input_len {
-                        let g00 = self.gates[gi0 - input_len];
-                        if let VLOP3GateFunc::LOP3(f) = g00.func {
-                            if self.negate_except2(
-                                g0.i0,
-                                g0n,
-                                &successors[g0i0 - input_len],
-                                &successors[gi0 - input_len],
-                                Some(g0.i0),
-                                None,
-                            ) {
-                                self.gates[gi0 - input_len].func = VLOP3GateFunc::And(NoNegs);
-                                self.gates[g0i0 - input_len].func = VLOP3GateFunc::LOP3(!f);
-                            }
-                        }
-                    }
-                }
-            }
-            VLOP3GateFunc::Xor(negs) => {
-                if negs == NegOutput || negs == NegInput1 {
-                    if self.negate_except(g0n, &successors[gi0 - input_len], None) {
-                        self.gates[gi0 - input_len].func = VLOP3GateFunc::Xor(NoNegs);
+                        self.gates[gi0 - input_len].negs = NoNegs;
                     }
                 }
             }
@@ -647,8 +610,8 @@ where
             let g = self.gates[i];
             // apply optimizations rules
             match g.func {
-                VLOP3GateFunc::And(negs) => {
-                    if negs == NegInput1 {
+                VLOP3GateFunc::And | VLOP3GateFunc::Or | VLOP3GateFunc::Xor => {
+                    if g.negs == NegInput1 {
                         let gi1 = usize::try_from(g.i1).unwrap();
                         if gi1 >= input_len && !successors[gi1 - input_len].is_empty() {
                             let g1 = self.gates[gi1 - input_len];
@@ -657,39 +620,7 @@ where
                                 if self.negate_except(g.i1, &successors[gi1 - input_len], Some(gi))
                                 {
                                     self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
-                                    self.gates[i].func = VLOP3GateFunc::And(NoNegs);
-                                }
-                            }
-                        }
-                    }
-                }
-                VLOP3GateFunc::Or(negs) => {
-                    if negs == NegInput1 {
-                        let gi1 = usize::try_from(g.i1).unwrap();
-                        if gi1 >= input_len && !successors[gi1 - input_len].is_empty() {
-                            let g1 = self.gates[gi1 - input_len];
-                            if let VLOP3GateFunc::LOP3(f) = g1.func {
-                                // negate lop3 and remove negation from second input
-                                if self.negate_except(g.i1, &successors[gi1 - input_len], Some(gi))
-                                {
-                                    self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
-                                    self.gates[i].func = VLOP3GateFunc::Or(NoNegs);
-                                }
-                            }
-                        }
-                    }
-                }
-                VLOP3GateFunc::Xor(negs) => {
-                    if negs == NegInput1 {
-                        let gi1 = usize::try_from(g.i1).unwrap();
-                        if gi1 >= input_len && !successors[gi1 - input_len].is_empty() {
-                            let g1 = self.gates[gi1 - input_len];
-                            if let VLOP3GateFunc::LOP3(f) = g1.func {
-                                // negate lop3 and remove negation from second input
-                                if self.negate_except(g.i1, &successors[gi1 - input_len], Some(gi))
-                                {
-                                    self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
-                                    self.gates[i].func = VLOP3GateFunc::Xor(NoNegs);
+                                    self.gates[i].negs = NoNegs;
                                 }
                             }
                         }
