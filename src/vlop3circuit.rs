@@ -1,6 +1,6 @@
 use gatesim::*;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -563,7 +563,44 @@ where
                 }
             }
         }
-        // TODO: optimize negs in outputs
+        // collect outputs by wire indices
+        let mut node_outputs_negs = HashMap::<T, (Vec<usize>, Vec<usize>)>::new();
+        for (i, (o, n)) in self.outputs.iter().enumerate() {
+            if *o < self.input_len {
+                continue;
+            }
+            if let Some((pos, negs)) = node_outputs_negs.get_mut(o) {
+                if *n {
+                    negs.push(i);
+                } else {
+                    pos.push(i);
+                }
+            } else {
+                node_outputs_negs.insert(
+                    *o,
+                    if *n {
+                        (vec![], vec![i])
+                    } else {
+                        (vec![i], vec![])
+                    },
+                );
+            }
+        }
+        // optimize negs in outputs
+        for (o, (pos, negs)) in node_outputs_negs {
+            let o = usize::try_from(o).unwrap();
+            if let VLOP3GateFunc::LOP3(f) = self.gates[o - input_len].func {
+                // if positive outputs is less than negative outputs
+                if pos.len() < negs.len() {
+                    // reduce negation: negate LOP3
+                    self.gates[o - input_len].func = VLOP3GateFunc::LOP3(!f);
+                    // negate outputs
+                    for p in pos.iter().chain(negs.iter()) {
+                        self.outputs[*p].1 = !self.outputs[*p].1;
+                    }
+                }
+            }
+        }
     }
 }
 
