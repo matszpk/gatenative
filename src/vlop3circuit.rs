@@ -63,6 +63,17 @@ where
     fn add_node(&mut self, wire_index: T) {}
 
     fn calc_lop3nodes(&self, lop3nodes: &mut [LOP3Node<T>]) {}
+
+    fn improve_and_optimize_and_gen_lop3nodes(
+        &mut self,
+        circuit: &VBinOpCircuit<T>,
+        lop3node: &mut [LOP3Node<T>],
+    ) {
+    }
+
+    fn nonfarest_nodes(&self) -> Vec<T> {
+        vec![]
+    }
 }
 
 // instead LOP3Boundary use path penetration form:
@@ -362,8 +373,8 @@ where
         // generate lop3nodes
         for i in (0..subtrees.len()).rev() {
             let subtree = &subtrees[i];
-            // mtuareas[i].improve_and_optimize_and_gen_lop3nodes()
-            let nonfarest_nodes: Vec<T> = vec![];
+            mtuareas[i].improve_and_optimize_and_gen_lop3nodes(&circuit, &mut lop3nodes);
+            let nonfarest_nodes: Vec<T> = mtuareas[i].nonfarest_nodes();
             // get nonfarest nodes
             for (i, nidx) in subtree
                 .gates()
