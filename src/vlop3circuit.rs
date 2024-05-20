@@ -1,6 +1,6 @@
 use gatesim::*;
 
-use std::cell::{Cell, RefCell};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -39,6 +39,16 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
 struct MTUAreaView<T> {
     nodes: Vec<T>,
     extra_cost: usize,
+}
+
+impl<T> Default for MTUAreaView<T> {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            nodes: vec![],
+            extra_cost: 0,
+        }
+    }
 }
 
 impl<T> MTUAreaView<T>
@@ -93,6 +103,20 @@ struct LOP3Node<T> {
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
     tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
     mtu_cost: usize,
+}
+
+impl<T> Default for LOP3Node<T>
+where
+    T: Clone + Copy + Default,
+{
+    #[inline]
+    fn default() -> Self {
+        Self {
+            args: [T::default(); 3],
+            tree_paths: [PathMove(0); 7],
+            mtu_cost: 0,
+        }
+    }
 }
 
 fn find_best_lop3node<T>(
@@ -240,7 +264,7 @@ fn mtu_area_view_calc_costs<T>(mtuaview: &MTUAreaView<T>) -> (Vec<(T, LOP3SubTre
 }
 
 // MTU graph and coverage: index - gate index, value - subtree index
-fn gen_subtree_coverage<T>(circuit: VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
+fn gen_subtree_coverage<T>(circuit: &VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -313,6 +337,34 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     fn from(circuit: VBinOpCircuit<T>) -> Self {
+        let subtrees = circuit.subtrees();
+        let gates = &circuit.gates;
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        let mut mtuareas = vec![MTUAreaView::<T>::default(); subtrees.len()];
+        let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
+        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        // generate lop3nodes
+        for i in (0..subtrees.len()).rev() {
+            let subtree = &subtrees[i];
+            // mtuareas[i].improve_and_optimize_and_gen_lop3nodes()
+            let nonfarest_nodes: Vec<T> = vec![];
+            // get nonfarest nodes
+            for (i, nidx) in subtree
+                .gates()
+                .iter()
+                .map(|(x, _)| *x)
+                .chain(std::iter::once(subtree.root()))
+                .enumerate()
+                // skip all nonfarest nodes in MTUAreaview
+                .filter(|(_, nidx)| nonfarest_nodes.iter().all(|x| *x != *nidx))
+            {
+                let gidx = usize::try_from(nidx).unwrap() - input_len;
+                // lop3nodes[gidx] = generate_lop3node();
+            }
+        }
+        // filter lop3nodes
+        // convert inputs in lop3nodes
         Self {
             input_len: T::default(),
             gates: vec![],
