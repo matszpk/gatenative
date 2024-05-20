@@ -285,10 +285,6 @@ fn update_mtuareas_from_lop3node<T>(
 {
 }
 
-fn mtu_area_view_calc_costs<T>(mtuaview: &MTUArea<T>) -> (Vec<(T, LOP3SubTreePaths)>, usize) {
-    (vec![], 0)
-}
-
 // MTU graph and coverage: index - gate index, value - subtree index
 fn gen_subtree_coverage<T>(circuit: &VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
 where
@@ -435,4 +431,71 @@ where
 
     // optimize negations in 2-input gates that neighbors with LOP3 gates.
     fn optimize_negs(&mut self) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gen_subtree_coverage_from_circuit(circuit: Circuit<u32>) -> Vec<u32> {
+        let binop_circuit = VBinOpCircuit::from(circuit.clone());
+        let subtrees = binop_circuit.subtrees();
+        gen_subtree_coverage(&binop_circuit, &subtrees)
+    }
+
+    #[test]
+    fn test_gen_subtree_coverage() {
+        assert_eq!(
+            vec![0, 1, 0, 1, 0, 1, 2, 3, 4, 5, 5, 5, 5, 6, 5, 6, 6, 6, 6],
+            gen_subtree_coverage_from_circuit(
+                Circuit::new(
+                    4,
+                    [
+                        Gate::new_nimpl(0, 1),   // 4
+                        Gate::new_and(0, 3),     // 5
+                        Gate::new_xor(1, 4),     // 6
+                        Gate::new_and(3, 5),     // 7
+                        Gate::new_xor(2, 6),     // 8
+                        Gate::new_xor(3, 7),     // 9
+                        Gate::new_nor(8, 9),     // 10
+                        Gate::new_and(8, 9),     // 11
+                        Gate::new_nimpl(8, 9),   // 12
+                        Gate::new_nor(0, 10),    // 13
+                        Gate::new_nor(1, 11),    // 14
+                        Gate::new_xor(2, 12),    // 15
+                        Gate::new_xor(13, 14),   // 16
+                        Gate::new_and(0, 10),    // 17 tree4
+                        Gate::new_nor(15, 16),   // 18 tree3
+                        Gate::new_nimpl(1, 12),  // 19 tree4
+                        Gate::new_nimpl(11, 17), // 20
+                        Gate::new_nimpl(3, 19),  // 21
+                        Gate::new_xor(20, 21),   // 22
+                    ],
+                    [(18, true), (22, false)],
+                )
+                .unwrap()
+            )
+        );
+
+        assert_eq!(
+            vec![0, 0, 1, 1, 1, 2, 2, 2],
+            gen_subtree_coverage_from_circuit(
+                Circuit::new(
+                    3,
+                    [
+                        Gate::new_nimpl(0, 1),
+                        Gate::new_xor(3, 2),
+                        Gate::new_nimpl(4, 2),
+                        Gate::new_and(0, 1),
+                        Gate::new_nor(5, 6),
+                        Gate::new_nor(2, 7),
+                        Gate::new_xor(1, 7),
+                        Gate::new_and(8, 9),
+                    ],
+                    [(4, true), (10, false)],
+                )
+                .unwrap()
+            )
+        );
+    }
 }
