@@ -264,6 +264,7 @@ where
     coverage
 }
 
+// THINK: really needed?? just pass in reverse order by subtrees.
 // argument - return from subtree_dependencies
 // return: index - subtree index, value - list of subtree's children (subtree index)
 fn gen_rev_subtree_dependencies<T>(deps: Vec<Vec<(T, T, bool)>>) -> Vec<Vec<T>>
