@@ -430,7 +430,7 @@ where
     }
 
     // return true if negation of argument is needed
-    fn reduce_neg_from_lop3_input(&mut self, gi0: usize) -> bool {
+    fn reduce_neg_from_lop3_input(&mut self, gi0: usize, usage: &[u8]) -> bool {
         let input_len = usize::try_from(self.input_len).unwrap();
         let g0 = self.gates[gi0 - input_len];
         match g0.func {
@@ -441,7 +441,7 @@ where
                 } else if negs == NegInput1 {
                     // check LOP3(and(LOP3,!v1)) and convert to: LOP3(!or(LOP3_neg,v1))
                     let g0i0 = usize::try_from(g0.i0).unwrap();
-                    if g0i0 >= input_len {
+                    if g0i0 >= input_len && usage[g0i0 - input_len] < 2 {
                         let g00 = self.gates[gi0 - input_len];
                         if let VLOP3GateFunc::LOP3(f) = g00.func {
                             self.gates[gi0 - input_len].func = VLOP3GateFunc::Or(NoNegs);
@@ -464,7 +464,7 @@ where
                 } else if negs == NegInput1 {
                     // check LOP3(or(LOP3,!v1)) and convert to: LOP3(!and(LOP3_neg,v1))
                     let g0i0 = usize::try_from(g0.i0).unwrap();
-                    if g0i0 >= input_len {
+                    if g0i0 >= input_len && usage[g0i0 - input_len] < 2 {
                         let g00 = self.gates[gi0 - input_len];
                         if let VLOP3GateFunc::LOP3(f) = g00.func {
                             self.gates[gi0 - input_len].func = VLOP3GateFunc::And(NoNegs);
@@ -495,15 +495,48 @@ where
     // optimize negations in 2-input gates that neighbors with LOP3 gates.
     fn optimize_negs(&mut self) {
         let input_len = usize::try_from(self.input_len).unwrap();
+        // calculate usage to avoids multiple usages
+        let mut usage = vec![0u8; self.gates.len()];
+        for g in &self.gates {
+            if g.i0 >= self.input_len {
+                let i0 = usize::try_from(g.i0).unwrap() - input_len;
+                if usage[i0] < 2 {
+                    usage[i0] += 1;
+                }
+            }
+            if g.i1 >= self.input_len {
+                let i1 = usize::try_from(g.i1).unwrap() - input_len;
+                if usage[i1] < 2 {
+                    usage[i1] += 1;
+                }
+            }
+            if matches!(g.func, VLOP3GateFunc::LOP3(_)) {
+                if g.i2 >= self.input_len {
+                    let i2 = usize::try_from(g.i2).unwrap() - input_len;
+                    if usage[i2] < 2 {
+                        usage[i2] += 1;
+                    }
+                }
+            }
+        }
+        for (o, _) in self.outputs.iter() {
+            if *o >= self.input_len {
+                let o = usize::try_from(*o).unwrap() - input_len;
+                if usage[o] < 2 {
+                    usage[o] += 1;
+                }
+            }
+        }
+        // optimize negations
+        let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
             let g = self.gates[i];
-            // optimizations rules:
-            // and(
+            // apply optimizations rules
             match g.func {
                 VLOP3GateFunc::And(negs) => {
                     if negs == NegInput1 {
                         let gi1 = usize::try_from(g.i1).unwrap();
-                        if gi1 >= input_len {
+                        if gi1 >= input_len && usage[gi1 - input_len] < 2 {
                             let g1 = self.gates[gi1 - input_len];
                             if let VLOP3GateFunc::LOP3(f) = g1.func {
                                 // negate lop3 and remove negation from second input
@@ -516,7 +549,7 @@ where
                 VLOP3GateFunc::Or(negs) => {
                     if negs == NegInput1 {
                         let gi1 = usize::try_from(g.i1).unwrap();
-                        if gi1 >= input_len {
+                        if gi1 >= input_len && usage[gi1 - input_len] < 2 {
                             let g1 = self.gates[gi1 - input_len];
                             if let VLOP3GateFunc::LOP3(f) = g1.func {
                                 // negate lop3 and remove negation from second input
@@ -529,7 +562,7 @@ where
                 VLOP3GateFunc::Xor(negs) => {
                     if negs == NegInput1 {
                         let gi1 = usize::try_from(g.i1).unwrap();
-                        if gi1 >= input_len {
+                        if gi1 >= input_len && usage[gi1 - input_len] < 2 {
                             let g1 = self.gates[gi1 - input_len];
                             if let VLOP3GateFunc::LOP3(f) = g1.func {
                                 // negate lop3 and remove negation from second input
@@ -542,20 +575,20 @@ where
                 VLOP3GateFunc::LOP3(f) => {
                     let mut f = f;
                     let gi0 = usize::try_from(g.i0).unwrap();
-                    if gi0 >= input_len {
-                        if self.reduce_neg_from_lop3_input(gi0) {
+                    if gi0 >= input_len && usage[gi0 - input_len] < 2 {
+                        if self.reduce_neg_from_lop3_input(gi0, &usage) {
                             f = (f >> 4) | (f << 4);
                         }
                     }
                     let gi1 = usize::try_from(g.i1).unwrap();
-                    if gi1 >= input_len {
-                        if self.reduce_neg_from_lop3_input(gi1) {
+                    if gi1 >= input_len && usage[gi1 - input_len] < 2 {
+                        if self.reduce_neg_from_lop3_input(gi1, &usage) {
                             f = ((f >> 2) & 0x33) | ((f << 2) & 0xcc);
                         }
                     }
                     let gi2 = usize::try_from(g.i2).unwrap();
-                    if gi2 >= input_len {
-                        if self.reduce_neg_from_lop3_input(gi2) {
+                    if gi2 >= input_len && usage[gi2 - input_len] < 2 {
+                        if self.reduce_neg_from_lop3_input(gi2, &usage) {
                             f = ((f >> 1) & 0x55) | ((f << 1) & 0xaa);
                         }
                     }
