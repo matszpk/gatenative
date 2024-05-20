@@ -411,7 +411,9 @@ where
         }
         // filter lop3nodes
         // convert inputs in lop3nodes
-        Self::from_lop3nodes(circuit, lop3nodes)
+        let mut out = Self::from_lop3nodes(circuit, lop3nodes);
+        out.optimize_negs();
+        out
     }
 }
 
