@@ -431,46 +431,8 @@ where
 
     // return true if operation done for all LOP3s as nodes, return false if done nothing
     fn negate_except(&mut self, arg: T, successors: &[T], except: Option<T>) -> bool {
-        let input_len = usize::try_from(self.input_len).unwrap();
-        // do if all is LOP3s except excepted node and if successor is not empty
-        if !successors.is_empty()
-            && successors.iter().all(|x| {
-                let xu = usize::try_from(*x).unwrap();
-                if matches!(self.gates[xu - input_len].func, VLOP3GateFunc::LOP3(_)) {
-                    true
-                } else if let Some(except) = except {
-                    except == *x
-                } else {
-                    false
-                }
-            })
-        {
-            for t in successors {
-                if except.map(|x| x == *t).unwrap_or(false) {
-                    // skip except
-                    continue;
-                }
-                let t = usize::try_from(*t).unwrap();
-                if let VLOP3GateFunc::LOP3(f) = self.gates[t - input_len].func {
-                    let mut f = f;
-                    if self.gates[t - input_len].i0 == arg {
-                        f = (f << 4) | (f >> 4);
-                    }
-                    if self.gates[t - input_len].i1 == arg {
-                        f = ((f << 2) & 0xcc) | ((f >> 2) & 0x33);
-                    }
-                    if self.gates[t - input_len].i2 == arg {
-                        f = ((f << 1) & 0xaa) | ((f >> 1) & 0x55);
-                    }
-                    self.gates[t - input_len].func = VLOP3GateFunc::LOP3(f);
-                } else {
-                    panic!("Unexpected!");
-                }
-            }
-            true
-        } else {
-            false
-        }
+        // skip second successors because except2==arg and successors2=[arg]
+        self.negate_except2(arg, arg, successors, &[arg], except, Some(arg))
     }
 
     // negate except including two various changes
@@ -739,11 +701,13 @@ where
                         self.reduce_neg_from_lop3_input(gi0, &successors);
                     }
                     let gi1 = usize::try_from(g.i1).unwrap();
-                    if gi1 >= input_len {
+                    // compare with previous args to avoid double negations
+                    if gi0 != gi1 && gi1 >= input_len {
                         self.reduce_neg_from_lop3_input(gi1, &successors);
                     }
                     let gi2 = usize::try_from(g.i2).unwrap();
-                    if gi2 >= input_len {
+                    // compare with previous args to avoid double negations
+                    if gi0 != gi2 && gi1 != gi2 && gi2 >= input_len {
                         self.reduce_neg_from_lop3_input(gi2, &successors);
                     }
                 }
