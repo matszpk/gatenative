@@ -264,6 +264,29 @@ where
     coverage
 }
 
+// argument - return from subtree_dependencies
+// return: index - subtree index, value - list of subtree's children (subtree index)
+fn gen_rev_subtree_dependencies<T>(deps: Vec<Vec<(T, T, bool)>>) -> Vec<Vec<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let mut revdeps = vec![vec![]; deps.len()];
+    for (i, deplist) in deps.into_iter().enumerate() {
+        for (ni, _, _) in deplist {
+            revdeps[usize::try_from(ni).unwrap()].push(T::try_from(i).unwrap());
+        }
+    }
+    for dep in &mut revdeps {
+        dep.sort();
+        dep.dedup();
+    }
+    revdeps
+}
+
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
