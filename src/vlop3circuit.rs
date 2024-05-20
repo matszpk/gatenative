@@ -430,4 +430,7 @@ where
             outputs: vec![],
         }
     }
+
+    // optimize negations in 2-input gates that neighbors with LOP3 gates.
+    fn optimize_negs(&mut self) {}
 }
