@@ -239,7 +239,30 @@ fn mtu_area_view_calc_costs<T>(mtuaview: &MTUAreaView<T>) -> (Vec<(T, LOP3SubTre
     (vec![], 0)
 }
 
-// MTU graph and coverage
+// MTU graph and coverage: index - gate index, value - subtree index
+fn gen_subtree_coverage<T>(circuit: VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len = usize::try_from(circuit.input_len).unwrap();
+    let mut coverage = vec![T::default(); circuit.gates.len()];
+    for (i, st) in subtrees.iter().enumerate() {
+        for (gi, _) in st
+            .gates()
+            .iter()
+            .copied()
+            .chain(std::iter::once((st.root(), T::default())))
+        {
+            let gi = usize::try_from(gi).unwrap();
+            coverage[gi - input_len] = T::try_from(i).unwrap();
+        }
+    }
+    coverage
+}
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
