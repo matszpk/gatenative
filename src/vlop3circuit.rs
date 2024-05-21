@@ -584,7 +584,6 @@ where
             if *o >= self.input_len {
                 let o = usize::try_from(*o).unwrap() - input_len;
                 // clear usage_by_gates because used by circuit outputs
-                println!("Clear: {}", o);
                 successors[o].clear();
             }
         }
