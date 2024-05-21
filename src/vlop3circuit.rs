@@ -743,4 +743,157 @@ mod tests {
             )
         );
     }
+
+    fn vgate<T: Clone + Copy>(
+        func: VLOP3GateFunc,
+        i0: T,
+        i1: T,
+        i2: T,
+        negs: VNegs,
+    ) -> VLOP3Gate<T> {
+        VLOP3Gate {
+            i0,
+            i1,
+            i2,
+            func,
+            negs,
+        }
+    }
+
+    fn vgate_and<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::And, i0, i1, i1, negs)
+    }
+    fn vgate_or<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::Or, i0, i1, i1, negs)
+    }
+    fn vgate_xor<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::Xor, i0, i1, i1, negs)
+    }
+    fn vgate_lop3<T: Clone + Copy>(i0: T, i1: T, i2: T, f: u8) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::LOP3(f), i0, i1, i2, NoNegs)
+    }
+
+    #[test]
+    fn test_vlop3circuit_negate_except() {
+        for (ci, (circuit, testcases)) in [(
+            VLOP3Circuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_lop3(0, 1, 2, 0b11100110),
+                    vgate_lop3(1, 2, 3, 0b00010010),
+                    vgate_lop3(2, 3, 4, 0b10111101),
+                ],
+                outputs: vec![(5, false)],
+            },
+            [
+                (
+                    2,
+                    &[5][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00010010),
+                            vgate_lop3(2, 3, 4, 0b11011011),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    3,
+                    &[5][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00010010),
+                            vgate_lop3(2, 3, 4, 0b11100111),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    4,
+                    &[5][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00010010),
+                            vgate_lop3(2, 3, 4, 0b01111110),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    1,
+                    &[4][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00100001),
+                            vgate_lop3(2, 3, 4, 0b10111101),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    2,
+                    &[4][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b01001000),
+                            vgate_lop3(2, 3, 4, 0b10111101),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    3,
+                    &[4][..],
+                    None,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00100001),
+                            vgate_lop3(2, 3, 4, 0b10111101),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+                (
+                    2,
+                    &[4][..],
+                    Some(4),
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_lop3(1, 2, 3, 0b00010010), // ignored
+                            vgate_lop3(2, 3, 4, 0b10111101),
+                        ],
+                        outputs: vec![(5, false)],
+                    },
+                ),
+            ],
+        )]
+        .into_iter()
+        .enumerate()
+        {
+            for (ti, (arg, succs, except, expres)) in testcases.into_iter().enumerate() {
+                let mut circuit = circuit.clone();
+                circuit.negate_except(arg, succs, except);
+                assert_eq!(expres, circuit, "{} {}", ci, ti);
+            }
+        }
+    }
 }
