@@ -548,8 +548,7 @@ where
         }
     }
 
-    // optimize negations in 2-input gates that neighbors with LOP3 gates.
-    fn optimize_negs(&mut self) {
+    fn successors_and_usage(&self) -> (Vec<Vec<T>>, Vec<u8>) {
         let input_len = usize::try_from(self.input_len).unwrap();
         // calculate usage to avoids multiple usages
         // successors to negate its arguments: only for LOP3s
@@ -599,6 +598,12 @@ where
             succ.sort();
             succ.dedup();
         }
+        (successors, usage_by_gates)
+    }
+
+    // optimize negations in 2-input gates that neighbors with LOP3 gates.
+    fn optimize_negs(&mut self) {
+        let (successors, usage_by_gates) = self.successors_and_usage();
         // optimize negations
         let input_len = usize::try_from(self.input_len).unwrap();
         for i in 0..self.gates.len() {
