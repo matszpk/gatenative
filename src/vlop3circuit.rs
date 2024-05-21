@@ -928,6 +928,34 @@ mod tests {
                             outputs: vec![(5, false)],
                         },
                     ),
+                    (
+                        3,
+                        &[4][..],
+                        None,
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 0, 1, 0b11011001),
+                                vgate_lop3(2, 3, 3, 0b00111101),
+                                vgate_lop3(4, 3, 4, 0b01101101),
+                            ],
+                            outputs: vec![(5, false)],
+                        },
+                    ),
+                    (
+                        4,
+                        &[5][..],
+                        None,
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 0, 1, 0b11011001),
+                                vgate_lop3(2, 3, 3, 0b11001011),
+                                vgate_lop3(4, 3, 4, 0b11101001),
+                            ],
+                            outputs: vec![(5, false)],
+                        },
+                    ),
                 ],
             ),
         ]
