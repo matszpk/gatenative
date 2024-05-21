@@ -1296,5 +1296,31 @@ mod tests {
             }
             .successors_and_usage()
         );
+        assert_eq!(
+            (
+                vec![
+                    vec![4, 5, 6],
+                    vec![5, 6, 7],
+                    vec![],
+                    vec![],
+                    vec![8],
+                    vec![]
+                ],
+                vec![2, 2, 2, 0, 1, 0]
+            ),
+            VLOP3Circuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_lop3(0, 1, 2, 0b11100110), // 3
+                    vgate_lop3(1, 2, 3, 0b00010010), // 4
+                    vgate_lop3(2, 3, 4, 0b10111101), // 5
+                    vgate_or(3, 4, NegOutput),       // 6
+                    vgate_lop3(4, 2, 5, 0b10010110), // 7
+                    vgate_xor(5, 7, NoNegs),         // 8
+                ],
+                outputs: vec![(6, false), (5, true), (8, false)],
+            }
+            .successors_and_usage()
+        );
     }
 }
