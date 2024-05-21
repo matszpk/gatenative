@@ -515,14 +515,14 @@ where
                     // check LOP3(and(LOP3,!v1)) and convert to: LOP3(!or(LOP3_neg,v1))
                     let g0i0 = usize::try_from(g0.i0).unwrap();
                     if g0i0 >= input_len {
-                        let g00 = self.gates[gi0 - input_len];
+                        let g00 = self.gates[g0i0 - input_len];
                         if let VLOP3GateFunc::LOP3(f) = g00.func {
                             if self.negate_lop3_arg_except2(
                                 g0.i0,
                                 g0n,
                                 &successors[g0i0 - input_len],
                                 &successors[gi0 - input_len],
-                                Some(g0.i0),
+                                Some(g0n),
                                 None,
                             ) {
                                 self.gates[gi0 - input_len].func = if is_and {
@@ -1458,6 +1458,117 @@ mod tests {
                             vgate_and(1, 6, NoNegs),
                         ],
                         outputs: vec![(7, false)],
+                    },
+                )],
+            ),
+            // circuit 5
+            (
+                // no change because xor in output
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_xor(2, 3, NegOutput),
+                        vgate_lop3(2, 3, 4, 0b10111101),
+                        vgate_and(1, 5, NoNegs),
+                    ],
+                    outputs: vec![(4, false), (6, false)],
+                },
+                vec![(
+                    4,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_xor(2, 3, NegOutput),
+                            vgate_lop3(2, 3, 4, 0b10111101),
+                            vgate_and(1, 5, NoNegs),
+                        ],
+                        outputs: vec![(4, false), (6, false)],
+                    },
+                )],
+            ),
+            // and gate to change
+            // circuit 6
+            (
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_and(2, 3, NegOutput),
+                        vgate_lop3(2, 3, 4, 0b10111101),
+                        vgate_lop3(0, 4, 5, 0b00100110),
+                        vgate_and(1, 6, NoNegs),
+                    ],
+                    outputs: vec![(7, false)],
+                },
+                vec![(
+                    4,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_and(2, 3, NoNegs),
+                            vgate_lop3(2, 3, 4, 0b01111110),
+                            vgate_lop3(0, 4, 5, 0b10001001),
+                            vgate_and(1, 6, NoNegs),
+                        ],
+                        outputs: vec![(7, false)],
+                    },
+                )],
+            ),
+            // circuit 7
+            (
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_or(2, 3, NegOutput),
+                        vgate_lop3(2, 3, 4, 0b10111101),
+                        vgate_lop3(0, 4, 5, 0b00100110),
+                        vgate_and(1, 6, NoNegs),
+                    ],
+                    outputs: vec![(7, false)],
+                },
+                vec![(
+                    4,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b11100110),
+                            vgate_or(2, 3, NoNegs),
+                            vgate_lop3(2, 3, 4, 0b01111110),
+                            vgate_lop3(0, 4, 5, 0b10001001),
+                            vgate_and(1, 6, NoNegs),
+                        ],
+                        outputs: vec![(7, false)],
+                    },
+                )],
+            ),
+            // two negations on gate
+            // circuit 8
+            (
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_and(3, 2, NegInput1),
+                        vgate_lop3(1, 2, 4, 0b10111101),
+                        vgate_and(1, 5, NoNegs),
+                    ],
+                    outputs: vec![(6, false)],
+                },
+                vec![(
+                    4,
+                    VLOP3Circuit {
+                        input_len: 3,
+                        gates: vec![
+                            vgate_lop3(0, 1, 2, 0b00011001),
+                            vgate_or(3, 2, NoNegs),
+                            vgate_lop3(1, 2, 4, 0b01111110),
+                            vgate_and(1, 5, NoNegs),
+                        ],
+                        outputs: vec![(6, false)],
                     },
                 )],
             ),
