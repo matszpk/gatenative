@@ -1744,8 +1744,8 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let mut circuit = circuit.clone();
             for (ti, (lop3, expres)) in testcases.into_iter().enumerate() {
+                let mut circuit = circuit.clone();
                 println!("Testcase {} {}", ci, ti);
                 let successors = circuit.successors_and_usage().0;
                 circuit.reduce_neg_from_lop3_input(lop3, &successors);
