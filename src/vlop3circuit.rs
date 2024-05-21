@@ -431,13 +431,20 @@ where
     }
 
     // return true if operation done for all LOP3s as nodes, return false if done nothing
-    fn negate_except(&mut self, arg: T, successors: &[T], except: Option<T>) -> bool {
-        // skip second successors because except2==arg and successors2=[arg]
-        self.negate_except2(arg, arg, successors, &[arg], except, Some(arg))
+    fn negate_lop3_arg_except(&mut self, arg: T, successors: &[T], except: Option<T>) -> bool {
+        // skip second successors because except2==first_gate and successors2=[first_gate]
+        self.negate_lop3_arg_except2(
+            arg,
+            arg,
+            successors,
+            &[self.input_len],
+            except,
+            Some(self.input_len),
+        )
     }
 
     // negate except including two various changes
-    fn negate_except2(
+    fn negate_lop3_arg_except2(
         &mut self,
         arg: T,
         arg2: T,
@@ -449,7 +456,7 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         let sets = [(successors, arg, except), (successors2, arg2, except2)];
         // do if all is LOP3s except excepted node and if successor is not empty
-        if sets.iter().all(|(successor, arg, except)| {
+        if sets.iter().all(|(successors, arg, except)| {
             !successors.is_empty()
                 && successors.iter().all(|x| {
                     let xu = usize::try_from(*x).unwrap();
@@ -501,7 +508,7 @@ where
             VLOP3GateFunc::And | VLOP3GateFunc::Or => {
                 let is_and = matches!(g0.func, VLOP3GateFunc::And);
                 if g0.negs == NegOutput {
-                    if self.negate_except(g0n, &successors[gi0 - input_len], None) {
+                    if self.negate_lop3_arg_except(g0n, &successors[gi0 - input_len], None) {
                         self.gates[gi0 - input_len].negs = NoNegs;
                     }
                 } else if g0.negs == NegInput1 {
@@ -510,7 +517,7 @@ where
                     if g0i0 >= input_len {
                         let g00 = self.gates[gi0 - input_len];
                         if let VLOP3GateFunc::LOP3(f) = g00.func {
-                            if self.negate_except2(
+                            if self.negate_lop3_arg_except2(
                                 g0.i0,
                                 g0n,
                                 &successors[g0i0 - input_len],
@@ -532,7 +539,7 @@ where
             }
             VLOP3GateFunc::Xor => {
                 if g0.negs == NegOutput || g0.negs == NegInput1 {
-                    if self.negate_except(g0n, &successors[gi0 - input_len], None) {
+                    if self.negate_lop3_arg_except(g0n, &successors[gi0 - input_len], None) {
                         self.gates[gi0 - input_len].negs = NoNegs;
                     }
                 }
@@ -606,8 +613,11 @@ where
                             let g1 = self.gates[gi1 - input_len];
                             if let VLOP3GateFunc::LOP3(f) = g1.func {
                                 // negate lop3 and remove negation from second input
-                                if self.negate_except(g.i1, &successors[gi1 - input_len], Some(gi))
-                                {
+                                if self.negate_lop3_arg_except(
+                                    g.i1,
+                                    &successors[gi1 - input_len],
+                                    Some(gi),
+                                ) {
                                     self.gates[gi1 - input_len].func = VLOP3GateFunc::LOP3(!f);
                                     self.gates[i].negs = NoNegs;
                                 }
@@ -774,7 +784,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vlop3circuit_negate_except() {
+    fn test_vlop3circuit_negate_lop3_arg_except() {
         for (ci, (circuit, testcases)) in [
             // circuit 0
             (
@@ -888,7 +898,7 @@ mod tests {
                     ),
                 ],
             ),
-            // circuit 1
+            // circuit 1 - more argument combinations
             (
                 VLOP3Circuit {
                     input_len: 3,
@@ -958,13 +968,99 @@ mod tests {
                     ),
                 ],
             ),
+            // circuit 2 - do or nothing
+            (
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110), // 3
+                        vgate_lop3(1, 2, 3, 0b00010010), // 4
+                        vgate_lop3(2, 3, 4, 0b10111101), // 5
+                        vgate_and(0, 4, NegOutput),      // 6
+                        vgate_lop3(0, 2, 5, 0b10010110), // 7
+                        vgate_lop3(0, 7, 5, 0b00101000), // 8
+                    ],
+                    outputs: vec![(6, false), (7, true), (8, false)],
+                },
+                vec![
+                    (
+                        3,
+                        &[4, 5][..],
+                        None,
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00100001), // 4 changed
+                                vgate_lop3(2, 3, 4, 0b11100111), // 5 changed
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b10010110), // 7
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
+                        4,
+                        &[5, 6][..],
+                        None,
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4
+                                vgate_lop3(2, 3, 4, 0b10111101), // 5
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b10010110), // 7
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
+                        4,
+                        &[5, 6][..],
+                        Some(5), // skip LOP3 - do nothing
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4
+                                vgate_lop3(2, 3, 4, 0b10111101), // 5
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b10010110), // 7
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
+                        4,
+                        &[5, 6][..],
+                        Some(6), // skp and - do
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4
+                                vgate_lop3(2, 3, 4, 0b01111110), // 5 changed
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b10010110), // 7
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                ],
+            ),
         ]
         .into_iter()
         .enumerate()
         {
             for (ti, (arg, succs, except, expres)) in testcases.into_iter().enumerate() {
                 let mut circuit = circuit.clone();
-                circuit.negate_except(arg, succs, except);
+                println!("Testcase {} {}", ci, ti);
+                circuit.negate_lop3_arg_except(arg, succs, except);
                 assert_eq!(expres, circuit, "{} {}", ci, ti);
             }
         }
