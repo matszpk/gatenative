@@ -558,18 +558,14 @@ where
         for (i, g) in self.gates.iter().enumerate() {
             if g.i0 >= self.input_len {
                 let i0 = usize::try_from(g.i0).unwrap() - input_len;
-                if !matches!(g.func, VLOP3GateFunc::LOP3(_)) {
-                    successors[i0].push(T::try_from(i + input_len).unwrap());
-                }
+                successors[i0].push(T::try_from(i + input_len).unwrap());
                 if usage_by_gates[i0] < 2 {
                     usage_by_gates[i0] += 1;
                 }
             }
             if g.i1 >= self.input_len {
                 let i1 = usize::try_from(g.i1).unwrap() - input_len;
-                if !matches!(g.func, VLOP3GateFunc::LOP3(_)) {
-                    successors[i1].push(T::try_from(i + input_len).unwrap());
-                }
+                successors[i1].push(T::try_from(i + input_len).unwrap());
                 if usage_by_gates[i1] < 2 {
                     usage_by_gates[i1] += 1;
                 }
@@ -577,9 +573,7 @@ where
             if matches!(g.func, VLOP3GateFunc::LOP3(_)) {
                 if g.i2 >= self.input_len {
                     let i2 = usize::try_from(g.i2).unwrap() - input_len;
-                    if !matches!(g.func, VLOP3GateFunc::LOP3(_)) {
-                        successors[i2].push(T::try_from(i + input_len).unwrap());
-                    }
+                    successors[i2].push(T::try_from(i + input_len).unwrap());
                     if usage_by_gates[i2] < 2 {
                         usage_by_gates[i2] += 1;
                     }
@@ -590,6 +584,7 @@ where
             if *o >= self.input_len {
                 let o = usize::try_from(*o).unwrap() - input_len;
                 // clear usage_by_gates because used by circuit outputs
+                println!("Clear: {}", o);
                 successors[o].clear();
             }
         }
@@ -1278,5 +1273,28 @@ mod tests {
                 assert_eq!(expres, circuit, "{} {}", ci, ti);
             }
         }
+    }
+
+    #[test]
+    fn test_vlop3circuit_successors_and_usage_by_gates() {
+        assert_eq!(
+            (
+                vec![vec![4, 5], vec![5, 6], vec![7, 8], vec![], vec![], vec![]],
+                vec![2, 2, 2, 0, 1, 0]
+            ),
+            VLOP3Circuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_lop3(0, 1, 2, 0b11100110), // 3
+                    vgate_lop3(1, 2, 3, 0b00010010), // 4
+                    vgate_lop3(2, 3, 4, 0b10111101), // 5
+                    vgate_and(0, 4, NegOutput),      // 6
+                    vgate_lop3(0, 2, 5, 0b10010110), // 7
+                    vgate_lop3(0, 7, 5, 0b00101000), // 8
+                ],
+                outputs: vec![(6, false), (7, true), (8, false)],
+            }
+            .successors_and_usage()
+        );
     }
 }
