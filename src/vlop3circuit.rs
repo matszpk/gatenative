@@ -1001,6 +1001,23 @@ mod tests {
                         },
                     ),
                     (
+                        3,
+                        &[4, 5][..],
+                        Some(4),
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4 skipped
+                                vgate_lop3(2, 3, 4, 0b11100111), // 5 changed
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b10010110), // 7
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
                         4,
                         &[5, 6][..],
                         None,
@@ -1047,6 +1064,40 @@ mod tests {
                                 vgate_and(0, 4, NegOutput),      // 6
                                 vgate_lop3(0, 2, 5, 0b10010110), // 7
                                 vgate_lop3(0, 7, 5, 0b00101000), // 8
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
+                        5,
+                        &[7, 8][..],
+                        None,
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4
+                                vgate_lop3(2, 3, 4, 0b10111101), // 5
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b01101001), // 7 changed
+                                vgate_lop3(0, 7, 5, 0b00010100), // 8 changed
+                            ],
+                            outputs: vec![(6, false), (7, true), (8, false)],
+                        },
+                    ),
+                    (
+                        5,
+                        &[7, 8][..],
+                        Some(8),
+                        VLOP3Circuit {
+                            input_len: 3,
+                            gates: vec![
+                                vgate_lop3(0, 1, 2, 0b11100110), // 3
+                                vgate_lop3(1, 2, 3, 0b00010010), // 4
+                                vgate_lop3(2, 3, 4, 0b10111101), // 5
+                                vgate_and(0, 4, NegOutput),      // 6
+                                vgate_lop3(0, 2, 5, 0b01101001), // 7 changed
+                                vgate_lop3(0, 7, 5, 0b00101000), // 8 skipped
                             ],
                             outputs: vec![(6, false), (7, true), (8, false)],
                         },
