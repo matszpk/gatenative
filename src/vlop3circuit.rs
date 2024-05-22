@@ -305,7 +305,7 @@ where
                                         - usize::from(preferred_nodes.iter().any(|x| *x == *ln))
                                 }
                             } else {
-                                0
+                                MTU_COST_BASE
                             }
                         })
                         .sum::<usize>()
