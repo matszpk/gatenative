@@ -341,7 +341,8 @@ where
                     + 1;
                 // choose if better
                 if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
-                    if (mtu_cost, gate_num) < (best_mtu_cost, best_gate_num) {
+                    use std::cmp::Reverse;
+                    if (mtu_cost, Reverse(gate_num)) < (best_mtu_cost, Reverse(best_gate_num)) {
                         best_config =
                             Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost, gate_num));
                     }
