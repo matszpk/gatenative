@@ -265,16 +265,19 @@ where
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
                         let t = usize::try_from(tt).unwrap();
+                        // remove gate from leaves
                         leaves.iter_mut().find(|(x, _)| *x == tt).unwrap().1 -= 1;
                         leaves.retain(|(_, c)| *c != 0);
                         let g = gates[t - input_len].0;
                         let a0 = g.i0;
                         let a1 = g.i1;
+                        // add first input (a0) to leaves
                         if let Some(p) = leaves.iter().position(|(x, _)| *x == a0) {
                             leaves[p].1 += 1;
                         } else {
                             leaves.push((a0, 1));
                         }
+                        // add second input (a1) to leaves
                         if let Some(p) = leaves.iter().position(|(x, _)| *x == a1) {
                             leaves[p].1 += 1;
                         } else {
@@ -301,9 +304,12 @@ where
                         let g = gates[t - input_len].0;
                         let a0 = g.i0;
                         let a1 = g.i1;
+                        // remove first input (a0) from leaves
                         leaves.iter_mut().find(|(x, _)| *x == a0).unwrap().1 -= 1;
+                        // remove second input (a1) from leaves
                         leaves.iter_mut().find(|(x, _)| *x == a1).unwrap().1 -= 1;
                         leaves.retain(|(_, c)| *c != 0);
+                        // add gate to leaves
                         if let Some(p) = leaves.iter().position(|(x, _)| *x == tt) {
                             leaves[p].1 += 1;
                         } else {
