@@ -100,6 +100,14 @@ impl PathMove {
     fn go_second(self) -> Self {
         Self(self.0 | 2)
     }
+    #[inline]
+    fn go(self, second: bool) -> Self {
+        Self(self.0 | (1 << u32::from(second)))
+    }
+    #[inline]
+    fn undo(self, second: bool) -> Self {
+        Self(self.0 & !(1 << u32::from(second)))
+    }
 }
 
 // tree moves organization:
@@ -241,7 +249,9 @@ where
                             leaves.push(a1);
                         }
                         if i != 0 {
-                            //moves[(i - 1) >> 1].go_first();
+                            let i = i as usize;
+                            // set move that go to this path
+                            moves[(i - 1) >> 1].go(((i - 1) & 1) != 0);
                         }
                         ex
                     } else {
@@ -262,7 +272,9 @@ where
                         leaves.retain(|x| *x != a1);
                         leaves.push(tt);
                         if i != 0 {
-                            //moves[(i - 1) >> 1].undo_first();
+                            let i = i as usize;
+                            // undo move in that path
+                            moves[(i - 1) >> 1].undo(((i - 1) & 1) != 0);
                         }
                         ex
                     } else {
@@ -295,20 +307,25 @@ where
                         .sum::<usize>()
                     - MTU_COST_BASE * leaves.len()
                     + 1;
-                if let Some((_, best_mtu_cost)) = best_config {
+                if let Some((_, _, best_mtu_cost)) = best_config {
                     if mtu_cost < best_mtu_cost {
-                        best_config = Some((moves, mtu_cost));
+                        best_config = Some((leaves.clone(), moves, mtu_cost));
                     }
                 } else {
-                    best_config = Some((moves, mtu_cost));
+                    best_config = Some((leaves.clone(), moves, mtu_cost));
                 }
             }
         }
     }
+    let best_config = best_config.unwrap();
+    let mut args = [best_config.0[0]; 3];
+    for (i, t) in best_config.0.iter().enumerate() {
+        args[i] = *t;
+    }
     LOP3Node {
-        args: [T::default(); 3],
-        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
-        mtu_cost: 0,
+        args,
+        tree_paths: best_config.1,
+        mtu_cost: best_config.2,
     }
 }
 
