@@ -80,7 +80,7 @@ where
 // instead LOP3Boundary use path penetration form:
 // entry: 0 - nothing, 1 - go left, 2 - go right, 3 - go left and right
 // and encode in bits to save memory.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct PathMove(u8);
 
 impl PathMove {
@@ -125,16 +125,17 @@ type LOP3SubTreePaths = [PathMove; 7];
 const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
 
 fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
-    let mut m = m;
+    let mut md = m;
     for i in (1..7).rev() {
         if m[(i - 1) >> 1].is_way(((i - 1) & 1) != 0) {
-            m[(i - 1) >> 1].go_first();
-            m[(i - 1) >> 1].go_second();
-            m[i].go_first();
-            m[i].go_second();
+            md[(i - 1) >> 1] = md[(i - 1) >> 1].go_first();
+            md[(i - 1) >> 1] = md[(i - 1) >> 1].go_second();
+            md[i] = md[i].go_first();
+            md[i] = md[i].go_second();
         }
     }
-    m
+    md[0] = PathMove(3);
+    md
 }
 
 #[derive(Clone)]
@@ -2188,5 +2189,49 @@ mod tests {
             circuit.optimize_negs();
             assert_eq!(expres, circuit, "{}", ci);
         }
+    }
+
+    fn to_paths(paths: [u8; 7]) -> LOP3SubTreePaths {
+        paths.map(|x| PathMove(x))
+    }
+
+    #[test]
+    fn test_lop3_fill_moves() {
+        assert_eq!(
+            to_paths([3, 0, 0, 0, 0, 0, 0]),
+            lop3_fill_moves(LOP3_SUBTREE_PATHS_DEFAULT),
+        );
+        assert_eq!(
+            to_paths([3, 3, 0, 0, 0, 0, 0]),
+            lop3_fill_moves(to_paths([1, 0, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 0, 3, 0, 0, 0, 0]),
+            lop3_fill_moves(to_paths([2, 0, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 3, 0, 0, 0, 0]),
+            lop3_fill_moves(to_paths([3, 0, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 0, 3, 0, 0, 0]),
+            lop3_fill_moves(to_paths([1, 1, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 0, 0, 3, 0, 0]),
+            lop3_fill_moves(to_paths([1, 2, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 0, 3, 3, 0, 0]),
+            lop3_fill_moves(to_paths([1, 3, 0, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 3, 3, 0, 0, 3]),
+            lop3_fill_moves(to_paths([3, 1, 2, 0, 0, 0, 0])),
+        );
+        assert_eq!(
+            to_paths([3, 3, 3, 0, 3, 3, 0]),
+            lop3_fill_moves(to_paths([3, 2, 1, 0, 0, 0, 0])),
+        );
     }
 }
