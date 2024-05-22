@@ -110,6 +110,8 @@ impl PathMove {
 // leaves are deepest LOP3 gates.
 type LOP3SubTreePaths = [PathMove; 7];
 
+const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
+
 #[derive(Clone)]
 struct LOP3Node<T> {
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
@@ -125,15 +127,18 @@ where
     fn default() -> Self {
         Self {
             args: [T::default(); 3],
-            tree_paths: [PathMove(0); 7],
+            tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
             mtu_cost: 0,
         }
     }
 }
 
+const MTU_COST_BASE: usize = 100;
+
 fn find_best_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
+    coverage: &[T],
     wire_index: T,
     preferred_nodes: &[T],
 ) -> LOP3Node<T>
@@ -147,6 +152,7 @@ where
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gates = &circuit.gates;
+    let current_mtu = coverage[usize::try_from(wire_index).unwrap() - input_len];
     // generate tree to explore
     let tree = {
         let mut tree = [None; 7];
@@ -216,6 +222,8 @@ where
         RemoveNode(5, true), // (R,C1,C11)
     ];
     let mut leaves: Vec<T> = vec![];
+    let mut moves = LOP3_SUBTREE_PATHS_DEFAULT;
+    let mut best_config = None;
     for instr in COMB_BATCH {
         let ex = match instr {
             AddNode(i, ex) => {
@@ -231,6 +239,9 @@ where
                         }
                         if leaves.iter().all(|x| *x != a1) {
                             leaves.push(a1);
+                        }
+                        if i != 0 {
+                            //moves[(i - 1) >> 1].go_first();
                         }
                         ex
                     } else {
@@ -250,6 +261,9 @@ where
                         leaves.retain(|x| *x != a0);
                         leaves.retain(|x| *x != a1);
                         leaves.push(tt);
+                        if i != 0 {
+                            //moves[(i - 1) >> 1].undo_first();
+                        }
                         ex
                     } else {
                         false
@@ -262,12 +276,38 @@ where
         if ex {
             if leaves.len() <= 3 {
                 // register case
+                let mtu_cost = MTU_COST_BASE
+                    + leaves
+                        .iter()
+                        .map(|ln| {
+                            let l = usize::try_from(*ln).unwrap() - input_len;
+                            if current_mtu == coverage[l] {
+                                lop3nodes[l].mtu_cost
+                            } else {
+                                let new_mtu_gindex =
+                                    usize::try_from(coverage[l]).unwrap() - input_len;
+                                MTU_COST_BASE - lop3nodes[new_mtu_gindex].mtu_cost
+                                    + lop3nodes[l].mtu_cost
+                                    // decrease if leave is preferred
+                                    - usize::from(preferred_nodes.iter().any(|x| *x == *ln))
+                            }
+                        })
+                        .sum::<usize>()
+                    - MTU_COST_BASE * leaves.len()
+                    + 1;
+                if let Some((_, best_mtu_cost)) = best_config {
+                    if mtu_cost < best_mtu_cost {
+                        best_config = Some((moves, mtu_cost));
+                    }
+                } else {
+                    best_config = Some((moves, mtu_cost));
+                }
             }
         }
     }
     LOP3Node {
         args: [T::default(); 3],
-        tree_paths: [PathMove(0); 7],
+        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
         mtu_cost: 0,
     }
 }
@@ -402,7 +442,8 @@ where
                 // get preferred nodes from mtuareas
                 let preferred_nodes =
                     get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &circuit_outputs, nidx);
-                lop3nodes[gidx] = find_best_lop3node(&circuit, &lop3nodes, nidx, &preferred_nodes);
+                lop3nodes[gidx] =
+                    find_best_lop3node(&circuit, &lop3nodes, &cov, nidx, &preferred_nodes);
                 update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
             }
         }
