@@ -231,22 +231,22 @@ where
         AddNode(3, true),     // (R,C0,C1,C00)
         AddNode(4, true),     // (R,C0,C1,C00,C01)
         RemoveNode(3, true),  // (R,C0,C1,C01)
-        RemoveNode(3, false), // (R,C0,C1) *
+        RemoveNode(4, false), // (R,C0,C1) *
         AddNode(5, true),     // (R,C0,C1,C10)
         AddNode(3, true),     // (R,C0,C1,C00,C10)
         AddNode(4, true),     // (R,C0,C1,C00,C01,C10)
         RemoveNode(3, true),  // (R,C0,C1,C01,C10)
-        RemoveNode(3, false), // (R,C0,C1,C10) *
+        RemoveNode(4, false), // (R,C0,C1,C10) *
         AddNode(6, true),     // (R,C0,C1,C10,C11)
         AddNode(3, true),     // (R,C0,C1,C00,C10,C11)
         AddNode(4, true),     // (R,C0,C1,C00,C01,C10,C11)
         RemoveNode(3, true),  // (R,C0,C1,C01,C10,C11)
-        RemoveNode(3, false), // (R,C0,C1,C10,C11) *
+        RemoveNode(4, false), // (R,C0,C1,C10,C11) *
         RemoveNode(5, true),  // (R,C0,C1,C11)
         AddNode(3, true),     // (R,C0,C1,C00,C11)
         AddNode(4, true),     // (R,C0,C1,C00,C01,C11)
         RemoveNode(3, true),  // (R,C0,C1,C01,C11)
-        RemoveNode(3, false), // (R,C0,C1,C11) *
+        RemoveNode(4, false), // (R,C0,C1,C11) *
         RemoveNode(6, false), // (R,C0,C1) *
         //
         RemoveNode(1, true), // (R,C1)
@@ -261,7 +261,6 @@ where
     let mut best_config = None;
     for instr in COMB_BATCH {
         let ex = match instr {
-            // FIX
             AddNode(i, ex) => {
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
@@ -295,7 +294,6 @@ where
                     false
                 }
             }
-            // FIX
             RemoveNode(i, ex) => {
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
@@ -326,16 +324,20 @@ where
                 }
             }
         };
+        println!(
+            "  Leaves: {:?}, GatesNum: {}: Ex: {}",
+            leaves
+                .iter()
+                .map(|(x, c)| (usize::try_from(*x).unwrap(), *c))
+                .collect::<Vec<_>>(),
+            gate_num,
+            ex,
+        );
+        println!(
+            "  Moves: {:?}",
+            moves.iter().map(|x| x.0).collect::<Vec<_>>()
+        );
         if ex {
-            println!(
-                "  Leaves: {:?}, GatesNum: {}",
-                leaves
-                    .iter()
-                    .map(|(x, c)| (usize::try_from(*x).unwrap(), *c))
-                    .collect::<Vec<_>>(),
-                gate_num
-            );
-            println!("  Moves: {:?}", moves);
             if leaves.len() <= 3 {
                 // calculate costs for node
                 let mtu_cost = MTU_COST_BASE
@@ -2340,6 +2342,58 @@ mod tests {
                     vbgate_xor(3, 4, NoNegs),
                 ],
                 outputs: vec![(5, false)],
+            })
+        );
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 1, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 2, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 2, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [1, 2, 1],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 1, 2],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 2, 1],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 2, 1],
+                    tree_paths: to_paths([3, 3, 3, 3, 3, 3, 3]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+            ],
+            simple_call_find_best_lop3node(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    vbgate_and(0, 1, NoNegs),
+                    vbgate_or(0, 2, NegOutput),
+                    vbgate_xor(0, 2, NegInput1),
+                    vbgate_and(1, 2, NegOutput),
+                    vbgate_xor(3, 4, NoNegs),
+                    vbgate_and(5, 6, NegInput1),
+                    vbgate_or(7, 8, NoNegs),
+                ],
+                outputs: vec![(9, false)],
             })
         );
     }
