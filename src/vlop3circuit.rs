@@ -292,16 +292,20 @@ where
                     + leaves
                         .iter()
                         .map(|ln| {
-                            let l = usize::try_from(*ln).unwrap() - input_len;
-                            if current_mtu == coverage[l] {
-                                lop3nodes[l].mtu_cost
+                            if *ln >= input_len_t {
+                                let l = usize::try_from(*ln).unwrap() - input_len;
+                                if current_mtu == coverage[l] {
+                                    lop3nodes[l].mtu_cost
+                                } else {
+                                    let new_mtu_gindex =
+                                        usize::try_from(coverage[l]).unwrap() - input_len;
+                                    MTU_COST_BASE - lop3nodes[new_mtu_gindex].mtu_cost
+                                        + lop3nodes[l].mtu_cost
+                                        // decrease if leave is preferred
+                                        - usize::from(preferred_nodes.iter().any(|x| *x == *ln))
+                                }
                             } else {
-                                let new_mtu_gindex =
-                                    usize::try_from(coverage[l]).unwrap() - input_len;
-                                MTU_COST_BASE - lop3nodes[new_mtu_gindex].mtu_cost
-                                    + lop3nodes[l].mtu_cost
-                                    // decrease if leave is preferred
-                                    - usize::from(preferred_nodes.iter().any(|x| *x == *ln))
+                                0
                             }
                         })
                         .sum::<usize>()
