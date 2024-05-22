@@ -360,6 +360,7 @@ where
                         .sum::<usize>()
                     - MTU_COST_BASE * leaves.len()
                     + 1;
+                println!("  MTUCost: {}", mtu_cost);
                 // choose if better
                 let leaves = leaves.iter().map(|(x, _)| *x).collect::<Vec<_>>();
                 if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
