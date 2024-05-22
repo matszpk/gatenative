@@ -138,7 +138,7 @@ fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
     md
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct LOP3Node<T> {
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
     tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
@@ -2314,8 +2314,24 @@ mod tests {
 
     #[test]
     fn test_find_best_lop3node() {
-        println!(
-            "LOP3Node: {:?}",
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 1, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 2, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 1, 2],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+            ],
             simple_call_find_best_lop3node(VBinOpCircuit {
                 input_len: 3,
                 gates: vec![
