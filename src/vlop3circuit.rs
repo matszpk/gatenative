@@ -2070,6 +2070,30 @@ mod tests {
                     outputs: vec![(6, false), (7, false), (8, false), (4, false)],
                 },
             ),
+            // other test with reduce_neg_from_lop3_input
+            // circuit 8
+            (
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_xor(2, 3, NegOutput),
+                        vgate_lop3(3, 4, 4, 0b10111101),
+                        vgate_and(1, 5, NoNegs),
+                    ],
+                    outputs: vec![(6, false)],
+                },
+                VLOP3Circuit {
+                    input_len: 3,
+                    gates: vec![
+                        vgate_lop3(0, 1, 2, 0b11100110),
+                        vgate_xor(2, 3, NoNegs),
+                        vgate_lop3(3, 4, 4, 0b11011011),
+                        vgate_and(1, 5, NoNegs),
+                    ],
+                    outputs: vec![(6, false)],
+                },
+            ),
         ]
         .into_iter()
         .enumerate()
