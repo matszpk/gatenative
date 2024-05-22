@@ -255,7 +255,7 @@ where
         AddNode(6, true),    // (R,C1,C10,C11)
         RemoveNode(5, true), // (R,C1,C11)
     ];
-    let mut leaves: Vec<T> = vec![];
+    let mut leaves: Vec<(T, u8)> = vec![(wire_index, 1)];
     let mut moves = LOP3_SUBTREE_PATHS_DEFAULT;
     let mut gate_num = 0;
     let mut best_config = None;
@@ -266,15 +266,20 @@ where
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
                         let t = usize::try_from(tt).unwrap();
-                        leaves.retain(|x| *x != tt);
+                        leaves.iter_mut().find(|(x, _)| *x == tt).unwrap().1 -= 1;
+                        leaves.retain(|(_, c)| *c != 0);
                         let g = gates[t - input_len].0;
                         let a0 = g.i0;
                         let a1 = g.i1;
-                        if leaves.iter().all(|x| *x != a0) {
-                            leaves.push(a0);
+                        if let Some(p) = leaves.iter().position(|(x, _)| *x == a0) {
+                            leaves[p].1 += 1;
+                        } else {
+                            leaves.push((a0, 1));
                         }
-                        if leaves.iter().all(|x| *x != a1) {
-                            leaves.push(a1);
+                        if let Some(p) = leaves.iter().position(|(x, _)| *x == a1) {
+                            leaves[p].1 += 1;
+                        } else {
+                            leaves.push((a1, 1));
                         }
                         if i != 0 {
                             let i = i as usize;
@@ -298,9 +303,14 @@ where
                         let g = gates[t - input_len].0;
                         let a0 = g.i0;
                         let a1 = g.i1;
-                        leaves.retain(|x| *x != a0);
-                        leaves.retain(|x| *x != a1);
-                        leaves.push(tt);
+                        leaves.iter_mut().find(|(x, _)| *x == a0).unwrap().1 -= 1;
+                        leaves.iter_mut().find(|(x, _)| *x == a1).unwrap().1 -= 1;
+                        leaves.retain(|(_, c)| *c != 0);
+                        if let Some(p) = leaves.iter().position(|(x, _)| *x == tt) {
+                            leaves[p].1 += 1;
+                        } else {
+                            leaves.push((tt, 1));
+                        }
                         if i != 0 {
                             let i = i as usize;
                             // undo move in that path
@@ -321,7 +331,7 @@ where
                 "  Leaves: {:?}, GatesNum: {}",
                 leaves
                     .iter()
-                    .map(|x| usize::try_from(*x).unwrap())
+                    .map(|(x, c)| (usize::try_from(*x).unwrap(), *c))
                     .collect::<Vec<_>>(),
                 gate_num
             );
@@ -331,7 +341,7 @@ where
                 let mtu_cost = MTU_COST_BASE
                     + leaves
                         .iter()
-                        .map(|ln| {
+                        .map(|(ln, _)| {
                             if *ln >= input_len_t {
                                 let l = usize::try_from(*ln).unwrap() - input_len;
                                 if current_mtu == coverage[l] {
@@ -351,6 +361,7 @@ where
                     - MTU_COST_BASE * leaves.len()
                     + 1;
                 // choose if better
+                let leaves = leaves.iter().map(|(x, _)| *x).collect::<Vec<_>>();
                 if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
                     use std::cmp::Reverse;
                     if (mtu_cost, Reverse(gate_num)) < (best_mtu_cost, Reverse(best_gate_num)) {
