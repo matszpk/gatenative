@@ -176,6 +176,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    println!("FindBestLOP3Node Start");
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gates = &circuit.gates;
@@ -260,6 +261,7 @@ where
     let mut best_config = None;
     for instr in COMB_BATCH {
         let ex = match instr {
+            // FIX
             AddNode(i, ex) => {
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
@@ -277,7 +279,7 @@ where
                         if i != 0 {
                             let i = i as usize;
                             // set move that go to this path
-                            moves[(i - 1) >> 1].go(((i - 1) & 1) != 0);
+                            moves[(i - 1) >> 1] = moves[(i - 1) >> 1].go(((i - 1) & 1) != 0);
                         }
                         gate_num += 1;
                         ex
@@ -288,6 +290,7 @@ where
                     false
                 }
             }
+            // FIX
             RemoveNode(i, ex) => {
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
@@ -301,7 +304,7 @@ where
                         if i != 0 {
                             let i = i as usize;
                             // undo move in that path
-                            moves[(i - 1) >> 1].undo(((i - 1) & 1) != 0);
+                            moves[(i - 1) >> 1] = moves[(i - 1) >> 1].undo(((i - 1) & 1) != 0);
                         }
                         gate_num -= 1;
                         ex
@@ -314,7 +317,15 @@ where
             }
         };
         if ex {
-            println!("Leaves: {:?}", leaves.len());
+            println!(
+                "  Leaves: {:?}, GatesNum: {}",
+                leaves
+                    .iter()
+                    .map(|x| usize::try_from(*x).unwrap())
+                    .collect::<Vec<_>>(),
+                gate_num
+            );
+            println!("  Moves: {:?}", moves);
             if leaves.len() <= 3 {
                 // calculate costs for node
                 let mtu_cost = MTU_COST_BASE
@@ -2299,7 +2310,7 @@ mod tests {
                     ],
                     outputs: vec![(5, false)],
                 },
-                4
+                5
             )
         );
     }
