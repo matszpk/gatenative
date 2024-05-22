@@ -93,6 +93,10 @@ impl PathMove {
         (self.0 & 2) != 0
     }
     #[inline]
+    fn is_way(self, second: bool) -> bool {
+        (self.0 & (1 << u32::from(second))) != 0
+    }
+    #[inline]
     fn go_first(self) -> Self {
         Self(self.0 | 1)
     }
@@ -119,6 +123,19 @@ impl PathMove {
 type LOP3SubTreePaths = [PathMove; 7];
 
 const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
+
+fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
+    let mut m = m;
+    for i in (1..7).rev() {
+        if m[(i - 1) >> 1].is_way(((i - 1) & 1) != 0) {
+            m[(i - 1) >> 1].go_first();
+            m[(i - 1) >> 1].go_second();
+            m[i].go_first();
+            m[i].go_second();
+        }
+    }
+    m
+}
 
 #[derive(Clone)]
 struct LOP3Node<T> {
@@ -288,7 +305,7 @@ where
         };
         if ex {
             if leaves.len() <= 3 {
-                // register case
+                // calculate costs for node
                 let mtu_cost = MTU_COST_BASE
                     + leaves
                         .iter()
@@ -311,12 +328,13 @@ where
                         .sum::<usize>()
                     - MTU_COST_BASE * leaves.len()
                     + 1;
+                // choose if better
                 if let Some((_, _, best_mtu_cost)) = best_config {
                     if mtu_cost < best_mtu_cost {
-                        best_config = Some((leaves.clone(), moves, mtu_cost));
+                        best_config = Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost));
                     }
                 } else {
-                    best_config = Some((leaves.clone(), moves, mtu_cost));
+                    best_config = Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost));
                 }
             }
         }
