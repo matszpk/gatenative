@@ -2285,7 +2285,7 @@ mod tests {
         vbgate(VGateFunc::Xor, i0, i1, negs)
     }
 
-    fn simple_call_find_best_lop3node<T>(circuit: VBinOpCircuit<T>, wire_index: T) -> LOP3Node<T>
+    fn simple_call_find_best_lop3node<T>(circuit: VBinOpCircuit<T>) -> Vec<LOP3Node<T>>
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
         T: Default + TryFrom<usize>,
@@ -2295,35 +2295,36 @@ mod tests {
     {
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
+        let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
         let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
-        find_best_lop3node(
-            &circuit,
-            &lop3nodes,
-            &cov,
-            &circuit_outputs,
-            wire_index,
-            &[],
-        )
+        for i in input_len..input_len + gates.len() {
+            lop3nodes[i - input_len] = find_best_lop3node(
+                &circuit,
+                &lop3nodes,
+                &cov,
+                &circuit_outputs,
+                T::try_from(i).unwrap(),
+                &[],
+            );
+        }
+        lop3nodes
     }
 
     #[test]
     fn test_find_best_lop3node() {
         println!(
             "LOP3Node: {:?}",
-            simple_call_find_best_lop3node(
-                VBinOpCircuit {
-                    input_len: 3,
-                    gates: vec![
-                        vbgate_and(0, 1, NoNegs),
-                        vbgate_or(0, 2, NegOutput),
-                        vbgate_xor(3, 4, NoNegs),
-                    ],
-                    outputs: vec![(5, false)],
-                },
-                5
-            )
+            simple_call_find_best_lop3node(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    vbgate_and(0, 1, NoNegs),
+                    vbgate_or(0, 2, NegOutput),
+                    vbgate_xor(3, 4, NoNegs),
+                ],
+                outputs: vec![(5, false)],
+            })
         );
     }
 }
