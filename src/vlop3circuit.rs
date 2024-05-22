@@ -119,7 +119,7 @@ impl PathMove {
 //   /---1---\       /----2---\
 //   3       4       5        6
 // 0 - root, 1 - first level start, 3 - second level start
-// leaves are deepest LOP3 gates.
+// leaves are LOP3 arguments, non-zero elements are deepest LOP3 gates.
 type LOP3SubTreePaths = [PathMove; 7];
 
 const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
