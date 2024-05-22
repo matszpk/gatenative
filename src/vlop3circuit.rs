@@ -138,7 +138,7 @@ fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
     md
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct LOP3Node<T> {
     args: [T; 3],                 // arguments, also leaves of LOP3 subtree
     tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
@@ -202,6 +202,12 @@ where
         }
         tree
     };
+    // println!(
+    //     "Tree: {:?}",
+    //     tree.iter()
+    //         .map(|x| x.map(|x| usize::try_from(x).unwrap()))
+    //         .collect::<Vec<_>>()
+    // );
     // algorithm: simple batch of combinations with difference
     #[derive(Clone, Copy)]
     enum CombBatchEntry {
@@ -211,8 +217,8 @@ where
     }
     use CombBatchEntry::*;
     const COMB_BATCH: [CombBatchEntry; 31] = [
-        AddNode(0, false), // (R) *
-        AddNode(1, true),  // (R,C0)
+        AddNode(0, true), // (R)
+        AddNode(1, true), // (R,C0)
         //
         AddNode(3, true),     // (R,C0,C00)
         AddNode(4, true),     // (R,C0,C00,C01)
@@ -250,6 +256,7 @@ where
     ];
     let mut leaves: Vec<T> = vec![];
     let mut moves = LOP3_SUBTREE_PATHS_DEFAULT;
+    let mut gate_num = 0;
     let mut best_config = None;
     for instr in COMB_BATCH {
         let ex = match instr {
@@ -272,6 +279,7 @@ where
                             // set move that go to this path
                             moves[(i - 1) >> 1].go(((i - 1) & 1) != 0);
                         }
+                        gate_num += 1;
                         ex
                     } else {
                         false
@@ -295,6 +303,7 @@ where
                             // undo move in that path
                             moves[(i - 1) >> 1].undo(((i - 1) & 1) != 0);
                         }
+                        gate_num -= 1;
                         ex
                     } else {
                         false
@@ -305,6 +314,7 @@ where
             }
         };
         if ex {
+            println!("Leaves: {:?}", leaves.len());
             if leaves.len() <= 3 {
                 // calculate costs for node
                 let mtu_cost = MTU_COST_BASE
@@ -330,12 +340,14 @@ where
                     - MTU_COST_BASE * leaves.len()
                     + 1;
                 // choose if better
-                if let Some((_, _, best_mtu_cost)) = best_config {
-                    if mtu_cost < best_mtu_cost {
-                        best_config = Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost));
+                if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
+                    if (mtu_cost, gate_num) < (best_mtu_cost, best_gate_num) {
+                        best_config =
+                            Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost, gate_num));
                     }
                 } else {
-                    best_config = Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost));
+                    best_config =
+                        Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost, gate_num));
                 }
             }
         }
@@ -2232,6 +2244,62 @@ mod tests {
         assert_eq!(
             to_paths([3, 3, 3, 0, 3, 3, 0]),
             lop3_fill_moves(to_paths([3, 2, 1, 0, 0, 0, 0])),
+        );
+    }
+
+    fn vbgate<T: Clone + Copy>(func: VGateFunc, i0: T, i1: T, negs: VNegs) -> (VGate<T>, VNegs) {
+        (VGate { i0, i1, func: func }, negs)
+    }
+
+    fn vbgate_and<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> (VGate<T>, VNegs) {
+        vbgate(VGateFunc::And, i0, i1, negs)
+    }
+    fn vbgate_or<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> (VGate<T>, VNegs) {
+        vbgate(VGateFunc::Or, i0, i1, negs)
+    }
+    fn vbgate_xor<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> (VGate<T>, VNegs) {
+        vbgate(VGateFunc::Xor, i0, i1, negs)
+    }
+
+    fn simple_call_find_best_lop3node<T>(circuit: VBinOpCircuit<T>, wire_index: T) -> LOP3Node<T>
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let subtrees = circuit.subtrees();
+        let gates = &circuit.gates;
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
+        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        find_best_lop3node(
+            &circuit,
+            &lop3nodes,
+            &cov,
+            &circuit_outputs,
+            wire_index,
+            &[],
+        )
+    }
+
+    #[test]
+    fn test_find_best_lop3node() {
+        println!(
+            "LOP3Node: {:?}",
+            simple_call_find_best_lop3node(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(0, 2, NegOutput),
+                        vbgate_xor(3, 4, NoNegs),
+                    ],
+                    outputs: vec![(5, false)],
+                },
+                4
+            )
         );
     }
 }
