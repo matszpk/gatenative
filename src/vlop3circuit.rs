@@ -147,11 +147,12 @@ fn find_best_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     coverage: &[T],
+    circuit_outputs: &HashSet<T>,
     wire_index: T,
     preferred_nodes: &[T],
 ) -> LOP3Node<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -297,12 +298,11 @@ where
                                 if current_mtu == coverage[l] {
                                     lop3nodes[l].mtu_cost
                                 } else {
-                                    let new_mtu_gindex =
-                                        usize::try_from(coverage[l]).unwrap() - input_len;
-                                    MTU_COST_BASE - lop3nodes[new_mtu_gindex].mtu_cost
-                                        + lop3nodes[l].mtu_cost
-                                        // decrease if leave is preferred
-                                        - usize::from(preferred_nodes.iter().any(|x| *x == *ln))
+                                    MTU_COST_BASE
+                                        - usize::from(
+                                            *ln == coverage[l]
+                                                && !circuit_outputs.contains(&coverage[l]),
+                                        )
                                 }
                             } else {
                                 MTU_COST_BASE
@@ -463,8 +463,14 @@ where
                 // get preferred nodes from mtuareas
                 let preferred_nodes =
                     get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &circuit_outputs, nidx);
-                lop3nodes[gidx] =
-                    find_best_lop3node(&circuit, &lop3nodes, &cov, nidx, &preferred_nodes);
+                lop3nodes[gidx] = find_best_lop3node(
+                    &circuit,
+                    &lop3nodes,
+                    &cov,
+                    &circuit_outputs,
+                    nidx,
+                    &preferred_nodes,
+                );
                 update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
             }
         }
