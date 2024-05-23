@@ -360,7 +360,7 @@ where
                                 if current_mtu == coverage_l {
                                     lop3nodes[l].mtu_cost
                                 } else {
-                                    MTU_COST_BASE
+                                    MTU_COST_BASE + 1
                                         - usize::from(
                                             *ln != coverage_l
                                                 && !circuit_outputs.contains(&coverage_l),
