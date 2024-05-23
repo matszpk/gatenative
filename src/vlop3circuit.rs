@@ -534,8 +534,10 @@ where
                     nidx,
                     &preferred_nodes,
                 );
-                update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
+                //update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
             }
+            // filter out current mtublock
+            // update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees, &lop3nodes[gidx]);
         }
         // filter lop3nodes
         // convert inputs in lop3nodes
