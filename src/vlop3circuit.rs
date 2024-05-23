@@ -2692,7 +2692,7 @@ mod tests {
                 &[3][..],
             )
         );
-        // full adder
+        // full adder 2
         assert_eq!(
             std::iter::repeat(LOP3Node {
                 args: [0, 0, 0],
