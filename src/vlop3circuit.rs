@@ -36,16 +36,50 @@ pub(crate) struct VLOP3Circuit<T: Clone + Copy> {
     pub(crate) outputs: Vec<(T, bool)>,
 }
 
+fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len_t = circuit.input_len;
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gates = &circuit.gates;
+    let mut tree = [None; 7];
+    let mut old_level_start = 0;
+    let mut level_start = 1;
+    tree[0] = Some(wire_index);
+    for level in 1..3 {
+        for pos in 0..level_start - old_level_start {
+            if let Some(t) = tree[old_level_start + pos] {
+                if t >= input_len_t {
+                    let gi = usize::try_from(t).unwrap();
+                    let g = gates[gi - input_len].0;
+                    tree[level_start + (pos << 1)] = Some(g.i0);
+                    tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                }
+            }
+        }
+        old_level_start = level_start;
+        level_start += level_start + 1;
+    }
+    tree
+}
+
 #[derive(Clone)]
 struct MTUArea<T> {
+    root: T,
     nodes: Vec<T>,
     extra_cost: usize,
 }
 
-impl<T> Default for MTUArea<T> {
+impl<T: Default> Default for MTUArea<T> {
     #[inline]
     fn default() -> Self {
         Self {
+            root: T::default(),
             nodes: vec![],
             extra_cost: 0,
         }
@@ -60,6 +94,14 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    fn empty_with_root(root: T) -> Self {
+        Self {
+            root,
+            nodes: vec![],
+            extra_cost: 0,
+        }
+    }
+
     // and improve - fix other TouchNodes to make better result if possible
     fn add_node(&mut self, wire_index: T) {}
 
@@ -72,8 +114,36 @@ where
     ) {
     }
 
-    fn farest_nonfarest_nodes(&self) -> (Vec<T>, Vec<T>) {
-        (vec![], vec![])
+    fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
+        let tree = get_small_tree(circuit, self.root);
+        let mut farest = vec![];
+        let mut nonfarest = vec![];
+        let tree_root = tree[0].unwrap();
+        if tree[1].is_none() || tree[2].is_none() {
+            farest.push(tree_root);
+        } else {
+            nonfarest.push(tree_root);
+        }
+        if let Some(t) = tree[1] {
+            if tree[3].is_none() || tree[4].is_none() {
+                farest.push(t);
+            } else {
+                nonfarest.push(t);
+            }
+        }
+        if let Some(t) = tree[2] {
+            if tree[5].is_none() || tree[6].is_none() {
+                farest.push(t);
+            } else {
+                nonfarest.push(t);
+            }
+        }
+        for i in 3..7 {
+            if let Some(t) = tree[3] {
+                farest.push(t);
+            }
+        }
+        (farest, nonfarest)
     }
 }
 
@@ -183,27 +253,7 @@ where
     let current_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
     let current_mtu = subtrees[usize::try_from(current_subtree).unwrap()].root();
     // generate tree to explore
-    let tree = {
-        let mut tree = [None; 7];
-        let mut old_level_start = 0;
-        let mut level_start = 1;
-        tree[0] = Some(wire_index);
-        for level in 1..3 {
-            for pos in 0..level_start - old_level_start {
-                if let Some(t) = tree[old_level_start + pos] {
-                    if t >= input_len_t {
-                        let gi = usize::try_from(t).unwrap();
-                        let g = gates[gi - input_len].0;
-                        tree[level_start + (pos << 1)] = Some(g.i0);
-                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
-                    }
-                }
-            }
-            old_level_start = level_start;
-            level_start += level_start + 1;
-        }
-        tree
-    };
+    let tree = get_small_tree(circuit, wire_index);
     // algorithm: simple batch of combinations with difference
     #[derive(Clone, Copy)]
     enum CombBatchEntry {
@@ -487,14 +537,17 @@ where
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
-        let mut mtuareas = vec![MTUArea::<T>::default(); subtrees.len()];
+        let mut mtuareas = subtrees
+            .iter()
+            .map(|s| MTUArea::<T>::empty_with_root(s.root()))
+            .collect::<Vec<_>>();
         let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
         let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         // generate lop3nodes
         for i in (0..subtrees.len()).rev() {
             let subtree = &subtrees[i];
             mtuareas[i].improve_and_optimize_and_gen_lop3nodes(&circuit, &mut lop3nodes);
-            let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes();
+            let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes(&circuit);
             // get nonfarest nodes
             for (i, nidx) in subtree
                 .gates()
