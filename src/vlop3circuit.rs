@@ -115,6 +115,7 @@ where
     }
 
     fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
+        // TODO: FIX algorithm!!
         let tree = get_small_tree(circuit, self.root);
         let mut way_lengths = vec![0; self.nodes.len()];
         for (i, toption) in tree.into_iter().enumerate() {
@@ -2742,6 +2743,48 @@ mod tests {
                 &[6, 7, 8, 9][..],
                 &[6, 7, 8, 9][..],
             )
+        );
+    }
+
+    #[test]
+    fn test_mtuarea_farest_nonfarest_nodes() {
+        let circuit = VBinOpCircuit {
+            input_len: 3,
+            gates: vec![
+                vbgate_and(0, 1, NoNegs),
+                vbgate_or(0, 2, NegOutput),
+                vbgate_xor(0, 2, NegInput1),
+                vbgate_and(1, 2, NegOutput),
+                vbgate_xor(3, 4, NoNegs),
+                vbgate_and(5, 6, NegInput1),
+                vbgate_or(7, 8, NoNegs),
+                vbgate_xor(0, 1, NoNegs),
+                vbgate_and(1, 2, NegInput1),
+                vbgate_or(1, 2, NegInput1),
+                vbgate_and(1, 2, NegOutput),
+                vbgate_xor(10, 11, NoNegs),
+                vbgate_and(13, 14, NegInput1),
+                vbgate_or(14, 15, NoNegs),
+            ],
+            outputs: vec![(9, false), (16, false)],
+        };
+        assert_eq!(
+            (vec![3, 4], vec![7, 8]),
+            MTUArea {
+                root: 9,
+                nodes: vec![3, 4, 7, 8],
+                extra_cost: 0,
+            }
+            .farest_nonfarest_nodes(&circuit)
+        );
+        assert_eq!(
+            (vec![3, 4, 5], vec![7, 8, 9]),
+            MTUArea {
+                root: 9,
+                nodes: vec![3, 4, 5, 7, 8, 9],
+                extra_cost: 0,
+            }
+            .farest_nonfarest_nodes(&circuit)
         );
     }
 }
