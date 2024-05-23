@@ -516,7 +516,10 @@ where
 
 fn get_preferred_nodes_from_mtuareas<T>(
     circuit: &VBinOpCircuit<T>,
+    lop3nodes: &[LOP3Node<T>],
     mtuareas: &[MTUArea<T>],
+    coverage: &[T],
+    subtrees: &[SubTree<T>],
     circuit_outputs: &HashSet<T>,
     nidx: T,
 ) -> Vec<T>
@@ -582,8 +585,15 @@ where
             {
                 let gidx = usize::try_from(nidx).unwrap() - input_len;
                 // get preferred nodes from mtuareas
-                let preferred_nodes =
-                    get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &circuit_outputs, nidx);
+                let preferred_nodes = get_preferred_nodes_from_mtuareas(
+                    &circuit,
+                    &lop3nodes,
+                    &mtuareas,
+                    &cov,
+                    &subtrees,
+                    &circuit_outputs,
+                    nidx,
+                );
                 lop3nodes[gidx] = find_best_lop3node(
                     &circuit,
                     &lop3nodes,
