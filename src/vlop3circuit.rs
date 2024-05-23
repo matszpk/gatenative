@@ -2519,5 +2519,57 @@ mod tests {
                 outputs: vec![(6, false)],
             })
         );
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 1, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [1, 3, 1],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 4, 2],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [3, 4, 3],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 1, 3],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 4, 3],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [9, 10, 9],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 3,
+                },
+            ],
+            simple_call_find_best_lop3node(VBinOpCircuit {
+                input_len: 5,
+                gates: vec![
+                    vbgate_and(0, 1, NoNegs),
+                    vbgate_or(1, 3, NegOutput),
+                    vbgate_xor(2, 4, NegInput1),
+                    vbgate_and(3, 4, NegOutput),
+                    vbgate_xor(5, 6, NoNegs),
+                    vbgate_and(7, 8, NegInput1),
+                    vbgate_or(9, 10, NoNegs),
+                ],
+                outputs: vec![(11, false)],
+            })
+        );
     }
 }
