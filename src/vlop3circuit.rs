@@ -116,34 +116,46 @@ where
 
     fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
         let tree = get_small_tree(circuit, self.root);
-        let mut farest = vec![];
-        let mut nonfarest = vec![];
-        let tree_root = tree[0].unwrap();
-        if tree[1].is_none() || tree[2].is_none() {
-            farest.push(tree_root);
-        } else {
-            nonfarest.push(tree_root);
-        }
-        if let Some(t) = tree[1] {
-            if tree[3].is_none() || tree[4].is_none() {
-                farest.push(t);
+        let mut way_lengths = vec![0; self.nodes.len()];
+        for (i, toption) in tree.into_iter().enumerate() {
+            let level = if i >= 3 {
+                2
+            } else if i >= 1 {
+                1
             } else {
-                nonfarest.push(t);
+                0
+            };
+            if let Some(t) = toption {
+                if let Some(p) = self.nodes.iter().position(|x| *x == t) {
+                    way_lengths[p] = level;
+                }
             }
         }
-        if let Some(t) = tree[2] {
-            if tree[5].is_none() || tree[6].is_none() {
-                farest.push(t);
-            } else {
-                nonfarest.push(t);
-            }
-        }
-        for i in 3..7 {
-            if let Some(t) = tree[3] {
-                farest.push(t);
-            }
-        }
-        (farest, nonfarest)
+        let max_level = way_lengths.iter().copied().max().unwrap();
+        (
+            way_lengths
+                .iter()
+                .enumerate()
+                .filter_map(|(i, l)| {
+                    if *l == max_level {
+                        Some(self.nodes[i])
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>(),
+            way_lengths
+                .iter()
+                .enumerate()
+                .filter_map(|(i, l)| {
+                    if *l != max_level {
+                        Some(self.nodes[i])
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>(),
+        )
     }
 }
 
