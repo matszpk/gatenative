@@ -2303,6 +2303,7 @@ mod tests {
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug,
     {
+        println!("Call find_best_lop3node");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
@@ -2482,6 +2483,40 @@ mod tests {
                     vbgate_or(5, 6, NoNegs),
                 ],
                 outputs: vec![(7, false)],
+            })
+        );
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 2, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [1, 2, 1],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 0, 2],
+                    tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [1, 2, 0],
+                    tree_paths: to_paths([3, 3, 3, 0, 0, 3, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+            ],
+            simple_call_find_best_lop3node(VBinOpCircuit {
+                input_len: 3,
+                gates: vec![
+                    vbgate_or(0, 2, NegOutput),
+                    vbgate_and(1, 2, NegOutput),
+                    vbgate_xor(3, 2, NoNegs),
+                    vbgate_or(4, 5, NoNegs),
+                ],
+                outputs: vec![(6, false)],
             })
         );
     }
