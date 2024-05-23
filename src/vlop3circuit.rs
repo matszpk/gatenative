@@ -177,13 +177,11 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("FindBestLOP3Node Start");
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gates = &circuit.gates;
     let current_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
     let current_mtu = subtrees[usize::try_from(current_subtree).unwrap()].root();
-    println!("CurrentMTU: {:?}", usize::try_from(current_mtu).unwrap());
     // generate tree to explore
     let tree = {
         let mut tree = [None; 7];
@@ -206,12 +204,6 @@ where
         }
         tree
     };
-    // println!(
-    //     "Tree: {:?}",
-    //     tree.iter()
-    //         .map(|x| x.map(|x| usize::try_from(x).unwrap()))
-    //         .collect::<Vec<_>>()
-    // );
     // algorithm: simple batch of combinations with difference
     #[derive(Clone, Copy)]
     enum CombBatchEntry {
@@ -333,19 +325,6 @@ where
                 }
             }
         };
-        println!(
-            "  Leaves: {:?}, GatesNum: {}: Ex: {}",
-            leaves
-                .iter()
-                .map(|(x, c)| (usize::try_from(*x).unwrap(), *c))
-                .collect::<Vec<_>>(),
-            gate_num,
-            ex,
-        );
-        println!(
-            "  Moves: {:?}",
-            moves.iter().map(|x| x.0).collect::<Vec<_>>()
-        );
         if ex {
             if leaves.len() <= 3 {
                 // calculate costs for node
@@ -373,7 +352,6 @@ where
                         .sum::<usize>()
                     - MTU_COST_BASE * leaves.len()
                     + 1;
-                println!("  MTUCost: {}", mtu_cost);
                 // choose if better
                 let leaves = leaves.iter().map(|(x, _)| *x).collect::<Vec<_>>();
                 if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
