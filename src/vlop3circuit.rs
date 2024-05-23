@@ -72,8 +72,8 @@ where
     ) {
     }
 
-    fn nonfarest_nodes(&self) -> Vec<T> {
-        vec![]
+    fn farest_nonfarest_nodes(&self) -> (Vec<T>, Vec<T>) {
+        (vec![], vec![])
     }
 }
 
@@ -516,7 +516,7 @@ where
         for i in (0..subtrees.len()).rev() {
             let subtree = &subtrees[i];
             mtuareas[i].improve_and_optimize_and_gen_lop3nodes(&circuit, &mut lop3nodes);
-            let nonfarest_nodes: Vec<T> = mtuareas[i].nonfarest_nodes();
+            let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes();
             // get nonfarest nodes
             for (i, nidx) in subtree
                 .gates()
