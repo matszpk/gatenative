@@ -165,6 +165,7 @@ fn find_best_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     coverage: &[T],
+    subtrees: &[SubTree<T>],
     circuit_outputs: &HashSet<T>,
     wire_index: T,
     preferred_nodes: &[T],
@@ -180,7 +181,9 @@ where
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gates = &circuit.gates;
-    let current_mtu = coverage[usize::try_from(wire_index).unwrap() - input_len];
+    let current_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
+    let current_mtu = subtrees[usize::try_from(current_subtree).unwrap()].root();
+    println!("CurrentMTU: {:?}", usize::try_from(current_mtu).unwrap());
     // generate tree to explore
     let tree = {
         let mut tree = [None; 7];
@@ -352,13 +355,15 @@ where
                         .map(|(ln, _)| {
                             if *ln >= input_len_t {
                                 let l = usize::try_from(*ln).unwrap() - input_len;
-                                if current_mtu == coverage[l] {
+                                let coverage_l =
+                                    subtrees[usize::try_from(coverage[l]).unwrap()].root();
+                                if current_mtu == coverage_l {
                                     lop3nodes[l].mtu_cost
                                 } else {
                                     MTU_COST_BASE
                                         - usize::from(
-                                            *ln == coverage[l]
-                                                && !circuit_outputs.contains(&coverage[l]),
+                                            *ln != coverage_l
+                                                && !circuit_outputs.contains(&coverage_l),
                                         )
                                 }
                             } else {
@@ -530,6 +535,7 @@ where
                     &circuit,
                     &lop3nodes,
                     &cov,
+                    &subtrees,
                     &circuit_outputs,
                     nidx,
                     &preferred_nodes,
@@ -2295,8 +2301,7 @@ mod tests {
         vbgate(VGateFunc::Xor, i0, i1, negs)
     }
 
-    fn simple_call_find_best_lop3node(circuit: VBinOpCircuit<u32>) -> Vec<LOP3Node<u32>>
-    {
+    fn simple_call_find_best_lop3node(circuit: VBinOpCircuit<u32>) -> Vec<LOP3Node<u32>> {
         println!("Call find_best_lop3node");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
@@ -2309,9 +2314,41 @@ mod tests {
                 &circuit,
                 &lop3nodes,
                 &cov,
+                &subtrees,
                 &circuit_outputs,
                 u32::try_from(i).unwrap(),
                 &[],
+            );
+        }
+        lop3nodes
+    }
+
+    fn call_find_best_lop3node_with_preferred(
+        circuit: VBinOpCircuit<u32>,
+        preferred_nodes: &[u32],
+        skip_nodes: &[u32],
+    ) -> Vec<LOP3Node<u32>> {
+        println!("Call find_best_lop3node with preferred_nodes");
+        let subtrees = circuit.subtrees();
+        let gates = &circuit.gates;
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        println!("Coverage: {:?}", cov);
+        let mut lop3nodes = vec![LOP3Node::default(); gates.len()];
+        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        for i in input_len..input_len + gates.len() {
+            if skip_nodes.iter().any(|x| *x == u32::try_from(i).unwrap()) {
+                continue;
+            }
+            println!("Node index {}", i);
+            lop3nodes[i - input_len] = find_best_lop3node(
+                &circuit,
+                &lop3nodes,
+                &cov,
+                &subtrees,
+                &circuit_outputs,
+                u32::try_from(i).unwrap(),
+                preferred_nodes,
             );
         }
         lop3nodes
@@ -2564,6 +2601,96 @@ mod tests {
                 ],
                 outputs: vec![(11, false)],
             })
+        );
+        // full adder
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 0, 0],
+                    tree_paths: to_paths([0, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: 0,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 1, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 3, 3, 0, 3, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+            ],
+            call_find_best_lop3node_with_preferred(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_xor(0, 1, NoNegs),
+                        vbgate_xor(2, 3, NoNegs),
+                        vbgate_and(2, 3, NoNegs),
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(5, 6, NoNegs),
+                    ],
+                    outputs: vec![(4, false), (7, false)],
+                },
+                &[3][..],
+                &[3][..],
+            )
+        );
+        // full adder
+        assert_eq!(
+            vec![
+                LOP3Node {
+                    args: [0, 0, 0],
+                    tree_paths: to_paths([0, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: 0,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [0, 1, 0],
+                    tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+                LOP3Node {
+                    args: [2, 0, 1],
+                    tree_paths: to_paths([3, 3, 3, 0, 3, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                },
+            ],
+            call_find_best_lop3node_with_preferred(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_xor(0, 1, NoNegs),
+                        vbgate_xor(2, 3, NoNegs),
+                        vbgate_and(2, 3, NoNegs),
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(5, 6, NoNegs),
+                    ],
+                    outputs: vec![(4, false), (7, false)],
+                },
+                &[][..],
+                &[3][..],
+            )
         );
     }
 }
