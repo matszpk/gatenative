@@ -362,7 +362,7 @@ where
                                 } else {
                                     MTU_COST_BASE + 1
                                         - usize::from(
-                                            *ln != coverage_l
+                                            preferred_nodes.iter().any(|x| *x == *ln)
                                                 && !circuit_outputs.contains(&coverage_l),
                                         )
                                 }
