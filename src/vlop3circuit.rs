@@ -2295,28 +2295,22 @@ mod tests {
         vbgate(VGateFunc::Xor, i0, i1, negs)
     }
 
-    fn simple_call_find_best_lop3node<T>(circuit: VBinOpCircuit<T>) -> Vec<LOP3Node<T>>
-    where
-        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-        T: Default + TryFrom<usize>,
-        <T as TryFrom<usize>>::Error: Debug,
-        usize: TryFrom<T>,
-        <usize as TryFrom<T>>::Error: Debug,
+    fn simple_call_find_best_lop3node(circuit: VBinOpCircuit<u32>) -> Vec<LOP3Node<u32>>
     {
         println!("Call find_best_lop3node");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
-        let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
-        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        let mut lop3nodes = vec![LOP3Node::default(); gates.len()];
+        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         for i in input_len..input_len + gates.len() {
             lop3nodes[i - input_len] = find_best_lop3node(
                 &circuit,
                 &lop3nodes,
                 &cov,
                 &circuit_outputs,
-                T::try_from(i).unwrap(),
+                u32::try_from(i).unwrap(),
                 &[],
             );
         }
