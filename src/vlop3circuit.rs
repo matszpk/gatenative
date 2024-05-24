@@ -507,7 +507,6 @@ where
 {
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
-    let gates = &circuit.gates;
     let top_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
     // generate tree to explore
     let tree = get_small_tree(circuit, wire_index);
