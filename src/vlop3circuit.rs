@@ -494,7 +494,6 @@ fn get_preferred_nodes_from_mtuareas<T>(
     circuit: &VBinOpCircuit<T>,
     mtuareas: &[MTUArea<T>],
     coverage: &[T],
-    circuit_outputs: &HashSet<T>,
     wire_index: T,
 ) -> Vec<T>
 where
@@ -582,13 +581,8 @@ where
             {
                 let gidx = usize::try_from(nidx).unwrap() - input_len;
                 // get preferred nodes from mtuareas
-                let preferred_nodes = get_preferred_nodes_from_mtuareas(
-                    &circuit,
-                    &mtuareas,
-                    &cov,
-                    &circuit_outputs,
-                    nidx,
-                );
+                let preferred_nodes =
+                    get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &cov, nidx);
                 lop3nodes[gidx] = find_best_lop3node(
                     &circuit,
                     &lop3nodes,
@@ -2922,12 +2916,9 @@ mod tests {
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         println!("Coverage: {:?}", cov);
-        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         wire_indices
             .into_iter()
-            .map(|node| {
-                get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &cov, &circuit_outputs, node)
-            })
+            .map(|node| get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &cov, node))
             .collect::<Vec<_>>()
     }
 
