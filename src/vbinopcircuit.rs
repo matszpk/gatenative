@@ -74,7 +74,7 @@ where
     }
 
     #[inline]
-    fn find_index(&self, t: T) -> Option<usize> {
+    pub(crate) fn find_index(&self, t: T) -> Option<usize> {
         if t == self.root {
             Some(self.gates.len())
         } else {

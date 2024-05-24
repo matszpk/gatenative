@@ -524,16 +524,32 @@ where
 }
 
 fn filter_lop3nodes_in_mtuarea<T>(
+    input_len: usize,
     lop3enables: &mut [bool],
     lop3nodes: &[LOP3Node<T>],
     farest_nodes: &[T],
+    subtree: &SubTree<T>,
 ) where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    #[derive(Clone)]
+    struct StackEntry {
+        st_node: usize,
+        way: usize,
+    }
+    let st_gates = subtree.gates();
+    let mut visited = vec![false; st_gates.len()];
+    for node in farest_nodes {
+        let mut stack = vec![StackEntry {
+            st_node: subtree.find_index(*node).unwrap(),
+            way: 0,
+        }];
+        while !stack.is_empty() {}
+    }
 }
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
@@ -608,7 +624,13 @@ where
                 );
             }
             // filter out current mtublock
-            filter_lop3nodes_in_mtuarea(&mut lop3enableds, &lop3nodes, &farest_nodes);
+            filter_lop3nodes_in_mtuarea(
+                input_len,
+                &mut lop3enableds,
+                &lop3nodes,
+                &farest_nodes,
+                subtree,
+            );
             // update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees,
             // &lop3nodes[gidx]);
         }
