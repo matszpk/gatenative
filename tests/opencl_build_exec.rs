@@ -323,7 +323,8 @@ fn test_opencl_builder_and_exec() {
             let mut s = 0x34251u32;
             for _ in 0..64 * 24 {
                 input.push(s & 15);
-                s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
+                s = (s ^ (s.overflowing_mul(1895952115).0.overflowing_add(159502151).0))
+                    ^ 0xba001a4;
                 s = s.rotate_right(s & 15);
             }
             input
@@ -911,7 +912,7 @@ fn test_opencl_builder_and_exec_group_vec() {
         let mut s = 0x34251u32;
         for _ in 0..word_len * 4 * 24 {
             input.push(s & 15);
-            s = (s ^ (s * 1895952115 + 159502151)) ^ 0xba001a4;
+            s = (s ^ (s.overflowing_mul(1895952115).0.overflowing_add(159502151).0)) ^ 0xba001a4;
             s = s.rotate_right(s & 15);
         }
         input

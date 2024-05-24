@@ -270,9 +270,9 @@ where
     };
 
     for (o, _) in circuit.outputs().iter() {
-        let oidx = usize::try_from(*o).unwrap() - input_len;
         let mut stack = Vec::new();
         if *o >= input_len_t {
+            let oidx = usize::try_from(*o).unwrap() - input_len;
             stack.push(StackEntry { node: oidx, way: 0 });
         }
 

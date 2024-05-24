@@ -108,7 +108,13 @@ fn test_cpu_data_transforms() {
     let mut execs = builder.build().unwrap();
     let input = execs[0].new_data_from_vec(
         (0..1024u32 * 128u32)
-            .map(|i| 124 * i + 21 * i * i + 1342)
+            .map(|i| {
+                (124 * i)
+                    .overflowing_add((21 * i).overflowing_mul(i).0)
+                    .0
+                    .overflowing_add(1342)
+                    .0
+            })
             .collect::<Vec<_>>(),
     );
     let mut it = execs[0]
