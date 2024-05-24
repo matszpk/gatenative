@@ -102,9 +102,12 @@ where
         }
     }
 
-    // and improve - fix other TouchNodes to make better result if possible
-    fn add_node(&mut self, wire_index: T) {}
+    fn sort_and_dedup(&mut self) {
+        self.nodes.sort();
+        self.nodes.dedup();
+    }
 
+    // and improve - fix other TouchNodes to make better result if possible
     fn calc_lop3nodes(&self, lop3nodes: &mut [LOP3Node<T>]) {}
 
     fn improve_and_optimize_and_gen_lop3nodes(
@@ -452,17 +455,47 @@ where
 }
 
 fn update_mtuareas_from_lop3node<T>(
-    mtuareas: &mut [MTUArea<T>],
     circuit: &VBinOpCircuit<T>,
-    subtrees: &[SubTree<T>],
-    lop3node: &LOP3Node<T>,
+    mtuareas: &mut [MTUArea<T>],
+    coverage: &[T],
+    subtree: &SubTree<T>,
+    lop3enableds: &[bool],
+    lop3nodes: &[LOP3Node<T>],
 ) where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    let input_len = usize::try_from(circuit.input_len).unwrap();
+    let st_gates = subtree.gates();
+    let subtree_index = coverage[usize::try_from(subtree.root()).unwrap() - input_len];
+    let mut mtuareas_indices = HashSet::new();
+    for (i, node) in subtree
+        .gates()
+        .iter()
+        .map(|(x, _)| *x)
+        .chain(std::iter::once(subtree.root()))
+        .enumerate()
+    {
+        let gidx = usize::try_from(node).unwrap() - input_len;
+        for arg in &lop3nodes[gidx].args {
+            if *arg >= circuit.input_len {
+                let arg_gidx = usize::try_from(*arg).unwrap() - input_len;
+                let arg_subtree_index = coverage[arg_gidx];
+                if arg_subtree_index != subtree_index {
+                    // if this is not this subtree then fill MTUarea
+                    let arg_subtree_index_u = usize::try_from(arg_subtree_index).unwrap();
+                    mtuareas[arg_subtree_index_u].nodes.push(*arg);
+                    mtuareas_indices.insert(arg_subtree_index_u);
+                }
+            }
+        }
+    }
+    for i in mtuareas_indices {
+        mtuareas[i].sort_and_dedup();
+    }
 }
 
 // MTU graph and coverage: index - gate index, value - subtree index
@@ -661,8 +694,14 @@ where
                 &farest_nodes,
                 subtree,
             );
-            // update_mtuareas_from_lop3node(&mut mtuareas, &circuit, &subtrees,
-            // &lop3nodes[gidx]);
+            update_mtuareas_from_lop3node(
+                &circuit,
+                &mut mtuareas,
+                &cov,
+                subtree,
+                &lop3enableds,
+                &lop3nodes,
+            );
         }
         // filter lop3nodes
         // convert inputs in lop3nodes
