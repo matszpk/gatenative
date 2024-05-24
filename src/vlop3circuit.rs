@@ -495,9 +495,8 @@ fn get_preferred_nodes_from_mtuareas<T>(
     lop3nodes: &[LOP3Node<T>],
     mtuareas: &[MTUArea<T>],
     coverage: &[T],
-    subtrees: &[SubTree<T>],
     circuit_outputs: &HashSet<T>,
-    nidx: T,
+    wire_index: T,
 ) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
@@ -506,7 +505,23 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    vec![]
+    let input_len_t = circuit.input_len;
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gates = &circuit.gates;
+    let top_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
+    // generate tree to explore
+    let tree = get_small_tree(circuit, wire_index);
+    let mut preferred_nodes = vec![];
+    for t in tree.into_iter().filter_map(|t| t) {
+        let subtree = coverage[usize::try_from(t).unwrap() - input_len];
+        if subtree != top_subtree {
+            let subtree_u = usize::try_from(subtree).unwrap();
+            if mtuareas[subtree_u].nodes.iter().any(|x| *x == t) {
+                preferred_nodes.push(t);
+            }
+        }
+    }
+    preferred_nodes
 }
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
@@ -566,7 +581,6 @@ where
                     &lop3nodes,
                     &mtuareas,
                     &cov,
-                    &subtrees,
                     &circuit_outputs,
                     nidx,
                 );
