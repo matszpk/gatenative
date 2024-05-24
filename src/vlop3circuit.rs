@@ -68,7 +68,7 @@ where
     tree
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct MTUArea<T> {
     root: T,
     nodes: Vec<T>,
@@ -2915,6 +2915,7 @@ mod tests {
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
+        println!("Coverage: {:?}", cov);
         let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         wire_indices
             .into_iter()
@@ -2944,6 +2945,120 @@ mod tests {
                     extra_cost: 0,
                 }],
                 vec![3, 4, 5]
+            )
+        );
+        assert_eq!(
+            vec![vec![3], vec![3], vec![], vec![3]],
+            simple_call_get_preferred_nodes_from_mtuareas(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_xor(0, 1, NoNegs),
+                        vbgate_xor(2, 3, NoNegs),
+                        vbgate_and(2, 3, NoNegs),
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(5, 6, NoNegs),
+                    ],
+                    outputs: vec![(4, false), (7, false)],
+                },
+                vec![
+                    MTUArea {
+                        root: 3,
+                        nodes: vec![3],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 4,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 7,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                ],
+                vec![4, 5, 6, 7]
+            )
+        );
+        assert_eq!(
+            vec![vec![5, 3, 4], vec![5, 3, 4], vec![], vec![5]],
+            simple_call_get_preferred_nodes_from_mtuareas(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NegOutput),
+                        vbgate_xor(0, 1, NoNegs),
+                        vbgate_or(3, 4, NegInput1),
+                        vbgate_xor(2, 5, NoNegs),
+                        vbgate_and(2, 5, NoNegs),
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(7, 8, NoNegs),
+                    ],
+                    outputs: vec![(6, false), (9, false)],
+                },
+                vec![
+                    MTUArea {
+                        root: 5,
+                        nodes: vec![3, 4, 5],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 6,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 9,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                ],
+                vec![6, 7, 8, 9]
+            )
+        );
+        assert_eq!(
+            vec![vec![8, 3, 7], vec![8, 3, 7], vec![3], vec![8]],
+            simple_call_get_preferred_nodes_from_mtuareas(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NegOutput),
+                        vbgate_xor(0, 1, NoNegs),
+                        vbgate_or(3, 4, NegInput1),
+                        vbgate_and(1, 2, NegOutput),
+                        vbgate_xor(1, 2, NoNegs),
+                        vbgate_or(6, 7, NegInput1),
+                        vbgate_xor(5, 8, NoNegs),
+                        vbgate_and(5, 8, NoNegs),
+                        vbgate_and(0, 5, NoNegs),
+                        vbgate_or(10, 11, NoNegs),
+                    ],
+                    outputs: vec![(9, false), (12, false)],
+                },
+                vec![
+                    MTUArea {
+                        root: 5,
+                        nodes: vec![3],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 8,
+                        nodes: vec![7, 8],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 9,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                    MTUArea {
+                        root: 12,
+                        nodes: vec![],
+                        extra_cost: 0,
+                    },
+                ],
+                vec![9, 10, 11, 12]
             )
         );
     }
