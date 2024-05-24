@@ -542,7 +542,7 @@ fn filter_lop3nodes_in_mtuarea<T>(
         way: usize,
     }
     let st_gates = subtree.gates();
-    let mut visited = vec![false; st_gates.len()];
+    let mut visited = vec![false; st_gates.len() + 1];
     for node in farest_nodes {
         let mut stack = vec![StackEntry {
             st_node: subtree.find_index(*node).unwrap(),
@@ -551,7 +551,11 @@ fn filter_lop3nodes_in_mtuarea<T>(
         while !stack.is_empty() {
             let top = stack.last_mut().unwrap();
             let top_way = top.way;
-            let node = st_gates[top.st_node].0;
+            let node = if top.st_node < st_gates.len() {
+                st_gates[top.st_node].0
+            } else {
+                subtree.root()
+            };
             let gidx = usize::try_from(node).unwrap() - input_len;
             if top_way == 0 {
                 if !visited[top.st_node] {
@@ -3119,6 +3123,95 @@ mod tests {
                     },
                 ],
                 vec![9, 10, 11, 12]
+            )
+        );
+    }
+
+    fn simple_call_filter_lop3nodes_in_mtuarea(
+        circuit: VBinOpCircuit<u32>,
+        farest_nodes: Vec<u32>,
+        subtree_index: usize,
+    ) -> Vec<bool> {
+        println!("Call get_preferred_nodes_from_mtuareas");
+        let subtrees = circuit.subtrees();
+        let gates = &circuit.gates;
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        let mut lop3nodes = vec![LOP3Node::default(); gates.len()];
+        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        for i in input_len..input_len + gates.len() {
+            lop3nodes[i - input_len] = find_best_lop3node(
+                &circuit,
+                &lop3nodes,
+                &cov,
+                &subtrees,
+                &circuit_outputs,
+                u32::try_from(i).unwrap(),
+                &[],
+            );
+        }
+        for (i, lop3) in lop3nodes.iter().enumerate() {
+            println!("LOP3 {}: {:?}", i + input_len, lop3.args);
+        }
+        let mut lop3enableds = vec![false; gates.len()];
+        filter_lop3nodes_in_mtuarea(
+            input_len,
+            &mut lop3enableds,
+            &lop3nodes,
+            &farest_nodes,
+            &subtrees[subtree_index],
+        );
+        lop3enableds
+    }
+
+    #[test]
+    fn test_filter_lop3nodes_in_mtuarea() {
+        assert_eq!(
+            vec![
+                false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, true, true,
+                true, true, true, false, false, true, true
+            ],
+            simple_call_filter_lop3nodes_in_mtuarea(
+                VBinOpCircuit {
+                    input_len: 6,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),     // 6
+                        vbgate_or(0, 1, NoNegs),      // 7
+                        vbgate_or(1, 2, NegInput1),   // 8
+                        vbgate_xor(1, 2, NoNegs),     // 9
+                        vbgate_and(2, 3, NoNegs),     // 10
+                        vbgate_or(2, 3, NoNegs),      // 11
+                        vbgate_or(2, 4, NegInput1),   // 12
+                        vbgate_xor(2, 4, NoNegs),     // 13
+                        vbgate_and(3, 5, NoNegs),     // 14
+                        vbgate_or(3, 5, NoNegs),      // 15
+                        vbgate_or(4, 5, NegInput1),   // 16
+                        vbgate_xor(4, 5, NoNegs),     // 17
+                        vbgate_and(1, 3, NoNegs),     // 18
+                        vbgate_or(1, 3, NoNegs),      // 19
+                        vbgate_or(0, 4, NegInput1),   // 20
+                        vbgate_xor(0, 4, NoNegs),     // 21
+                        vbgate_and(6, 7, NoNegs),     // 22 1
+                        vbgate_or(8, 9, NoNegs),      // 23
+                        vbgate_or(10, 11, NegInput1), // 24
+                        vbgate_xor(12, 13, NoNegs),   // 25
+                        vbgate_and(14, 15, NoNegs),   // 26
+                        vbgate_or(16, 17, NoNegs),    // 27
+                        vbgate_or(18, 19, NegInput1), // 28
+                        vbgate_xor(20, 21, NoNegs),   // 29
+                        vbgate_and(22, 23, NoNegs),   // 30 2
+                        vbgate_or(24, 25, NoNegs),    // 31
+                        vbgate_or(26, 27, NegInput1), // 32
+                        vbgate_xor(28, 29, NoNegs),   // 33
+                        vbgate_and(30, 31, NoNegs),   // 34 3
+                        vbgate_or(32, 33, NoNegs),    // 35
+                        vbgate_xor(34, 35, NoNegs),   // 36 4
+                    ],
+                    outputs: vec![(36, false)],
+                },
+                vec![36],
+                0,
             )
         );
     }
