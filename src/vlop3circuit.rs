@@ -2763,6 +2763,59 @@ mod tests {
                 &[6, 7, 8, 9][..],
             )
         );
+        // full adder 2
+        assert_eq!(
+            std::iter::repeat(LOP3Node {
+                args: [0, 0, 0],
+                tree_paths: to_paths([0, 0, 0, 0, 0, 0, 0]),
+                mtu_cost: 0,
+            })
+            .take(4)
+            .chain(
+                [
+                    LOP3Node {
+                        args: [9, 4, 5],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 2
+                    }, // 10
+                    LOP3Node {
+                        args: [9, 4, 5],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 2
+                    }, // 11
+                    LOP3Node {
+                        args: [7, 0, 1],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 2
+                    }, // 12
+                    LOP3Node {
+                        args: [6, 7, 8],
+                        tree_paths: to_paths([3, 3, 3, 0, 3, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 4
+                    }
+                ]
+                .into_iter()
+            )
+            .collect::<Vec<_>>(),
+            call_find_best_lop3node_with_preferred(
+                VBinOpCircuit {
+                    input_len: 6,
+                    gates: vec![
+                        vbgate_and(0, 1, NegInput1), // 6
+                        vbgate_or(2, 3, NegInput1),  // 7
+                        vbgate_xor(4, 5, NoNegs),    // 8
+                        vbgate_xor(6, 7, NoNegs),    // 9
+                        vbgate_xor(8, 9, NoNegs),    // 10
+                        vbgate_and(8, 9, NoNegs),    // 11
+                        vbgate_and(6, 7, NoNegs),    // 12
+                        vbgate_or(11, 12, NoNegs),
+                    ],
+                    outputs: vec![(10, false), (13, false)],
+                },
+                &[][..],
+                &[6, 7, 8, 9][..],
+            )
+        );
     }
 
     #[test]
