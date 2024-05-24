@@ -3214,5 +3214,53 @@ mod tests {
                 0,
             )
         );
+        assert_eq!(
+            vec![
+                false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, true,
+                true, true, false, true, true, false, false
+            ],
+            simple_call_filter_lop3nodes_in_mtuarea(
+                VBinOpCircuit {
+                    input_len: 6,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),     // 6
+                        vbgate_or(0, 1, NoNegs),      // 7
+                        vbgate_or(1, 2, NegInput1),   // 8
+                        vbgate_xor(1, 2, NoNegs),     // 9
+                        vbgate_and(2, 3, NoNegs),     // 10
+                        vbgate_or(2, 3, NoNegs),      // 11
+                        vbgate_or(2, 4, NegInput1),   // 12
+                        vbgate_xor(2, 4, NoNegs),     // 13
+                        vbgate_and(3, 5, NoNegs),     // 14
+                        vbgate_or(3, 5, NoNegs),      // 15
+                        vbgate_or(4, 5, NegInput1),   // 16
+                        vbgate_xor(4, 5, NoNegs),     // 17
+                        vbgate_and(1, 3, NoNegs),     // 18
+                        vbgate_or(1, 3, NoNegs),      // 19
+                        vbgate_or(0, 4, NegInput1),   // 20
+                        vbgate_xor(0, 4, NoNegs),     // 21
+                        vbgate_and(6, 7, NoNegs),     // 22 1
+                        vbgate_or(8, 9, NoNegs),      // 23
+                        vbgate_or(10, 11, NegInput1), // 24
+                        vbgate_xor(12, 13, NoNegs),   // 25
+                        vbgate_and(14, 15, NoNegs),   // 26
+                        vbgate_or(16, 17, NoNegs),    // 27
+                        vbgate_or(18, 19, NegInput1), // 28
+                        vbgate_xor(20, 21, NoNegs),   // 29
+                        vbgate_and(22, 23, NoNegs),   // 30 2
+                        vbgate_or(24, 25, NoNegs),    // 31
+                        vbgate_or(26, 27, NegInput1), // 32
+                        vbgate_xor(28, 29, NoNegs),   // 33
+                        vbgate_and(30, 31, NoNegs),   // 34 3
+                        vbgate_or(32, 33, NoNegs),    // 35
+                        vbgate_xor(34, 35, NoNegs),   // 36 4
+                    ],
+                    outputs: vec![(36, false)],
+                },
+                vec![33, 34],
+                0,
+            )
+        );
     }
 }
