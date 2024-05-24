@@ -525,7 +525,7 @@ where
 
 fn filter_lop3nodes_in_mtuarea<T>(
     input_len: usize,
-    lop3enables: &mut [bool],
+    lop3enableds: &mut [bool],
     lop3nodes: &[LOP3Node<T>],
     farest_nodes: &[T],
     subtree: &SubTree<T>,
@@ -548,7 +548,33 @@ fn filter_lop3nodes_in_mtuarea<T>(
             st_node: subtree.find_index(*node).unwrap(),
             way: 0,
         }];
-        while !stack.is_empty() {}
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let top_way = top.way;
+            let node = st_gates[top.st_node].0;
+            let gidx = usize::try_from(node).unwrap() - input_len;
+            if top_way == 0 {
+                if !visited[top.st_node] {
+                    visited[top.st_node] = true;
+                    lop3enableds[gidx] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+            }
+            if top_way < 3 {
+                top.way += 1;
+                let next = lop3nodes[gidx].args[top_way];
+                if let Some(st_next) = subtree.find_index(next) {
+                    stack.push(StackEntry {
+                        st_node: st_next,
+                        way: 0,
+                    });
+                }
+            } else {
+                stack.pop();
+            }
+        }
     }
 }
 
