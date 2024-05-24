@@ -492,7 +492,6 @@ where
 
 fn get_preferred_nodes_from_mtuareas<T>(
     circuit: &VBinOpCircuit<T>,
-    lop3nodes: &[LOP3Node<T>],
     mtuareas: &[MTUArea<T>],
     coverage: &[T],
     circuit_outputs: &HashSet<T>,
@@ -512,11 +511,13 @@ where
     let tree = get_small_tree(circuit, wire_index);
     let mut preferred_nodes = vec![];
     for t in tree.into_iter().filter_map(|t| t) {
-        let subtree = coverage[usize::try_from(t).unwrap() - input_len];
-        if subtree != top_subtree {
-            let subtree_u = usize::try_from(subtree).unwrap();
-            if mtuareas[subtree_u].nodes.iter().any(|x| *x == t) {
-                preferred_nodes.push(t);
+        if t >= input_len_t {
+            let subtree = coverage[usize::try_from(t).unwrap() - input_len];
+            if subtree != top_subtree {
+                let subtree_u = usize::try_from(subtree).unwrap();
+                if mtuareas[subtree_u].nodes.iter().any(|x| *x == t) {
+                    preferred_nodes.push(t);
+                }
             }
         }
     }
@@ -577,7 +578,6 @@ where
                 // get preferred nodes from mtuareas
                 let preferred_nodes = get_preferred_nodes_from_mtuareas(
                     &circuit,
-                    &lop3nodes,
                     &mtuareas,
                     &cov,
                     &circuit_outputs,
@@ -2902,6 +2902,49 @@ mod tests {
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
+        );
+    }
+
+    fn simple_call_get_preferred_nodes_from_mtuareas(
+        circuit: VBinOpCircuit<u32>,
+        mtuareas: Vec<MTUArea<u32>>,
+        wire_indices: Vec<u32>,
+    ) -> Vec<Vec<u32>> {
+        println!("Call get_preferred_nodes_from_mtuareas");
+        let subtrees = circuit.subtrees();
+        let gates = &circuit.gates;
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        wire_indices
+            .into_iter()
+            .map(|node| {
+                get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &cov, &circuit_outputs, node)
+            })
+            .collect::<Vec<_>>()
+    }
+
+    #[test]
+    fn test_get_preferred_nodes_from_mtuareas() {
+        assert_eq!(
+            vec![Vec::<u32>::new(); 3],
+            simple_call_get_preferred_nodes_from_mtuareas(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_or(0, 2, NegOutput),
+                        vbgate_xor(3, 4, NoNegs),
+                    ],
+                    outputs: vec![(5, false)],
+                },
+                vec![MTUArea {
+                    root: 5,
+                    nodes: vec![],
+                    extra_cost: 0,
+                }],
+                vec![3, 4, 5]
+            )
         );
     }
 }
