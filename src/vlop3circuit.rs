@@ -552,13 +552,19 @@ where
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
+        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         let mut mtuareas = subtrees
             .iter()
-            .map(|s| MTUArea::<T>::empty_with_root(s.root()))
+            .map(|s| {
+                let mut mtuarea = MTUArea::<T>::empty_with_root(s.root());
+                if circuit_outputs.contains(&s.root()) {
+                    mtuarea.nodes.push(s.root());
+                }
+                mtuarea
+            })
             .collect::<Vec<_>>();
         let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
-        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         // generate lop3nodes
         for i in (0..subtrees.len()).rev() {
             let subtree = &subtrees[i];
@@ -2941,7 +2947,7 @@ mod tests {
                 },
                 vec![MTUArea {
                     root: 5,
-                    nodes: vec![],
+                    nodes: vec![5],
                     extra_cost: 0,
                 }],
                 vec![3, 4, 5]
@@ -2969,12 +2975,12 @@ mod tests {
                     },
                     MTUArea {
                         root: 4,
-                        nodes: vec![],
+                        nodes: vec![4],
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 7,
-                        nodes: vec![],
+                        nodes: vec![7],
                         extra_cost: 0,
                     },
                 ],
@@ -3005,12 +3011,12 @@ mod tests {
                     },
                     MTUArea {
                         root: 6,
-                        nodes: vec![],
+                        nodes: vec![6],
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 9,
-                        nodes: vec![],
+                        nodes: vec![9],
                         extra_cost: 0,
                     },
                 ],
@@ -3049,12 +3055,12 @@ mod tests {
                     },
                     MTUArea {
                         root: 9,
-                        nodes: vec![],
+                        nodes: vec![9],
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 12,
-                        nodes: vec![],
+                        nodes: vec![12],
                         extra_cost: 0,
                     },
                 ],
