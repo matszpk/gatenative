@@ -71,7 +71,7 @@ where
 #[derive(Clone, Debug)]
 struct MTUArea<T> {
     root: T,
-    nodes: Vec<T>,
+    nodes: Vec<(T, Vec<T>)>,
     extra_cost: usize,
 }
 
@@ -102,6 +102,16 @@ where
         }
     }
 
+    fn add_node(&mut self, node: T, touch_node: T) {
+        if let Some((_, ts)) = self.nodes.iter_mut().find(|(x, _)| *x == node) {
+            if ts.iter().all(|x| *x != touch_node) {
+                ts.push(touch_node);
+            }
+        } else {
+            self.nodes.push((node, vec![touch_node]));
+        }
+    }
+
     fn sort_and_dedup(&mut self) {
         self.nodes.sort();
         self.nodes.dedup();
@@ -124,7 +134,7 @@ where
             .enumerate()
             .map(|(i, t)| {
                 if let Some(t) = t {
-                    self.nodes.iter().any(|x| *x == t)
+                    self.nodes.iter().any(|(x, _)| *x == t)
                 } else {
                     false
                 }
@@ -490,7 +500,7 @@ fn update_mtuareas_from_lop3node<T>(
                 if arg_subtree_index != subtree_index {
                     // if this is not this subtree then fill MTUarea
                     let arg_subtree_index_u = usize::try_from(arg_subtree_index).unwrap();
-                    mtuareas[arg_subtree_index_u].nodes.push(*arg);
+                    mtuareas[arg_subtree_index_u].add_node(*arg, node);
                     mtuareas_indices.insert(arg_subtree_index_u);
                 }
             }
@@ -550,7 +560,7 @@ where
             let subtree = coverage[usize::try_from(t).unwrap() - input_len];
             if subtree != top_subtree {
                 let subtree_u = usize::try_from(subtree).unwrap();
-                if mtuareas[subtree_u].nodes.iter().any(|x| *x == t) {
+                if mtuareas[subtree_u].nodes.iter().any(|(x, _)| *x == t) {
                     preferred_nodes.push(t);
                 }
             }
@@ -654,7 +664,7 @@ where
             .map(|s| {
                 let mut mtuarea = MTUArea::<T>::empty_with_root(s.root());
                 if circuit_outputs.contains(&s.root()) {
-                    mtuarea.nodes.push(s.root());
+                    mtuarea.nodes.push((s.root(), vec![]));
                 }
                 mtuarea
             })
@@ -2916,6 +2926,10 @@ mod tests {
         );
     }
 
+    fn to_mtunodes(nodes: Vec<u32>) -> Vec<(u32, Vec<u32>)> {
+        nodes.into_iter().map(|x| (x, vec![])).collect()
+    }
+
     #[test]
     fn test_mtuarea_farest_nonfarest_nodes() {
         let circuit = VBinOpCircuit {
@@ -2942,7 +2956,7 @@ mod tests {
             (vec![8, 3, 4], vec![7]),
             MTUArea {
                 root: 9,
-                nodes: vec![3, 4, 7, 8],
+                nodes: to_mtunodes(vec![3, 4, 7, 8]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -2951,7 +2965,7 @@ mod tests {
             (vec![8, 3, 4, 5], vec![9, 7]),
             MTUArea {
                 root: 9,
-                nodes: vec![3, 4, 5, 7, 8, 9],
+                nodes: to_mtunodes(vec![3, 4, 5, 7, 8, 9]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -2960,7 +2974,7 @@ mod tests {
             (vec![15, 10, 11], vec![16]),
             MTUArea {
                 root: 16,
-                nodes: vec![10, 11, 15, 16],
+                nodes: to_mtunodes(vec![10, 11, 15, 16]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -2978,7 +2992,7 @@ mod tests {
             (vec![3, 4], vec![5]),
             MTUArea {
                 root: 5,
-                nodes: vec![3, 4, 5],
+                nodes: to_mtunodes(vec![3, 4, 5]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -2987,7 +3001,7 @@ mod tests {
             (vec![5, 3], vec![]),
             MTUArea {
                 root: 5,
-                nodes: vec![3, 5],
+                nodes: to_mtunodes(vec![3, 5]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -3007,7 +3021,7 @@ mod tests {
             (vec![6, 3, 4], vec![7]),
             MTUArea {
                 root: 7,
-                nodes: vec![3, 4, 6, 7],
+                nodes: to_mtunodes(vec![3, 4, 6, 7]),
                 extra_cost: 0,
             }
             .farest_nonfarest_nodes(&circuit)
@@ -3047,7 +3061,7 @@ mod tests {
                 },
                 vec![MTUArea {
                     root: 5,
-                    nodes: vec![5],
+                    nodes: to_mtunodes(vec![5]),
                     extra_cost: 0,
                 }],
                 vec![3, 4, 5]
@@ -3070,17 +3084,17 @@ mod tests {
                 vec![
                     MTUArea {
                         root: 3,
-                        nodes: vec![3],
+                        nodes: to_mtunodes(vec![3]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 4,
-                        nodes: vec![4],
+                        nodes: to_mtunodes(vec![4]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 7,
-                        nodes: vec![7],
+                        nodes: to_mtunodes(vec![7]),
                         extra_cost: 0,
                     },
                 ],
@@ -3106,17 +3120,17 @@ mod tests {
                 vec![
                     MTUArea {
                         root: 5,
-                        nodes: vec![3, 4, 5],
+                        nodes: to_mtunodes(vec![3, 4, 5]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 6,
-                        nodes: vec![6],
+                        nodes: to_mtunodes(vec![6]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 9,
-                        nodes: vec![9],
+                        nodes: to_mtunodes(vec![9]),
                         extra_cost: 0,
                     },
                 ],
@@ -3145,22 +3159,22 @@ mod tests {
                 vec![
                     MTUArea {
                         root: 5,
-                        nodes: vec![3],
+                        nodes: to_mtunodes(vec![3]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 8,
-                        nodes: vec![7, 8],
+                        nodes: to_mtunodes(vec![7, 8]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 9,
-                        nodes: vec![9],
+                        nodes: to_mtunodes(vec![9]),
                         extra_cost: 0,
                     },
                     MTUArea {
                         root: 12,
-                        nodes: vec![12],
+                        nodes: to_mtunodes(vec![12]),
                         extra_cost: 0,
                     },
                 ],
@@ -3360,7 +3374,7 @@ mod tests {
         circuit: VBinOpCircuit<u32>,
         lop3enableds: Vec<bool>,
         subtree_index: usize,
-    ) -> Vec<Vec<u32>> {
+    ) -> Vec<Vec<(u32, Vec<u32>)>> {
         println!("Call get_preferred_nodes_from_mtuareas");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
@@ -3388,7 +3402,7 @@ mod tests {
             .map(|s| {
                 let mut mtuarea = MTUArea::empty_with_root(s.root());
                 if circuit_outputs.contains(&s.root()) {
-                    mtuarea.nodes.push(s.root());
+                    mtuarea.nodes.push((s.root(), vec![]));
                 }
                 mtuarea
             })
@@ -3410,7 +3424,13 @@ mod tests {
     #[test]
     fn test_update_mtuareas_from_lop3node() {
         assert_eq!(
-            vec![vec![8], vec![11], vec![12, 13, 14], vec![], vec![32]],
+            vec![
+                vec![(8, vec![18, 24, 26, 29])],
+                vec![(11, vec![18, 26])],
+                vec![(12, vec![20]), (13, vec![19]), (14, vec![23, 27])],
+                vec![],
+                vec![(32, vec![])]
+            ],
             simple_call_update_mtuareas_from_lop3node(
                 VBinOpCircuit {
                     input_len: 6,
