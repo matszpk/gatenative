@@ -118,7 +118,9 @@ where
     }
 
     // and improve - fix other TouchNodes to make better result if possible
-    fn calc_lop3nodes(&self, lop3nodes: &mut [LOP3Node<T>]) {}
+    fn calc_lop3nodes(&mut self, lop3nodes: &mut [LOP3Node<T>]) -> usize {
+        0
+    }
 
     fn improve_and_optimize_and_gen_lop3nodes(
         &mut self,
@@ -463,6 +465,26 @@ where
         mtu_cost: best_config.2,
     }
 }
+
+fn find_best_lop3node_variants<T>(
+    circuit: &VBinOpCircuit<T>,
+    lop3nodes: &[LOP3Node<T>],
+    coverage: &[T],
+    subtrees: &[SubTree<T>],
+    circuit_outputs: &HashSet<T>,
+    wire_index: T,
+) -> Vec<LOP3Node<T>>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    vec![]
+}
+
+fn update_lop3nodes_variants<T>(lop3nodes: &[LOP3Node<T>], variants: Vec<(T, Vec<T>)>) {}
 
 fn update_mtuareas_from_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
