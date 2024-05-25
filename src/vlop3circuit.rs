@@ -473,6 +473,7 @@ fn find_best_lop3node_variants<T>(
     subtrees: &[SubTree<T>],
     circuit_outputs: &HashSet<T>,
     wire_index: T,
+    required_args: &[T],
 ) -> Vec<LOP3Node<T>>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
