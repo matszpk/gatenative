@@ -542,7 +542,7 @@ where
                 use std::cmp::Reverse;
                 let best_cost = (*best_mtu_cost, Reverse(*best_gate_num));
                 let cmp_result = (mtu_cost, Reverse(gate_num)).cmp(&best_cost);
-                if cmp_result < Ordering::Less {
+                if cmp_result == Ordering::Less {
                     configs.clear();
                 }
                 if cmp_result != Ordering::Greater {
