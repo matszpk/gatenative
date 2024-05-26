@@ -268,7 +268,12 @@ where
 
 const MTU_COST_BASE: usize = 100;
 
-fn find_best_lop3node<T>(
+// register_sol - function to register solution. arguments:
+//    leaves - arguments of LOP3 instruction,
+//    lop3_moves (tree_paths) - tree paths for choosen LOP3
+//    mtu_cost - cost of LOP3 in MTUblock
+//    gate_num - number of gates that covered by LOP3
+fn find_best_lop3node_generic<T, F>(
     circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     coverage: &[T],
@@ -276,13 +281,14 @@ fn find_best_lop3node<T>(
     circuit_outputs: &HashSet<T>,
     wire_index: T,
     preferred_nodes: &[T],
-) -> LOP3Node<T>
-where
+    mut register_sol: F,
+) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
+    F: FnMut(&[T], LOP3SubTreePaths, usize, usize),
 {
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
@@ -346,7 +352,6 @@ where
     let mut leaves: Vec<(T, u8)> = vec![(wire_index, 1)];
     let mut moves = LOP3_SUBTREE_PATHS_DEFAULT;
     let mut gate_num = 0;
-    let mut best_config = None;
     let comb_batch =
         if tree[3].is_some() || tree[4].is_some() || tree[5].is_some() || tree[6].is_some() {
             &COMB_BATCH[..]
@@ -453,19 +458,51 @@ where
                     + 1;
                 // choose if better
                 let leaves = leaves.iter().map(|(x, _)| *x).collect::<Vec<_>>();
-                if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
-                    use std::cmp::Reverse;
-                    if (mtu_cost, Reverse(gate_num)) < (best_mtu_cost, Reverse(best_gate_num)) {
-                        best_config =
-                            Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost, gate_num));
-                    }
-                } else {
-                    best_config =
-                        Some((leaves.clone(), lop3_fill_moves(moves), mtu_cost, gate_num));
-                }
+                register_sol(&leaves, moves, mtu_cost, gate_num);
             }
         }
     }
+}
+
+fn find_best_lop3node<T>(
+    circuit: &VBinOpCircuit<T>,
+    lop3nodes: &[LOP3Node<T>],
+    coverage: &[T],
+    subtrees: &[SubTree<T>],
+    circuit_outputs: &HashSet<T>,
+    wire_index: T,
+    preferred_nodes: &[T],
+) -> LOP3Node<T>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let mut best_config = None;
+    let reg_sol = |leaves: &[T], moves, mtu_cost, gate_num| {
+        if let Some((_, _, best_mtu_cost, best_gate_num)) = best_config {
+            use std::cmp::Reverse;
+            if (mtu_cost, Reverse(gate_num)) < (best_mtu_cost, Reverse(best_gate_num)) {
+                best_config = Some((leaves.to_vec(), lop3_fill_moves(moves), mtu_cost, gate_num));
+            }
+        } else {
+            best_config = Some((leaves.to_vec(), lop3_fill_moves(moves), mtu_cost, gate_num));
+        }
+    };
+
+    find_best_lop3node_generic(
+        circuit,
+        lop3nodes,
+        coverage,
+        subtrees,
+        circuit_outputs,
+        wire_index,
+        preferred_nodes,
+        reg_sol,
+    );
+
     let best_config = best_config.unwrap();
     let mut args = [best_config.0[0]; 3];
     for (i, t) in best_config.0.iter().enumerate() {
