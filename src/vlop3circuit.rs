@@ -117,7 +117,8 @@ where
         self.nodes.dedup();
     }
 
-    fn calc_lop3nodes(&mut self, circuit: &VBinOpCircuit<T>,
+    // return cost of MTUarea
+    fn gen_lop3nodes(&mut self, circuit: &VBinOpCircuit<T>,
                       lop3nodes: &mut [LOP3Node<T>]) -> usize {
         let tree = get_small_tree(circuit, self.root);
         let mut extra_cost = 0;
