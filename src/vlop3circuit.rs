@@ -3056,6 +3056,7 @@ mod tests {
     fn simple_call_find_best_lop3node_variants(
         circuit: VBinOpCircuit<u32>,
         preferred_nodes: &[u32],
+        required_args: &[u32],
         node: u32,
     ) -> Vec<LOP3Node<u32>> {
         println!("Call find_best_lop3node_variants");
@@ -3073,7 +3074,7 @@ mod tests {
             &circuit_outputs,
             u32::try_from(node).unwrap(),
             preferred_nodes,
-            &[],
+            required_args,
         )
     }
 
@@ -3108,6 +3109,33 @@ mod tests {
                     outputs: vec![(10, false), (13, false)],
                 },
                 &[6, 7, 8, 9][..],
+                &[],
+                10
+            )
+        );
+        assert_eq!(
+            vec![LOP3Node {
+                args: [9, 4, 5],
+                tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                mtu_cost: MTU_COST_BASE + 1
+            },],
+            simple_call_find_best_lop3node_variants(
+                VBinOpCircuit {
+                    input_len: 6,
+                    gates: vec![
+                        vbgate_and(0, 1, NegInput1), // 6
+                        vbgate_or(2, 3, NegInput1),  // 7
+                        vbgate_xor(4, 5, NoNegs),    // 8
+                        vbgate_xor(6, 7, NoNegs),    // 9
+                        vbgate_xor(8, 9, NoNegs),    // 10
+                        vbgate_and(8, 9, NoNegs),    // 11
+                        vbgate_and(6, 7, NoNegs),    // 12
+                        vbgate_or(11, 12, NoNegs),
+                    ],
+                    outputs: vec![(10, false), (13, false)],
+                },
+                &[6, 7, 8, 9][..],
+                &[4, 9],
                 10
             )
         );
