@@ -531,7 +531,59 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    vec![]
+    let mut best_configs: Option<(Vec<(Vec<T>, LOP3SubTreePaths)>, usize, usize)> = None;
+    let reg_sol = |leaves: &[T], moves, mtu_cost: usize, gate_num: usize| {
+        if required_args
+            .iter()
+            .all(|x| leaves.iter().any(|y| *x == *y))
+        {
+            if let Some((configs, best_mtu_cost, best_gate_num)) = &mut best_configs {
+                use std::cmp::Ordering;
+                use std::cmp::Reverse;
+                let best_cost = (*best_mtu_cost, Reverse(*best_gate_num));
+                let cmp_result = (mtu_cost, Reverse(gate_num)).cmp(&best_cost);
+                if cmp_result < Ordering::Less {
+                    configs.clear();
+                }
+                if cmp_result != Ordering::Greater {
+                    configs.push((leaves.to_vec(), lop3_fill_moves(moves)));
+                }
+            } else {
+                best_configs = Some((
+                    vec![(leaves.to_vec(), lop3_fill_moves(moves))],
+                    mtu_cost,
+                    gate_num,
+                ));
+            }
+        }
+    };
+    find_best_lop3node_generic(
+        circuit,
+        lop3nodes,
+        coverage,
+        subtrees,
+        circuit_outputs,
+        wire_index,
+        &[],
+        reg_sol,
+    );
+
+    let best_config = best_configs.unwrap();
+    best_config
+        .0
+        .into_iter()
+        .map(|(leaves, moves)| {
+            let mut args = [leaves[0]; 3];
+            for (i, t) in leaves.iter().enumerate() {
+                args[i] = *t;
+            }
+            LOP3Node {
+                args,
+                tree_paths: moves,
+                mtu_cost: best_config.1,
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
 fn update_lop3nodes_variants<T>(lop3nodes: &[LOP3Node<T>], variants: Vec<(T, Vec<T>)>) {}
