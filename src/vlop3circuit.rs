@@ -123,6 +123,10 @@ where
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
     ) -> usize {
+        // IDEA:
+        // use form closed form of area by nodes (for example: (R,C00,C01,C10,C11)
+        // or (R,C00,C01,C1)) and it can be without root.
+        // if some nodes are node supplied then add.
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let tree = get_small_tree(circuit, self.root);
         let gates = &circuit.gates;
@@ -170,7 +174,8 @@ where
         }
         // generate lop3nodes from MTUarea
         for (i, m) in node_mask.iter().enumerate() {
-            // initialize only nodes which any input connected to other any node
+            // initialize only nodes which any input connected to other any node.
+            // ^^--- really??? reconsider it!
         }
         self.nodes.len() + extra_cost
     }
