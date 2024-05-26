@@ -123,8 +123,55 @@ where
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
     ) -> usize {
+        let input_len = usize::try_from(circuit.input_len).unwrap();
         let tree = get_small_tree(circuit, self.root);
+        let gates = &circuit.gates;
         let mut extra_cost = 0;
+        let mut node_mask = tree
+            .into_iter()
+            .enumerate()
+            .map(|(i, t)| {
+                if let Some(t) = t {
+                    self.nodes.iter().any(|(x, _)| *x == t)
+                } else {
+                    false
+                }
+            })
+            .collect::<Vec<_>>();
+        if tree[0].is_some()
+            && self.nodes.iter().any(|x| x.0 == self.root)
+            && tree[1].is_some()
+            && tree[2].is_some()
+        {
+            // if something must be added
+            let t1 = tree[1].unwrap();
+            let t2 = tree[2].unwrap();
+            if t1 >= circuit.input_len && t2 >= circuit.input_len && !node_mask[1] && !node_mask[2]
+            {
+                let gidx1 = usize::try_from(t1).unwrap() - input_len;
+                let gidx2 = usize::try_from(t2).unwrap() - input_len;
+                let mut children = vec![
+                    gates[gidx1].0.i0,
+                    gates[gidx1].0.i1,
+                    gates[gidx2].0.i0,
+                    gates[gidx2].0.i1,
+                ];
+                children.sort();
+                children.dedup();
+                if children.len() == 4
+                    && (node_mask[3] || node_mask[4])
+                    && (node_mask[5] || node_mask[6])
+                {
+                    // just add new lop3 node
+                    node_mask[2] = true;
+                    extra_cost = 1;
+                }
+            }
+        }
+        // generate lop3nodes from MTUarea
+        for (i, m) in node_mask.iter().enumerate() {
+            // initialize only nodes which any input connected to other any node
+        }
         self.nodes.len() + extra_cost
     }
 
