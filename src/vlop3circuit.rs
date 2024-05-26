@@ -299,6 +299,12 @@ where
         RemoveNode(u8, bool),
     }
     use CombBatchEntry::*;
+    const COMB_BATCH_L1: [CombBatchEntry; 4] = [
+        AddNode(0, true),    // (R)
+        AddNode(1, true),    // (R,C0)
+        AddNode(2, true),    // (R,C0,C1)
+        RemoveNode(1, true), // (R,C1)
+    ];
     const COMB_BATCH: [CombBatchEntry; 31] = [
         AddNode(0, true), // (R)
         AddNode(1, true), // (R,C0)
@@ -341,8 +347,14 @@ where
     let mut moves = LOP3_SUBTREE_PATHS_DEFAULT;
     let mut gate_num = 0;
     let mut best_config = None;
-    for instr in COMB_BATCH {
-        let ex = match instr {
+    let comb_batch =
+        if tree[3].is_some() || tree[4].is_some() || tree[5].is_some() || tree[6].is_some() {
+            &COMB_BATCH[..]
+        } else {
+            &COMB_BATCH_L1[..]
+        };
+    for instr in comb_batch {
+        let ex = match *instr {
             AddNode(i, ex) => {
                 if let Some(tt) = tree[i as usize] {
                     if tt >= input_len_t {
