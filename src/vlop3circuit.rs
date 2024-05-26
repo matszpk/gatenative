@@ -117,11 +117,11 @@ where
         self.nodes.dedup();
     }
 
-    // and improve - fix other TouchNodes to make better result if possible
     fn calc_lop3nodes(&mut self, lop3nodes: &mut [LOP3Node<T>]) -> usize {
         0
     }
 
+    // and improve - fix other TouchNodes to make better result if possible
     fn improve_and_optimize_and_gen_lop3nodes(
         &mut self,
         circuit: &VBinOpCircuit<T>,
