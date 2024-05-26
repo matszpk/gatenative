@@ -68,6 +68,7 @@ where
     tree
 }
 
+// special area of MTUsubtree that used to join with other MTUblocks.
 #[derive(Clone, Debug)]
 struct MTUArea<T> {
     root: T,
