@@ -128,6 +128,7 @@ where
         // use form closed form of area by nodes (for example: (R,C00,C01,C10,C11)
         // or (R,C00,C01,C1)) and it can be without root.
         // if some nodes are node supplied then add.
+        // NEXT THOUGHT: include (minimal) depth of nodes in MTUarea to calculate costs
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let tree = get_small_tree(circuit, self.root);
         let gates = &circuit.gates;
