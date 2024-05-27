@@ -87,6 +87,71 @@ impl<T: Default> Default for MTUArea<T> {
     }
 }
 
+const LOP3_TREE_SHAPE_TABLE: [u8; 19] = [
+    0b0000001, // (R)
+    0b0000110, // (C0,C1)
+    0b0000111, // (R,C0,C1)
+    0b0011100, // (C1,C00,C01)
+    0b0011101, // (R,C1,C00,C01)
+    0b0011110, // (C0,C1,C00,C01)
+    0b0011111, // (R,C0,C1,C00,C01)
+    0b1100010, // (C0,C10,C11)
+    0b1100011, // (R,C0,C10,C11)
+    0b1100110, // (C0,C1,C10,C11)
+    0b1100111, // (R,C0,C1,C10,C11)
+    0b1111000, // (C00,C01,C10,C11)
+    0b1111001, // (R,C00,C01,C10,C11)
+    0b1111010, // (C0,C00,C01,C10,C11)
+    0b1111011, // (R,C0,C00,C01,C10,C11)
+    0b1111100, // (C1,C00,C01,C10,C11)
+    0b1111101, // (R,C1,C00,C01,C10,C11)
+    0b1111110, // (C0,C1,C00,C01,C10,C11)
+    0b1111111, // (R,C0,C1,C00,C01,C10,C11)
+];
+
+//
+#[derive(Clone, Copy)]
+struct MTUAreaConfig(u8, bool);
+// ^^--- node_mask, check_node_C1
+
+// cost calculation: number of nodes to connect with farest nodes + extra nodes,
+//                   reversed minimal depth of nodes (depth=0->3,depth=1->2)
+fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
+    let all_nodes = cfg.0 | idx;
+    let mut cost = 0;
+    // connection with other nodes
+    if (all_nodes & 0b0000001) != 0 && (all_nodes & 0b1111110) != 0 {
+        cost += 1;
+    }
+    if (all_nodes & 0b0000010) != 0 && (all_nodes & 0b0011000) != 0 {
+        cost += 1;
+    }
+    if (all_nodes & 0b0000100) != 0 && (all_nodes & 0b1100000) != 0 {
+        cost += 1;
+    }
+    // reversed min depth
+    if (all_nodes & 0b0000001) != 0 {
+        cost += 3;
+    } else if (all_nodes & 0b0000110) != 0 {
+        cost += 2;
+    } else if (all_nodes & 0b1111000) != 0 {
+        cost += 1;
+    }
+    // add number of extra nodes
+    cost + cfg.0.count_ones() as usize
+}
+
+const MTUAREA_CONFIG_TBL: [MTUAreaConfig; 8] = [
+    MTUAreaConfig(0b0000000, false), // 0b0000000: ()
+    MTUAreaConfig(0b0000000, false), // 0b0000001: (R)
+    MTUAreaConfig(0b0000000, false), // 0b0000010: (C0)
+    MTUAreaConfig(0b0000100, false), // 0b0000011: (R,C0)
+    MTUAreaConfig(0b0000000, false), // 0b0000100: (C1)
+    MTUAreaConfig(0b0000010, false), // 0b0000101: (R,C1)
+    MTUAreaConfig(0b0000000, false), // 0b0000110: (C0,C1)
+    MTUAreaConfig(0b0000000, false), // 0b0000111: (R,C0,C1)
+];
+
 impl<T> MTUArea<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
@@ -144,6 +209,21 @@ where
                 }
             })
             .collect::<Vec<_>>();
+        //         let shape_index = {
+        //             if (node_mask & 0b1111000) != 0 {
+        //                 if (node_mask & 0b1100000) == 0 {
+        //
+        //                 } else if (node_mask & 0b0011000) == 0 {
+        //                 } else {
+        //                     // full
+        //                     if (node_maks & 0b
+        //                 }
+        //             } else if (node_mask & 0b110) != 0 {
+        //                 1
+        //             } else {
+        //                 0
+        //             }
+        //         };
         if tree[0].is_some()
             && self.nodes.iter().any(|x| x.0 == self.root)
             && tree[1].is_some()
