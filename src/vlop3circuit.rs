@@ -393,8 +393,83 @@ where
                 let t = tree[i].unwrap();
                 if t >= circuit.input_len {
                     let gidx = usize::try_from(t).unwrap() - input_len;
-                    if i == 0 {
+                    if i == 0 && (all_nodes & 0b0000110) != 0b0000110 {
+                        // if root node and node available all nodes higher level
                         // add LOP3node
+                        match (all_nodes & 0b0000110) {
+                            0b0000010 => {
+                                let t2_0 = gates[gidx].0.i0;
+                                let gidx2_0 = usize::try_from(t2_0).unwrap() - input_len;
+                                lop3nodes[gidx] = LOP3Node {
+                                    args: [
+                                        gates[gidx2_0].0.i0,
+                                        gates[gidx2_0].0.i1,
+                                        gates[gidx].0.i1,
+                                    ],
+                                    tree_paths: [
+                                        PathMove(3),
+                                        PathMove(3),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                    ],
+                                    mtu_cost: MTU_COST_BASE + 1,
+                                };
+                            }
+                            0b0000100 => {
+                                let t2_1 = gates[gidx].0.i1;
+                                let gidx2_1 = usize::try_from(t2_1).unwrap() - input_len;
+                                lop3nodes[gidx] = LOP3Node {
+                                    args: [
+                                        gates[gidx].0.i0,
+                                        gates[gidx2_1].0.i0,
+                                        gates[gidx2_1].0.i1,
+                                    ],
+                                    tree_paths: [
+                                        PathMove(3),
+                                        PathMove(0),
+                                        PathMove(3),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                    ],
+                                    mtu_cost: MTU_COST_BASE + 1,
+                                };
+                            }
+                            0b0000000 => {
+                                let t2_0 = gates[gidx].0.i1;
+                                let gidx2_0 = usize::try_from(t2_0).unwrap() - input_len;
+                                let t2_1 = gates[gidx].0.i1;
+                                let gidx2_1 = usize::try_from(t2_1).unwrap() - input_len;
+                                let mut args = vec![
+                                    gates[gidx2_0].0.i0,
+                                    gates[gidx2_0].0.i1,
+                                    gates[gidx2_1].0.i0,
+                                    gates[gidx2_1].0.i1,
+                                ];
+                                args.sort();
+                                args.dedup();
+                                lop3nodes[gidx] = LOP3Node {
+                                    args: [args[0], args[1], args[2]],
+                                    tree_paths: [
+                                        PathMove(3),
+                                        PathMove(3),
+                                        PathMove(3),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                    ],
+                                    mtu_cost: MTU_COST_BASE + 1,
+                                };
+                            }
+                            _ => {
+                                panic!("Unexpected!");
+                            }
+                        }
                         //lop3nodes[gidx] =
                     } else {
                         lop3nodes[gidx] = LOP3Node {
