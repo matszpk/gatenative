@@ -355,7 +355,6 @@ where
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let tree = get_small_tree(circuit, self.root);
         let gates = &circuit.gates;
-        let mut extra_cost = 0;
         let mut node_mask = tree
             .into_iter()
             .enumerate()
@@ -367,55 +366,53 @@ where
                 }
             })
             .collect::<Vec<_>>();
-        //         let shape_index = {
-        //             if (node_mask & 0b1111000) != 0 {
-        //                 if (node_mask & 0b1100000) == 0 {
-        //
-        //                 } else if (node_mask & 0b0011000) == 0 {
-        //                 } else {
-        //                     // full
-        //                     if (node_maks & 0b
-        //                 }
-        //             } else if (node_mask & 0b110) != 0 {
-        //                 1
-        //             } else {
-        //                 0
-        //             }
-        //         };
-        if tree[0].is_some()
-            && self.nodes.iter().any(|x| x.0 == self.root)
-            && tree[1].is_some()
-            && tree[2].is_some()
-        {
-            // if something must be added
-            let t1 = tree[1].unwrap();
-            let t2 = tree[2].unwrap();
-            if t1 >= circuit.input_len && t2 >= circuit.input_len && !node_mask[1] && !node_mask[2]
-            {
-                let gidx1 = usize::try_from(t1).unwrap() - input_len;
-                let gidx2 = usize::try_from(t2).unwrap() - input_len;
-                let mut children = vec![
-                    gates[gidx1].0.i0,
-                    gates[gidx1].0.i1,
-                    gates[gidx2].0.i0,
-                    gates[gidx2].0.i1,
-                ];
-                children.sort();
-                children.dedup();
-                if children.len() == 4
-                    && (node_mask[3] || node_mask[4])
-                    && (node_mask[5] || node_mask[6])
-                {
-                    // just add new lop3 node
-                    node_mask[2] = true;
-                    extra_cost = 1;
-                }
-            }
-        }
+        let node_mask_u8 = node_mask
+            .iter()
+            .enumerate()
+            .fold(0u8, |a, (i, x)| a | (u8::from(*x) << i));
+        let mtuarea_config = MTUAREA_CONFIG_TBL[node_mask_u8 as usize];
+        let all_nodes = node_mask_u8 | mtuarea_config.0;
+        let extra_cost = calc_mtu_area_config_cost(node_mask_u8, mtuarea_config);
+        let check_c1_node = check_c1_node(node_mask_u8, mtuarea_config);
+        let do_add_c1_node = if let Some(t) = tree[0] {
+            let mut farest = (3..7).map(|x| tree[x].unwrap()).collect::<Vec<_>>();
+            farest.sort();
+            farest.dedup();
+            farest.len() == 4
+        } else {
+            false
+        };
+        let all_nodes = all_nodes | (u8::from(do_add_c1_node) << 2);
+        let (farest_nodes, nonfarest_nodes) = farest_nonfarest_nodes_from_mask(all_nodes);
         // generate lop3nodes from MTUarea
-        for (i, m) in node_mask.iter().enumerate() {
+        for i in 0..7 {
             // initialize only nodes which any input connected to other any node.
             // ^^--- really??? reconsider it!
+            if (nonfarest_nodes & (1u8 << i)) != 0 {
+                // node to process
+                let t = tree[i].unwrap();
+                if t >= circuit.input_len {
+                    let gidx = usize::try_from(t).unwrap() - input_len;
+                    if i == 0 {
+                        // add LOP3node
+                        //lop3nodes[gidx] =
+                    } else {
+                        lop3nodes[gidx] = LOP3Node {
+                            args: [gates[gidx].0.i0, gates[gidx].0.i1, gates[gidx].0.i0],
+                            tree_paths: [
+                                PathMove(3),
+                                PathMove(0),
+                                PathMove(0),
+                                PathMove(0),
+                                PathMove(0),
+                                PathMove(0),
+                                PathMove(0),
+                            ],
+                            mtu_cost: MTU_COST_BASE + 1,
+                        };
+                    }
+                }
+            }
         }
         self.nodes.len() + extra_cost
     }
