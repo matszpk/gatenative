@@ -3990,4 +3990,32 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_farest_nonfarest_nodes_from_mask() {
+        assert_eq!(
+            (0b0000001, 0b0000000),
+            farest_nonfarest_nodes_from_mask(0b0000001),
+        );
+        assert_eq!(
+            (0b0000110, 0b0000001),
+            farest_nonfarest_nodes_from_mask(0b0000111),
+        );
+        assert_eq!(
+            (0b0011000, 0b0000010),
+            farest_nonfarest_nodes_from_mask(0b0011010),
+        );
+        assert_eq!(
+            (0b1100000, 0b0000100),
+            farest_nonfarest_nodes_from_mask(0b1100100),
+        );
+        assert_eq!(
+            (0b0011100, 0b0000001),
+            farest_nonfarest_nodes_from_mask(0b0011101),
+        );
+        assert_eq!(
+            (0b1100010, 0b0000001),
+            farest_nonfarest_nodes_from_mask(0b1100011),
+        );
+    }
 }
