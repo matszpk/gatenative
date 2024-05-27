@@ -112,7 +112,7 @@ const LOP3_TREE_SHAPE_TABLE: [u8; 19] = [
 //
 #[derive(Clone, Copy)]
 struct MTUAreaConfig(u8);
-// ^^--- node_mask, check_node_C1
+// ^^--- node_mask, farest nodes
 
 // cost calculation: number of nodes to connect with farest nodes + extra nodes,
 //                   reversed minimal depth of nodes (depth=0->3,depth=1->2)
@@ -144,6 +144,36 @@ fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
 fn check_c1_node(idx: u8, cfg: MTUAreaConfig) -> bool {
     let all_nodes = cfg.0 | idx;
     (all_nodes & 0b1111001) == 0b1111001 && (all_nodes & 0b0000110) == 0
+}
+
+fn farest_nonfarest_nodes_from_mask(nodes: u8) -> (u8, u8) {
+    let mut farest = 0;
+    let mut nonfarest = 0;
+    if (nodes & 0b0000001) != 0 {
+        if ((nodes & 0b0000010) != 0 || (nodes & 0b0011000) == 0b0011000)
+            && ((nodes & 0b0000100) != 0 || (nodes & 0b1100000) == 0b1100000)
+        {
+            nonfarest |= 0b0000001;
+        } else {
+            farest |= 0b0000001;
+        }
+    }
+    if (nodes & 0b0000010) != 0 {
+        if (nodes & 0b0011000) == 0b0011000 {
+            nonfarest |= 0b0000010;
+        } else {
+            farest |= 0b0000010;
+        }
+    }
+    if (nodes & 0b0000100) != 0 {
+        if (nodes & 0b1100000) == 0b1100000 {
+            nonfarest |= 0b0000100;
+        } else {
+            farest |= 0b0000100;
+        }
+    }
+    farest |= nodes & 0b1111000;
+    (farest, nonfarest)
 }
 
 const MTUAREA_CONFIG_TBL: [MTUAreaConfig; 128] = [
