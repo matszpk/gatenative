@@ -26,6 +26,7 @@ where
     }
 }
 
+// get_small_tree with checking whether nodes are belonging to same subtree.
 fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
     wire_index: T,
