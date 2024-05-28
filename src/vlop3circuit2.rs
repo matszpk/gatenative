@@ -1204,11 +1204,9 @@ where
                 &lop3nodes,
             );
         }
-        // filter lop3nodes
         // convert inputs in lop3nodes
-        let mut out = Self::from_lop3nodes(circuit, lop3nodes);
-        out.optimize_negs();
-        out
+        Self::from_lop3nodes(circuit, lop3nodes)
+        // optimize can be called later
     }
 }
 
