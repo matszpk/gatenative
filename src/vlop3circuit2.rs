@@ -119,6 +119,7 @@ fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
     if (all_nodes & 0b0000100) != 0 && (all_nodes & 0b1100000) != 0 {
         cost += 1;
     }
+    println!("Cost 0: {}", cost);
     // reversed min depth
     if (all_nodes & 0b0000001) != 0 {
         cost += 3;
@@ -127,8 +128,9 @@ fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
     } else if (all_nodes & 0b1111000) != 0 {
         cost += 1;
     }
+    println!("Cost 1: {} {}", cost, all_nodes.count_ones());
     // add number of extra nodes
-    cost + cfg.0.count_ones() as usize
+    cost + all_nodes.count_ones() as usize
 }
 
 fn check_c1_node(idx: u8, cfg: MTUAreaConfig) -> bool {
@@ -491,6 +493,7 @@ where
                 }
             }
         }
+        let cost = cost + usize::from(check_c1_node);
         self.cost = cost;
         cost
     }
@@ -2539,7 +2542,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
-                4
+                7
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![12, 13, 14], circuit.clone())
         );
@@ -2557,7 +2560,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
-                5
+                7
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![13, 14], circuit.clone())
         );
@@ -2575,7 +2578,7 @@ mod tests {
                     mtu_cost: MTU_COST_BASE + 1,
                 }))
                 .collect::<Vec<_>>(),
-                4
+                8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![9, 8, 13, 14], circuit.clone())
         );
@@ -2593,7 +2596,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
-                6
+                8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![9, 14], circuit.clone())
         );
