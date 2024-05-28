@@ -375,6 +375,7 @@ where
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
+        cov: &[T],
     ) -> usize {
         // IDEA:
         // use form closed form of area by nodes (for example: (R,C00,C01,C10,C11)
@@ -382,7 +383,9 @@ where
         // if some nodes are node supplied then add.
         // NEXT THOUGHT: include (minimal) depth of nodes in MTUarea to calculate costs
         let input_len = usize::try_from(circuit.input_len).unwrap();
-        let tree = get_small_tree(circuit, self.root);
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
+        assert!(self.root >= circuit.input_len);
+        let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
         let gates = &circuit.gates;
         let mut node_mask = tree
             .into_iter()
@@ -554,7 +557,10 @@ where
                 let t = tree[i].unwrap();
                 // TODO: add checking whether is same MTUsubtree
                 if t >= circuit.input_len {
-                    self.nodes.push((t, vec![]));
+                    let t_subtree_index = cov[usize::try_from(t).unwrap() - input_len];
+                    if t_subtree_index == root_subtree_index {
+                        self.nodes.push((t, vec![]));
+                    }
                 }
             }
         }
@@ -2546,6 +2552,8 @@ mod tests {
         circuit: VBinOpCircuit<u32>,
         nodes_to_check: Vec<u32>,
     ) -> (Vec<LOP3Node<u32>>, Vec<u32>, usize) {
+        let subtrees = circuit.subtrees();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
         let mut mtuarea = MTUArea {
             root: mtuarea_root,
             nodes: mtuarea_nodes
@@ -2556,7 +2564,7 @@ mod tests {
         };
         let input_len = circuit.input_len as usize;
         let mut lop3nodes = vec![LOP3Node::default(); circuit.gates.len() - input_len];
-        let cost = mtuarea.gen_lop3nodes_and_cost(&circuit, &mut lop3nodes);
+        let cost = mtuarea.gen_lop3nodes_and_cost(&circuit, &mut lop3nodes, &cov);
         let lop3nodes = nodes_to_check
             .into_iter()
             .map(|x| lop3nodes[(x as usize) - input_len].clone())
