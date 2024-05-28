@@ -100,7 +100,7 @@ const LOP3_TREE_SHAPE_TABLE: [u8; 19] = [
 ];
 
 //
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct MTUAreaConfig(u8);
 // ^^--- node_mask, farest nodes
 
@@ -332,7 +332,7 @@ where
     }
 
     // return cost of MTUarea
-    fn gen_lop3nodes(
+    fn gen_lop3nodes_and_cost(
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
@@ -361,6 +361,7 @@ where
             .enumerate()
             .fold(0u8, |a, (i, x)| a | (u8::from(*x) << i));
         let mtuarea_config = MTUAREA_CONFIG_TBL[node_mask_u8 as usize];
+        println!("MTUAreaconfig: {} {:?}", node_mask_u8, mtuarea_config);
         let all_nodes = node_mask_u8 | mtuarea_config.0;
         let cost = calc_mtu_area_config_cost(node_mask_u8, mtuarea_config);
         let check_c1_node = check_c1_node(node_mask_u8, mtuarea_config);
@@ -374,6 +375,17 @@ where
         };
         let all_nodes = all_nodes | (u8::from(do_add_c1_node) << 2);
         let (farest_nodes, nonfarest_nodes) = farest_nonfarest_nodes_from_mask(all_nodes);
+        println!(
+            "Debug nodes: {:07b} {:07b} {:07b}",
+            all_nodes, farest_nodes, nonfarest_nodes
+        );
+        println!("ChecC1Node: {}, Cost: {}", check_c1_node, cost);
+        println!(
+            "Tree: {:?}",
+            tree.iter()
+                .map(|x| x.map(|t| usize::try_from(t).unwrap()))
+                .collect::<Vec<_>>()
+        );
         // generate lop3nodes from MTUarea
         for i in 0..7 {
             // initialize only nodes which any input connected to other any node.
@@ -388,27 +400,6 @@ where
                         // add LOP3node
                         match all_nodes & 0b0000110 {
                             0b0000010 => {
-                                let t2_0 = gates[gidx].0.i0;
-                                let gidx2_0 = usize::try_from(t2_0).unwrap() - input_len;
-                                lop3nodes[gidx] = LOP3Node {
-                                    args: [
-                                        gates[gidx2_0].0.i0,
-                                        gates[gidx2_0].0.i1,
-                                        gates[gidx].0.i1,
-                                    ],
-                                    tree_paths: [
-                                        PathMove(3),
-                                        PathMove(3),
-                                        PathMove(0),
-                                        PathMove(0),
-                                        PathMove(0),
-                                        PathMove(0),
-                                        PathMove(0),
-                                    ],
-                                    mtu_cost: MTU_COST_BASE + 1,
-                                };
-                            }
-                            0b0000100 => {
                                 let t2_1 = gates[gidx].0.i1;
                                 let gidx2_1 = usize::try_from(t2_1).unwrap() - input_len;
                                 lop3nodes[gidx] = LOP3Node {
@@ -421,6 +412,27 @@ where
                                         PathMove(3),
                                         PathMove(0),
                                         PathMove(3),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                        PathMove(0),
+                                    ],
+                                    mtu_cost: MTU_COST_BASE + 1,
+                                };
+                            }
+                            0b0000100 => {
+                                let t2_0 = gates[gidx].0.i0;
+                                let gidx2_0 = usize::try_from(t2_0).unwrap() - input_len;
+                                lop3nodes[gidx] = LOP3Node {
+                                    args: [
+                                        gates[gidx2_0].0.i0,
+                                        gates[gidx2_0].0.i1,
+                                        gates[gidx].0.i1,
+                                    ],
+                                    tree_paths: [
+                                        PathMove(3),
+                                        PathMove(3),
+                                        PathMove(0),
                                         PathMove(0),
                                         PathMove(0),
                                         PathMove(0),
@@ -2459,11 +2471,11 @@ mod tests {
         );
     }
 
-    fn call_mtuarea_gen_lop3nodes(
+    fn call_mtuarea_gen_lop3nodes_and_cost(
         mtuarea_root: u32,
         mtuarea_nodes: Vec<u32>,
-        circuit: &VBinOpCircuit<u32>,
-    ) {
+        circuit: VBinOpCircuit<u32>,
+    ) -> (Vec<LOP3Node<u32>>, usize) {
         let mut mtuarea = MTUArea {
             root: mtuarea_root,
             nodes: mtuarea_nodes
@@ -2472,8 +2484,118 @@ mod tests {
                 .collect::<Vec<_>>(),
             cost: 0,
         };
+        let input_len = circuit.input_len as usize;
+        let mut lop3nodes = vec![LOP3Node::default(); circuit.gates.len() - input_len];
+        let cost = mtuarea.gen_lop3nodes_and_cost(&circuit, &mut lop3nodes);
+        let lop3nodes = mtuarea
+            .nodes
+            .into_iter()
+            .map(|(x, _)| lop3nodes[(x as usize) - input_len].clone())
+            .collect::<Vec<_>>();
+        (lop3nodes, cost)
     }
 
     #[test]
-    fn test_mtuarea_gen_lop3nodes() {}
+    fn test_mtuarea_gen_lop3nodes_and_cost() {
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                // MTU area
+                vbgate_and(0, 1, NoNegs),      // 4
+                vbgate_and(2, 3, NoNegs),      // 5
+                vbgate_or(1, 3, NoNegs),       // 6
+                vbgate_xor(0, 3, NoNegs),      // 7
+                vbgate_and(4, 5, NoNegs),      // 8
+                vbgate_or(6, 7, NegOutput),    // 9
+                vbgate_xor(5, 7, NegOutput),   // 10
+                vbgate_or(4, 7, NegInput1),    // 11
+                vbgate_or(8, 9, NegInput1),    // 12
+                vbgate_xor(10, 11, NoNegs),    // 13
+                vbgate_and(12, 13, NegOutput), // 14
+                // next MTU block
+                vbgate_or(14, 1, NoNegs),      // 15
+                vbgate_or(2, 14, NegInput1),   // 16
+                vbgate_xor(14, 3, NoNegs),     // 17
+                vbgate_and(15, 16, NegInput1), // 18
+            ],
+            outputs: vec![(17, false), (18, false)],
+        };
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [12, 13, 12],
+                        tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                4
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(14, vec![12, 13, 14], circuit.clone())
+        );
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [12, 13, 12],
+                        tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                5
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(14, vec![13, 14], circuit.clone())
+        );
+        assert_eq!(
+            (
+                std::iter::repeat(LOP3Node {
+                    args: [0, 0, 0],
+                    tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                    mtu_cost: 0,
+                })
+                .take(3)
+                .chain(std::iter::once(LOP3Node {
+                    args: [8, 9, 13],
+                    tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                    mtu_cost: MTU_COST_BASE + 1,
+                }))
+                .collect::<Vec<_>>(),
+                4
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(14, vec![9, 8, 13, 14], circuit.clone())
+        );
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [8, 9, 13],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                6
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(14, vec![9, 14], circuit.clone())
+        );
+    }
 }
