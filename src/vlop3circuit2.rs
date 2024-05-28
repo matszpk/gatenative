@@ -2691,5 +2691,33 @@ mod tests {
                 vec![12, 13, 14]
             )
         );
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [8, 9, 8],
+                        tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    },
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [12, 10, 11],
+                        tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                11
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(
+                14,
+                vec![11, 8, 9, 10, 12, 14],
+                circuit.clone(),
+                vec![12, 13, 14]
+            )
+        );
     }
 }
