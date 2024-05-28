@@ -339,7 +339,7 @@ const MTUAREA_CONFIG_TBL: [MTUAreaConfig; 128] = [
 
 impl<T> MTUArea<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -558,10 +558,69 @@ where
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
-        coverage: &[T],
+        cov: &[T],
         subtrees: &[SubTree<T>],
         circuit_outputs: &HashSet<T>,
     ) {
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
+        // prefereed nodes are all nodes in MTUarea (in tree except circuit inputs and
+        // nodes from other MTUsubtrees).
+        let preferred_nodes = tree
+            .iter()
+            .filter_map(|x| {
+                if let Some(x) = *x {
+                    if x >= circuit.input_len
+                        && cov[usize::try_from(x).unwrap() - input_len] == root_subtree_index
+                    {
+                        Some(x)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        // generate variants
+        let lop3node_variants = self
+            .nodes
+            .iter()
+            .map(|(node, touch_nodes)| {
+                let gi = usize::try_from(*node).unwrap() - input_len;
+                let required_args = lop3nodes[gi]
+                    .args
+                    .iter()
+                    .filter(|x| {
+                        if **x >= circuit.input_len {
+                            cov[usize::try_from(**x).unwrap() - input_len] != root_subtree_index
+                        } else {
+                            true
+                        }
+                    })
+                    .copied()
+                    .collect::<Vec<_>>();
+                let mut variants = find_best_lop3node_variants(
+                    circuit,
+                    lop3nodes,
+                    cov,
+                    subtrees,
+                    circuit_outputs,
+                    *node,
+                    &preferred_nodes,
+                    &required_args,
+                );
+                if variants
+                    .iter()
+                    .all(|variant| variant.args != lop3nodes[gi].args)
+                {
+                    // add original if doesn't exists
+                    variants.push(lop3nodes[gi].clone());
+                }
+                variants
+            })
+            .collect::<Vec<_>>();
     }
 
     fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
