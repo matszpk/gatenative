@@ -26,7 +26,11 @@ where
     }
 }
 
-fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
+fn get_small_tree_with_cov<T>(
+    circuit: &VBinOpCircuit<T>,
+    wire_index: T,
+    cov: Option<&[T]>,
+) -> [Option<T>; 7]
 where
     T: Clone + Copy + Ord + PartialEq + Eq,
     T: Default + TryFrom<usize>,
@@ -37,6 +41,16 @@ where
     let input_len_t = circuit.input_len;
     let input_len = usize::try_from(input_len_t).unwrap();
     let gates = &circuit.gates;
+    // by default is subtree is zero if no coverage supplied
+    let root_subtree_index = if let Some(cov) = cov {
+        if wire_index >= circuit.input_len {
+            cov[usize::try_from(wire_index).unwrap() - input_len]
+        } else {
+            T::default() // it doesn't matter what is value
+        }
+    } else {
+        T::default()
+    };
     let mut tree = [None; 7];
     let mut old_level_start = 0;
     let mut level_start = 1;
@@ -46,9 +60,18 @@ where
             if let Some(t) = tree[old_level_start + pos] {
                 if t >= input_len_t {
                     let gi = usize::try_from(t).unwrap();
-                    let g = gates[gi - input_len].0;
-                    tree[level_start + (pos << 1)] = Some(g.i0);
-                    tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                    // by default is subtree is zero if no coverage supplied
+                    // if no supplied coverage then root_subtree_index == t_subtree_index
+                    let t_subtree_index = if let Some(cov) = cov {
+                        cov[gi - input_len]
+                    } else {
+                        T::default()
+                    };
+                    if t_subtree_index == root_subtree_index {
+                        let g = gates[gi - input_len].0;
+                        tree[level_start + (pos << 1)] = Some(g.i0);
+                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                    }
                 }
             }
         }
@@ -56,6 +79,17 @@ where
         level_start += level_start + 1;
     }
     tree
+}
+
+fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
+where
+    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    get_small_tree_with_cov(circuit, wire_index, None)
 }
 
 // special area of MTUsubtree that used to join with other MTUblocks.
