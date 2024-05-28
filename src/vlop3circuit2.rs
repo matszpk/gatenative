@@ -368,8 +368,6 @@ where
         self.nodes.dedup();
     }
 
-    // TODO: add coverage and subtree to limit smalltree of MTUarea to nodes in same MTUsubtree
-    // as root.
     // return cost of MTUarea
     fn gen_lop3nodes_and_cost(
         &mut self,
