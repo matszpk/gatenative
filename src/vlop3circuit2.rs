@@ -558,6 +558,7 @@ where
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3node: &mut [LOP3Node<T>],
+        cov: &[T],
     ) {
     }
 
@@ -1230,7 +1231,7 @@ where
         // generate lop3nodes
         for i in (0..subtrees.len()).rev() {
             let subtree = &subtrees[i];
-            mtuareas[i].improve_and_optimize_and_gen_lop3nodes(&circuit, &mut lop3nodes);
+            mtuareas[i].improve_and_optimize_and_gen_lop3nodes(&circuit, &mut lop3nodes, &cov);
             let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes(&circuit);
             // get nonfarest nodes
             for (i, nidx) in subtree
