@@ -333,6 +333,8 @@ where
         self.nodes.dedup();
     }
 
+    // TODO: add coverage and subtree to limit smalltree of MTUarea to nodes in same MTUsubtree
+    // as root.
     // return cost of MTUarea
     fn gen_lop3nodes_and_cost(
         &mut self,
@@ -506,6 +508,18 @@ where
                             mtu_cost: MTU_COST_BASE + 1,
                         };
                     }
+                }
+            }
+        }
+        let extra_nodes = all_nodes & !node_mask_u8;
+        println!("ExtraNodes: {:07b}", extra_nodes);
+        // update nodes
+        for i in 0..7 {
+            if ((extra_nodes >> i) & 1) != 0 {
+                let t = tree[i].unwrap();
+                // TODO: add checking whether is same MTUsubtree
+                if t >= circuit.input_len {
+                    self.nodes.push((t, vec![]));
                 }
             }
         }
@@ -2490,12 +2504,13 @@ mod tests {
         );
     }
 
+    // return LOP3nodes from MTUarea to check, nodes in MTUarea, cost of MTUarea
     fn call_mtuarea_gen_lop3nodes_and_cost(
         mtuarea_root: u32,
         mtuarea_nodes: Vec<u32>,
         circuit: VBinOpCircuit<u32>,
         nodes_to_check: Vec<u32>,
-    ) -> (Vec<LOP3Node<u32>>, usize) {
+    ) -> (Vec<LOP3Node<u32>>, Vec<u32>, usize) {
         let mut mtuarea = MTUArea {
             root: mtuarea_root,
             nodes: mtuarea_nodes
@@ -2511,7 +2526,12 @@ mod tests {
             .into_iter()
             .map(|x| lop3nodes[(x as usize) - input_len].clone())
             .collect::<Vec<_>>();
-        (lop3nodes, cost)
+        let mtuarea_new_nodes = mtuarea
+            .nodes
+            .into_iter()
+            .map(|(x, _)| x)
+            .collect::<Vec<_>>();
+        (lop3nodes, mtuarea_new_nodes, cost)
     }
 
     #[test]
@@ -2558,6 +2578,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![12, 13, 14],
                 7
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2581,6 +2602,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![13, 14, 12],
                 7
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![13, 14], circuit.clone(), vec![13, 14])
@@ -2599,6 +2621,7 @@ mod tests {
                     mtu_cost: MTU_COST_BASE + 1,
                 }))
                 .collect::<Vec<_>>(),
+                vec![9, 8, 13, 14],
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2622,6 +2645,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![9, 14, 13, 8],
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![9, 14], circuit.clone(), vec![9, 14])
@@ -2640,6 +2664,7 @@ mod tests {
                     mtu_cost: MTU_COST_BASE + 1,
                 }))
                 .collect::<Vec<_>>(),
+                vec![11, 10, 12, 14],
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2663,6 +2688,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![10, 14, 12, 11],
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![10, 14], circuit.clone(), vec![10, 14])
@@ -2687,6 +2713,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![11, 8, 9, 10, 14, 13],
                 10
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2715,6 +2742,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![11, 8, 9, 10, 12, 14],
                 11
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2738,6 +2766,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![11, 8, 9, 10, 12, 13],
                 10
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2790,6 +2819,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![8, 9, 10, 13],
                 10
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2833,6 +2863,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![7, 4, 5, 6, 8, 9],
                 10
             ),
             call_mtuarea_gen_lop3nodes_and_cost(
@@ -2877,6 +2908,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![4, 6, 7, 5],
                 10
             ),
             call_mtuarea_gen_lop3nodes_and_cost(7, vec![4, 6, 7], circuit.clone(), vec![4, 6, 7])
@@ -2900,6 +2932,7 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1,
                     }
                 ],
+                vec![4, 7, 5],
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(7, vec![4, 7], circuit.clone(), vec![4, 6, 7])
