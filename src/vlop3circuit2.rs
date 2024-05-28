@@ -1034,8 +1034,6 @@ where
         .collect::<Vec<_>>()
 }
 
-fn update_lop3nodes_variants<T>(lop3nodes: &[LOP3Node<T>], variants: Vec<(T, Vec<T>)>) {}
-
 fn update_mtuareas_from_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     mtuareas: &mut [MTUArea<T>],
