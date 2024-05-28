@@ -401,7 +401,6 @@ where
             .enumerate()
             .fold(0u8, |a, (i, x)| a | (u8::from(*x) << i));
         let mtuarea_config = MTUAREA_CONFIG_TBL[node_mask_u8 as usize];
-        println!("MTUAreaconfig: {:07b} {:?}", node_mask_u8, mtuarea_config);
         let all_nodes = node_mask_u8 | mtuarea_config.0;
         let cost = calc_mtu_area_config_cost(node_mask_u8, mtuarea_config);
         let check_c1_node = check_c1_node(node_mask_u8, mtuarea_config);
@@ -427,17 +426,6 @@ where
         };
         let all_nodes = all_nodes | (u8::from(do_add_c1_node) << 2);
         let (farest_nodes, nonfarest_nodes) = farest_nonfarest_nodes_from_mask(all_nodes);
-        println!(
-            "Debug nodes: {:07b} {:07b} {:07b}",
-            all_nodes, farest_nodes, nonfarest_nodes
-        );
-        println!("ChecC1Node: {}, Cost: {}", check_c1_node, cost);
-        println!(
-            "Tree: {:?}",
-            tree.iter()
-                .map(|x| x.map(|t| usize::try_from(t).unwrap()))
-                .collect::<Vec<_>>()
-        );
         // generate lop3nodes from MTUarea
         for i in 0..7 {
             // initialize only nodes which any input connected to other any node.
@@ -548,7 +536,6 @@ where
             }
         }
         let extra_nodes = all_nodes & !node_mask_u8;
-        println!("ExtraNodes: {:07b}", extra_nodes);
         // update nodes
         for i in 0..7 {
             if ((extra_nodes >> i) & 1) != 0 {
