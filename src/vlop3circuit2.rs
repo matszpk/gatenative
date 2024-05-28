@@ -555,7 +555,6 @@ where
         for i in 0..7 {
             if ((extra_nodes >> i) & 1) != 0 {
                 let t = tree[i].unwrap();
-                // TODO: add checking whether is same MTUsubtree
                 if t >= circuit.input_len {
                     let t_subtree_index = cov[usize::try_from(t).unwrap() - input_len];
                     if t_subtree_index == root_subtree_index {
@@ -2554,6 +2553,7 @@ mod tests {
     ) -> (Vec<LOP3Node<u32>>, Vec<u32>, usize) {
         let subtrees = circuit.subtrees();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
+        println!("Coverage: {:?}", cov);
         let mut mtuarea = MTUArea {
             root: mtuarea_root,
             nodes: mtuarea_nodes
@@ -2979,6 +2979,48 @@ mod tests {
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(7, vec![4, 7], circuit.clone(), vec![4, 6, 7])
+        );
+        // with lower subtree - to check testing whether nodes in same subtree as root.
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                vbgate_xor(0, 3, NoNegs), // 4
+                // MTU area
+                vbgate_and(1, 2, NoNegs),   // 5
+                vbgate_or(3, 4, NegOutput), // 6
+                vbgate_or(5, 6, NegInput1), // 7
+                vbgate_xor(7, 4, NoNegs),   // 8
+                // next MTU block
+                vbgate_or(8, 2, NoNegs),      // 9
+                vbgate_or(3, 8, NegInput1),   // 10
+                vbgate_xor(8, 4, NoNegs),     // 11
+                vbgate_and(9, 10, NegInput1), // 12
+            ],
+            outputs: vec![(11, false), (12, false)],
+        };
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [5, 6, 4],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                vec![5, 8, 6],
+                8
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(8, vec![5, 8], circuit.clone(), vec![5, 7, 8])
         );
     }
 }
