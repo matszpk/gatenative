@@ -456,7 +456,7 @@ where
                                 };
                             }
                             0b0000000 => {
-                                let t2_0 = gates[gidx].0.i1;
+                                let t2_0 = gates[gidx].0.i0;
                                 let gidx2_0 = usize::try_from(t2_0).unwrap() - input_len;
                                 let t2_1 = gates[gidx].0.i1;
                                 let gidx2_1 = usize::try_from(t2_1).unwrap() - input_len;
@@ -468,8 +468,12 @@ where
                                 ];
                                 args.sort();
                                 args.dedup();
+                                let mut args_out = [args[0]; 3];
+                                for (j, arg) in args.into_iter().enumerate() {
+                                    args_out[j] = arg;
+                                }
                                 lop3nodes[gidx] = LOP3Node {
-                                    args: [args[0], args[1], args[2]],
+                                    args: args_out,
                                     tree_paths: [
                                         PathMove(3),
                                         PathMove(3),
@@ -2663,6 +2667,7 @@ mod tests {
             ),
             call_mtuarea_gen_lop3nodes_and_cost(14, vec![10, 14], circuit.clone(), vec![10, 14])
         );
+        // checking splitting farest nodes into two parts
         assert_eq!(
             (
                 vec![
@@ -2717,6 +2722,81 @@ mod tests {
                 vec![11, 8, 9, 10, 12, 14],
                 circuit.clone(),
                 vec![12, 13, 14]
+            )
+        );
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [8, 9, 8],
+                        tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    },
+                    LOP3Node {
+                        args: [10, 11, 10],
+                        tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                10
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(
+                14,
+                vec![11, 8, 9, 10, 12, 13],
+                circuit.clone(),
+                vec![12, 13]
+            )
+        );
+        // with three same farest nodes
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                // MTU area
+                vbgate_and(0, 1, NoNegs),      // 4
+                vbgate_and(2, 3, NoNegs),      // 5
+                vbgate_or(1, 3, NoNegs),       // 6
+                vbgate_xor(0, 3, NoNegs),      // 7
+                vbgate_and(4, 5, NoNegs),      // 8
+                vbgate_or(6, 7, NegOutput),    // 9
+                vbgate_or(4, 7, NegInput1),    // 10
+                vbgate_or(8, 9, NegInput1),    // 11
+                vbgate_xor(9, 10, NoNegs),     // 12
+                vbgate_and(11, 12, NegOutput), // 13
+                // next MTU block
+                vbgate_or(13, 1, NoNegs),      // 14
+                vbgate_or(2, 13, NegInput1),   // 15
+                vbgate_xor(13, 3, NoNegs),     // 16
+                vbgate_and(14, 15, NegInput1), // 17
+            ],
+            outputs: vec![(16, false), (17, false)],
+        };
+        // checking sharing farest nodes by one part
+        assert_eq!(
+            (
+                vec![
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [0, 0, 0],
+                        tree_paths: LOP3_SUBTREE_PATHS_DEFAULT,
+                        mtu_cost: 0,
+                    },
+                    LOP3Node {
+                        args: [8, 9, 10],
+                        tree_paths: to_paths([3, 3, 3, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 1,
+                    }
+                ],
+                10
+            ),
+            call_mtuarea_gen_lop3nodes_and_cost(
+                13,
+                vec![8, 9, 10, 13],
+                circuit.clone(),
+                vec![11, 12, 13]
             )
         );
     }
