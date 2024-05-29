@@ -765,20 +765,22 @@ where
                 .collect::<Vec<_>>();
             let current_cost = self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
             if current_cost < best_choice.0 {
-                let mut enabled_nodes: Vec<Vec<u8>> = vec![vec![]; lop3node_variants.len()];
+                let mut enabled_nodes: Vec<Vec<(bool, u8)>> = lop3node_variants
+                    .iter()
+                    .map(|v| vec![(true, 0u8); v.len()])
+                    .collect::<Vec<_>>();
                 let mut found = true;
                 // check if satisfiable by touch nodes
-                'a: for (tni, touch_node) in touch_nodes.iter().enumerate() {
+                for (tni, touch_node) in touch_nodes.iter().enumerate() {
                     let variants = &lop3node_variants[tni];
                     for (vi, variant) in variants.iter().enumerate() {
                         for arg in &variant.args {
                             if let Some(p) = preferred_nodes.iter().position(|x| *arg == *x) {
                                 if (i & (1 << p)) == 1 {
-                                    enabled_nodes[tni][vi] = 1 << p;
+                                    enabled_nodes[tni][vi].1 = 1 << p;
                                 } else {
                                     // if outside nodes in MTUarea comb
-                                    found = false;
-                                    break 'a;
+                                    enabled_nodes[tni][vi].0 = false;
                                 }
                             }
                         }
