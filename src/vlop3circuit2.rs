@@ -74,7 +74,7 @@ where
                 let mut level_start = 3;
                 let mut level_end = 7;
                 // calculate values for tree nodes
-                for _ in 0..3 {
+                for level in 0..3 {
                     for l in level_start..level_end {
                         let calc_l = 3 + 7 - l - 1;
                         if let Some(t) = tree[l] {
@@ -88,8 +88,28 @@ where
                                 let tgi = usize::try_from(t).unwrap() - input_len;
                                 let l_arg0 = (l << 1) + 1;
                                 let l_arg1 = (l << 1) + 2;
-                                let va0 = calcs[3 + 7 - l_arg0 - 1];
-                                let va1 = calcs[3 + 7 - l_arg1 - 1];
+                                let va0 = if l > 0 {
+                                    calcs[3 + 7 - l_arg0 - 1]
+                                } else {
+                                    if gates[tgi].0.i0 == lop3node.args[0] {
+                                        calcs[0]
+                                    } else if gates[tgi].0.i0 == lop3node.args[1] {
+                                        calcs[1]
+                                    } else {
+                                        calcs[2]
+                                    }
+                                };
+                                let va1 = if l > 0 {
+                                    calcs[3 + 7 - l_arg1 - 1]
+                                } else {
+                                    if gates[tgi].0.i1 == lop3node.args[0] {
+                                        calcs[0]
+                                    } else if gates[tgi].0.i1 == lop3node.args[1] {
+                                        calcs[1]
+                                    } else {
+                                        calcs[2]
+                                    }
+                                };
                                 let va1 = if gates[tgi].1 == NegInput1 {
                                     va1 ^ 0xff
                                 } else {
