@@ -384,6 +384,57 @@ const MTUAREA_COMBS: [u8; 44] = [
     0b0000000, // ()
 ];
 
+const VALUE_BY_COUNT_ONES_REV_7BIT_TBL: [u8; 128] = [
+    0b1111111, 0b1111110, 0b1111101, 0b1111011, 0b1110111, 0b1101111, 0b1011111, 0b0111111,
+    0b1111100, 0b1111010, 0b1111001, 0b1110110, 0b1110101, 0b1110011, 0b1101110, 0b1101101,
+    0b1101011, 0b1100111, 0b1011110, 0b1011101, 0b1011011, 0b1010111, 0b1001111, 0b0111110,
+    0b0111101, 0b0111011, 0b0110111, 0b0101111, 0b0011111, 0b1111000, 0b1110100, 0b1110010,
+    0b1110001, 0b1101100, 0b1101010, 0b1101001, 0b1100110, 0b1100101, 0b1100011, 0b1011100,
+    0b1011010, 0b1011001, 0b1010110, 0b1010101, 0b1010011, 0b1001110, 0b1001101, 0b1001011,
+    0b1000111, 0b0111100, 0b0111010, 0b0111001, 0b0110110, 0b0110101, 0b0110011, 0b0101110,
+    0b0101101, 0b0101011, 0b0100111, 0b0011110, 0b0011101, 0b0011011, 0b0010111, 0b0001111,
+    0b1110000, 0b1101000, 0b1100100, 0b1100010, 0b1100001, 0b1011000, 0b1010100, 0b1010010,
+    0b1010001, 0b1001100, 0b1001010, 0b1001001, 0b1000110, 0b1000101, 0b1000011, 0b0111000,
+    0b0110100, 0b0110010, 0b0110001, 0b0101100, 0b0101010, 0b0101001, 0b0100110, 0b0100101,
+    0b0100011, 0b0011100, 0b0011010, 0b0011001, 0b0010110, 0b0010101, 0b0010011, 0b0001110,
+    0b0001101, 0b0001011, 0b0000111, 0b1100000, 0b1010000, 0b1001000, 0b1000100, 0b1000010,
+    0b1000001, 0b0110000, 0b0101000, 0b0100100, 0b0100010, 0b0100001, 0b0011000, 0b0010100,
+    0b0010010, 0b0010001, 0b0001100, 0b0001010, 0b0001001, 0b0000110, 0b0000101, 0b0000011,
+    0b1000000, 0b0100000, 0b0010000, 0b0001000, 0b0000100, 0b0000010, 0b0000001, 0b0000000,
+];
+
+const VALUE_BY_COUNT_ONES_REV_6BIT_TBL: [u8; 64] = [
+    0b111111, 0b111110, 0b111101, 0b111011, 0b110111, 0b101111, 0b011111, 0b111100, 0b111010,
+    0b111001, 0b110110, 0b110101, 0b110011, 0b101110, 0b101101, 0b101011, 0b100111, 0b011110,
+    0b011101, 0b011011, 0b010111, 0b001111, 0b111000, 0b110100, 0b110010, 0b110001, 0b101100,
+    0b101010, 0b101001, 0b100110, 0b100101, 0b100011, 0b011100, 0b011010, 0b011001, 0b010110,
+    0b010101, 0b010011, 0b001110, 0b001101, 0b001011, 0b000111, 0b110000, 0b101000, 0b100100,
+    0b100010, 0b100001, 0b011000, 0b010100, 0b010010, 0b010001, 0b001100, 0b001010, 0b001001,
+    0b000110, 0b000101, 0b000011, 0b100000, 0b010000, 0b001000, 0b000100, 0b000010, 0b000001,
+    0b000000,
+];
+
+const VALUE_BY_COUNT_ONES_REV_5BIT_TBL: [u8; 32] = [
+    0b11111, 0b11110, 0b11101, 0b11011, 0b10111, 0b01111, 0b11100, 0b11010, 0b11001, 0b10110,
+    0b10101, 0b10011, 0b01110, 0b01101, 0b01011, 0b00111, 0b11000, 0b10100, 0b10010, 0b10001,
+    0b01100, 0b01010, 0b01001, 0b00110, 0b00101, 0b00011, 0b10000, 0b01000, 0b00100, 0b00010,
+    0b00001, 0b00000,
+];
+
+const VALUE_BY_COUNT_ONES_REV_4BIT_TBL: [u8; 16] = [
+    0b1111, 0b1110, 0b1101, 0b1011, 0b0111, 0b1100, 0b1010, 0b1001, 0b0110, 0b0101, 0b0011, 0b1000,
+    0b0100, 0b0010, 0b0001, 0b0000,
+];
+
+const VALUE_BY_COUNT_ONES_REV_3BIT_TBL: [u8; 8] =
+    [0b111, 0b110, 0b101, 0b011, 0b100, 0b010, 0b001, 0b000];
+
+const VALUE_BY_COUNT_ONES_REV_2BIT_TBL: [u8; 4] = [0b11, 0b10, 0b01, 0b00];
+
+const VALUE_BY_COUNT_ONES_REV_1BIT_TBL: [u8; 2] = [0b1, 0b0];
+
+const VALUE_BY_COUNT_ONES_REV_0BIT_TBL: [u8; 1] = [0b0];
+
 impl<T> MTUArea<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -669,6 +720,46 @@ where
             })
             .collect::<Vec<_>>();
         // find the best mtu area nodes combination
+        let value_count_ones_tbls = [
+            &VALUE_BY_COUNT_ONES_REV_0BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_1BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_2BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_3BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_4BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_5BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_6BIT_TBL[..],
+            &VALUE_BY_COUNT_ONES_REV_7BIT_TBL[..],
+        ];
+
+        let preferred_nodes_num = preferred_nodes.len();
+        // choose reversed sorted combinations table
+        let value_tbl_choosen = value_count_ones_tbls[preferred_nodes_num];
+        // find first choice with this same number of choosen nodes as original
+        let p = value_tbl_choosen.partition_point(|x| x.count_ones() as usize > self.nodes.len());
+        let mut best_choice = (
+            self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov),
+            Option::<u8>::None,
+        );
+        // make copy of current choice
+        let copy = self.clone();
+        // routine find best choice
+        for i in &value_tbl_choosen[p..] {
+            // set up nodes
+            self.nodes = preferred_nodes
+                .iter()
+                .enumerate()
+                .filter(|(b, _)| ((i >> b) & 1) != 0)
+                .map(|(_, x)| (*x, vec![]))
+                .collect::<Vec<_>>();
+            let current_cost = self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
+            if current_cost < best_choice.0 {
+                // check if satisfiable by touch nodes
+                if true {
+                    best_choice = (current_cost, Some(*i));
+                }
+            }
+        }
+        // now apply to MTU area and touch nodes
     }
 
     fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
