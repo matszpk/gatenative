@@ -638,12 +638,7 @@ where
                             if *arg >= circuit.input_len {
                                 let arggi = usize::try_from(*arg).unwrap() - input_len;
                                 if cov[arggi] == root_subtree_index {
-                                    if let Some(p) = self.nodes.iter().position(|(n, _)| *n == *arg)
-                                    {
-                                        if self.nodes[p].1.iter().all(|n| *n == touch_node) {
-                                            self.nodes[p].1.push(touch_node);
-                                        }
-                                    }
+                                    self.add_node(*arg, touch_node);
                                 }
                             }
                         }
