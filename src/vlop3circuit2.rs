@@ -681,11 +681,22 @@ where
                 }
             })
             .collect::<Vec<_>>();
+        // get touch nodes
+        let touch_nodes = {
+            let mut touch_nodes = self
+                .nodes
+                .iter()
+                .map(|(_, touch_nodes)| touch_nodes.clone())
+                .flatten()
+                .collect::<Vec<_>>();
+            touch_nodes.sort();
+            touch_nodes.dedup();
+            touch_nodes
+        };
         // generate variants
-        let lop3node_variants = self
-            .nodes
+        let lop3node_variants = touch_nodes
             .iter()
-            .map(|(node, touch_nodes)| {
+            .map(|node| {
                 let gi = usize::try_from(*node).unwrap() - input_len;
                 let required_args = lop3nodes[gi]
                     .args
@@ -754,12 +765,24 @@ where
             let current_cost = self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
             if current_cost < best_choice.0 {
                 // check if satisfiable by touch nodes
-                if true {
+                if touch_nodes.iter().enumerate().all(|(tni, touch_node)| {
+                    lop3node_variants[tni].iter().any(|lop3node| {
+                        true
+                    })
+                }) {
                     best_choice = (current_cost, Some(*i));
                 }
             }
         }
         // now apply to MTU area and touch nodes
+        self.nodes = preferred_nodes
+            .iter()
+            .enumerate()
+            .filter(|(b, _)| ((best_choice.0 >> b) & 1) != 0)
+            .map(|(_, x)| (*x, vec![]))
+            .collect::<Vec<_>>();
+        self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
+        // find touch nodes configuration
     }
 
     fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
