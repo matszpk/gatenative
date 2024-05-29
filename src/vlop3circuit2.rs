@@ -561,6 +561,17 @@ where
                 }
             })
             .collect::<Vec<_>>();
+        let all_touch_nodes = {
+            let mut touch_nodes = self
+                .nodes
+                .iter()
+                .map(|(_, touch_nodes)| touch_nodes.clone())
+                .flatten()
+                .collect::<Vec<_>>();
+            touch_nodes.sort();
+            touch_nodes.dedup();
+            touch_nodes
+        };
         let keep_root = circuit_outputs.contains(&self.root);
         let nodes_copy = self.nodes.clone();
         for (i, (mtunode, _)) in nodes_copy.iter().enumerate() {
@@ -629,26 +640,28 @@ where
                         let gi = usize::try_from(touch_node).unwrap() - input_len;
                         // if found then replace
                         lop3nodes[gi] = variant.clone();
-                        // and update MTU nodes
-                        for (node, touch_nodes) in &mut self.nodes {
-                            touch_nodes.retain(|tn| *tn != touch_node);
-                        }
-                        // add touch node into MTU node's touch nodes list
-                        for arg in &variant.args {
-                            if *arg >= circuit.input_len {
-                                let arggi = usize::try_from(*arg).unwrap() - input_len;
-                                if cov[arggi] == root_subtree_index {
-                                    self.add_node(*arg, touch_node);
-                                }
-                            }
-                        }
                     }
-                    // remove obsolete nodes in MTU
-                    self.nodes
-                        .retain(|(n, touch_nodes)| *n == self.root || !touch_nodes.is_empty());
                 }
             }
         }
+        // update MTUarea
+        self.nodes = vec![]; // clear nodes
+        for touch_node in all_touch_nodes {
+            let gi = usize::try_from(touch_node).unwrap() - input_len;
+            for arg in &lop3nodes[gi].args {
+                if *arg >= circuit.input_len {
+                    let arggi = usize::try_from(*arg).unwrap() - input_len;
+                    if cov[arggi] == root_subtree_index {
+                        self.add_node(*arg, touch_node);
+                    }
+                }
+            }
+        }
+        if keep_root && self.nodes.iter().all(|(n, _)| *n != self.root) {
+            // add root
+            self.nodes.push((self.root, vec![]));
+        }
+        // end
         self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
     }
 
