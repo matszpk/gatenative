@@ -32,7 +32,8 @@ where
                 continue;
             }
             let gi = input_len + i;
-            let newgi = new_gates.len();
+            let newgi = input_len + new_gates.len();
+            println!("Xfgf {} {}", newgi, gi);
             trans_tbl[newgi] = T::try_from(gi).unwrap();
             if !lop3node.tree_paths[0].is_empty()
                 && lop3node.tree_paths[1].is_empty()
@@ -50,7 +51,7 @@ where
                 new_gates.push(VLOP3Gate {
                     i0: gates[i].0.i0,
                     i1: gates[i].0.i1,
-                    i2: gates[i].0.i0,
+                    i2: gates[i].0.i1,
                     func,
                     negs: gates[i].1,
                 });
@@ -1550,6 +1551,35 @@ mod tests {
 
     use crate::vcircuit::*;
     use gatesim::Gate;
+
+    fn vgate<T: Clone + Copy>(
+        func: VLOP3GateFunc,
+        i0: T,
+        i1: T,
+        i2: T,
+        negs: VNegs,
+    ) -> VLOP3Gate<T> {
+        VLOP3Gate {
+            i0,
+            i1,
+            i2,
+            func,
+            negs,
+        }
+    }
+
+    fn vgate_and<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::And, i0, i1, i1, negs)
+    }
+    fn vgate_or<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::Or, i0, i1, i1, negs)
+    }
+    fn vgate_xor<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::Xor, i0, i1, i1, negs)
+    }
+    fn vgate_lop3<T: Clone + Copy>(i0: T, i1: T, i2: T, f: u8) -> VLOP3Gate<T> {
+        vgate(VLOP3GateFunc::LOP3(f), i0, i1, i2, NoNegs)
+    }
 
     fn gen_subtree_coverage_from_circuit(circuit: Circuit<u32>) -> Vec<u32> {
         let binop_circuit = VBinOpCircuit::from(circuit.clone());
@@ -3269,6 +3299,78 @@ mod tests {
                 8
             ),
             call_mtuarea_gen_lop3nodes_and_cost(8, vec![5, 8], circuit.clone(), vec![5, 7, 8])
+        );
+    }
+
+    fn lop3node_1(arg0: u32, arg1: u32, arg2: u32) -> LOP3Node<u32> {
+        LOP3Node {
+            args: [arg0, arg1, arg2],
+            tree_paths: to_paths([3, 0, 0, 0, 0, 0, 0]),
+            mtu_cost: MTU_COST_BASE + 1,
+        }
+    }
+
+    #[test]
+    fn test_vlop3circuit_from_lop3nodes() {
+        assert_eq!(
+            VLOP3Circuit {
+                input_len: 2,
+                gates: vec![
+                    vgate_and(0, 1, NoNegs),
+                    vgate_and(0, 2, NegInput1),
+                    vgate_and(0, 3, NegOutput),
+                    vgate_or(2, 3, NoNegs),
+                    vgate_or(2, 1, NegInput1),
+                    vgate_or(0, 1, NegOutput),
+                    vgate_xor(4, 2, NoNegs),
+                    vgate_xor(0, 1, NegInput1),
+                    vgate_xor(0, 1, NegOutput),
+                ],
+                outputs: vec![
+                    (0, false),
+                    (2, true),
+                    (3, false),
+                    (4, true),
+                    (5, false),
+                    (6, true),
+                    (7, false),
+                    (8, true),
+                    (9, false),
+                    (10, true),
+                ],
+            },
+            VLOP3Circuit::from_lop3nodes(
+                VBinOpCircuit {
+                    input_len: 2,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),
+                        vbgate_and(0, 2, NegInput1),
+                        vbgate_and(0, 3, NegOutput),
+                        vbgate_or(2, 3, NoNegs),
+                        vbgate_or(2, 1, NegInput1),
+                        vbgate_or(0, 1, NegOutput),
+                        vbgate_xor(4, 2, NoNegs),
+                        vbgate_xor(0, 1, NegInput1),
+                        vbgate_xor(0, 1, NegOutput),
+                    ],
+                    outputs: vec![
+                        (0, false),
+                        (2, true),
+                        (3, false),
+                        (4, true),
+                        (5, false),
+                        (6, true),
+                        (7, false),
+                        (8, true),
+                        (9, false),
+                        (10, true),
+                    ],
+                },
+                std::iter::repeat(true).take(9).collect::<Vec<_>>(),
+                std::iter::repeat(lop3node_1(0, 1, 0))
+                    .take(9)
+                    .collect::<Vec<_>>(),
+            )
         );
     }
 }
