@@ -82,9 +82,9 @@ where
                                 calcs[0]
                             } else if lop3node.args[1] == t {
                                 calcs[1]
-                            } else if lop3node.args[1] == t {
+                            } else if lop3node.args[2] == t {
                                 calcs[2]
-                            } else if t >= circuit.input_len {
+                            } else if t >= circuit.input_len && !lop3node.tree_paths[l].is_empty() {
                                 let tgi = usize::try_from(t).unwrap() - input_len;
                                 let l_arg0 = (l << 1) + 1;
                                 let l_arg1 = (l << 1) + 2;
