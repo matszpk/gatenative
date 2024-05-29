@@ -56,7 +56,7 @@ where
     let mut old_level_start = 0;
     let mut level_start = 1;
     tree[0] = Some(wire_index);
-    for level in 1..3 {
+    for _ in 1..3 {
         for pos in 0..level_start - old_level_start {
             if let Some(t) = tree[old_level_start + pos] {
                 if t >= input_len_t {
@@ -363,10 +363,9 @@ where
         assert!(self.root >= circuit.input_len);
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
         let gates = &circuit.gates;
-        let mut node_mask = tree
+        let node_mask = tree
             .into_iter()
-            .enumerate()
-            .map(|(i, t)| {
+            .map(|t| {
                 if let Some(t) = t {
                     self.nodes.iter().any(|(x, _)| *x == t)
                 } else {
@@ -382,7 +381,7 @@ where
         let all_nodes = node_mask_u8 | mtuarea_config.0;
         let cost = calc_mtu_area_config_cost(node_mask_u8, mtuarea_config);
         let check_c1_node = check_c1_node(node_mask_u8, mtuarea_config);
-        let do_add_c1_node = if let Some(t) = tree[0] {
+        let do_add_c1_node = if tree[0].is_some() {
             if (all_nodes & 0b0000110) == 0 {
                 let mut farest = (3..7)
                     .filter_map(|x| {
@@ -403,7 +402,7 @@ where
             false
         };
         let all_nodes = all_nodes | (u8::from(do_add_c1_node) << 2);
-        let (farest_nodes, nonfarest_nodes) = farest_nonfarest_nodes_from_mask(all_nodes);
+        let (_, nonfarest_nodes) = farest_nonfarest_nodes_from_mask(all_nodes);
         // generate lop3nodes from MTUarea
         for i in 0..7 {
             // initialize only nodes which any input connected to other any node.
@@ -573,9 +572,8 @@ where
             touch_nodes
         };
         let keep_root = circuit_outputs.contains(&self.root);
-        let nodes_copy = self.nodes.clone();
         let mut changes = false;
-        for (i, (mtunode, _)) in nodes_copy.iter().enumerate() {
+        for (mtunode, _) in &self.nodes {
             if *mtunode == self.root && keep_root {
                 continue; // do not reduce root of MTUarea
             }
@@ -673,8 +671,7 @@ where
         let tree = get_small_tree(circuit, self.root);
         let node_mask = tree
             .into_iter()
-            .enumerate()
-            .map(|(i, t)| {
+            .map(|t| {
                 if let Some(t) = t {
                     self.nodes.iter().any(|(x, _)| *x == t)
                 } else {
@@ -1144,15 +1141,13 @@ fn update_mtuareas_from_lop3node<T>(
     <usize as TryFrom<T>>::Error: Debug,
 {
     let input_len = usize::try_from(circuit.input_len).unwrap();
-    let st_gates = subtree.gates();
     let subtree_index = coverage[usize::try_from(subtree.root()).unwrap() - input_len];
     let mut mtuareas_indices = HashSet::new();
-    for (i, node) in subtree
+    for node in subtree
         .gates()
         .iter()
         .map(|(x, _)| *x)
         .chain(std::iter::once(subtree.root()))
-        .enumerate()
     {
         let gidx = usize::try_from(node).unwrap() - input_len;
         if !lop3enableds[gidx] {

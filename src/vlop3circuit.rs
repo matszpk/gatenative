@@ -62,7 +62,7 @@ where
         let input_len = usize::try_from(self.input_len).unwrap();
         let sets = [(successors, arg, except), (successors2, arg2, except2)];
         // do if all is LOP3s except excepted node and if successor is not empty
-        if sets.iter().all(|(successors, arg, except)| {
+        if sets.iter().all(|(successors, _, except)| {
             !successors.is_empty()
                 && successors.iter().all(|x| {
                     let xu = usize::try_from(*x).unwrap();
@@ -230,7 +230,7 @@ where
                         }
                     }
                 }
-                VLOP3GateFunc::LOP3(f) => {
+                VLOP3GateFunc::LOP3(_) => {
                     let gi0 = usize::try_from(g.i0).unwrap();
                     if gi0 >= input_len {
                         self.reduce_neg_from_lop3_input(gi0, &successors);
