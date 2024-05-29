@@ -5,6 +5,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::vbinopcircuit::*;
+use crate::vcircuit::{VGate, VGateFunc};
 use crate::VNegs::{self, *};
 
 use crate::vlop3circuit::*;
@@ -17,11 +18,146 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    fn from_lop3nodes(circuit: VBinOpCircuit<T>, lop3nodes: Vec<LOP3Node<T>>) -> VLOP3Circuit<T> {
+    fn from_lop3nodes(
+        circuit: VBinOpCircuit<T>,
+        enableds: Vec<bool>,
+        lop3nodes: Vec<LOP3Node<T>>,
+    ) -> VLOP3Circuit<T> {
+        let input_len = usize::try_from(circuit.input_len).unwrap();
+        let mut new_gates: Vec<VLOP3Gate<T>> = vec![];
+        let gates = &circuit.gates;
+        let mut trans_tbl = vec![T::default(); input_len + gates.len()];
+        for (i, (en, lop3node)) in enableds.into_iter().zip(lop3nodes.into_iter()).enumerate() {
+            if !en {
+                continue;
+            }
+            let gi = input_len + i;
+            let newgi = new_gates.len();
+            trans_tbl[newgi] = T::try_from(gi).unwrap();
+            if !lop3node.tree_paths[0].is_empty()
+                && lop3node.tree_paths[1].is_empty()
+                && lop3node.tree_paths[2].is_empty()
+            {
+                // single gate
+                let func = match gates[i].0.func {
+                    VGateFunc::And => VLOP3GateFunc::And,
+                    VGateFunc::Or => VLOP3GateFunc::Or,
+                    VGateFunc::Xor => VLOP3GateFunc::Xor,
+                    _ => {
+                        panic!("Unexpected!");
+                    }
+                };
+                new_gates.push(VLOP3Gate {
+                    i0: gates[i].0.i0,
+                    i1: gates[i].0.i1,
+                    i2: gates[i].0.i0,
+                    func,
+                    negs: gates[i].1,
+                });
+            } else {
+                // more complex LOP3
+                let tree = get_small_tree(&circuit, T::try_from(input_len + i).unwrap());
+                let mut bits = 0u8;
+                let mut calcs = [
+                    0b11110000u8,
+                    0b11001100u8,
+                    0b10101010u8,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ];
+                let mut level_start = 3;
+                let mut level_end = 7;
+                // calculate values for tree nodes
+                for _ in 0..3 {
+                    for l in level_start..level_end {
+                        let calc_l = 3 + 7 - l - 1;
+                        if let Some(t) = tree[l] {
+                            calcs[3 + 7 - l - 1] = if lop3node.args[0] == t {
+                                calcs[0]
+                            } else if lop3node.args[1] == t {
+                                calcs[1]
+                            } else if lop3node.args[1] == t {
+                                calcs[2]
+                            } else if t >= circuit.input_len {
+                                let tgi = usize::try_from(t).unwrap() - input_len;
+                                let l_arg0 = (l << 1) + 1;
+                                let l_arg1 = (l << 1) + 2;
+                                let va0 = calcs[3 + 7 - l_arg0 - 1];
+                                let va1 = calcs[3 + 7 - l_arg1 - 1];
+                                let va1 = if gates[tgi].1 == NegInput1 {
+                                    va1 ^ 0xff
+                                } else {
+                                    va1
+                                };
+                                let vop = match gates[tgi].0.func {
+                                    VGateFunc::And => va0 & va1,
+                                    VGateFunc::Or => va0 | va1,
+                                    VGateFunc::Xor => va0 ^ va1,
+                                    _ => {
+                                        panic!("Unexpected gate");
+                                    }
+                                };
+                                if gates[tgi].1 == NegOutput {
+                                    vop ^ 0xff
+                                } else {
+                                    vop
+                                }
+                            } else {
+                                0
+                            };
+                        }
+                    }
+                    level_start >>= 1;
+                    level_end >>= 1;
+                }
+                new_gates.push(VLOP3Gate {
+                    i0: lop3node.args[0],
+                    i1: lop3node.args[1],
+                    i2: lop3node.args[2],
+                    func: VLOP3GateFunc::LOP3(*calcs.last().unwrap()),
+                    negs: NoNegs,
+                });
+            }
+        }
+        // translation of gate arguments
+        for g in new_gates.iter_mut() {
+            g.i0 = if g.i0 >= circuit.input_len {
+                trans_tbl[usize::try_from(g.i0).unwrap()]
+            } else {
+                g.i0
+            };
+            g.i1 = if g.i1 >= circuit.input_len {
+                trans_tbl[usize::try_from(g.i1).unwrap()]
+            } else {
+                g.i1
+            };
+            g.i2 = if g.i2 >= circuit.input_len {
+                trans_tbl[usize::try_from(g.i2).unwrap()]
+            } else {
+                g.i2
+            };
+        }
+
         Self {
-            input_len: T::default(),
-            gates: vec![],
-            outputs: vec![],
+            input_len: circuit.input_len,
+            gates: new_gates,
+            outputs: circuit
+                .outputs
+                .into_iter()
+                .map(|(o, n)| {
+                    if o >= circuit.input_len {
+                        (trans_tbl[usize::try_from(o).unwrap()], n)
+                    } else {
+                        (o, n)
+                    }
+                })
+                .collect::<Vec<_>>(),
         }
     }
 }
@@ -741,6 +877,10 @@ impl PathMove {
         (self.0 & (1 << u32::from(second))) != 0
     }
     #[inline]
+    fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+    #[inline]
     fn go_first(self) -> Self {
         Self(self.0 | 1)
     }
@@ -1383,7 +1523,7 @@ where
             );
         }
         // convert inputs in lop3nodes
-        Self::from_lop3nodes(circuit, lop3nodes)
+        Self::from_lop3nodes(circuit, lop3enableds, lop3nodes)
         // optimize can be called later
     }
 }
