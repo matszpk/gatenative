@@ -112,28 +112,6 @@ impl<T: Default> Default for MTUArea<T> {
     }
 }
 
-const LOP3_TREE_SHAPE_TABLE: [u8; 19] = [
-    0b0000001, // (R)
-    0b0000110, // (C0,C1)
-    0b0000111, // (R,C0,C1)
-    0b0011100, // (C1,C00,C01)
-    0b0011101, // (R,C1,C00,C01)
-    0b0011110, // (C0,C1,C00,C01)
-    0b0011111, // (R,C0,C1,C00,C01)
-    0b1100010, // (C0,C10,C11)
-    0b1100011, // (R,C0,C10,C11)
-    0b1100110, // (C0,C1,C10,C11)
-    0b1100111, // (R,C0,C1,C10,C11)
-    0b1111000, // (C00,C01,C10,C11)
-    0b1111001, // (R,C00,C01,C10,C11)
-    0b1111010, // (C0,C00,C01,C10,C11)
-    0b1111011, // (R,C0,C00,C01,C10,C11)
-    0b1111100, // (C1,C00,C01,C10,C11)
-    0b1111101, // (R,C1,C00,C01,C10,C11)
-    0b1111110, // (C0,C1,C00,C01,C10,C11)
-    0b1111111, // (R,C0,C1,C00,C01,C10,C11)
-];
-
 //
 #[derive(Clone, Copy, Debug)]
 struct MTUAreaConfig(u8);
@@ -591,8 +569,10 @@ where
             }
             if let Some(p) = self.nodes.iter().position(|(n, _)| *mtunode == *n) {
                 let touch_nodes = self.nodes[p].1.clone();
-                for touch_node in touch_nodes {
-                    let gi = usize::try_from(touch_node).unwrap() - input_len;
+                let mut all_touch_nodes_removed = true;
+                let mut new_variants = vec![];
+                for (tni, touch_node) in touch_nodes.iter().enumerate() {
+                    let gi = usize::try_from(*touch_node).unwrap() - input_len;
                     let required_args = lop3nodes[gi]
                         .args
                         .iter()
@@ -612,7 +592,7 @@ where
                         cov,
                         subtrees,
                         circuit_outputs,
-                        touch_node,
+                        *touch_node,
                         &preferred_nodes,
                         &required_args,
                     );
@@ -633,17 +613,28 @@ where
                         )
                         }) {
                             choosen = Some(vi);
+                            break;
                         }
                     }
                     if let Some(choosen) = choosen {
+                        new_variants.push((tni, variants[choosen].clone()));
+                    } else {
+                        all_touch_nodes_removed = false;
+                        break;
+                    }
+                }
+                if all_touch_nodes_removed {
+                    for (tni, variant) in new_variants {
+                        let touch_node = touch_nodes[tni];
+                        let gi = usize::try_from(touch_node).unwrap() - input_len;
                         // if found then replace
-                        lop3nodes[gi] = variants[choosen].clone();
+                        lop3nodes[gi] = variant.clone();
                         // and update MTU nodes
                         for (node, touch_nodes) in &mut self.nodes {
                             touch_nodes.retain(|tn| *tn != touch_node);
                         }
                         // add touch node into MTU node's touch nodes list
-                        for arg in &variants[choosen].args {
+                        for arg in &variant.args {
                             if *arg >= circuit.input_len {
                                 let arggi = usize::try_from(*arg).unwrap() - input_len;
                                 if cov[arggi] == root_subtree_index {
@@ -657,6 +648,9 @@ where
                             }
                         }
                     }
+                    // remove obsolete nodes in MTU
+                    self.nodes
+                        .retain(|(n, touch_nodes)| *n == self.root || !touch_nodes.is_empty());
                 }
             }
         }
