@@ -750,6 +750,7 @@ where
         let mut best_choice = (
             self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov),
             Option::<u8>::None,
+            Option::<Vec<usize>>::None,
         );
         // make copy of current choice
         let copy = self.clone();
@@ -764,28 +765,30 @@ where
                 .collect::<Vec<_>>();
             let current_cost = self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
             if current_cost < best_choice.0 {
-                let mut total_enabled_nodes: Vec<Vec<u8>> = vec![vec![]; lop3node_variants.len()];
+                let mut enabled_nodes: Vec<Vec<u8>> = vec![vec![]; lop3node_variants.len()];
                 let mut found = true;
                 // check if satisfiable by touch nodes
-                // 'a: for (tni, touch_node) in touch_nodes.iter().enumerate() {
-                //     let variants = &lop3node_variants[tni];
-                //     for variant in variants {
-                //         for arg in &variant.args {
-                //             if let Some(p) = preferred_nodes.iter().position(|x| *arg == *x) {
-                //                 if (i & (1 << p)) == 1 {
-                //                     total_enabled_nodes |= 1 << p;
-                //                 } else {
-                //                     // if outside nodes in MTUarea comb
-                //                     found = false;
-                //                     break 'a;
-                //                 }
-                //             }
-                //         }
-                //     }
-                // }
+                'a: for (tni, touch_node) in touch_nodes.iter().enumerate() {
+                    let variants = &lop3node_variants[tni];
+                    for (vi, variant) in variants.iter().enumerate() {
+                        for arg in &variant.args {
+                            if let Some(p) = preferred_nodes.iter().position(|x| *arg == *x) {
+                                if (i & (1 << p)) == 1 {
+                                    enabled_nodes[tni][vi] = 1 << p;
+                                } else {
+                                    // if outside nodes in MTUarea comb
+                                    found = false;
+                                    break 'a;
+                                }
+                            }
+                        }
+                    }
+                }
                 // let found = found && total_enabled_nodes == *i;
                 if found {
-                    best_choice = (current_cost, Some(*i));
+                    // if let Some(sol) = solve_cover(enabled_nodes) {
+                    //     best_choice = (current_cost, Some(*i), sol);
+                    // }
                 }
             }
         }
