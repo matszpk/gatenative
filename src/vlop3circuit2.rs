@@ -33,7 +33,6 @@ where
             }
             let gi = input_len + i;
             let newgi = input_len + new_gates.len();
-            println!("Xfgf {} {}", newgi, gi);
             trans_tbl[newgi] = T::try_from(gi).unwrap();
             if !lop3node.tree_paths[0].is_empty()
                 && lop3node.tree_paths[1].is_empty()
