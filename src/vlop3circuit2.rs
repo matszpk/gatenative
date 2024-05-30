@@ -76,6 +76,7 @@ where
                 // calculate values for tree nodes
                 for _ in 0..3 {
                     for l in level_start..level_end {
+                        println!("L: {}", l);
                         let calc_l = 3 + 7 - l - 1;
                         if let Some(t) = tree[l] {
                             calcs[calc_l] = if lop3node.args[0] == t {
@@ -88,7 +89,7 @@ where
                                 let tgi = usize::try_from(t).unwrap() - input_len;
                                 let l_arg0 = (l << 1) + 1;
                                 let l_arg1 = (l << 1) + 2;
-                                let va0 = if !lop3node.tree_paths[l_arg0].is_empty() {
+                                let va0 = if l_arg0 < 7 && !lop3node.tree_paths[l_arg0].is_empty() {
                                     calcs[3 + 7 - l_arg0 - 1]
                                 } else if gates[tgi].0.i0 == lop3node.args[0] {
                                     calcs[0]
@@ -97,7 +98,7 @@ where
                                 } else {
                                     calcs[2]
                                 };
-                                let va1 = if !lop3node.tree_paths[l_arg1].is_empty() {
+                                let va1 = if l_arg1 < 7 && !lop3node.tree_paths[l_arg1].is_empty() {
                                     calcs[3 + 7 - l_arg1 - 1]
                                 } else if gates[tgi].0.i1 == lop3node.args[0] {
                                     calcs[0]
@@ -3438,6 +3439,76 @@ mod tests {
                     (lop3node_1(0, 2, 0), false),               // 12
                     (lop3node_1(2, 1, 2), false),               // 13
                     (lop3node_mmask(2, 1, 0, 0b0000111), true), // 14
+                ],
+            )
+        );
+        assert_eq!(
+            VLOP3Circuit {
+                input_len: 3,
+                gates: vec![
+                    vgate_lop3(0, 1, 2, a2 | (a0 & !a1)),
+                    vgate_lop3(0, 1, 2, (a0 & a1) | (a2 & !a1)),
+                    vgate_lop3(0, 1, 2, a1 | !(a2 & (a0 & !a1))),
+                    vgate_lop3(0, 1, 2, ((a2 & !a1) & a0) | !a2),
+                    vgate_lop3(0, 1, 2, (a0 & (a0 ^ a1)) ^ (!(a2 | a1) & !a2)),
+                    vgate_lop3(3, 4, 5, !(a2 | (a0 ^ a1))),
+                    vgate_lop3(6, 7, 3, a2 & !(a0 & a1)),
+                ],
+                outputs: vec![(8, true), (9, false)],
+            },
+            call_vlop3circuit_from_lopnodes(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NegInput1), // 3
+                        vbgate_or(2, 3, NoNegs),     // 4
+                        //
+                        vbgate_and(0, 1, NoNegs),    // 5
+                        vbgate_and(2, 1, NegInput1), // 6
+                        vbgate_xor(5, 6, NoNegs),    // 7
+                        //
+                        vbgate_and(0, 1, NegInput1), // 8
+                        vbgate_and(2, 8, NoNegs),    // 9
+                        vbgate_or(1, 9, NegInput1),  // 10
+                        //
+                        vbgate_and(2, 1, NegInput1), // 11
+                        vbgate_and(11, 0, NoNegs),   // 12
+                        vbgate_or(12, 2, NegInput1), // 13
+                        //
+                        vbgate_xor(0, 1, NoNegs),     // 14
+                        vbgate_or(2, 1, NegOutput),   // 15
+                        vbgate_and(0, 14, NoNegs),    // 16
+                        vbgate_and(15, 2, NegInput1), // 17
+                        vbgate_xor(16, 17, NoNegs),   // 18
+                        //
+                        vbgate_xor(4, 7, NoNegs),     // 19
+                        vbgate_or(10, 19, NegOutput), // 20
+                        vbgate_and(13, 18, NoNegs),   // 21
+                        vbgate_and(4, 21, NegInput1), // 22
+                    ],
+                    outputs: vec![(20, true), (22, false)],
+                },
+                vec![
+                    (lop3node_1(0, 1, 0), false),                 // 3
+                    (lop3node_mmask(0, 1, 2, 0b0000101), true),   // 4
+                    (lop3node_1(0, 1, 0), false),                 // 5
+                    (lop3node_1(2, 1, 2), false),                 // 6
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true),   // 7
+                    (lop3node_1(0, 1, 0), false),                 // 8
+                    (lop3node_1(2, 8, 2), false),                 // 9
+                    (lop3node_mmask(0, 1, 2, 0b1000101), true),   // 10
+                    (lop3node_1(2, 1, 2), false),                 // 11
+                    (lop3node_1(11, 0, 11), false),               // 12
+                    (lop3node_mmask(0, 1, 2, 0b0001011), true),   // 13
+                    (lop3node_1(0, 1, 0), false),                 // 14
+                    (lop3node_1(2, 1, 2), false),                 // 15
+                    (lop3node_1(0, 14, 0), false),                // 16
+                    (lop3node_1(15, 0, 15), false),               // 17
+                    (lop3node_mmask(0, 1, 2, 0b0110111), true),   // 18
+                    (lop3node_1(4, 7, 4), false),                 // 19
+                    (lop3node_mmask(4, 7, 10, 0b0000101), true),  // 20
+                    (lop3node_1(13, 18, 13), false),              // 19
+                    (lop3node_mmask(13, 18, 4, 0b0000101), true), // 20
                 ],
             )
         );
