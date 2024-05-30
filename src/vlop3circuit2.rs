@@ -3459,8 +3459,16 @@ mod tests {
                     vgate_lop3(0, 1, 2, (a2 & !a1) | !a0),
                     vgate_lop3(0, 1, 2, ((a0 & !a1) ^ (a2 & !a1)) | !(a0 & !a1)),
                     vgate_lop3(1, 2, 1, !(a0 & a1) ^ a1),
+                    vgate_lop3(4, 5, 7, ((a0 & a1) | (a1 & !a2)) ^ ((a2 & !a0) | (a0 ^ a1))),
                 ],
-                outputs: vec![(8, true), (9, false), (10, true), (11, false), (12, true)],
+                outputs: vec![
+                    (8, true),
+                    (9, false),
+                    (10, true),
+                    (11, false),
+                    (12, true),
+                    (13, true)
+                ],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
@@ -3500,36 +3508,58 @@ mod tests {
                         //
                         vbgate_and(1, 2, NegOutput), // 27
                         vbgate_xor(27, 2, NoNegs),   // 28
+                        //
+                        vbgate_and(7, 10, NoNegs),     // 29
+                        vbgate_and(10, 18, NegInput1), // 30
+                        vbgate_and(18, 7, NegInput1),  // 31
+                        vbgate_xor(7, 10, NoNegs),     // 32
+                        vbgate_or(29, 30, NoNegs),     // 33
+                        vbgate_or(31, 32, NoNegs),     // 34
+                        vbgate_xor(33, 34, NoNegs),    // 35
                     ],
-                    outputs: vec![(20, true), (22, false), (24, true), (26, false), (28, true)],
+                    outputs: vec![
+                        (20, true),
+                        (22, false),
+                        (24, true),
+                        (26, false),
+                        (28, true),
+                        (35, true)
+                    ],
                 },
                 vec![
-                    (lop3node_1(0, 1, 0), false),                 // 3
-                    (lop3node_mmask(0, 1, 2, 0b0000101), true),   // 4
-                    (lop3node_1(0, 1, 0), false),                 // 5
-                    (lop3node_1(2, 1, 2), false),                 // 6
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true),   // 7
-                    (lop3node_1(0, 1, 0), false),                 // 8
-                    (lop3node_1(2, 8, 2), false),                 // 9
-                    (lop3node_mmask(0, 1, 2, 0b1000101), true),   // 10
-                    (lop3node_1(2, 1, 2), false),                 // 11
-                    (lop3node_1(11, 0, 11), false),               // 12
-                    (lop3node_mmask(2, 0, 1, 0b0001011), true),   // 13
-                    (lop3node_1(0, 1, 0), false),                 // 14
-                    (lop3node_1(2, 1, 2), false),                 // 15
-                    (lop3node_mmask(0, 1, 2, 0b0000101), false),  // 16
-                    (lop3node_mmask(0, 1, 2, 0b0000011), false),  // 17
-                    (lop3node_mmask(0, 1, 2, 0b0110111), true),   // 18
-                    (lop3node_1(4, 7, 4), false),                 // 19
-                    (lop3node_mmask(4, 7, 10, 0b0000101), true),  // 20
-                    (lop3node_1(13, 18, 13), false),              // 21
-                    (lop3node_mmask(13, 18, 4, 0b0000101), true), // 22
-                    (lop3node_1(2, 1, 2), false),                 // 23
-                    (lop3node_mmask(0, 1, 2, 0b0000011), true),   // 24
-                    (lop3node_1(3, 6, 3), false),                 // 25
-                    (lop3node_mmask(0, 1, 2, 0b0011111), true),   // 26
-                    (lop3node_1(1, 2, 1), false),                 // 27
-                    (lop3node_mmask(1, 2, 1, 0b0000011), true),   // 28
+                    (lop3node_1(0, 1, 0), false),                  // 3
+                    (lop3node_mmask(0, 1, 2, 0b0000101), true),    // 4
+                    (lop3node_1(0, 1, 0), false),                  // 5
+                    (lop3node_1(2, 1, 2), false),                  // 6
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true),    // 7
+                    (lop3node_1(0, 1, 0), false),                  // 8
+                    (lop3node_1(2, 8, 2), false),                  // 9
+                    (lop3node_mmask(0, 1, 2, 0b1000101), true),    // 10
+                    (lop3node_1(2, 1, 2), false),                  // 11
+                    (lop3node_1(11, 0, 11), false),                // 12
+                    (lop3node_mmask(2, 0, 1, 0b0001011), true),    // 13
+                    (lop3node_1(0, 1, 0), false),                  // 14
+                    (lop3node_1(2, 1, 2), false),                  // 15
+                    (lop3node_mmask(0, 1, 2, 0b0000101), false),   // 16
+                    (lop3node_mmask(0, 1, 2, 0b0000011), false),   // 17
+                    (lop3node_mmask(0, 1, 2, 0b0110111), true),    // 18
+                    (lop3node_1(4, 7, 4), false),                  // 19
+                    (lop3node_mmask(4, 7, 10, 0b0000101), true),   // 20
+                    (lop3node_1(13, 18, 13), false),               // 21
+                    (lop3node_mmask(13, 18, 4, 0b0000101), true),  // 22
+                    (lop3node_1(2, 1, 2), false),                  // 23
+                    (lop3node_mmask(0, 1, 2, 0b0000011), true),    // 24
+                    (lop3node_1(3, 6, 3), false),                  // 25
+                    (lop3node_mmask(0, 1, 2, 0b0011111), true),    // 26
+                    (lop3node_1(1, 2, 1), false),                  // 27
+                    (lop3node_mmask(1, 2, 1, 0b0000011), true),    // 28
+                    (lop3node_1(7, 10, 7), false),                 // 29
+                    (lop3node_1(10, 18, 10), false),               // 30
+                    (lop3node_1(18, 7, 18), false),                // 31
+                    (lop3node_1(7, 10, 7), false),                 // 32
+                    (lop3node_mmask(7, 10, 18, 0b0000111), false), // 33
+                    (lop3node_mmask(7, 10, 18, 0b0000111), false), // 34
+                    (lop3node_mmask(7, 10, 18, 0b1111111), true),  // 35
                 ],
             )
         );
