@@ -39,7 +39,6 @@ where
                 && lop3node.tree_paths[1].is_empty()
                 && lop3node.tree_paths[2].is_empty()
             {
-                println!("Gate: {:?} {:?}", gi, newgi);
                 // single gate
                 let func = match gates[i].0.func {
                     VGateFunc::And => VLOP3GateFunc::And,
@@ -57,7 +56,6 @@ where
                     negs: gates[i].1,
                 });
             } else {
-                println!("LOP3Node: {:?} {:?}", gi, newgi);
                 // more complex LOP3
                 let tree = get_small_tree(&circuit, T::try_from(input_len + i).unwrap());
                 let mut bits = 0u8;
@@ -134,7 +132,6 @@ where
                     level_start >>= 1;
                     level_end >>= 1;
                 }
-                println!("  Calcs: {:?}", calcs);
                 new_gates.push(VLOP3Gate {
                     i0: lop3node.args[0],
                     i1: lop3node.args[1],
@@ -3334,6 +3331,9 @@ mod tests {
 
     #[test]
     fn test_vlop3circuit_from_lop3nodes() {
+        let a0 = 0b11110000u8;
+        let a1 = 0b11001100u8;
+        let a2 = 0b10101010u8;
         assert_eq!(
             VLOP3Circuit {
                 input_len: 2,
@@ -3399,27 +3399,31 @@ mod tests {
             VLOP3Circuit {
                 input_len: 3,
                 gates: vec![
-                    vgate_lop3(0, 1, 2, 47),
-                    vgate_lop3(0, 1, 2, 29),
-                    vgate_lop3(0, 1, 2, 103),
+                    vgate_lop3(0, 1, 2, !((a0 & a1) | (a0 & !a2))),
+                    vgate_lop3(0, 1, 2, !(a0 & a1) ^ (a2 & !a1)),
+                    vgate_lop3(0, 1, 2, !(a0 | a1) | !(a1 ^ !a2)),
+                    vgate_lop3(0, 1, 2, !((a0 | !a2) & (a2 ^ a1))),
                 ],
-                outputs: vec![(3, false), (4, false), (5, true)],
+                outputs: vec![(3, false), (4, false), (5, true), (6, false)],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
                     input_len: 3,
                     gates: vec![
-                        vbgate_and(0, 1, NoNegs),    // 3
-                        vbgate_and(0, 2, NegInput1), // 4
-                        vbgate_or(3, 4, NegOutput),  // 5
-                        vbgate_and(0, 1, NegOutput), // 6
-                        vbgate_and(2, 1, NegInput1), // 7
-                        vbgate_xor(6, 7, NoNegs),    // 8
-                        vbgate_or(0, 2, NegOutput),  // 9
-                        vbgate_xor(1, 2, NegInput1), // 10
-                        vbgate_or(9, 10, NegInput1), // 11
+                        vbgate_and(0, 1, NoNegs),      // 3
+                        vbgate_and(0, 2, NegInput1),   // 4
+                        vbgate_or(3, 4, NegOutput),    // 5
+                        vbgate_and(0, 1, NegOutput),   // 6
+                        vbgate_and(2, 1, NegInput1),   // 7
+                        vbgate_xor(6, 7, NoNegs),      // 8
+                        vbgate_or(0, 2, NegOutput),    // 9
+                        vbgate_xor(1, 2, NegInput1),   // 10
+                        vbgate_or(9, 10, NegInput1),   // 11
+                        vbgate_or(0, 2, NegInput1),    // 12
+                        vbgate_xor(2, 1, NoNegs),      // 13
+                        vbgate_and(12, 13, NegOutput), // 14
                     ],
-                    outputs: vec![(5, false), (8, false), (11, true)],
+                    outputs: vec![(5, false), (8, false), (11, true), (14, false)],
                 },
                 vec![
                     (lop3node_1(0, 1, 0), false),               // 3
@@ -3431,6 +3435,9 @@ mod tests {
                     (lop3node_1(0, 2, 0), false),               // 9
                     (lop3node_1(1, 2, 1), false),               // 10
                     (lop3node_mmask(0, 1, 2, 0b0000111), true), // 11
+                    (lop3node_1(0, 2, 0), false),               // 12
+                    (lop3node_1(2, 1, 2), false),               // 13
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 14
                 ],
             )
         );
