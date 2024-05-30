@@ -39,6 +39,7 @@ where
                 && lop3node.tree_paths[1].is_empty()
                 && lop3node.tree_paths[2].is_empty()
             {
+                println!("Gate: {:?} {:?}", gi, newgi);
                 // single gate
                 let func = match gates[i].0.func {
                     VGateFunc::And => VLOP3GateFunc::And,
@@ -56,6 +57,7 @@ where
                     negs: gates[i].1,
                 });
             } else {
+                println!("LOP3Node: {:?} {:?}", gi, newgi);
                 // more complex LOP3
                 let tree = get_small_tree(&circuit, T::try_from(input_len + i).unwrap());
                 let mut bits = 0u8;
@@ -63,7 +65,6 @@ where
                     0b11110000u8,
                     0b11001100u8,
                     0b10101010u8,
-                    0,
                     0,
                     0,
                     0,
@@ -133,6 +134,7 @@ where
                     level_start >>= 1;
                     level_end >>= 1;
                 }
+                println!("  Calcs: {:?}", calcs);
                 new_gates.push(VLOP3Gate {
                     i0: lop3node.args[0],
                     i1: lop3node.args[1],
@@ -3396,8 +3398,12 @@ mod tests {
         assert_eq!(
             VLOP3Circuit {
                 input_len: 3,
-                gates: vec![],
-                outputs: vec![],
+                gates: vec![
+                    vgate_lop3(0, 1, 2, 47),
+                    vgate_lop3(0, 1, 2, 29),
+                    vgate_lop3(0, 1, 2, 103),
+                ],
+                outputs: vec![(3, false), (4, false), (5, true)],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
