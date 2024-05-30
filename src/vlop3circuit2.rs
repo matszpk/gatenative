@@ -3507,8 +3507,8 @@ mod tests {
                     (lop3node_mmask(0, 1, 2, 0b0110111), true),   // 18
                     (lop3node_1(4, 7, 4), false),                 // 19
                     (lop3node_mmask(4, 7, 10, 0b0000101), true),  // 20
-                    (lop3node_1(13, 18, 13), false),              // 19
-                    (lop3node_mmask(13, 18, 4, 0b0000101), true), // 20
+                    (lop3node_1(13, 18, 13), false),              // 21
+                    (lop3node_mmask(13, 18, 4, 0b0000101), true), // 22
                 ],
             )
         );
