@@ -3579,8 +3579,9 @@ mod tests {
                     vgate_lop3(3, 4, 5, (!(a2 & a0) | (a1 & !a0)) ^ !a2),
                     vgate_lop3(6, 7, 8, !(a0 ^ ((a1 & a2) & (a2 | !a1)))),
                     vgate_lop3(9, 10, 11, a1 | !(!(a1 & a2) & a0)),
+                    vgate_lop3(4, 7, 4, !(a0 ^ (a0 & a1))),
                 ],
-                outputs: vec![(12, false), (13, true), (14, true)],
+                outputs: vec![(12, false), (13, true), (14, true), (15, false)],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
@@ -3596,21 +3597,24 @@ mod tests {
                         vbgate_xor(2, 1, NegInput1), // 10
                         vbgate_xor(1, 0, NegOutput), // 11
                         //
-                        vbgate_and(4, 3, NegInput1),  // 12
-                        vbgate_and(5, 3, NegOutput),  // 13
-                        vbgate_or(13, 12, NoNegs),    // 14
-                        vbgate_xor(14, 5, NegInput1), // 15
+                        vbgate_and(4, 3, NegInput1), // 12
+                        vbgate_and(5, 3, NegOutput), // 13
+                        vbgate_or(13, 12, NoNegs),   // 14
+                        vbgate_and(7, 8, NoNegs),    // 15
+                        vbgate_or(8, 7, NegInput1),  // 16
+                        vbgate_and(15, 16, NoNegs),  // 17
                         //
-                        vbgate_and(7, 8, NoNegs),     // 16
-                        vbgate_or(8, 7, NegInput1),   // 17
-                        vbgate_and(16, 17, NoNegs),   // 18
-                        vbgate_xor(6, 18, NegOutput), // 19
+                        vbgate_xor(14, 5, NegInput1), // 18
+                        vbgate_xor(6, 17, NegOutput), // 19
                         //
                         vbgate_and(10, 11, NegOutput), // 20
                         vbgate_and(20, 9, NoNegs),     // 21
                         vbgate_or(10, 21, NegInput1),  // 22
+                        //
+                        vbgate_and(4, 7, NoNegs),     // 23
+                        vbgate_xor(4, 23, NegOutput), // 24
                     ],
-                    outputs: vec![(15, false), (19, true), (22, true)],
+                    outputs: vec![(18, false), (19, true), (22, true), (24, false)],
                 },
                 vec![
                     (lop3node_1(0, 1, 0), true),                  // 3
@@ -3625,14 +3629,16 @@ mod tests {
                     (lop3node_1(4, 3, 4), false),                 // 12
                     (lop3node_1(5, 3, 5), false),                 // 13
                     (lop3node_1(12, 13, 12), false),              // 14
-                    (lop3node_mmask(3, 4, 5, 0b0011011), true),   // 15
-                    (lop3node_1(7, 8, 7), false),                 // 16
-                    (lop3node_1(8, 7, 8), false),                 // 17
-                    (lop3node_1(16, 17, 16), false),              // 18
+                    (lop3node_1(7, 8, 7), false),                 // 15
+                    (lop3node_1(8, 7, 8), false),                 // 16
+                    (lop3node_1(15, 16, 15), false),              // 17
+                    (lop3node_mmask(3, 4, 5, 0b0011011), true),   // 18
                     (lop3node_mmask(6, 7, 8, 0b1100101), true),   // 19
                     (lop3node_1(10, 11, 10), false),              // 20
                     (lop3node_1(20, 9, 20), false),               // 21
                     (lop3node_mmask(9, 10, 11, 0b0100101), true), // 22
+                    (lop3node_1(4, 7, 4), false),                 // 23
+                    (lop3node_mmask(4, 7, 4, 0b0000101), true),   // 24
                 ],
             )
         );
