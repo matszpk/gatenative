@@ -76,7 +76,6 @@ where
                 // calculate values for tree nodes
                 for _ in 0..3 {
                     for l in level_start..level_end {
-                        println!("L: {}", l);
                         let calc_l = 3 + 7 - l - 1;
                         if let Some(t) = tree[l] {
                             calcs[calc_l] = if lop3node.args[0] == t {
@@ -3449,12 +3448,13 @@ mod tests {
                     vgate_lop3(0, 1, 2, a2 | (a0 & !a1)),
                     vgate_lop3(0, 1, 2, (a0 & a1) | (a2 & !a1)),
                     vgate_lop3(0, 1, 2, a1 | !(a2 & (a0 & !a1))),
-                    vgate_lop3(0, 1, 2, ((a2 & !a1) & a0) | !a2),
+                    vgate_lop3(2, 0, 1, ((a0 & !a2) & a1) | !a0),
                     vgate_lop3(0, 1, 2, (a0 & (a0 ^ a1)) ^ (!(a2 | a1) & !a2)),
                     vgate_lop3(3, 4, 5, !(a2 | (a0 ^ a1))),
                     vgate_lop3(6, 7, 3, a2 & !(a0 & a1)),
+                    vgate_lop3(0, 1, 2, (a2 & !a1) | !a0),
                 ],
-                outputs: vec![(8, true), (9, false)],
+                outputs: vec![(8, true), (9, false), (10, true)],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
@@ -3485,8 +3485,11 @@ mod tests {
                         vbgate_or(10, 19, NegOutput), // 20
                         vbgate_and(13, 18, NoNegs),   // 21
                         vbgate_and(4, 21, NegInput1), // 22
+                        //
+                        vbgate_and(2, 1, NegInput1), // 23
+                        vbgate_or(23, 0, NegInput1), // 24
                     ],
-                    outputs: vec![(20, true), (22, false)],
+                    outputs: vec![(20, true), (22, false), (24, true)],
                 },
                 vec![
                     (lop3node_1(0, 1, 0), false),                 // 3
@@ -3499,7 +3502,7 @@ mod tests {
                     (lop3node_mmask(0, 1, 2, 0b1000101), true),   // 10
                     (lop3node_1(2, 1, 2), false),                 // 11
                     (lop3node_1(11, 0, 11), false),               // 12
-                    (lop3node_mmask(0, 1, 2, 0b0001011), true),   // 13
+                    (lop3node_mmask(2, 0, 1, 0b0001011), true),   // 13
                     (lop3node_1(0, 1, 0), false),                 // 14
                     (lop3node_1(2, 1, 2), false),                 // 15
                     (lop3node_1(0, 14, 0), false),                // 16
@@ -3509,6 +3512,8 @@ mod tests {
                     (lop3node_mmask(4, 7, 10, 0b0000101), true),  // 20
                     (lop3node_1(13, 18, 13), false),              // 21
                     (lop3node_mmask(13, 18, 4, 0b0000101), true), // 22
+                    (lop3node_1(2, 1, 2), false),                 // 23
+                    (lop3node_mmask(0, 1, 2, 0b0000011), true),   // 24
                 ],
             )
         );
