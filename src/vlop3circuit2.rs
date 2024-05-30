@@ -3458,8 +3458,9 @@ mod tests {
                     vgate_lop3(6, 7, 3, a2 & !(a0 & a1)),
                     vgate_lop3(0, 1, 2, (a2 & !a1) | !a0),
                     vgate_lop3(0, 1, 2, ((a0 & !a1) ^ (a2 & !a1)) | !(a0 & !a1)),
+                    vgate_lop3(1, 2, 1, !(a0 & a1) ^ a1),
                 ],
-                outputs: vec![(8, true), (9, false), (10, true), (11, false)],
+                outputs: vec![(8, true), (9, false), (10, true), (11, false), (12, true)],
             },
             call_vlop3circuit_from_lopnodes(
                 VBinOpCircuit {
@@ -3496,8 +3497,11 @@ mod tests {
                         //
                         vbgate_xor(3, 6, NoNegs),    // 25
                         vbgate_or(25, 3, NegInput1), // 26
+                        //
+                        vbgate_and(1, 2, NegOutput), // 27
+                        vbgate_xor(27, 2, NoNegs),   // 28
                     ],
-                    outputs: vec![(20, true), (22, false), (24, true), (26, false)],
+                    outputs: vec![(20, true), (22, false), (24, true), (26, false), (28, true)],
                 },
                 vec![
                     (lop3node_1(0, 1, 0), false),                 // 3
@@ -3522,8 +3526,10 @@ mod tests {
                     (lop3node_mmask(13, 18, 4, 0b0000101), true), // 22
                     (lop3node_1(2, 1, 2), false),                 // 23
                     (lop3node_mmask(0, 1, 2, 0b0000011), true),   // 24
-                    (lop3node_1(3, 5, 3), false),                 // 25
+                    (lop3node_1(3, 6, 3), false),                 // 25
                     (lop3node_mmask(0, 1, 2, 0b0011111), true),   // 26
+                    (lop3node_1(1, 2, 1), false),                 // 27
+                    (lop3node_mmask(1, 2, 1, 0b0000011), true),   // 28
                 ],
             )
         );
