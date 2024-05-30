@@ -23,6 +23,7 @@ where
         enableds: Vec<bool>,
         lop3nodes: Vec<LOP3Node<T>>,
     ) -> VLOP3Circuit<T> {
+        println!("FromLOP3Nodes Start");
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let mut new_gates: Vec<VLOP3Gate<T>> = vec![];
         let gates = &circuit.gates;
@@ -33,7 +34,7 @@ where
             }
             let gi = input_len + i;
             let newgi = input_len + new_gates.len();
-            trans_tbl[newgi] = T::try_from(gi).unwrap();
+            trans_tbl[gi] = T::try_from(newgi).unwrap();
             if !lop3node.tree_paths[0].is_empty()
                 && lop3node.tree_paths[1].is_empty()
                 && lop3node.tree_paths[2].is_empty()
@@ -3309,6 +3310,26 @@ mod tests {
         }
     }
 
+    fn lop3node_mmask(arg0: u32, arg1: u32, arg2: u32, move_mask: u8) -> LOP3Node<u32> {
+        let mut tree_paths = LOP3_SUBTREE_PATHS_DEFAULT;
+        for i in 0..7 {
+            tree_paths[i] = PathMove(u8::from(((move_mask >> i) & 1) != 0) * 3);
+        }
+        LOP3Node {
+            args: [arg0, arg1, arg2],
+            tree_paths,
+            mtu_cost: MTU_COST_BASE + 1,
+        }
+    }
+
+    fn call_vlop3circuit_from_lopnodes(
+        circuit: VBinOpCircuit<u32>,
+        lop3nodes_and_enableds: Vec<(LOP3Node<u32>, bool)>,
+    ) -> VLOP3Circuit<u32> {
+        let (lop3nodes, enableds): (Vec<_>, Vec<_>) = lop3nodes_and_enableds.into_iter().unzip();
+        VLOP3Circuit::from_lop3nodes(circuit, enableds, lop3nodes)
+    }
+
     #[test]
     fn test_vlop3circuit_from_lop3nodes() {
         assert_eq!(
@@ -3369,6 +3390,42 @@ mod tests {
                 std::iter::repeat(lop3node_1(0, 1, 0))
                     .take(9)
                     .collect::<Vec<_>>(),
+            )
+        );
+        // LOP3Nodes
+        assert_eq!(
+            VLOP3Circuit {
+                input_len: 3,
+                gates: vec![],
+                outputs: vec![],
+            },
+            call_vlop3circuit_from_lopnodes(
+                VBinOpCircuit {
+                    input_len: 3,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),    // 3
+                        vbgate_and(0, 2, NegInput1), // 4
+                        vbgate_or(3, 4, NegOutput),  // 5
+                        vbgate_and(0, 1, NegOutput), // 6
+                        vbgate_and(2, 1, NegInput1), // 7
+                        vbgate_xor(6, 7, NoNegs),    // 8
+                        vbgate_or(0, 2, NegOutput),  // 9
+                        vbgate_xor(1, 2, NegInput1), // 10
+                        vbgate_or(9, 10, NegInput1), // 11
+                    ],
+                    outputs: vec![(5, false), (8, false), (11, true)],
+                },
+                vec![
+                    (lop3node_1(0, 1, 0), false),               // 3
+                    (lop3node_1(0, 2, 0), false),               // 4
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 5
+                    (lop3node_1(0, 1, 0), false),               // 6
+                    (lop3node_1(2, 1, 2), false),               // 7
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 8
+                    (lop3node_1(0, 2, 0), false),               // 9
+                    (lop3node_1(1, 2, 1), false),               // 10
+                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 11
+                ],
             )
         );
     }
