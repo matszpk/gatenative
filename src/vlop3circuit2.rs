@@ -23,7 +23,6 @@ where
         enableds: Vec<bool>,
         lop3nodes: Vec<LOP3Node<T>>,
     ) -> VLOP3Circuit<T> {
-        println!("FromLOP3Nodes Start");
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let mut new_gates: Vec<VLOP3Gate<T>> = vec![];
         let gates = &circuit.gates;
@@ -90,7 +89,6 @@ where
                                 let l_arg0 = (l << 1) + 1;
                                 let l_arg1 = (l << 1) + 2;
                                 let va0 = if l_arg0 < 7 && !lop3moves[l_arg0].is_empty() {
-                                    println!("    VACalc0: {}", l_arg0);
                                     calcs[3 + 7 - l_arg0 - 1]
                                 } else if gates[tgi].0.i0 == lop3node.args[0] {
                                     calcs[0]
@@ -100,7 +98,6 @@ where
                                     calcs[2]
                                 };
                                 let va1 = if l_arg1 < 7 && !lop3moves[l_arg1].is_empty() {
-                                    println!("    VACalc1: {}", l_arg1);
                                     calcs[3 + 7 - l_arg1 - 1]
                                 } else if gates[tgi].0.i1 == lop3node.args[0] {
                                     calcs[0]
@@ -135,7 +132,6 @@ where
                     level_start >>= 1;
                     level_end >>= 1;
                 }
-                println!("  Calc: {:?}", calcs);
                 new_gates.push(VLOP3Gate {
                     i0: lop3node.args[0],
                     i1: lop3node.args[1],
