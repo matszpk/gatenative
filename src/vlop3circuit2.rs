@@ -74,6 +74,7 @@ where
                 let mut level_start = 3;
                 let mut level_end = 7;
                 // calculate values for tree nodes
+                let lop3moves = &lop3node.tree_paths;
                 for _ in 0..3 {
                     for l in level_start..level_end {
                         let calc_l = 3 + 7 - l - 1;
@@ -84,11 +85,11 @@ where
                                 calcs[1]
                             } else if lop3node.args[2] == t {
                                 calcs[2]
-                            } else if t >= circuit.input_len && !lop3node.tree_paths[l].is_empty() {
+                            } else if t >= circuit.input_len && !lop3moves[l].is_empty() {
                                 let tgi = usize::try_from(t).unwrap() - input_len;
                                 let l_arg0 = (l << 1) + 1;
                                 let l_arg1 = (l << 1) + 2;
-                                let va0 = if l_arg0 < 7 && !lop3node.tree_paths[l_arg0].is_empty() {
+                                let va0 = if l_arg0 < 7 && !lop3moves[l_arg0].is_empty() {
                                     calcs[3 + 7 - l_arg0 - 1]
                                 } else if gates[tgi].0.i0 == lop3node.args[0] {
                                     calcs[0]
@@ -97,7 +98,7 @@ where
                                 } else {
                                     calcs[2]
                                 };
-                                let va1 = if l_arg1 < 7 && !lop3node.tree_paths[l_arg1].is_empty() {
+                                let va1 = if l_arg1 < 7 && !lop3moves[l_arg1].is_empty() {
                                     calcs[3 + 7 - l_arg1 - 1]
                                 } else if gates[tgi].0.i1 == lop3node.args[0] {
                                     calcs[0]
