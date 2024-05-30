@@ -78,7 +78,7 @@ where
                     for l in level_start..level_end {
                         let calc_l = 3 + 7 - l - 1;
                         if let Some(t) = tree[l] {
-                            calcs[3 + 7 - l - 1] = if lop3node.args[0] == t {
+                            calcs[calc_l] = if lop3node.args[0] == t {
                                 calcs[0]
                             } else if lop3node.args[1] == t {
                                 calcs[1]
@@ -3402,7 +3402,7 @@ mod tests {
                     vgate_lop3(0, 1, 2, !((a0 & a1) | (a0 & !a2))),
                     vgate_lop3(0, 1, 2, !(a0 & a1) ^ (a2 & !a1)),
                     vgate_lop3(0, 1, 2, !(a0 | a1) | !(a1 ^ !a2)),
-                    vgate_lop3(0, 1, 2, !((a0 | !a2) & (a2 ^ a1))),
+                    vgate_lop3(2, 1, 0, !((a2 | !a0) & (a0 ^ a1))),
                 ],
                 outputs: vec![(3, false), (4, false), (5, true), (6, false)],
             },
@@ -3437,7 +3437,7 @@ mod tests {
                     (lop3node_mmask(0, 1, 2, 0b0000111), true), // 11
                     (lop3node_1(0, 2, 0), false),               // 12
                     (lop3node_1(2, 1, 2), false),               // 13
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 14
+                    (lop3node_mmask(2, 1, 0, 0b0000111), true), // 14
                 ],
             )
         );
