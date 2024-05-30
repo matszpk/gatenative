@@ -9,6 +9,8 @@ use std::ops::{Range, RangeFrom};
 // instead same - for 000xxxx - use circuit000, for 001xxxx use circuit001
 // TODO: Add ability to build once circuits for many these same builders.
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
+// TODO: CLangWriter: add handling array-like types to handle longer words and
+// groupped executions. Hint: Add parameter to configs, write transparent to CLangWriterConfigs.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
