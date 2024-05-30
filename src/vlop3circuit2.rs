@@ -3453,7 +3453,7 @@ mod tests {
                     vgate_lop3(0, 1, 2, (a0 & a1) | (a2 & !a1)),
                     vgate_lop3(0, 1, 2, a1 | !(a2 & (a0 & !a1))),
                     vgate_lop3(2, 0, 1, ((a0 & !a2) & a1) | !a0),
-                    vgate_lop3(0, 1, 2, (a0 & (a0 ^ a1)) ^ (!(a2 | a1) & !a2)),
+                    vgate_lop3(0, 1, 2, (a0 & !(a2 | a1)) ^ ((a0 ^ a1) & !a2)),
                     vgate_lop3(3, 4, 5, !(a2 | (a0 ^ a1))),
                     vgate_lop3(6, 7, 3, a2 & !(a0 & a1)),
                     vgate_lop3(0, 1, 2, (a2 & !a1) | !a0),
@@ -3483,8 +3483,8 @@ mod tests {
                         //
                         vbgate_xor(0, 1, NoNegs),     // 14
                         vbgate_or(2, 1, NegOutput),   // 15
-                        vbgate_and(0, 14, NoNegs),    // 16
-                        vbgate_and(15, 2, NegInput1), // 17
+                        vbgate_and(0, 15, NoNegs),    // 16
+                        vbgate_and(14, 2, NegInput1), // 17
                         vbgate_xor(16, 17, NoNegs),   // 18
                         //
                         vbgate_xor(4, 7, NoNegs),     // 19
@@ -3517,8 +3517,8 @@ mod tests {
                     (lop3node_mmask(2, 0, 1, 0b0001011), true),   // 13
                     (lop3node_1(0, 1, 0), false),                 // 14
                     (lop3node_1(2, 1, 2), false),                 // 15
-                    (lop3node_1(0, 14, 0), false),                // 16
-                    (lop3node_1(15, 0, 15), false),               // 17
+                    (lop3node_mmask(0, 1, 2, 0b0000101), false),  // 16
+                    (lop3node_mmask(0, 1, 2, 0b0000011), false),  // 17
                     (lop3node_mmask(0, 1, 2, 0b0110111), true),   // 18
                     (lop3node_1(4, 7, 4), false),                 // 19
                     (lop3node_mmask(4, 7, 10, 0b0000101), true),  // 20
