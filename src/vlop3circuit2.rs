@@ -183,6 +183,7 @@ where
     }
 }
 
+// TODO: add limitation of penetration of get_small_tree to two level depth of MTUsubtrees.
 // get_small_tree with checking whether nodes are belonging to same subtree.
 fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
