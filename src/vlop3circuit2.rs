@@ -215,7 +215,7 @@ where
     let mut old_level_start = 0;
     let mut level_start = 1;
     tree[0] = Some(wire_index);
-    let mut one_depth_subtrees = HashSet::new();
+    let mut one_depth_subtree_indicess = HashSet::new();
     for _ in 1..3 {
         for pos in 0..level_start - old_level_start {
             if let Some(t) = tree[old_level_start + pos] {
@@ -229,25 +229,44 @@ where
                         T::default()
                     };
                     if t_subtree_index == root_subtree_index
-                        || (depth_one && one_depth_subtrees.contains(&t_subtree_index))
+                        || (depth_one &&
+                        // condition to check
+                        (
+                            // if current node subtree in one depth subtrees
+                            if one_depth_subtree_indicess.is_empty() ||
+                                    one_depth_subtree_indicess.contains(&t_subtree_index) {
+                                let g = gates[gi - input_len].0;
+                                // check whether argument is ok:
+                                // if circuit input or have same subtree as current node
+                                let gi0ok = if g.i0 >= circuit.input_len {
+                                    let g0gi = usize::try_from(g.i0).unwrap() - input_len;
+                                    let g0gi_subtree_idx = cov.unwrap()[g0gi];
+                                    g0gi_subtree_idx == t_subtree_index
+                                } else {
+                                    true
+                                };
+                                // if circuit input or have same subtree as current node
+                                let gi1ok = if g.i1 >= circuit.input_len {
+                                    let g1gi = usize::try_from(g.i1).unwrap() - input_len;
+                                    let g1gi_subtree_idx = cov.unwrap()[g1gi];
+                                    g1gi_subtree_idx == t_subtree_index
+                                } else {
+                                    true
+                                };
+                                if gi0ok && gi1ok {
+                                    one_depth_subtree_indicess.insert(t_subtree_index);
+                                    true
+                                } else {
+                                    false
+                                }
+                            } else {
+                                false
+                            }
+                        ))
                     {
                         let g = gates[gi - input_len].0;
                         tree[level_start + (pos << 1)] = Some(g.i0);
-                        if depth_one
-                            && g.i0 >= circuit.input_len
-                            && t_subtree_index == root_subtree_index
-                        {
-                            let g0gi = usize::try_from(g.i0).unwrap() - input_len;
-                            one_depth_subtrees.insert(cov.unwrap()[g0gi]);
-                        }
                         tree[level_start + (pos << 1) + 1] = Some(g.i1);
-                        if depth_one
-                            && g.i1 >= circuit.input_len
-                            && t_subtree_index == root_subtree_index
-                        {
-                            let g1gi = usize::try_from(g.i1).unwrap() - input_len;
-                            one_depth_subtrees.insert(cov.unwrap()[g1gi]);
-                        }
                     }
                 }
             }
