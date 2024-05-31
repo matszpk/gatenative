@@ -734,7 +734,7 @@ where
     ) {
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
-        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), true);
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), false);
         // prefereed nodes are all nodes in MTUarea (in tree except circuit inputs and
         // nodes from other MTUsubtrees).
         let preferred_nodes = tree
