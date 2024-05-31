@@ -729,12 +729,28 @@ where
         );
         let keep_root = circuit_outputs.contains(&self.root);
         let mut changes = false;
-        for (mtunode, _) in &self.nodes {
-            if *mtunode == self.root && keep_root {
-                continue; // do not reduce root of MTUarea
-            }
-            if let Some(p) = self.nodes.iter().position(|(n, _)| *mtunode == *n) {
-                println!("  MTUNode: {}", usize::try_from(*mtunode).unwrap());
+        let iter_num = self.nodes.len();
+        let mut checked_mtunode = HashSet::new();
+        for _ in 0..iter_num {
+            let mtunode = {
+                let mut choosen = None;
+                for (mtunode, _) in &self.nodes {
+                    if *mtunode == self.root && keep_root {
+                        continue; // do not reduce root of MTUarea
+                    }
+                    if checked_mtunode.contains(mtunode) {
+                        continue;
+                    }
+                    choosen = Some(*mtunode);
+                }
+                if let Some(mtunode) = choosen {
+                    mtunode
+                } else {
+                    break;
+                }
+            };
+            if let Some(p) = self.nodes.iter().position(|(n, _)| mtunode == *n) {
+                println!("  MTUNode: {}", usize::try_from(mtunode).unwrap());
                 let touch_nodes = self.nodes[p].1.clone();
                 let mut all_touch_nodes_removed = true;
                 let mut new_variants = vec![];
@@ -776,7 +792,7 @@ where
                     let mut choosen = None;
                     for (vi, variant) in variants.iter().enumerate() {
                         if variant.args.iter().all(|a| {
-                            *a != *mtunode &&
+                            *a != mtunode &&
                             // and if any argument is other mtunode enabled by touch nodes or
                             (self.nodes.iter().any(|(mtunode2, _)| *mtunode2 == *a) ||
                             // circuit input or node from other MTUarea
@@ -809,25 +825,26 @@ where
                     changes = true;
                 }
             }
-        }
-        // update MTUarea
-        if changes {
-            self.nodes = vec![]; // clear nodes
-            for touch_node in all_touch_nodes {
-                let gi = usize::try_from(touch_node).unwrap() - input_len;
-                for arg in &lop3nodes[gi].args {
-                    if *arg >= circuit.input_len {
-                        let arggi = usize::try_from(*arg).unwrap() - input_len;
-                        if cov[arggi] == root_subtree_index {
-                            self.add_node(*arg, touch_node);
+            // update MTUarea
+            if changes {
+                self.nodes = vec![]; // clear nodes
+                for touch_node in &all_touch_nodes {
+                    let gi = usize::try_from(*touch_node).unwrap() - input_len;
+                    for arg in &lop3nodes[gi].args {
+                        if *arg >= circuit.input_len {
+                            let arggi = usize::try_from(*arg).unwrap() - input_len;
+                            if cov[arggi] == root_subtree_index {
+                                self.add_node(*arg, *touch_node);
+                            }
                         }
                     }
                 }
+                if keep_root && self.nodes.iter().all(|(n, _)| *n != self.root) {
+                    // add root
+                    self.nodes.push((self.root, vec![]));
+                }
             }
-            if keep_root && self.nodes.iter().all(|(n, _)| *n != self.root) {
-                // add root
-                self.nodes.push((self.root, vec![]));
-            }
+            checked_mtunode.insert(mtunode);
         }
         // end
         self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
