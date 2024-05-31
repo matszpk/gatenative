@@ -3685,6 +3685,7 @@ mod tests {
     ) -> (MTUArea<u32>, Vec<LOP3Node<u32>>) {
         println!("Call improve_and_optimize_and_gen_lop3nodes");
         let subtrees = circuit.subtrees();
+        println!("Subtrees: {:?}", subtrees);
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         let mut mtuarea = mtuarea.clone();
         let mut lop3nodes = lop3nodes.clone();
@@ -3864,24 +3865,94 @@ mod tests {
             ),
             call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
         );
-        // let circuit = VBinOpCircuit {
-        //     input_len: 4,
-        //     gates: vec![
-        //         // MTU area to share
-        //         vbgate_and(0, 1, NoNegs),    // 4
-        //         vbgate_xor(0, 2, NoNegs),    // 5
-        //         vbgate_and(2, 0, NegInput1), // 6
-        //         vbgate_or(1, 2, NegOutput),  // 7
-        //         vbgate_xor(4, 5, NoNegs),    // 8
-        //         vbgate_and(6, 7, NegOutput), // 9
-        //         vbgate_or(9, 8, NegInput1),  // 10
-        //         //
-        //         vbgate_and(4, 5, NoNegs),    // 11
-        //         vbgate_or(6, 7, NoNegs),     // 12
-        //         vbgate_and(4, 8, NoNegs),    // 13
-        //         vbgate_or(13, , NoNegs),    // 14
-        //     ],
-        //     outputs: vec![(14, false)],
-        // };
+        // new circuit with more complex MTUarea
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                // MTU area to share
+                vbgate_and(0, 1, NoNegs),    // 4  *
+                vbgate_xor(0, 2, NoNegs),    // 5  *
+                vbgate_and(2, 0, NegInput1), // 6  *
+                vbgate_or(1, 2, NegOutput),  // 7  *
+                vbgate_xor(4, 5, NoNegs),    // 8  *
+                vbgate_and(6, 7, NegOutput), // 9  *
+                vbgate_or(9, 8, NegInput1),  // 10
+                //
+                vbgate_and(4, 10, NoNegs),   // 11
+                vbgate_or(10, 5, NegInput1), // 12
+                vbgate_or(6, 10, NegInput1), // 13
+                vbgate_xor(7, 10, NoNegs),   // 14
+                //
+                vbgate_and(11, 12, NoNegs), // 15
+                vbgate_and(13, 14, NoNegs), // 16
+                vbgate_and(15, 16, NoNegs), // 17
+            ],
+            outputs: vec![(17, false)],
+        };
+        let mtuarea = MTUArea {
+            root: 10,
+            nodes: vec![
+                (8, vec![11, 12, 13, 14]),
+                (9, vec![11, 12, 13, 14]),
+                (10, vec![]),
+            ],
+            cost: 4,
+        };
+        let lop3nodes = vec![
+            LOP3Node::default(), // 4
+            LOP3Node::default(), // 5
+            LOP3Node::default(), // 6
+            LOP3Node::default(), // 7
+            LOP3Node::default(), // 8
+            LOP3Node::default(), // 9
+            LOP3Node::default(), // 10
+            //
+            lop3node_mmask(4, 8, 9, 0b0000101), // 11
+            lop3node_mmask(5, 8, 9, 0b0000011), // 12
+            lop3node_mmask(6, 8, 9, 0b0000101), // 13
+            lop3node_mmask(7, 8, 9, 0b0000101), // 14
+            //
+            LOP3Node::default(), // 15
+            LOP3Node::default(), // 16
+            LOP3Node::default(), // 17
+        ];
+        assert_eq!(
+            (
+                MTUArea {
+                    root: 10,
+                    nodes: vec![(8, vec![11, 12, 13, 14]), (9, vec![11, 12, 13, 14]),],
+                    cost: 4,
+                },
+                lop3nodes.clone(),
+            ),
+            call_improve_and_optimize_and_gen_lop3nodes(circuit, mtuarea, lop3nodes)
+        );
+        let mtuarea = MTUArea {
+            root: 10,
+            nodes: vec![
+                (8, vec![11, 12, 13, 14]),
+                (9, vec![11, 12, 13, 14]),
+                (10, vec![11, 12, 13, 14]),
+            ],
+            cost: 4,
+        };
+        let lop3nodes = vec![
+            LOP3Node::default(), // 4
+            LOP3Node::default(), // 5
+            LOP3Node::default(), // 6
+            LOP3Node::default(), // 7
+            LOP3Node::default(), // 8
+            LOP3Node::default(), // 9
+            LOP3Node::default(), // 10
+            //
+            lop3node_mmask(4, 8, 9, 0b0000101), // 11
+            lop3node_mmask(5, 8, 9, 0b0000011), // 12
+            lop3node_mmask(6, 8, 9, 0b0000101), // 13
+            lop3node_mmask(7, 8, 9, 0b0000101), // 14
+            //
+            LOP3Node::default(), // 15
+            LOP3Node::default(), // 16
+            LOP3Node::default(), // 17
+        ];
     }
 }
