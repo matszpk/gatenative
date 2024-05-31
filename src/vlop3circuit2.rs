@@ -189,7 +189,6 @@ fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
     wire_index: T,
     cov: Option<&[T]>,
-    depth_one: bool,
 ) -> [Option<T>; 7]
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -215,7 +214,6 @@ where
     let mut old_level_start = 0;
     let mut level_start = 1;
     tree[0] = Some(wire_index);
-    let mut one_depth_subtree_indicess = HashSet::new();
     for _ in 1..3 {
         for pos in 0..level_start - old_level_start {
             if let Some(t) = tree[old_level_start + pos] {
@@ -228,78 +226,92 @@ where
                     } else {
                         T::default()
                     };
-                    if t_subtree_index == root_subtree_index || depth_one {
+                    if t_subtree_index == root_subtree_index {
                         let g = gates[gi - input_len].0;
-                        // if current node subtree in one depth subtrees
-                        let mut ok_func = |t| {
-                            if depth_one {
-                                let gi = usize::try_from(t).unwrap();
-                                if gi >= input_len {
-                                    let t_subtree_index = if let Some(cov) = cov {
-                                        cov[gi - input_len]
-                                    } else {
-                                        T::default()
-                                    };
-                                    if t_subtree_index == root_subtree_index {
-                                        true
-                                    } else if one_depth_subtree_indicess.is_empty()
-                                        || one_depth_subtree_indicess.contains(&t_subtree_index)
-                                    {
-                                        let g = gates[gi - input_len].0;
-                                        // check whether argument is ok:
-                                        // if circuit input or have same subtree as current node
-                                        let gi0ok = if g.i0 >= circuit.input_len {
-                                            let g0gi = usize::try_from(g.i0).unwrap() - input_len;
-                                            let g0gi_subtree_idx = cov.unwrap()[g0gi];
-                                            println!(
-                                                "GI0: {} {} {} {}",
-                                                gi,
-                                                g0gi,
-                                                usize::try_from(g0gi_subtree_idx).unwrap(),
-                                                usize::try_from(t_subtree_index).unwrap()
-                                            );
-                                            g0gi_subtree_idx == t_subtree_index
-                                        } else {
-                                            true
-                                        };
-                                        // if circuit input or have same subtree as current node
-                                        let gi1ok = if g.i1 >= circuit.input_len {
-                                            let g1gi = usize::try_from(g.i1).unwrap() - input_len;
-                                            let g1gi_subtree_idx = cov.unwrap()[g1gi];
-                                            println!(
-                                                "GI1: {} {} {} {}",
-                                                gi,
-                                                g1gi,
-                                                usize::try_from(g1gi_subtree_idx).unwrap(),
-                                                usize::try_from(t_subtree_index).unwrap()
-                                            );
-                                            g1gi_subtree_idx == t_subtree_index
-                                        } else {
-                                            true
-                                        };
-                                        if gi0ok && gi1ok {
-                                            one_depth_subtree_indicess.insert(t_subtree_index);
-                                            true
-                                        } else {
-                                            // revert change for t if not good
-                                            false
-                                        }
-                                    } else {
-                                        false
-                                    }
-                                } else {
-                                    true
-                                }
-                            } else {
-                                true
-                            }
-                        };
-                        if ok_func(g.i0) {
-                            tree[level_start + (pos << 1)] = Some(g.i0);
+                        tree[level_start + (pos << 1)] = Some(g.i0);
+                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                    }
+                }
+            }
+        }
+        old_level_start = level_start;
+        level_start += level_start + 1;
+    }
+    tree
+}
+
+fn get_small_tree_with_one_depth<T>(
+    circuit: &VBinOpCircuit<T>,
+    wire_index: T,
+    cov: &[T],
+) -> [Option<T>; 7]
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len_t = circuit.input_len;
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gates = &circuit.gates;
+    // by default is subtree is zero if no coverage supplied
+    let root_subtree_index = if wire_index >= circuit.input_len {
+        cov[usize::try_from(wire_index).unwrap() - input_len]
+    } else {
+        T::default() // it doesn't matter what is value
+    };
+    let mut tree = [None; 7];
+    let mut covs = [T::default(); 7];
+    let mut cov_changes = [0; 7];
+    let mut old_level_start = 0;
+    let mut level_start = 1;
+    tree[0] = Some(wire_index);
+    covs[0] = root_subtree_index;
+    //let mut one_depth_subtree_indices = HashSet::new();
+    for depth in 1..4 {
+        for pos in 0..level_start - old_level_start {
+            if let Some(t) = tree[old_level_start + pos] {
+                if t >= input_len_t {
+                    let gi = usize::try_from(t).unwrap();
+                    // by default is subtree is zero if no coverage supplied
+                    // if no supplied coverage then root_subtree_index == t_subtree_index
+                    let old_cov_change = cov_changes[old_level_start + pos];
+                    let t_subtree_index = covs[old_level_start + pos];
+                    let g = gates[gi - input_len].0;
+                    let gi0cov_change = if g.i0 >= circuit.input_len {
+                        let gix0 = usize::try_from(g.i0).unwrap() - input_len;
+                        let gi0_subtree_index = cov[gix0];
+                        let new_cov_change =
+                            old_cov_change + usize::from(gi0_subtree_index != t_subtree_index);
+                        if depth < 3 {
+                            covs[level_start + (pos << 1)] = gi0_subtree_index;
+                            cov_changes[level_start + (pos << 1)] = new_cov_change;
                         }
-                        if ok_func(g.i1) {
-                            tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                        new_cov_change
+                    } else {
+                        old_cov_change
+                    };
+                    let gi1cov_change = if g.i1 >= circuit.input_len {
+                        let gix1 = usize::try_from(g.i1).unwrap() - input_len;
+                        let gi1_subtree_index = cov[gix1];
+                        let new_cov_change =
+                            old_cov_change + usize::from(gi1_subtree_index != t_subtree_index);
+                        if depth < 3 {
+                            covs[level_start + (pos << 1) + 1] = gi1_subtree_index;
+                            cov_changes[level_start + (pos << 1) + 1] = new_cov_change;
                         }
+                        new_cov_change
+                    } else {
+                        old_cov_change
+                    };
+                    if depth < 3 && old_cov_change <= 1 && gi0cov_change <= 1 && gi1cov_change <= 1
+                    {
+                        tree[level_start + (pos << 1)] = Some(g.i0);
+                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                    }
+                    if gi0cov_change > 1 || gi1cov_change > 1 {
+                        tree[old_level_start + pos] = None;
                     }
                 }
             }
@@ -318,7 +330,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    get_small_tree_with_cov(circuit, wire_index, None, false)
+    get_small_tree_with_cov(circuit, wire_index, None)
 }
 
 // special area of MTUsubtree that used to join with other MTUblocks.
@@ -585,7 +597,7 @@ where
         // if some nodes are node supplied then add.
         // NEXT THOUGHT: include (minimal) depth of nodes in MTUarea to calculate costs
         let input_len = usize::try_from(circuit.input_len).unwrap();
-        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), false);
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
         assert!(self.root >= circuit.input_len);
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
         let gates = &circuit.gates;
@@ -767,7 +779,7 @@ where
     ) {
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
-        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), false);
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
         // prefereed nodes are all nodes in MTUarea (in tree except circuit inputs and
         // nodes from other MTUsubtrees).
         let preferred_nodes = tree
@@ -1072,7 +1084,7 @@ fn find_best_lop3node_generic<T, F>(
     let current_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
     let current_mtu = subtrees[usize::try_from(current_subtree).unwrap()].root();
     // generate tree to explore
-    let tree = get_small_tree_with_cov(circuit, wire_index, Some(coverage), true);
+    let tree = get_small_tree_with_one_depth(circuit, wire_index, coverage);
     // let tree = get_small_tree(circuit, wire_index);
     // algorithm: simple batch of combinations with difference
     #[derive(Clone, Copy)]
@@ -2156,9 +2168,9 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 1
                     }, // 12
                     LOP3Node {
-                        args: [6, 7, 8],
-                        tree_paths: to_paths([3, 3, 3, 0, 3, 0, 0]),
-                        mtu_cost: MTU_COST_BASE + 1
+                        args: [12, 8, 9],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 2
                     }
                 ]
                 .into_iter()
@@ -2209,9 +2221,9 @@ mod tests {
                         mtu_cost: MTU_COST_BASE + 2
                     }, // 12
                     LOP3Node {
-                        args: [6, 7, 8],
-                        tree_paths: to_paths([3, 3, 3, 0, 3, 0, 0]),
-                        mtu_cost: MTU_COST_BASE + 4
+                        args: [12, 8, 9],
+                        tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                        mtu_cost: MTU_COST_BASE + 5
                     }
                 ]
                 .into_iter()
@@ -2265,18 +2277,11 @@ mod tests {
     #[test]
     fn test_find_best_lop3node_variants() {
         assert_eq!(
-            vec![
-                LOP3Node {
-                    args: [9, 4, 5],
-                    tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
-                    mtu_cost: MTU_COST_BASE + 1
-                },
-                LOP3Node {
-                    args: [6, 7, 8],
-                    tree_paths: to_paths([3, 0, 3, 0, 0, 0, 0]),
-                    mtu_cost: MTU_COST_BASE + 1
-                }
-            ],
+            vec![LOP3Node {
+                args: [9, 4, 5],
+                tree_paths: to_paths([3, 3, 0, 0, 0, 0, 0]),
+                mtu_cost: MTU_COST_BASE + 1
+            },],
             simple_call_find_best_lop3node_variants(
                 VBinOpCircuit {
                     input_len: 6,
@@ -3998,7 +4003,7 @@ mod tests {
         let subtrees = circuit.subtrees();
         println!("Subtrees: {:?}", subtrees);
         let cov = gen_subtree_coverage(&circuit, &subtrees);
-        get_small_tree_with_cov(&circuit, wire_index, Some(&cov), true)
+        get_small_tree_with_one_depth(&circuit, wire_index, &cov)
     }
 
     #[test]
@@ -4106,8 +4111,24 @@ mod tests {
             call_get_small_tree_with_one_depth(circuit.clone(), 25)
         );
         assert_eq!(
-            [Some(25), Some(23), Some(24), None, Some(2), Some(2), None],
+            [
+                Some(28),
+                Some(26),
+                Some(27),
+                Some(22),
+                Some(2),
+                Some(2),
+                Some(25)
+            ],
             call_get_small_tree_with_one_depth(circuit.clone(), 28)
+        );
+        assert_eq!(
+            [Some(26), Some(22), Some(2), None, None, None, None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 26)
+        );
+        assert_eq!(
+            [Some(27), Some(2), Some(25), None, None, None, None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 27)
         );
     }
 }
