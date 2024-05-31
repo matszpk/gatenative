@@ -3768,5 +3768,85 @@ mod tests {
             ),
             call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
         );
+        // other sides
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                vbgate_and(0, 1, NoNegs),    // 4 lop3:10 lop3:11 lop3:12
+                vbgate_or(0, 2, NoNegs),     // 5 lop3:10, 2:lop3:5
+                vbgate_or(4, 1, NoNegs),     // 6 lop3:10, 2:lop3:10
+                vbgate_xor(4, 1, NoNegs),    // 7 lop3:11, 2:lop3:11
+                vbgate_or(3, 4, NegInput1),  // 8 lop3:11, 2:lop3:11
+                vbgate_and(2, 4, NegInput1), // 9 lop3:12, 2:lop3:12
+                vbgate_xor(6, 5, NoNegs),    // 10 lop3:10, 2:lop3:10
+                vbgate_xor(8, 7, NoNegs),    // 11 lop3:11, 2:lop3:11
+                vbgate_xor(9, 2, NoNegs),    // 12 lop3:12, 2:lop3:12
+                vbgate_xor(10, 11, NoNegs),  // 13 lop3:14, 2:lop3:14
+                vbgate_xor(12, 13, NoNegs),  // 14 lop3:14, 2:lop3:14
+            ],
+            outputs: vec![(14, false)],
+        };
+        let (mtuarea, lop3nodes) = (
+            MTUArea {
+                root: 4,
+                nodes: vec![(4, vec![10, 11, 12])],
+                cost: 0,
+            },
+            vec![
+                lop3node_1(0, 1, 0),                   // 4
+                lop3node_1(0, 2, 0),                   // 5
+                lop3node_1(4, 1, 4),                   // 6
+                lop3node_1(4, 1, 4),                   // 7
+                lop3node_1(3, 4, 3),                   // 8
+                lop3node_1(2, 4, 2),                   // 9
+                lop3node_mmask(1, 4, 5, 0b0000011),    // 10
+                lop3node_mmask(1, 3, 4, 0b0000111),    // 11
+                lop3node_mmask(2, 4, 2, 0b0000011),    // 12
+                LOP3Node::default(),                   // 13
+                lop3node_mmask(10, 11, 12, 0b0000101), // 14
+            ],
+        );
+        assert_eq!(
+            (
+                MTUArea {
+                    root: 4,
+                    nodes: vec![],
+                    cost: 0,
+                },
+                vec![
+                    lop3node_1(0, 1, 0),                                        // 4
+                    lop3node_1(0, 2, 0),                                        // 5
+                    lop3node_1(4, 1, 4),                                        // 6
+                    lop3node_1(4, 1, 4),                                        // 7
+                    lop3node_1(3, 4, 3),                                        // 8
+                    lop3node_1(2, 4, 2),                                        // 9
+                    lop3node_mmask_cost(5, 1, 0, 0b0001011, MTU_COST_BASE + 2), // 10
+                    lop3node_mmask(3, 1, 0, 0b0110111),                         // 11
+                    lop3node_mmask(2, 0, 1, 0b0010011),                         // 12
+                    LOP3Node::default(),                                        // 13
+                    lop3node_mmask(10, 11, 12, 0b0000101),                      // 14
+                ]
+            ),
+            call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
+        );
+        // let circuit = VBinOpCircuit {
+        //     input_len: 4,
+        //     gates: vec![
+        //         // MTU area to share
+        //         vbgate_and(0, 1, NoNegs),    // 4
+        //         vbgate_xor(0, 2, NoNegs),    // 5
+        //         vbgate_and(2, 0, NegInput1), // 6
+        //         vbgate_or(1, 2, NegOutput),  // 7
+        //         vbgate_xor(4, 5, NoNegs),    // 8
+        //         vbgate_and(6, 7, NegOutput), // 9
+        //         vbgate_or(9, 8, NegInput1),  // 10
+        //         //
+        //         vbgate_and(4, 5, NoNegs),    // 11
+        //         vbgate_or(6, 7, NoNegs),     // 12
+        //         vbgate_and(4, 8, NoNegs),    // 13
+        //         vbgate_or(13, , NoNegs),    // 14
+        //     ],
+        //     outputs: vec![(14, false)],
+        // };
     }
 }
