@@ -189,9 +189,10 @@ fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
     wire_index: T,
     cov: Option<&[T]>,
+    depth_one: bool,
 ) -> [Option<T>; 7]
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -214,6 +215,7 @@ where
     let mut old_level_start = 0;
     let mut level_start = 1;
     tree[0] = Some(wire_index);
+    let mut one_depth_subtrees = HashSet::new();
     for _ in 1..3 {
         for pos in 0..level_start - old_level_start {
             if let Some(t) = tree[old_level_start + pos] {
@@ -226,10 +228,26 @@ where
                     } else {
                         T::default()
                     };
-                    if t_subtree_index == root_subtree_index {
+                    if t_subtree_index == root_subtree_index
+                        || (depth_one && one_depth_subtrees.contains(&t_subtree_index))
+                    {
                         let g = gates[gi - input_len].0;
                         tree[level_start + (pos << 1)] = Some(g.i0);
+                        if depth_one
+                            && g.i0 >= circuit.input_len
+                            && t_subtree_index == root_subtree_index
+                        {
+                            let g0gi = usize::try_from(g.i0).unwrap() - input_len;
+                            one_depth_subtrees.insert(cov.unwrap()[g0gi]);
+                        }
                         tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                        if depth_one
+                            && g.i1 >= circuit.input_len
+                            && t_subtree_index == root_subtree_index
+                        {
+                            let g1gi = usize::try_from(g.i1).unwrap() - input_len;
+                            one_depth_subtrees.insert(cov.unwrap()[g1gi]);
+                        }
                     }
                 }
             }
@@ -242,13 +260,13 @@ where
 
 fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    get_small_tree_with_cov(circuit, wire_index, None)
+    get_small_tree_with_cov(circuit, wire_index, None, false)
 }
 
 // special area of MTUsubtree that used to join with other MTUblocks.
@@ -515,7 +533,7 @@ where
         // if some nodes are node supplied then add.
         // NEXT THOUGHT: include (minimal) depth of nodes in MTUarea to calculate costs
         let input_len = usize::try_from(circuit.input_len).unwrap();
-        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), false);
         assert!(self.root >= circuit.input_len);
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
         let gates = &circuit.gates;
@@ -697,7 +715,7 @@ where
     ) {
         let input_len = usize::try_from(circuit.input_len).unwrap();
         let root_subtree_index = cov[usize::try_from(self.root).unwrap() - input_len];
-        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov));
+        let tree = get_small_tree_with_cov(circuit, self.root, Some(cov), true);
         // prefereed nodes are all nodes in MTUarea (in tree except circuit inputs and
         // nodes from other MTUsubtrees).
         let preferred_nodes = tree
@@ -1002,7 +1020,8 @@ fn find_best_lop3node_generic<T, F>(
     let current_subtree = coverage[usize::try_from(wire_index).unwrap() - input_len];
     let current_mtu = subtrees[usize::try_from(current_subtree).unwrap()].root();
     // generate tree to explore
-    let tree = get_small_tree(circuit, wire_index);
+    let tree = get_small_tree_with_cov(circuit, wire_index, Some(coverage), true);
+    // let tree = get_small_tree(circuit, wire_index);
     // algorithm: simple batch of combinations with difference
     #[derive(Clone, Copy)]
     enum CombBatchEntry {
@@ -1372,7 +1391,7 @@ fn get_preferred_nodes_from_mtuareas<T>(
     wire_index: T,
 ) -> Vec<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
