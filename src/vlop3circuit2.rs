@@ -5,8 +5,8 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::vbinopcircuit::*;
-use crate::vcircuit::{VGate, VGateFunc};
-use crate::VNegs::{self, *};
+use crate::vcircuit::VGateFunc;
+use crate::VNegs::*;
 
 use crate::vlop3circuit::*;
 
@@ -57,7 +57,6 @@ where
             } else {
                 // more complex LOP3
                 let tree = get_small_tree(&circuit, T::try_from(input_len + i).unwrap());
-                let mut bits = 0u8;
                 let mut calcs = [
                     0b11110000u8,
                     0b11001100u8,
@@ -881,14 +880,6 @@ struct PathMove(u8);
 
 impl PathMove {
     #[inline]
-    fn is_first(self) -> bool {
-        (self.0 & 1) != 0
-    }
-    #[inline]
-    fn is_second(self) -> bool {
-        (self.0 & 2) != 0
-    }
-    #[inline]
     fn is_way(self, second: bool) -> bool {
         (self.0 & (1 << u32::from(second))) != 0
     }
@@ -1498,14 +1489,13 @@ where
             );
             let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes(&circuit);
             // get nonfarest nodes
-            for (i, nidx) in subtree
+            for nidx in subtree
                 .gates()
                 .iter()
                 .map(|(x, _)| *x)
                 .chain(std::iter::once(subtree.root()))
-                .enumerate()
                 // skip all nonfarest nodes in MTUAreaview
-                .filter(|(_, nidx)| nonfarest_nodes.iter().all(|x| *x != *nidx))
+                .filter(|nidx| nonfarest_nodes.iter().all(|x| *x != *nidx))
             {
                 let gidx = usize::try_from(nidx).unwrap() - input_len;
                 // get preferred nodes from mtuareas
@@ -1550,6 +1540,7 @@ mod tests {
 
     use crate::vcircuit::*;
     use gatesim::Gate;
+    use crate::VNegs;
 
     fn vgate<T: Clone + Copy>(
         func: VLOP3GateFunc,
@@ -2163,7 +2154,6 @@ mod tests {
         println!("Call find_best_lop3node_variants");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
-        let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         let lop3nodes = vec![LOP3Node::default(); gates.len()];
         let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
@@ -2351,8 +2341,6 @@ mod tests {
     ) -> Vec<Vec<u32>> {
         println!("Call get_preferred_nodes_from_mtuareas");
         let subtrees = circuit.subtrees();
-        let gates = &circuit.gates;
-        let input_len = usize::try_from(circuit.input_len).unwrap();
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         println!("Coverage: {:?}", cov);
         wire_indices
