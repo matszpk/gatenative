@@ -228,45 +228,78 @@ where
                     } else {
                         T::default()
                     };
-                    if t_subtree_index == root_subtree_index
-                        || (depth_one &&
-                        // condition to check
-                        (
-                            // if current node subtree in one depth subtrees
-                            if one_depth_subtree_indicess.is_empty() ||
-                                    one_depth_subtree_indicess.contains(&t_subtree_index) {
-                                let g = gates[gi - input_len].0;
-                                // check whether argument is ok:
-                                // if circuit input or have same subtree as current node
-                                let gi0ok = if g.i0 >= circuit.input_len {
-                                    let g0gi = usize::try_from(g.i0).unwrap() - input_len;
-                                    let g0gi_subtree_idx = cov.unwrap()[g0gi];
-                                    g0gi_subtree_idx == t_subtree_index
+                    if t_subtree_index == root_subtree_index || depth_one {
+                        let g = gates[gi - input_len].0;
+                        // if current node subtree in one depth subtrees
+                        let mut ok_func = |t| {
+                            if depth_one {
+                                let gi = usize::try_from(t).unwrap();
+                                if gi >= input_len {
+                                    let t_subtree_index = if let Some(cov) = cov {
+                                        cov[gi - input_len]
+                                    } else {
+                                        T::default()
+                                    };
+                                    if t_subtree_index == root_subtree_index {
+                                        true
+                                    } else if one_depth_subtree_indicess.is_empty()
+                                        || one_depth_subtree_indicess.contains(&t_subtree_index)
+                                    {
+                                        let g = gates[gi - input_len].0;
+                                        // check whether argument is ok:
+                                        // if circuit input or have same subtree as current node
+                                        let gi0ok = if g.i0 >= circuit.input_len {
+                                            let g0gi = usize::try_from(g.i0).unwrap() - input_len;
+                                            let g0gi_subtree_idx = cov.unwrap()[g0gi];
+                                            println!(
+                                                "GI0: {} {} {} {}",
+                                                gi,
+                                                g0gi,
+                                                usize::try_from(g0gi_subtree_idx).unwrap(),
+                                                usize::try_from(t_subtree_index).unwrap()
+                                            );
+                                            g0gi_subtree_idx == t_subtree_index
+                                        } else {
+                                            true
+                                        };
+                                        // if circuit input or have same subtree as current node
+                                        let gi1ok = if g.i1 >= circuit.input_len {
+                                            let g1gi = usize::try_from(g.i1).unwrap() - input_len;
+                                            let g1gi_subtree_idx = cov.unwrap()[g1gi];
+                                            println!(
+                                                "GI1: {} {} {} {}",
+                                                gi,
+                                                g1gi,
+                                                usize::try_from(g1gi_subtree_idx).unwrap(),
+                                                usize::try_from(t_subtree_index).unwrap()
+                                            );
+                                            g1gi_subtree_idx == t_subtree_index
+                                        } else {
+                                            true
+                                        };
+                                        if gi0ok && gi1ok {
+                                            one_depth_subtree_indicess.insert(t_subtree_index);
+                                            true
+                                        } else {
+                                            // revert change for t if not good
+                                            false
+                                        }
+                                    } else {
+                                        false
+                                    }
                                 } else {
                                     true
-                                };
-                                // if circuit input or have same subtree as current node
-                                let gi1ok = if g.i1 >= circuit.input_len {
-                                    let g1gi = usize::try_from(g.i1).unwrap() - input_len;
-                                    let g1gi_subtree_idx = cov.unwrap()[g1gi];
-                                    g1gi_subtree_idx == t_subtree_index
-                                } else {
-                                    true
-                                };
-                                if gi0ok && gi1ok {
-                                    one_depth_subtree_indicess.insert(t_subtree_index);
-                                    true
-                                } else {
-                                    false
                                 }
                             } else {
-                                false
+                                true
                             }
-                        ))
-                    {
-                        let g = gates[gi - input_len].0;
-                        tree[level_start + (pos << 1)] = Some(g.i0);
-                        tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                        };
+                        if ok_func(g.i0) {
+                            tree[level_start + (pos << 1)] = Some(g.i0);
+                        }
+                        if ok_func(g.i1) {
+                            tree[level_start + (pos << 1) + 1] = Some(g.i1);
+                        }
                     }
                 }
             }
@@ -3954,6 +3987,127 @@ mod tests {
                 lop3nodes.clone(),
             ),
             call_improve_and_optimize_and_gen_lop3nodes(circuit, mtuarea, lop3nodes)
+        );
+    }
+
+    fn call_get_small_tree_with_one_depth(
+        circuit: VBinOpCircuit<u32>,
+        wire_index: u32,
+    ) -> [Option<u32>; 7] {
+        println!("Call get_small_tree_with_one_depth");
+        let subtrees = circuit.subtrees();
+        println!("Subtrees: {:?}", subtrees);
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        get_small_tree_with_cov(&circuit, wire_index, Some(&cov), true)
+    }
+
+    #[test]
+    fn test_small_tree_with_one_depth() {
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                //
+                vbgate_and(0, 1, NoNegs), // 4
+                vbgate_or(0, 2, NoNegs),  // 5
+                vbgate_or(2, 3, NoNegs),  // 6
+                vbgate_or(0, 1, NoNegs),  // 7
+                vbgate_xor(4, 5, NoNegs), // 8
+                vbgate_xor(6, 7, NoNegs), // 9
+                vbgate_and(8, 9, NoNegs), // 10
+                //
+                vbgate_xor(0, 1, NoNegs),   // 11
+                vbgate_xor(2, 3, NoNegs),   // 12
+                vbgate_and(11, 12, NoNegs), // 13
+                //
+                vbgate_xor(0, 1, NoNegs),  // 14
+                vbgate_xor(0, 14, NoNegs), // 15
+                vbgate_xor(0, 15, NoNegs), // 16
+                //
+                vbgate_or(0, 14, NoNegs),  // 17
+                vbgate_or(1, 14, NoNegs),  // 18
+                vbgate_or(17, 18, NoNegs), // 19
+                //
+                vbgate_or(0, 15, NoNegs),  // 20
+                vbgate_and(15, 1, NoNegs), // 21
+                vbgate_or(20, 21, NoNegs), // 22
+                //
+                vbgate_or(16, 2, NoNegs),  // 23
+                vbgate_and(2, 16, NoNegs), // 24
+                vbgate_or(23, 24, NoNegs), // 25
+                //
+                vbgate_or(22, 2, NoNegs),  // 26
+                vbgate_and(2, 25, NoNegs), // 27
+                vbgate_or(26, 27, NoNegs), // 28
+            ],
+            outputs: vec![
+                (10, false),
+                (13, false),
+                (16, false),
+                (19, false),
+                (22, false),
+                (25, false),
+                (28, false),
+            ],
+        };
+        assert_eq!(
+            [
+                Some(10),
+                Some(8),
+                Some(9),
+                Some(4),
+                Some(5),
+                Some(6),
+                Some(7)
+            ],
+            call_get_small_tree_with_one_depth(circuit.clone(), 10)
+        );
+        assert_eq!(
+            [
+                Some(13),
+                Some(11),
+                Some(12),
+                Some(0),
+                Some(1),
+                Some(2),
+                Some(3)
+            ],
+            call_get_small_tree_with_one_depth(circuit.clone(), 13)
+        );
+        assert_eq!(
+            [Some(14), Some(0), Some(1), None, None, None, None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 14)
+        );
+        assert_eq!(
+            [Some(15), Some(0), Some(14), None, None, Some(0), Some(1)],
+            call_get_small_tree_with_one_depth(circuit.clone(), 15)
+        );
+        assert_eq!(
+            [Some(16), Some(0), None, None, None, None, None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 16)
+        );
+        assert_eq!(
+            [
+                Some(19),
+                Some(17),
+                Some(18),
+                Some(0),
+                Some(14),
+                Some(1),
+                Some(14)
+            ],
+            call_get_small_tree_with_one_depth(circuit.clone(), 19)
+        );
+        assert_eq!(
+            [Some(22), Some(20), Some(21), Some(0), None, None, Some(1)],
+            call_get_small_tree_with_one_depth(circuit.clone(), 22)
+        );
+        assert_eq!(
+            [Some(25), Some(23), Some(24), None, Some(2), Some(2), None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 25)
+        );
+        assert_eq!(
+            [Some(25), Some(23), Some(24), None, Some(2), Some(2), None],
+            call_get_small_tree_with_one_depth(circuit.clone(), 28)
         );
     }
 }
