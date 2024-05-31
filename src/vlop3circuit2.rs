@@ -283,7 +283,6 @@ fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
     if (all_nodes & 0b0000100) != 0 && (all_nodes & 0b1100000) != 0 {
         cost += 1;
     }
-    println!("Cost 0: {}", cost);
     // reversed min depth
     if (all_nodes & 0b0000001) != 0 {
         cost += 3;
@@ -292,7 +291,6 @@ fn calc_mtu_area_config_cost(idx: u8, cfg: MTUAreaConfig) -> usize {
     } else if (all_nodes & 0b1111000) != 0 {
         cost += 1;
     }
-    println!("Cost 1: {} {}", cost, all_nodes.count_ones());
     // add number of extra nodes
     cost + all_nodes.count_ones() as usize
 }
@@ -468,7 +466,7 @@ const MTUAREA_CONFIG_TBL: [MTUAreaConfig; 128] = [
 
 impl<T> MTUArea<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -722,6 +720,13 @@ where
             touch_nodes.dedup();
             touch_nodes
         };
+        println!(
+            "AllTouchNodes: {:?}",
+            all_touch_nodes
+                .iter()
+                .map(|x| usize::try_from(*x).unwrap())
+                .collect::<Vec<_>>()
+        );
         let keep_root = circuit_outputs.contains(&self.root);
         let mut changes = false;
         for (mtunode, _) in &self.nodes {
@@ -729,6 +734,7 @@ where
                 continue; // do not reduce root of MTUarea
             }
             if let Some(p) = self.nodes.iter().position(|(n, _)| *mtunode == *n) {
+                println!("  MTUNode: {}", usize::try_from(*mtunode).unwrap());
                 let touch_nodes = self.nodes[p].1.clone();
                 let mut all_touch_nodes_removed = true;
                 let mut new_variants = vec![];
@@ -747,6 +753,14 @@ where
                         })
                         .copied()
                         .collect::<Vec<_>>();
+                    println!("    TouchNode: {}", usize::try_from(*touch_node).unwrap());
+                    println!(
+                        "    ReqArgs: {:?}",
+                        required_args
+                            .iter()
+                            .map(|x| usize::try_from(*x).unwrap())
+                            .collect::<Vec<_>>()
+                    );
                     let variants = find_best_lop3node_variants(
                         circuit,
                         lop3nodes,
@@ -757,6 +771,7 @@ where
                         &preferred_nodes,
                         &required_args,
                     );
+                    println!("    LOP3Variants: {:?}", variants);
                     // find variant without mtunode and other mtunode
                     let mut choosen = None;
                     for (vi, variant) in variants.iter().enumerate() {
@@ -1281,7 +1296,7 @@ fn update_mtuareas_from_lop3node<T>(
     lop3enableds: &[bool],
     lop3nodes: &[LOP3Node<T>],
 ) where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -1437,7 +1452,7 @@ fn filter_lop3nodes_in_mtuarea<T>(
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -1453,7 +1468,7 @@ where
 
 impl<T> From<VBinOpCircuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -3309,6 +3324,24 @@ mod tests {
         }
     }
 
+    fn lop3node_mmask_cost(
+        arg0: u32,
+        arg1: u32,
+        arg2: u32,
+        move_mask: u8,
+        cost: usize,
+    ) -> LOP3Node<u32> {
+        let mut tree_paths = LOP3_SUBTREE_PATHS_DEFAULT;
+        for i in 0..7 {
+            tree_paths[i] = PathMove(u8::from(((move_mask >> i) & 1) != 0) * 3);
+        }
+        LOP3Node {
+            args: [arg0, arg1, arg2],
+            tree_paths,
+            mtu_cost: cost,
+        }
+    }
+
     fn call_vlop3circuit_from_lopnodes(
         circuit: VBinOpCircuit<u32>,
         lop3nodes_and_enableds: Vec<(LOP3Node<u32>, bool)>,
@@ -3659,8 +3692,8 @@ mod tests {
             },
             vec![
                 lop3node_1(0, 1, 0),                   // 4
-                LOP3Node::default(),                   // 5
-                LOP3Node::default(),                   // 6
+                lop3node_1(0, 2, 0),                   // 5
+                lop3node_1(1, 4, 1),                   // 6
                 LOP3Node::default(),                   // 7
                 LOP3Node::default(),                   // 8
                 LOP3Node::default(),                   // 9
@@ -3668,32 +3701,72 @@ mod tests {
                 lop3node_mmask(0, 1, 3, 0b1001111),    // 11
                 lop3node_mmask(0, 1, 2, 0b1000101),    // 12
                 LOP3Node::default(),                   // 13
-                lop3node_mmask(10, 11, 12, 0b0000011), // 14
+                lop3node_mmask(10, 11, 12, 0b0000101), // 14
+            ],
+        );
+        let circuit = VBinOpCircuit {
+            input_len: 4,
+            gates: vec![
+                vbgate_and(0, 1, NoNegs),    // 4 lop3:10 lop3:11 lop3:12
+                vbgate_or(0, 2, NoNegs),     // 5 lop3:10, 2:lop3:5
+                vbgate_or(1, 4, NoNegs),     // 6 lop3:10, 2:lop3:10
+                vbgate_xor(4, 1, NoNegs),    // 7 lop3:11, 2:lop3:11
+                vbgate_or(3, 4, NegInput1),  // 8 lop3:11, 2:lop3:11
+                vbgate_and(2, 4, NegInput1), // 9 lop3:12, 2:lop3:12
+                vbgate_xor(5, 6, NoNegs),    // 10 lop3:10, 2:lop3:10
+                vbgate_xor(7, 8, NoNegs),    // 11 lop3:11, 2:lop3:11
+                vbgate_xor(2, 9, NoNegs),    // 12 lop3:12, 2:lop3:12
+                vbgate_xor(10, 11, NoNegs),  // 13 lop3:14, 2:lop3:14
+                vbgate_xor(12, 13, NoNegs),  // 14 lop3:14, 2:lop3:14
+            ],
+            outputs: vec![(14, false)],
+        };
+        assert_eq!(
+            (mtuarea.clone(), lop3nodes.clone()),
+            call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
+        );
+        let (mtuarea, lop3nodes) = (
+            MTUArea {
+                root: 4,
+                nodes: vec![(4, vec![10, 11, 12])],
+                cost: 0,
+            },
+            vec![
+                lop3node_1(0, 1, 0),                   // 4
+                lop3node_1(0, 2, 0),                   // 5
+                lop3node_1(1, 4, 1),                   // 6
+                lop3node_1(4, 1, 4),                   // 7
+                lop3node_1(3, 4, 3),                   // 8
+                lop3node_1(2, 4, 2),                   // 9
+                lop3node_mmask(1, 4, 5, 0b0000101),    // 10
+                lop3node_mmask(1, 3, 4, 0b0000111),    // 11
+                lop3node_mmask(2, 4, 2, 0b0000101),    // 12
+                LOP3Node::default(),                   // 13
+                lop3node_mmask(10, 11, 12, 0b0000101), // 14
             ],
         );
         assert_eq!(
-            (mtuarea.clone(), lop3nodes.clone()),
-            call_improve_and_optimize_and_gen_lop3nodes(
-                VBinOpCircuit {
-                    input_len: 4,
-                    gates: vec![
-                        vbgate_and(0, 1, NoNegs),    // 4 lop3:10 lop3:11 lop3:12
-                        vbgate_or(0, 2, NoNegs),     // 5 lop3:10
-                        vbgate_or(1, 4, NoNegs),     // 6 lop3:10
-                        vbgate_xor(4, 1, NoNegs),    // 7 lop3:11
-                        vbgate_or(3, 4, NegInput1),  // 8 lop3:11
-                        vbgate_and(2, 4, NegInput1), // 9 lop3:12
-                        vbgate_xor(5, 6, NoNegs),    // 10 lop3:10
-                        vbgate_xor(7, 8, NoNegs),    // 11 lop3:11
-                        vbgate_xor(2, 9, NoNegs),    // 12 lop3:12
-                        vbgate_xor(10, 11, NoNegs),  // 13 lop3:14
-                        vbgate_xor(12, 13, NoNegs),  // 14 lop3:14
-                    ],
-                    outputs: vec![(14, false)],
+            (
+                MTUArea {
+                    root: 4,
+                    nodes: vec![],
+                    cost: 0,
                 },
-                mtuarea,
-                lop3nodes,
-            )
+                vec![
+                    lop3node_1(0, 1, 0),                                        // 4
+                    lop3node_1(0, 2, 0),                                        // 5
+                    lop3node_1(1, 4, 1),                                        // 6
+                    lop3node_1(4, 1, 4),                                        // 7
+                    lop3node_1(3, 4, 3),                                        // 8
+                    lop3node_1(2, 4, 2),                                        // 9
+                    lop3node_mmask_cost(1, 5, 0, 0b1000101, MTU_COST_BASE + 2), // 10
+                    lop3node_mmask(1, 3, 0, 0b1001111),                         // 11
+                    lop3node_mmask(2, 0, 1, 0b1000101),                         // 12
+                    LOP3Node::default(),                                        // 13
+                    lop3node_mmask(10, 11, 12, 0b0000101),                      // 14
+                ]
+            ),
+            call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
         );
     }
 }
