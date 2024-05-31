@@ -245,7 +245,7 @@ where
 }
 
 // special area of MTUsubtree that used to join with other MTUblocks.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct MTUArea<T> {
     root: T,
     nodes: Vec<(T, Vec<T>)>,
@@ -1539,8 +1539,8 @@ mod tests {
     use super::*;
 
     use crate::vcircuit::*;
-    use gatesim::Gate;
     use crate::VNegs;
+    use gatesim::Gate;
 
     fn vgate<T: Clone + Copy>(
         func: VLOP3GateFunc,
@@ -3624,6 +3624,75 @@ mod tests {
                     (lop3node_1(4, 7, 4), false),                 // 23
                     (lop3node_mmask(4, 7, 4, 0b0000101), true),   // 24
                 ],
+            )
+        );
+    }
+
+    fn call_improve_and_optimize_and_gen_lop3nodes(
+        circuit: VBinOpCircuit<u32>,
+        mtuarea: MTUArea<u32>,
+        lop3nodes: Vec<LOP3Node<u32>>,
+    ) -> (MTUArea<u32>, Vec<LOP3Node<u32>>) {
+        println!("Call improve_and_optimize_and_gen_lop3nodes");
+        let subtrees = circuit.subtrees();
+        let cov = gen_subtree_coverage(&circuit, &subtrees);
+        let mut mtuarea = mtuarea.clone();
+        let mut lop3nodes = lop3nodes.clone();
+        let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
+        mtuarea.improve_and_optimize_and_gen_lop3nodes(
+            &circuit,
+            &mut lop3nodes,
+            &cov,
+            &subtrees,
+            &circuit_outputs,
+        );
+        (mtuarea, lop3nodes)
+    }
+
+    #[test]
+    fn test_improve_and_optimize_and_gen_lop3nodes() {
+        let (mtuarea, lop3nodes) = (
+            MTUArea {
+                root: 4,
+                nodes: vec![],
+                cost: 0,
+            },
+            vec![
+                lop3node_1(0, 1, 0),                   // 4
+                LOP3Node::default(),                   // 5
+                LOP3Node::default(),                   // 6
+                LOP3Node::default(),                   // 7
+                LOP3Node::default(),                   // 8
+                LOP3Node::default(),                   // 9
+                lop3node_mmask(0, 1, 2, 0b1000111),    // 10
+                lop3node_mmask(0, 1, 3, 0b1001111),    // 11
+                lop3node_mmask(0, 1, 2, 0b1000101),    // 12
+                LOP3Node::default(),                   // 13
+                lop3node_mmask(10, 11, 12, 0b0000011), // 14
+            ],
+        );
+        assert_eq!(
+            (mtuarea.clone(), lop3nodes.clone()),
+            call_improve_and_optimize_and_gen_lop3nodes(
+                VBinOpCircuit {
+                    input_len: 4,
+                    gates: vec![
+                        vbgate_and(0, 1, NoNegs),    // 4 lop3:10 lop3:11 lop3:12
+                        vbgate_or(0, 2, NoNegs),     // 5 lop3:10
+                        vbgate_or(1, 4, NoNegs),     // 6 lop3:10
+                        vbgate_xor(4, 1, NoNegs),    // 7 lop3:11
+                        vbgate_or(3, 4, NegInput1),  // 8 lop3:11
+                        vbgate_and(2, 4, NegInput1), // 9 lop3:12
+                        vbgate_xor(5, 6, NoNegs),    // 10 lop3:10
+                        vbgate_xor(7, 8, NoNegs),    // 11 lop3:11
+                        vbgate_xor(2, 9, NoNegs),    // 12 lop3:12
+                        vbgate_xor(10, 11, NoNegs),  // 13 lop3:14
+                        vbgate_xor(12, 13, NoNegs),  // 14 lop3:14
+                    ],
+                    outputs: vec![(14, false)],
+                },
+                mtuarea,
+                lop3nodes,
             )
         );
     }
