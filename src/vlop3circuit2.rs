@@ -10,6 +10,12 @@ use crate::VNegs::*;
 
 use crate::vlop3circuit::*;
 
+// TODO: PROBLEM:
+// if MTUsubtrees are single gates: then possible to make LOP3s that
+// creates sequence through MTUsubtrees interleavely:
+// LOP3_0: (p,s0,s2,s4,s6, LOP3_1: (p,s1,s3,s5,s7) - it causes creating inefficiently
+// sequences of LOP3s.
+
 impl<T> VLOP3Circuit<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
