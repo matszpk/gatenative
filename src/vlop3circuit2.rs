@@ -260,12 +260,12 @@ where
         T::default() // it doesn't matter what is value
     };
     let mut tree = [None; 7];
-    let mut covs = [T::default(); 7];
-    let mut cov_changes = [0; 7];
+    let mut covs_tree = [T::default(); 7];
+    let mut covs_changes_tree = [0; 7];
     let mut old_level_start = 0;
     let mut level_start = 1;
     tree[0] = Some(wire_index);
-    covs[0] = root_subtree_index;
+    covs_tree[0] = root_subtree_index;
     //let mut one_depth_subtree_indices = HashSet::new();
     for depth in 1..4 {
         for pos in 0..level_start - old_level_start {
@@ -274,8 +274,8 @@ where
                     let gi = usize::try_from(t).unwrap();
                     // by default is subtree is zero if no coverage supplied
                     // if no supplied coverage then root_subtree_index == t_subtree_index
-                    let old_cov_change = cov_changes[old_level_start + pos];
-                    let t_subtree_index = covs[old_level_start + pos];
+                    let old_cov_change = covs_changes_tree[old_level_start + pos];
+                    let t_subtree_index = covs_tree[old_level_start + pos];
                     let g = gates[gi - input_len].0;
                     let gi0cov_change = if g.i0 >= circuit.input_len {
                         let gix0 = usize::try_from(g.i0).unwrap() - input_len;
@@ -283,8 +283,8 @@ where
                         let new_cov_change =
                             old_cov_change + usize::from(gi0_subtree_index != t_subtree_index);
                         if depth < 3 {
-                            covs[level_start + (pos << 1)] = gi0_subtree_index;
-                            cov_changes[level_start + (pos << 1)] = new_cov_change;
+                            covs_tree[level_start + (pos << 1)] = gi0_subtree_index;
+                            covs_changes_tree[level_start + (pos << 1)] = new_cov_change;
                         }
                         new_cov_change
                     } else {
@@ -296,8 +296,8 @@ where
                         let new_cov_change =
                             old_cov_change + usize::from(gi1_subtree_index != t_subtree_index);
                         if depth < 3 {
-                            covs[level_start + (pos << 1) + 1] = gi1_subtree_index;
-                            cov_changes[level_start + (pos << 1) + 1] = new_cov_change;
+                            covs_tree[level_start + (pos << 1) + 1] = gi1_subtree_index;
+                            covs_changes_tree[level_start + (pos << 1) + 1] = new_cov_change;
                         }
                         new_cov_change
                     } else {
