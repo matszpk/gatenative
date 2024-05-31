@@ -466,7 +466,7 @@ const MTUAREA_CONFIG_TBL: [MTUAreaConfig; 128] = [
 
 impl<T> MTUArea<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -720,13 +720,6 @@ where
             touch_nodes.dedup();
             touch_nodes
         };
-        println!(
-            "AllTouchNodes: {:?}",
-            all_touch_nodes
-                .iter()
-                .map(|x| usize::try_from(*x).unwrap())
-                .collect::<Vec<_>>()
-        );
         let keep_root = circuit_outputs.contains(&self.root);
         let iter_num = self.nodes.len();
         let mut checked_mtunode = HashSet::new();
@@ -750,7 +743,6 @@ where
                 }
             };
             if let Some(p) = self.nodes.iter().position(|(n, _)| mtunode == *n) {
-                println!("  MTUNode: {}", usize::try_from(mtunode).unwrap());
                 let touch_nodes = self.nodes[p].1.clone();
                 let mut all_touch_nodes_removed = true;
                 let mut new_variants = vec![];
@@ -769,14 +761,6 @@ where
                         })
                         .copied()
                         .collect::<Vec<_>>();
-                    println!("    TouchNode: {}", usize::try_from(*touch_node).unwrap());
-                    println!(
-                        "    ReqArgs: {:?}",
-                        required_args
-                            .iter()
-                            .map(|x| usize::try_from(*x).unwrap())
-                            .collect::<Vec<_>>()
-                    );
                     let variants = find_best_lop3node_variants(
                         circuit,
                         lop3nodes,
@@ -787,7 +771,6 @@ where
                         &preferred_nodes,
                         &required_args,
                     );
-                    println!("    LOP3Variants: {:?}", variants);
                     // find variant without mtunode and other mtunode
                     let mut choosen = None;
                     for (vi, variant) in variants.iter().enumerate() {
@@ -1313,7 +1296,7 @@ fn update_mtuareas_from_lop3node<T>(
     lop3enableds: &[bool],
     lop3nodes: &[LOP3Node<T>],
 ) where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -1469,7 +1452,7 @@ fn filter_lop3nodes_in_mtuarea<T>(
 
 impl<T> From<Circuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
@@ -1485,7 +1468,7 @@ where
 
 impl<T> From<VBinOpCircuit<T>> for VLOP3Circuit<T>
 where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash + Debug,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
     <T as TryFrom<usize>>::Error: Debug,
     usize: TryFrom<T>,
