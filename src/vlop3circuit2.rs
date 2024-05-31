@@ -3844,6 +3844,24 @@ mod tests {
                     lop3node_mmask(10, 11, 12, 0b0000101),                      // 14
                 ]
             ),
+            call_improve_and_optimize_and_gen_lop3nodes(
+                circuit.clone(),
+                mtuarea.clone(),
+                lop3nodes.clone()
+            )
+        );
+        // mtuarea root as circuit output
+        let mut circuit = circuit.clone();
+        circuit.outputs.push((4, false));
+        assert_eq!(
+            (
+                MTUArea {
+                    root: 4,
+                    nodes: vec![(4, vec![10, 11, 12])],
+                    cost: 4,
+                },
+                lop3nodes.clone()
+            ),
             call_improve_and_optimize_and_gen_lop3nodes(circuit.clone(), mtuarea, lop3nodes)
         );
         // let circuit = VBinOpCircuit {
