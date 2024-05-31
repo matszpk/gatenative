@@ -728,10 +728,10 @@ where
                 .collect::<Vec<_>>()
         );
         let keep_root = circuit_outputs.contains(&self.root);
-        let mut changes = false;
         let iter_num = self.nodes.len();
         let mut checked_mtunode = HashSet::new();
         for _ in 0..iter_num {
+            let mut changes = false;
             let mtunode = {
                 let mut choosen = None;
                 for (mtunode, _) in &self.nodes {
@@ -3927,32 +3927,5 @@ mod tests {
             ),
             call_improve_and_optimize_and_gen_lop3nodes(circuit, mtuarea, lop3nodes)
         );
-        let mtuarea = MTUArea {
-            root: 10,
-            nodes: vec![
-                (8, vec![11, 12, 13, 14]),
-                (9, vec![11, 12, 13, 14]),
-                (10, vec![11, 12, 13, 14]),
-            ],
-            cost: 4,
-        };
-        let lop3nodes = vec![
-            LOP3Node::default(), // 4
-            LOP3Node::default(), // 5
-            LOP3Node::default(), // 6
-            LOP3Node::default(), // 7
-            LOP3Node::default(), // 8
-            LOP3Node::default(), // 9
-            LOP3Node::default(), // 10
-            //
-            lop3node_mmask(4, 8, 9, 0b0000101), // 11
-            lop3node_mmask(5, 8, 9, 0b0000011), // 12
-            lop3node_mmask(6, 8, 9, 0b0000101), // 13
-            lop3node_mmask(7, 8, 9, 0b0000101), // 14
-            //
-            LOP3Node::default(), // 15
-            LOP3Node::default(), // 16
-            LOP3Node::default(), // 17
-        ];
     }
 }
