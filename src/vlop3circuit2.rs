@@ -3887,7 +3887,7 @@ mod tests {
                 vbgate_and(13, 14, NoNegs), // 16
                 vbgate_and(15, 16, NoNegs), // 17
             ],
-            outputs: vec![(17, false)],
+            outputs: vec![(17, false), (3, true)],
         };
         let mtuarea = MTUArea {
             root: 10,
