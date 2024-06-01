@@ -10,174 +10,7 @@ use crate::VNegs::*;
 
 use crate::vlop3circuit::*;
 
-impl<T> VLOP3Circuit<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    fn from_lop3nodes(
-        circuit: VBinOpCircuit<T>,
-        enableds: Vec<bool>,
-        lop3nodes: Vec<LOP3Node<T>>,
-    ) -> VLOP3Circuit<T> {
-        let input_len = usize::try_from(circuit.input_len).unwrap();
-        let mut new_gates: Vec<VLOP3Gate<T>> = vec![];
-        let gates = &circuit.gates;
-        let mut trans_tbl = vec![T::default(); input_len + gates.len()];
-        for (i, (en, lop3node)) in enableds.into_iter().zip(lop3nodes.into_iter()).enumerate() {
-            if !en {
-                continue;
-            }
-            let gi = input_len + i;
-            let newgi = input_len + new_gates.len();
-            trans_tbl[gi] = T::try_from(newgi).unwrap();
-            if !lop3node.tree_paths[0].is_empty()
-                && lop3node.tree_paths[1].is_empty()
-                && lop3node.tree_paths[2].is_empty()
-            {
-                // single gate
-                let func = match gates[i].0.func {
-                    VGateFunc::And => VLOP3GateFunc::And,
-                    VGateFunc::Or => VLOP3GateFunc::Or,
-                    VGateFunc::Xor => VLOP3GateFunc::Xor,
-                    _ => {
-                        panic!("Unexpected!");
-                    }
-                };
-                new_gates.push(VLOP3Gate {
-                    i0: gates[i].0.i0,
-                    i1: gates[i].0.i1,
-                    i2: gates[i].0.i1,
-                    func,
-                    negs: gates[i].1,
-                });
-            } else {
-                // more complex LOP3
-                let tree = get_small_tree(&circuit, T::try_from(input_len + i).unwrap());
-                let mut calcs = [
-                    0b11110000u8,
-                    0b11001100u8,
-                    0b10101010u8,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                ];
-                let mut level_start = 3;
-                let mut level_end = 7;
-                // calculate values for tree nodes
-                let lop3moves = &lop3node.tree_paths;
-                for _ in 0..3 {
-                    for l in level_start..level_end {
-                        let calc_l = 3 + 7 - l - 1;
-                        if let Some(t) = tree[l] {
-                            calcs[calc_l] = if lop3node.args[0] == t {
-                                calcs[0]
-                            } else if lop3node.args[1] == t {
-                                calcs[1]
-                            } else if lop3node.args[2] == t {
-                                calcs[2]
-                            } else if t >= circuit.input_len && !lop3moves[l].is_empty() {
-                                let tgi = usize::try_from(t).unwrap() - input_len;
-                                let l_arg0 = (l << 1) + 1;
-                                let l_arg1 = (l << 1) + 2;
-                                let va0 = if l_arg0 < 7 && !lop3moves[l_arg0].is_empty() {
-                                    calcs[3 + 7 - l_arg0 - 1]
-                                } else if gates[tgi].0.i0 == lop3node.args[0] {
-                                    calcs[0]
-                                } else if gates[tgi].0.i0 == lop3node.args[1] {
-                                    calcs[1]
-                                } else {
-                                    calcs[2]
-                                };
-                                let va1 = if l_arg1 < 7 && !lop3moves[l_arg1].is_empty() {
-                                    calcs[3 + 7 - l_arg1 - 1]
-                                } else if gates[tgi].0.i1 == lop3node.args[0] {
-                                    calcs[0]
-                                } else if gates[tgi].0.i1 == lop3node.args[1] {
-                                    calcs[1]
-                                } else {
-                                    calcs[2]
-                                };
-                                let va1 = if gates[tgi].1 == NegInput1 {
-                                    va1 ^ 0xff
-                                } else {
-                                    va1
-                                };
-                                let vop = match gates[tgi].0.func {
-                                    VGateFunc::And => va0 & va1,
-                                    VGateFunc::Or => va0 | va1,
-                                    VGateFunc::Xor => va0 ^ va1,
-                                    _ => {
-                                        panic!("Unexpected gate");
-                                    }
-                                };
-                                if gates[tgi].1 == NegOutput {
-                                    vop ^ 0xff
-                                } else {
-                                    vop
-                                }
-                            } else {
-                                0
-                            };
-                        }
-                    }
-                    level_start >>= 1;
-                    level_end >>= 1;
-                }
-                new_gates.push(VLOP3Gate {
-                    i0: lop3node.args[0],
-                    i1: lop3node.args[1],
-                    i2: lop3node.args[2],
-                    func: VLOP3GateFunc::LOP3(*calcs.last().unwrap()),
-                    negs: NoNegs,
-                });
-            }
-        }
-        // translation of gate arguments
-        for g in new_gates.iter_mut() {
-            g.i0 = if g.i0 >= circuit.input_len {
-                trans_tbl[usize::try_from(g.i0).unwrap()]
-            } else {
-                g.i0
-            };
-            g.i1 = if g.i1 >= circuit.input_len {
-                trans_tbl[usize::try_from(g.i1).unwrap()]
-            } else {
-                g.i1
-            };
-            g.i2 = if g.i2 >= circuit.input_len {
-                trans_tbl[usize::try_from(g.i2).unwrap()]
-            } else {
-                g.i2
-            };
-        }
-
-        Self {
-            input_len: circuit.input_len,
-            gates: new_gates,
-            outputs: circuit
-                .outputs
-                .into_iter()
-                .map(|(o, n)| {
-                    if o >= circuit.input_len {
-                        (trans_tbl[usize::try_from(o).unwrap()], n)
-                    } else {
-                        (o, n)
-                    }
-                })
-                .collect::<Vec<_>>(),
-        }
-    }
-}
-
-fn get_small_tree_with_cov<T>(
+pub(crate) fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
     wire_index: T,
     cov: Option<&[T]>,
@@ -238,7 +71,7 @@ where
 // creates sequence through MTUsubtrees interleavely:
 // LOP3_0: (p,s0,s2,s4,s6, LOP3_1: (p,s1,s3,s5,s7) - it causes creating inefficiently
 // sequences of LOP3s.
-fn get_small_tree_with_one_depth<T>(
+pub(crate) fn get_small_tree_with_one_depth<T>(
     circuit: &VBinOpCircuit<T>,
     wire_index: T,
     cov: &[T],
@@ -320,7 +153,7 @@ where
     tree
 }
 
-fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
+pub(crate) fn get_small_tree<T>(circuit: &VBinOpCircuit<T>, wire_index: T) -> [Option<T>; 7]
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -333,10 +166,10 @@ where
 
 // special area of MTUsubtree that used to join with other MTUblocks.
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct MTUArea<T> {
-    root: T,
-    nodes: Vec<(T, Vec<T>)>,
-    cost: usize,
+pub(crate) struct MTUArea<T> {
+    pub(crate) root: T,
+    pub(crate) nodes: Vec<(T, Vec<T>)>,
+    pub(crate) cost: usize,
 }
 
 impl<T: Default> Default for MTUArea<T> {
@@ -559,7 +392,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    fn empty_with_root(root: T) -> Self {
+    pub(crate) fn empty_with_root(root: T) -> Self {
         Self {
             root,
             nodes: vec![],
@@ -767,7 +600,7 @@ where
     }
 
     // and improve - fix other TouchNodes to make better result if possible
-    fn improve_and_optimize_and_gen_lop3nodes(
+    pub(crate) fn improve_and_optimize_and_gen_lop3nodes(
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
@@ -920,7 +753,7 @@ where
         self.gen_lop3nodes_and_cost(circuit, lop3nodes, cov);
     }
 
-    fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
+    pub(crate) fn farest_nonfarest_nodes(&self, circuit: &VBinOpCircuit<T>) -> (Vec<T>, Vec<T>) {
         let tree = get_small_tree(circuit, self.root);
         let node_mask = tree
             .into_iter()
@@ -978,31 +811,31 @@ where
 // entry: 0 - nothing, 1 - go left, 2 - go right, 3 - go left and right
 // and encode in bits to save memory.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct PathMove(u8);
+pub(crate) struct PathMove(pub u8);
 
 impl PathMove {
     #[inline]
-    fn is_way(self, second: bool) -> bool {
+    pub(crate) fn is_way(self, second: bool) -> bool {
         (self.0 & (1 << u32::from(second))) != 0
     }
     #[inline]
-    fn is_empty(self) -> bool {
+    pub(crate) fn is_empty(self) -> bool {
         self.0 == 0
     }
     #[inline]
-    fn go_first(self) -> Self {
+    pub(crate) fn go_first(self) -> Self {
         Self(self.0 | 1)
     }
     #[inline]
-    fn go_second(self) -> Self {
+    pub(crate) fn go_second(self) -> Self {
         Self(self.0 | 2)
     }
     #[inline]
-    fn go(self, second: bool) -> Self {
+    pub(crate) fn go(self, second: bool) -> Self {
         Self(self.0 | (1 << u32::from(second)))
     }
     #[inline]
-    fn undo(self, second: bool) -> Self {
+    pub(crate) fn undo(self, second: bool) -> Self {
         Self(self.0 & !(1 << u32::from(second)))
     }
 }
@@ -1013,9 +846,9 @@ impl PathMove {
 //   3       4       5        6
 // 0 - root, 1 - first level start, 3 - second level start
 // leaves are LOP3 arguments, non-zero elements are deepest LOP3 gates.
-type LOP3SubTreePaths = [PathMove; 7];
+pub(crate) type LOP3SubTreePaths = [PathMove; 7];
 
-const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
+pub(crate) const LOP3_SUBTREE_PATHS_DEFAULT: LOP3SubTreePaths = [PathMove(0); 7];
 
 fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
     let mut md = m;
@@ -1032,10 +865,10 @@ fn lop3_fill_moves(m: LOP3SubTreePaths) -> LOP3SubTreePaths {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct LOP3Node<T> {
-    args: [T; 3],                 // arguments, also leaves of LOP3 subtree
-    tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
-    mtu_cost: usize,
+pub(crate) struct LOP3Node<T> {
+    pub(crate) args: [T; 3], // arguments, also leaves of LOP3 subtree
+    pub(crate) tree_paths: LOP3SubTreePaths, // LOP3 subtree paths
+    pub(crate) mtu_cost: usize,
 }
 
 impl<T> Default for LOP3Node<T>
@@ -1052,7 +885,7 @@ where
     }
 }
 
-const MTU_COST_BASE: usize = 100;
+pub(crate) const MTU_COST_BASE: usize = 100;
 
 // register_sol - function to register solution. arguments:
 //    leaves - arguments of LOP3 instruction,
@@ -1251,7 +1084,7 @@ fn find_best_lop3node_generic<T, F>(
     }
 }
 
-fn find_best_lop3node<T>(
+pub(crate) fn find_best_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     lop3nodes: &[LOP3Node<T>],
     coverage: &[T],
@@ -1376,7 +1209,7 @@ where
         .collect::<Vec<_>>()
 }
 
-fn update_mtuareas_from_lop3node<T>(
+pub(crate) fn update_mtuareas_from_lop3node<T>(
     circuit: &VBinOpCircuit<T>,
     mtuareas: &mut [MTUArea<T>],
     coverage: &[T],
@@ -1422,7 +1255,7 @@ fn update_mtuareas_from_lop3node<T>(
 }
 
 // MTU graph and coverage: index - gate index, value - subtree index
-fn gen_subtree_coverage<T>(circuit: &VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
+pub(crate) fn gen_subtree_coverage<T>(circuit: &VBinOpCircuit<T>, subtrees: &[SubTree<T>]) -> Vec<T>
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
     T: Default + TryFrom<usize>,
@@ -1446,7 +1279,7 @@ where
     coverage
 }
 
-fn get_preferred_nodes_from_mtuareas<T>(
+pub(crate) fn get_preferred_nodes_from_mtuareas<T>(
     circuit: &VBinOpCircuit<T>,
     mtuareas: &[MTUArea<T>],
     coverage: &[T],
@@ -1479,7 +1312,7 @@ where
     preferred_nodes
 }
 
-fn filter_lop3nodes_in_mtuarea<T>(
+pub(crate) fn filter_lop3nodes_in_mtuarea<T>(
     input_len: usize,
     lop3enableds: &mut [bool],
     lop3nodes: &[LOP3Node<T>],
@@ -1535,105 +1368,6 @@ fn filter_lop3nodes_in_mtuarea<T>(
                 stack.pop();
             }
         }
-    }
-}
-
-impl<T> From<Circuit<T>> for VLOP3Circuit<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    fn from(circuit: Circuit<T>) -> Self {
-        // for especially NVIDIA LOP3 - enabled by default
-        let mut vcircuit = VBinOpCircuit::from(circuit.clone());
-        vcircuit.optimize_negs();
-        Self::from(vcircuit)
-    }
-}
-
-impl<T> From<VBinOpCircuit<T>> for VLOP3Circuit<T>
-where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    fn from(circuit: VBinOpCircuit<T>) -> Self {
-        let subtrees = circuit.subtrees();
-        let gates = &circuit.gates;
-        let input_len = usize::try_from(circuit.input_len).unwrap();
-        let circuit_outputs = HashSet::<T>::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
-        let cov = gen_subtree_coverage(&circuit, &subtrees);
-        let mut lop3enableds = vec![false; gates.len()];
-        let mut mtuareas = subtrees
-            .iter()
-            .map(|s| {
-                let mut mtuarea = MTUArea::<T>::empty_with_root(s.root());
-                if circuit_outputs.contains(&s.root()) {
-                    mtuarea.nodes.push((s.root(), vec![]));
-                }
-                mtuarea
-            })
-            .collect::<Vec<_>>();
-        let mut lop3nodes = vec![LOP3Node::<T>::default(); gates.len()];
-        // generate lop3nodes
-        for i in (0..subtrees.len()).rev() {
-            let subtree = &subtrees[i];
-            mtuareas[i].improve_and_optimize_and_gen_lop3nodes(
-                &circuit,
-                &mut lop3nodes,
-                &cov,
-                &subtrees,
-                &circuit_outputs,
-            );
-            let (farest_nodes, nonfarest_nodes) = mtuareas[i].farest_nonfarest_nodes(&circuit);
-            // get nonfarest nodes
-            for nidx in subtree
-                .gates()
-                .iter()
-                .map(|(x, _)| *x)
-                .chain(std::iter::once(subtree.root()))
-                // skip all nonfarest nodes in MTUAreaview
-                .filter(|nidx| nonfarest_nodes.iter().all(|x| *x != *nidx))
-            {
-                let gidx = usize::try_from(nidx).unwrap() - input_len;
-                // get preferred nodes from mtuareas
-                let preferred_nodes =
-                    get_preferred_nodes_from_mtuareas(&circuit, &mtuareas, &cov, nidx);
-                lop3nodes[gidx] = find_best_lop3node(
-                    &circuit,
-                    &lop3nodes,
-                    &cov,
-                    &subtrees,
-                    &circuit_outputs,
-                    nidx,
-                    &preferred_nodes,
-                );
-            }
-            // filter out current mtublock
-            filter_lop3nodes_in_mtuarea(
-                input_len,
-                &mut lop3enableds,
-                &lop3nodes,
-                &farest_nodes,
-                subtree,
-            );
-            update_mtuareas_from_lop3node(
-                &circuit,
-                &mut mtuareas,
-                &cov,
-                subtree,
-                &lop3enableds,
-                &lop3nodes,
-            );
-        }
-        // convert inputs in lop3nodes
-        Self::from_lop3nodes(circuit, lop3enableds, lop3nodes)
-        // optimize can be called later
     }
 }
 
@@ -3421,325 +3155,6 @@ mod tests {
             tree_paths,
             mtu_cost: cost,
         }
-    }
-
-    fn call_vlop3circuit_from_lopnodes(
-        circuit: VBinOpCircuit<u32>,
-        lop3nodes_and_enableds: Vec<(LOP3Node<u32>, bool)>,
-    ) -> VLOP3Circuit<u32> {
-        let (lop3nodes, enableds): (Vec<_>, Vec<_>) = lop3nodes_and_enableds.into_iter().unzip();
-        VLOP3Circuit::from_lop3nodes(circuit, enableds, lop3nodes)
-    }
-
-    #[test]
-    fn test_vlop3circuit_from_lop3nodes() {
-        let a0 = 0b11110000u8;
-        let a1 = 0b11001100u8;
-        let a2 = 0b10101010u8;
-        assert_eq!(
-            VLOP3Circuit {
-                input_len: 2,
-                gates: vec![
-                    vgate_and(0, 1, NoNegs),
-                    vgate_and(0, 2, NegInput1),
-                    vgate_and(0, 3, NegOutput),
-                    vgate_or(2, 3, NoNegs),
-                    vgate_or(2, 1, NegInput1),
-                    vgate_or(0, 1, NegOutput),
-                    vgate_xor(4, 2, NoNegs),
-                    vgate_xor(0, 1, NegInput1),
-                    vgate_xor(0, 1, NegOutput),
-                ],
-                outputs: vec![
-                    (0, false),
-                    (2, true),
-                    (3, false),
-                    (4, true),
-                    (5, false),
-                    (6, true),
-                    (7, false),
-                    (8, true),
-                    (9, false),
-                    (10, true),
-                ],
-            },
-            VLOP3Circuit::from_lop3nodes(
-                VBinOpCircuit {
-                    input_len: 2,
-                    gates: vec![
-                        vbgate_and(0, 1, NoNegs),
-                        vbgate_and(0, 2, NegInput1),
-                        vbgate_and(0, 3, NegOutput),
-                        vbgate_or(2, 3, NoNegs),
-                        vbgate_or(2, 1, NegInput1),
-                        vbgate_or(0, 1, NegOutput),
-                        vbgate_xor(4, 2, NoNegs),
-                        vbgate_xor(0, 1, NegInput1),
-                        vbgate_xor(0, 1, NegOutput),
-                    ],
-                    outputs: vec![
-                        (0, false),
-                        (2, true),
-                        (3, false),
-                        (4, true),
-                        (5, false),
-                        (6, true),
-                        (7, false),
-                        (8, true),
-                        (9, false),
-                        (10, true),
-                    ],
-                },
-                std::iter::repeat(true).take(9).collect::<Vec<_>>(),
-                std::iter::repeat(lop3node_1(0, 1, 0))
-                    .take(9)
-                    .collect::<Vec<_>>(),
-            )
-        );
-        // LOP3Nodes
-        assert_eq!(
-            VLOP3Circuit {
-                input_len: 3,
-                gates: vec![
-                    vgate_lop3(0, 1, 2, !((a0 & a1) | (a0 & !a2))),
-                    vgate_lop3(0, 1, 2, !(a0 & a1) ^ (a2 & !a1)),
-                    vgate_lop3(0, 1, 2, !(a0 | a1) | !(a1 ^ !a2)),
-                    vgate_lop3(2, 1, 0, !((a2 | !a0) & (a0 ^ a1))),
-                ],
-                outputs: vec![(3, false), (4, false), (5, true), (6, false)],
-            },
-            call_vlop3circuit_from_lopnodes(
-                VBinOpCircuit {
-                    input_len: 3,
-                    gates: vec![
-                        vbgate_and(0, 1, NoNegs),      // 3
-                        vbgate_and(0, 2, NegInput1),   // 4
-                        vbgate_or(3, 4, NegOutput),    // 5
-                        vbgate_and(0, 1, NegOutput),   // 6
-                        vbgate_and(2, 1, NegInput1),   // 7
-                        vbgate_xor(6, 7, NoNegs),      // 8
-                        vbgate_or(0, 2, NegOutput),    // 9
-                        vbgate_xor(1, 2, NegInput1),   // 10
-                        vbgate_or(9, 10, NegInput1),   // 11
-                        vbgate_or(0, 2, NegInput1),    // 12
-                        vbgate_xor(2, 1, NoNegs),      // 13
-                        vbgate_and(12, 13, NegOutput), // 14
-                    ],
-                    outputs: vec![(5, false), (8, false), (11, true), (14, false)],
-                },
-                vec![
-                    (lop3node_1(0, 1, 0), false),               // 3
-                    (lop3node_1(0, 2, 0), false),               // 4
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 5
-                    (lop3node_1(0, 1, 0), false),               // 6
-                    (lop3node_1(2, 1, 2), false),               // 7
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 8
-                    (lop3node_1(0, 2, 0), false),               // 9
-                    (lop3node_1(1, 2, 1), false),               // 10
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true), // 11
-                    (lop3node_1(0, 2, 0), false),               // 12
-                    (lop3node_1(2, 1, 2), false),               // 13
-                    (lop3node_mmask(2, 1, 0, 0b0000111), true), // 14
-                ],
-            )
-        );
-        assert_eq!(
-            VLOP3Circuit {
-                input_len: 3,
-                gates: vec![
-                    vgate_lop3(0, 1, 2, a2 | (a0 & !a1)),
-                    vgate_lop3(0, 1, 2, (a0 & a1) | (a2 & !a1)),
-                    vgate_lop3(0, 1, 2, a1 | !(a2 & (a0 & !a1))),
-                    vgate_lop3(2, 0, 1, ((a0 & !a2) & a1) | !a0),
-                    vgate_lop3(0, 1, 2, (a0 & !(a2 | a1)) ^ ((a0 ^ a1) & !a2)),
-                    vgate_lop3(3, 4, 5, !(a2 | (a0 ^ a1))),
-                    vgate_lop3(6, 7, 3, a2 & !(a0 & a1)),
-                    vgate_lop3(0, 1, 2, (a2 & !a1) | !a0),
-                    vgate_lop3(0, 1, 2, ((a0 & !a1) ^ (a2 & !a1)) | !(a0 & !a1)),
-                    vgate_lop3(1, 2, 1, !(a0 & a1) ^ a1),
-                    vgate_lop3(4, 5, 7, ((a0 & a1) | (a1 & !a2)) ^ ((a2 & !a0) | (a0 ^ a1))),
-                ],
-                outputs: vec![
-                    (8, true),
-                    (9, false),
-                    (10, true),
-                    (11, false),
-                    (12, true),
-                    (13, true)
-                ],
-            },
-            call_vlop3circuit_from_lopnodes(
-                VBinOpCircuit {
-                    input_len: 3,
-                    gates: vec![
-                        vbgate_and(0, 1, NegInput1), // 3
-                        vbgate_or(2, 3, NoNegs),     // 4
-                        //
-                        vbgate_and(0, 1, NoNegs),    // 5
-                        vbgate_and(2, 1, NegInput1), // 6
-                        vbgate_xor(5, 6, NoNegs),    // 7
-                        //
-                        vbgate_and(0, 1, NegInput1), // 8
-                        vbgate_and(2, 8, NoNegs),    // 9
-                        vbgate_or(1, 9, NegInput1),  // 10
-                        //
-                        vbgate_and(2, 1, NegInput1), // 11
-                        vbgate_and(11, 0, NoNegs),   // 12
-                        vbgate_or(12, 2, NegInput1), // 13
-                        //
-                        vbgate_xor(0, 1, NoNegs),     // 14
-                        vbgate_or(2, 1, NegOutput),   // 15
-                        vbgate_and(0, 15, NoNegs),    // 16
-                        vbgate_and(14, 2, NegInput1), // 17
-                        vbgate_xor(16, 17, NoNegs),   // 18
-                        //
-                        vbgate_xor(4, 7, NoNegs),     // 19
-                        vbgate_or(10, 19, NegOutput), // 20
-                        vbgate_and(13, 18, NoNegs),   // 21
-                        vbgate_and(4, 21, NegInput1), // 22
-                        //
-                        vbgate_and(2, 1, NegInput1), // 23
-                        vbgate_or(23, 0, NegInput1), // 24
-                        //
-                        vbgate_xor(3, 6, NoNegs),    // 25
-                        vbgate_or(25, 3, NegInput1), // 26
-                        //
-                        vbgate_and(1, 2, NegOutput), // 27
-                        vbgate_xor(27, 2, NoNegs),   // 28
-                        //
-                        vbgate_and(7, 10, NoNegs),     // 29
-                        vbgate_and(10, 18, NegInput1), // 30
-                        vbgate_and(18, 7, NegInput1),  // 31
-                        vbgate_xor(7, 10, NoNegs),     // 32
-                        vbgate_or(29, 30, NoNegs),     // 33
-                        vbgate_or(31, 32, NoNegs),     // 34
-                        vbgate_xor(33, 34, NoNegs),    // 35
-                    ],
-                    outputs: vec![
-                        (20, true),
-                        (22, false),
-                        (24, true),
-                        (26, false),
-                        (28, true),
-                        (35, true)
-                    ],
-                },
-                vec![
-                    (lop3node_1(0, 1, 0), false),                  // 3
-                    (lop3node_mmask(0, 1, 2, 0b0000101), true),    // 4
-                    (lop3node_1(0, 1, 0), false),                  // 5
-                    (lop3node_1(2, 1, 2), false),                  // 6
-                    (lop3node_mmask(0, 1, 2, 0b0000111), true),    // 7
-                    (lop3node_1(0, 1, 0), false),                  // 8
-                    (lop3node_1(2, 8, 2), false),                  // 9
-                    (lop3node_mmask(0, 1, 2, 0b1000101), true),    // 10
-                    (lop3node_1(2, 1, 2), false),                  // 11
-                    (lop3node_1(11, 0, 11), false),                // 12
-                    (lop3node_mmask(2, 0, 1, 0b0001011), true),    // 13
-                    (lop3node_1(0, 1, 0), false),                  // 14
-                    (lop3node_1(2, 1, 2), false),                  // 15
-                    (lop3node_mmask(0, 1, 2, 0b0000101), false),   // 16
-                    (lop3node_mmask(0, 1, 2, 0b0000011), false),   // 17
-                    (lop3node_mmask(0, 1, 2, 0b0110111), true),    // 18
-                    (lop3node_1(4, 7, 4), false),                  // 19
-                    (lop3node_mmask(4, 7, 10, 0b0000101), true),   // 20
-                    (lop3node_1(13, 18, 13), false),               // 21
-                    (lop3node_mmask(13, 18, 4, 0b0000101), true),  // 22
-                    (lop3node_1(2, 1, 2), false),                  // 23
-                    (lop3node_mmask(0, 1, 2, 0b0000011), true),    // 24
-                    (lop3node_1(3, 6, 3), false),                  // 25
-                    (lop3node_mmask(0, 1, 2, 0b0011111), true),    // 26
-                    (lop3node_1(1, 2, 1), false),                  // 27
-                    (lop3node_mmask(1, 2, 1, 0b0000011), true),    // 28
-                    (lop3node_1(7, 10, 7), false),                 // 29
-                    (lop3node_1(10, 18, 10), false),               // 30
-                    (lop3node_1(18, 7, 18), false),                // 31
-                    (lop3node_1(7, 10, 7), false),                 // 32
-                    (lop3node_mmask(7, 10, 18, 0b0000111), false), // 33
-                    (lop3node_mmask(7, 10, 18, 0b0000111), false), // 34
-                    (lop3node_mmask(7, 10, 18, 0b1111111), true),  // 35
-                ],
-            )
-        );
-        assert_eq!(
-            VLOP3Circuit {
-                input_len: 3,
-                gates: vec![
-                    vgate_and(0, 1, NoNegs),    // 3
-                    vgate_and(0, 2, NegInput1), // 4
-                    vgate_and(1, 2, NegOutput), // 5
-                    vgate_or(2, 1, NoNegs),     // 6
-                    vgate_or(2, 0, NegInput1),  // 7
-                    vgate_or(0, 1, NegOutput),  // 8
-                    vgate_xor(0, 2, NoNegs),    // 9
-                    vgate_xor(2, 1, NegInput1), // 10
-                    vgate_xor(1, 0, NegOutput), // 11
-                    vgate_lop3(3, 4, 5, (!(a2 & a0) | (a1 & !a0)) ^ !a2),
-                    vgate_lop3(6, 7, 8, !(a0 ^ ((a1 & a2) & (a2 | !a1)))),
-                    vgate_lop3(9, 10, 11, a1 | !(!(a1 & a2) & a0)),
-                    vgate_lop3(4, 7, 4, !(a0 ^ (a0 & a1))),
-                ],
-                outputs: vec![(12, false), (13, true), (14, true), (15, false)],
-            },
-            call_vlop3circuit_from_lopnodes(
-                VBinOpCircuit {
-                    input_len: 3,
-                    gates: vec![
-                        vbgate_and(0, 1, NoNegs),    // 3
-                        vbgate_and(0, 2, NegInput1), // 4
-                        vbgate_and(1, 2, NegOutput), // 5
-                        vbgate_or(2, 1, NoNegs),     // 6
-                        vbgate_or(2, 0, NegInput1),  // 7
-                        vbgate_or(0, 1, NegOutput),  // 8
-                        vbgate_xor(0, 2, NoNegs),    // 9
-                        vbgate_xor(2, 1, NegInput1), // 10
-                        vbgate_xor(1, 0, NegOutput), // 11
-                        //
-                        vbgate_and(4, 3, NegInput1), // 12
-                        vbgate_and(5, 3, NegOutput), // 13
-                        vbgate_or(13, 12, NoNegs),   // 14
-                        vbgate_and(7, 8, NoNegs),    // 15
-                        vbgate_or(8, 7, NegInput1),  // 16
-                        vbgate_and(15, 16, NoNegs),  // 17
-                        //
-                        vbgate_xor(14, 5, NegInput1), // 18
-                        vbgate_xor(6, 17, NegOutput), // 19
-                        //
-                        vbgate_and(10, 11, NegOutput), // 20
-                        vbgate_and(20, 9, NoNegs),     // 21
-                        vbgate_or(10, 21, NegInput1),  // 22
-                        //
-                        vbgate_and(4, 7, NoNegs),     // 23
-                        vbgate_xor(4, 23, NegOutput), // 24
-                    ],
-                    outputs: vec![(18, false), (19, true), (22, true), (24, false)],
-                },
-                vec![
-                    (lop3node_1(0, 1, 0), true),                  // 3
-                    (lop3node_1(0, 2, 0), true),                  // 4
-                    (lop3node_1(1, 2, 1), true),                  // 5
-                    (lop3node_1(2, 1, 2), true),                  // 6
-                    (lop3node_1(2, 0, 2), true),                  // 7
-                    (lop3node_1(0, 1, 0), true),                  // 8
-                    (lop3node_1(0, 2, 0), true),                  // 9
-                    (lop3node_1(2, 1, 2), true),                  // 10
-                    (lop3node_1(1, 0, 1), true),                  // 11
-                    (lop3node_1(4, 3, 4), false),                 // 12
-                    (lop3node_1(5, 3, 5), false),                 // 13
-                    (lop3node_1(12, 13, 12), false),              // 14
-                    (lop3node_1(7, 8, 7), false),                 // 15
-                    (lop3node_1(8, 7, 8), false),                 // 16
-                    (lop3node_1(15, 16, 15), false),              // 17
-                    (lop3node_mmask(3, 4, 5, 0b0011011), true),   // 18
-                    (lop3node_mmask(6, 7, 8, 0b1100101), true),   // 19
-                    (lop3node_1(10, 11, 10), false),              // 20
-                    (lop3node_1(20, 9, 20), false),               // 21
-                    (lop3node_mmask(9, 10, 11, 0b0100101), true), // 22
-                    (lop3node_1(4, 7, 4), false),                 // 23
-                    (lop3node_mmask(4, 7, 4, 0b0000101), true),   // 24
-                ],
-            )
-        );
     }
 
     fn call_improve_and_optimize_and_gen_lop3nodes(
