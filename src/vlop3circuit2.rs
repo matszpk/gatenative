@@ -1,14 +1,8 @@
-use gatesim::*;
-
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::vbinopcircuit::*;
-use crate::vcircuit::VGateFunc;
-use crate::VNegs::*;
-
-use crate::vlop3circuit::*;
 
 pub(crate) fn get_small_tree_with_cov<T>(
     circuit: &VBinOpCircuit<T>,
@@ -1376,37 +1370,9 @@ mod tests {
     use super::*;
 
     use crate::vcircuit::*;
-    use crate::VNegs;
+    use crate::VNegs::{self, *};
     use gatesim::Gate;
-
-    fn vgate<T: Clone + Copy>(
-        func: VLOP3GateFunc,
-        i0: T,
-        i1: T,
-        i2: T,
-        negs: VNegs,
-    ) -> VLOP3Gate<T> {
-        VLOP3Gate {
-            i0,
-            i1,
-            i2,
-            func,
-            negs,
-        }
-    }
-
-    fn vgate_and<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
-        vgate(VLOP3GateFunc::And, i0, i1, i1, negs)
-    }
-    fn vgate_or<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
-        vgate(VLOP3GateFunc::Or, i0, i1, i1, negs)
-    }
-    fn vgate_xor<T: Clone + Copy>(i0: T, i1: T, negs: VNegs) -> VLOP3Gate<T> {
-        vgate(VLOP3GateFunc::Xor, i0, i1, i1, negs)
-    }
-    fn vgate_lop3<T: Clone + Copy>(i0: T, i1: T, i2: T, f: u8) -> VLOP3Gate<T> {
-        vgate(VLOP3GateFunc::LOP3(f), i0, i1, i2, NoNegs)
-    }
+    use gatesim::*;
 
     fn gen_subtree_coverage_from_circuit(circuit: Circuit<u32>) -> Vec<u32> {
         let binop_circuit = VBinOpCircuit::from(circuit.clone());

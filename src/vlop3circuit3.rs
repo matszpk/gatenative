@@ -283,7 +283,6 @@ mod tests {
 
     use crate::vcircuit::*;
     use crate::VNegs;
-    use gatesim::Gate;
 
     fn vgate<T: Clone + Copy>(
         func: VLOP3GateFunc,
@@ -353,24 +352,6 @@ mod tests {
             args: [arg0, arg1, arg2],
             tree_paths,
             mtu_cost: MTU_COST_BASE + 1,
-        }
-    }
-
-    fn lop3node_mmask_cost(
-        arg0: u32,
-        arg1: u32,
-        arg2: u32,
-        move_mask: u8,
-        cost: usize,
-    ) -> LOP3Node<u32> {
-        let mut tree_paths = LOP3_SUBTREE_PATHS_DEFAULT;
-        for i in 0..7 {
-            tree_paths[i] = PathMove(u8::from(((move_mask >> i) & 1) != 0) * 3);
-        }
-        LOP3Node {
-            args: [arg0, arg1, arg2],
-            tree_paths,
-            mtu_cost: cost,
         }
     }
 
