@@ -146,6 +146,70 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: None,
+    init_index: None,
+    init_local_index: None,
+    buffer_shift: false,
+    include_name: Some("stdint.h"),
+    include_name_2: Some("stddef.h"),
+    include_name_3: None,
+    type_name: "uint64_t",
+    type_bit_len: 64,
+    arg_modifier: None,
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: None,
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    lop3_op: Some((
+        r##"static inline uint64_t lop3_test(uint64_t a, uint64_t b, uint64_t c, uint8_t comb) {
+    return ((~a & ~b & ~c & (0ULL - (((uint64_t)comb) & 1))) |
+        (~a & ~b & c & (0ULL - ((((uint64_t)comb) >> 1) & 1))) |
+        (~a & b & ~c & (0ULL - ((((uint64_t)comb) >> 2) & 1))) |
+        (~a & b & c & (0ULL - ((((uint64_t)comb) >> 3) & 1))) |
+        (a & ~b & ~c & (0ULL - ((((uint64_t)comb) >> 4) & 1))) |
+        (a & ~b & c & (0ULL - ((((uint64_t)comb) >> 5) & 1))) |
+        (a & b & ~c & (0ULL - ((((uint64_t)comb) >> 6) & 1))) |
+        (a & b & c & (0ULL - ((((uint64_t)comb) >> 7) & 1))));
+}"##,
+        "lop3_test({}, {}, {}, {})",
+    )),
+    zero_value: ("", "0ULL"),
+    one_value: ("", "0xffffffffffffffffULL"),
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
+            "0xaaaaaaaaaaaaaaaaULL",
+            "0xccccccccccccccccULL",
+            "0xf0f0f0f0f0f0f0f0ULL",
+            "0xff00ff00ff00ff00ULL",
+            "0xffff0000ffff0000ULL",
+            "0xffffffff00000000ULL",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: None,
+    store_op: None,
+    get_u32_op: "{ (D) = ((X) >> ((I)<<5)); }",
+    get_u32_all_op: "{ (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }",
+    set_u32_op: r##"{ uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }"##,
+    set_u32_all_op: "{ (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }",
+    func_finish: None,
+    transform_config: &CLANG_TRANSFORM_U64,
+};
+
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -879,6 +943,139 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
+pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: Some("kernel"),
+    init_index: Some("const size_t idx = get_global_id(0);"),
+    init_local_index: None,
+    buffer_shift: true,
+    include_name: None,
+    include_name_2: None,
+    include_name_3: None,
+    type_name: "uint",
+    type_bit_len: 32,
+    arg_modifier: Some("global"),
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: None,
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    // definition from:
+    // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
+    // original name of function: lut3
+    lop3_op: Some((
+        r##"inline uint lop3(uint a, uint b, uint c, uint imm)
+{
+    uint r;
+    asm("lop3.b32 %0, %1, %2, %3, %4;"
+        : "=r" (r)
+        : "r" (a), "r" (b), "r" (c), "i" (imm));
+    return r;
+}
+"##,
+        "lop3({}, {}, {}, {})",
+    )),
+    zero_value: ("", "0"),
+    one_value: ("", "0xffffffff"),
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
+            "0xaaaaaaaa",
+            "0xcccccccc",
+            "0xf0f0f0f0",
+            "0xff00ff00",
+            "0xffff0000",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: None,
+    store_op: None,
+    get_u32_op: "{ (D) = (X); }",
+    get_u32_all_op: "{ (D)[0] = (X); }",
+    set_u32_op: "{ (X) = (S); }",
+    set_u32_all_op: "{ (X) = (S)[0]; }",
+    func_finish: None,
+    transform_config: &CLANG_TRANSFORM_OPENCL_U32,
+};
+
+pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangWriterConfig {
+    func_modifier: Some("kernel"),
+    init_index: Some("const size_t idx = get_group_id(0);"),
+    init_local_index: Some(concat!(
+        "const uint lidx = get_local_id(0);\n",
+        "    const uint llen = get_local_size(0);"
+    )),
+    buffer_shift: true,
+    include_name: None,
+    include_name_2: None,
+    include_name_3: None,
+    type_name: "uint",
+    type_bit_len: 32,
+    arg_modifier: Some("global"),
+    and_op: "({} & {})",
+    or_op: "({} | {})",
+    xor_op: "({} ^ {})",
+    impl_op: None,
+    nimpl_op: None,
+    not_op: Some("~{}"),
+    // definition from:
+    // https://github.com/vanhoefm/broadkey/blob/master/broadkey/opencl/opencl_misc.h
+    // original name of function: lut3
+    lop3_op: Some((
+        r##"inline uint lop3(uint a, uint b, uint c, uint imm)
+{
+    uint r;
+    asm("lop3.b32 %0, %1, %2, %3, %4;"
+        : "=r" (r)
+        : "r" (a), "r" (b), "r" (c), "i" (imm));
+    return r;
+}
+"##,
+        "lop3({}, {}, {}, {})",
+    )),
+    zero_value: ("", "0"),
+    one_value: ("", "0xffffffff"),
+    elem_index: ElemIndexConfig {
+        low_bits_init: "",
+        low_bits_defs: [
+            "0xaaaaaaaa",
+            "0xcccccccc",
+            "0xf0f0f0f0",
+            "0xff00ff00",
+            "0xffff0000",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ],
+    },
+    load_op: None,
+    store_op: None,
+    get_u32_op: "{ (D) = (X); }",
+    get_u32_all_op: "{ (D)[0] = (X); }",
+    set_u32_op: "{ (X) = (S); }",
+    set_u32_all_op: "{ (X) = (S)[0]; }",
+    func_finish: None,
+    transform_config: &CLANG_TRANSFORM_OPENCL_U32,
+};
+
 pub struct CLangFuncWriter<'a, 'c> {
     writer: &'c mut CLangWriter<'a>,
     name: &'c str,
@@ -1561,12 +1758,17 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             | (1u64 << InstrOp::Xor.int_value());
         let basic_impl_ops = basic_ops | (1u64 << InstrOp::Impl.int_value());
         let basic_nimpl_ops = basic_ops | (1u64 << InstrOp::Nimpl.int_value());
-        if self.config.impl_op.is_some() {
+        let op = if self.config.impl_op.is_some() {
             basic_impl_ops
         } else if self.config.nimpl_op.is_some() {
             basic_nimpl_ops
         } else {
             basic_ops
+        };
+        if self.config.lop3_op.is_some() {
+            op | (1u64 << InstrOp::Lop3(0).int_value())
+        } else {
+            op
         }
     }
     fn word_len(&self) -> u32 {

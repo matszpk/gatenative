@@ -4,6 +4,7 @@ use crate::*;
 
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
+use crate::vlop3circuit::*;
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -240,6 +241,59 @@ where
     }
     fn outputs(&self) -> &[(T, bool)] {
         &self.0.outputs
+    }
+}
+
+impl<T> CircuitTrait<T> for VLOP3Circuit<T>
+where
+    T: Clone + Copy,
+{
+    fn input_len(&self) -> T {
+        self.input_len
+    }
+    fn len(&self) -> usize {
+        self.gates.len()
+    }
+    fn gate_input_num(&self, gate: usize) -> usize {
+        if matches!(self.gates[gate].func, VLOP3GateFunc::LOP3(_)) {
+            3
+        } else {
+            2
+        }
+    }
+    fn gate_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.gates[gate].i0,
+            1 => self.gates[gate].i1,
+            2 => self.gates[gate].i2,
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op_input(&self, gate: usize, input: usize) -> T {
+        match input {
+            0 => self.gates[gate].i0,
+            1 => self.gates[gate].i1,
+            2 => self.gates[gate].i2,
+            _ => {
+                panic!("No more input");
+            }
+        }
+    }
+    fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
+        (
+            match self.gates[gate].func {
+                VLOP3GateFunc::And => InstrOp::And,
+                VLOP3GateFunc::Or => InstrOp::Or,
+                VLOP3GateFunc::Xor => InstrOp::Xor,
+                VLOP3GateFunc::LOP3(f) => InstrOp::Lop3(f),
+            },
+            self.gates[gate].negs,
+        )
+    }
+    fn outputs(&self) -> &[(T, bool)] {
+        &self.outputs
     }
 }
 

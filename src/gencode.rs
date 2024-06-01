@@ -9,6 +9,7 @@ use crate::*;
 
 use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
+use crate::vlop3circuit::*;
 
 // TODO: Later: separate circuit traversal logic (number ways, ways, first way...)
 // from gen_var_allocs, gen_func_code into some traits and use that traits.
@@ -1102,6 +1103,12 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     assert_eq!(basic_ops, (supported_ops & basic_ops));
     let impl_op = (supported_ops & (1u64 << InstrOp::Impl.int_value())) != 0;
     let nimpl_op = (supported_ops & (1u64 << InstrOp::Nimpl.int_value())) != 0;
+    let have_lop3 = supported_ops & (1u64 << InstrOp::Lop3(0).int_value()) != 0;
+    // DEBUG
+    if have_lop3 {
+        println!("HaveLOP3");
+    }
+    // DEBUG
 
     // generate input_map
     let input_len = usize::try_from(circuit.input_len()).unwrap();
@@ -1170,56 +1177,50 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     } else {
         None
     };
-    let (var_allocs, var_num, output_vars) = gen_var_allocs(
-        &circuit,
-        code_config.input_placement,
-        code_config.output_placement,
-        &mut gen_var_usage(&circuit),
-        code_config.single_buffer,
-        input_map.as_ref(),
-        if code_config.inner_loop.is_some() {
-            // enable all outputs as used after gate calculation
-            Some(&[])
-        } else if code_config.aggr_output_code.is_some() {
-            if code_config.aggr_to_buffer.is_some() {
-                code_config.aggr_to_buffer
-            } else {
+
+    if have_lop3 {
+        let vlop3circuit = VLOP3Circuit::from(circuit.clone());
+        let (var_allocs, var_num, output_vars) = gen_var_allocs(
+            &vlop3circuit,
+            code_config.input_placement,
+            code_config.output_placement,
+            &mut gen_var_usage(&vlop3circuit),
+            code_config.single_buffer,
+            input_map.as_ref(),
+            if code_config.inner_loop.is_some() {
+                // enable all outputs as used after gate calculation
                 Some(&[])
-            }
-        } else {
-            None
-        },
-        pop_inputs,
-        output_map.as_ref(),
-        code_config.inner_loop.is_some(),
-    );
+            } else if code_config.aggr_output_code.is_some() {
+                if code_config.aggr_to_buffer.is_some() {
+                    code_config.aggr_to_buffer
+                } else {
+                    Some(&[])
+                }
+            } else {
+                None
+            },
+            pop_inputs,
+            output_map.as_ref(),
+            code_config.inner_loop.is_some(),
+        );
+        println!("genvlop3 varalloc");
 
-    let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let mut func_writer = writer.func_writer_with_config(
-        name,
-        input_len,
-        circuit.outputs().len(),
-        code_config.clone(),
-        output_vars
-            .as_ref()
-            .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
-    );
-    func_writer.func_start();
-    func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
-
-    if impl_op || nimpl_op {
-        let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);
-        // generate swap_args - it used to preserve order original traverse from original circuit.
-        // if true then argument should be swapped while choosen way.
-        let swap_args = circuit
-            .gates()
-            .iter()
-            .enumerate()
-            .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
-            .collect::<Vec<_>>();
+        let input_len = usize::try_from(circuit.input_len()).unwrap();
+        let mut func_writer = writer.func_writer_with_config(
+            name,
+            input_len,
+            circuit.outputs().len(),
+            code_config.clone(),
+            output_vars
+                .as_ref()
+                .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
+        );
+        func_writer.func_start();
+        func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
+        println!("genvlop3");
         gen_func_code_for_circuit(
             &mut func_writer,
-            &(vcircuit, swap_args),
+            &vlop3circuit,
             code_config.input_placement,
             code_config.output_placement,
             &var_allocs,
@@ -1233,38 +1234,107 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.inner_loop.is_some(),
             code_config.aggr_output_code.is_some(),
         );
+        println!("End of lop3 0");
+
+        func_writer.func_end();
+        println!("End of lop3");
     } else {
-        let mut vcircuit = VBinOpCircuit::from(circuit.clone());
-        if optimize_negs {
-            vcircuit.optimize_negs();
-        }
-        // generate swap_args - it used to preserve order original traverse from original circuit.
-        // if true then argument should be swapped while choosen way.
-        let swap_args = circuit
-            .gates()
-            .iter()
-            .enumerate()
-            .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
-            .collect::<Vec<_>>();
-        gen_func_code_for_circuit(
-            &mut func_writer,
-            &(vcircuit, swap_args),
+        let (var_allocs, var_num, output_vars) = gen_var_allocs(
+            &circuit,
             code_config.input_placement,
             code_config.output_placement,
-            &var_allocs,
-            var_num,
+            &mut gen_var_usage(&circuit),
             code_config.single_buffer,
             input_map.as_ref(),
-            output_vars.as_ref(),
+            if code_config.inner_loop.is_some() {
+                // enable all outputs as used after gate calculation
+                Some(&[])
+            } else if code_config.aggr_output_code.is_some() {
+                if code_config.aggr_to_buffer.is_some() {
+                    code_config.aggr_to_buffer
+                } else {
+                    Some(&[])
+                }
+            } else {
+                None
+            },
             pop_inputs,
-            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
             output_map.as_ref(),
             code_config.inner_loop.is_some(),
-            code_config.aggr_output_code.is_some(),
         );
-    }
 
-    func_writer.func_end();
+        let input_len = usize::try_from(circuit.input_len()).unwrap();
+        let mut func_writer = writer.func_writer_with_config(
+            name,
+            input_len,
+            circuit.outputs().len(),
+            code_config.clone(),
+            output_vars
+                .as_ref()
+                .map(|ov| ov.iter().map(|(i, (x, _))| (*i, *x)).collect()),
+        );
+        func_writer.func_start();
+        func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
+
+        if impl_op || nimpl_op {
+            let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);
+            // generate swap_args - it used to preserve order original traverse from original circuit.
+            // if true then argument should be swapped while choosen way.
+            let swap_args = circuit
+                .gates()
+                .iter()
+                .enumerate()
+                .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
+                .collect::<Vec<_>>();
+            gen_func_code_for_circuit(
+                &mut func_writer,
+                &(vcircuit, swap_args),
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        } else {
+            let mut vcircuit = VBinOpCircuit::from(circuit.clone());
+            if optimize_negs {
+                vcircuit.optimize_negs();
+            }
+            // generate swap_args - it used to preserve order original traverse from original circuit.
+            // if true then argument should be swapped while choosen way.
+            let swap_args = circuit
+                .gates()
+                .iter()
+                .enumerate()
+                .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
+                .collect::<Vec<_>>();
+            gen_func_code_for_circuit(
+                &mut func_writer,
+                &(vcircuit, swap_args),
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        }
+
+        func_writer.func_end();
+    }
 }
 
 pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
