@@ -35,9 +35,6 @@ pub mod parseq_mapper;
 pub mod utils;
 mod vbinopcircuit;
 mod vcircuit;
-mod vlop3circuit;
-mod vlop3circuit2;
-mod vlop3circuit3;
 
 pub use opencl3;
 
