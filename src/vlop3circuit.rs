@@ -105,7 +105,6 @@ where
         }
     }
 
-    // return true if negation of argument is needed
     fn reduce_neg_from_lop3_input(&mut self, gi0: usize, successors: &[Vec<T>]) {
         let input_len = usize::try_from(self.input_len).unwrap();
         let g0 = self.gates[gi0 - input_len];
