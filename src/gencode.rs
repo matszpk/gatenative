@@ -1203,7 +1203,6 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             output_map.as_ref(),
             code_config.inner_loop.is_some(),
         );
-        println!("genvlop3 varalloc");
 
         let input_len = usize::try_from(circuit.input_len()).unwrap();
         let mut func_writer = writer.func_writer_with_config(
@@ -1217,7 +1216,6 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         );
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
-        println!("genvlop3");
         gen_func_code_for_circuit(
             &mut func_writer,
             &vlop3circuit,
@@ -1234,10 +1232,8 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
             code_config.inner_loop.is_some(),
             code_config.aggr_output_code.is_some(),
         );
-        println!("End of lop3 0");
 
         func_writer.func_end();
-        println!("End of lop3");
     } else {
         let (var_allocs, var_num, output_vars) = gen_var_allocs(
             &circuit,
