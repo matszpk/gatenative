@@ -203,7 +203,6 @@ where
     <usize as TryFrom<T>>::Error: Debug,
 {
     fn from(circuit: VBinOpCircuit<T>) -> Self {
-        println!("Conv start");
         let subtrees = circuit.subtrees();
         let gates = &circuit.gates;
         let input_len = usize::try_from(circuit.input_len).unwrap();
@@ -278,7 +277,6 @@ where
         // optimize can be called later
         // println!("xLOP3end");
         circuit.optimize_negs();
-        println!("optneg end");
         circuit
     }
 }
