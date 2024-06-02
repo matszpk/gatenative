@@ -505,22 +505,6 @@ where
         }
     }
 
-    // DEBUG
-    for i in 0..circuit.len() {
-        println!(
-            "G: {}: {:?} {:?} {} {} {}",
-            input_len + i,
-            circuit.gate_op(i).0.int_value(),
-            circuit.gate_op(i).1,
-            usize::try_from(circuit.gate_op_input(i, 0)).unwrap(),
-            usize::try_from(circuit.gate_op_input(i, 1)).unwrap(),
-            usize::try_from(circuit.gate_op_input(i, 2)).unwrap(),
-        );
-    }
-    for (i, (o, n)) in circuit.outputs().iter().enumerate() {
-        println!("O: {}: {} {}", i, usize::try_from(*o).unwrap(), *n);
-    }
-    // DEBUG
     (
         alloc_vars
             .into_iter()

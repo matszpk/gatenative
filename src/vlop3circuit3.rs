@@ -274,6 +274,7 @@ where
             );
         }
         // convert inputs in lop3nodes
+        let lop3enableds = filter_lop3nodes(&circuit, &lop3nodes);
         let mut circuit = Self::from_lop3nodes(circuit, lop3enableds, lop3nodes);
         // optimize can be called later
         // println!("xLOP3end");

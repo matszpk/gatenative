@@ -725,8 +725,9 @@ where
             }
             // update MTUarea
             if changes {
-                self.nodes = vec![]; // clear nodes
-                                     // clear all tree in lop3enableds (disable all tree)
+                // clear nodes
+                self.nodes = vec![];
+                // clear all tree in lop3enableds (disable all tree)
                 for topt in &tree {
                     if let Some(t) = topt {
                         if *t >= circuit.input_len {
@@ -1378,6 +1379,59 @@ pub(crate) fn filter_lop3nodes_in_mtuarea<T>(
             }
         }
     }
+}
+
+pub(crate) fn filter_lop3nodes<T>(
+    circuit: &VBinOpCircuit<T>,
+    lop3nodes: &[LOP3Node<T>],
+) -> Vec<bool>
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len = usize::try_from(circuit.input_len).unwrap();
+    #[derive(Clone)]
+    struct StackEntry {
+        node: usize,
+        way: usize,
+    }
+    let gates = &circuit.gates;
+    let mut visited = vec![false; gates.len()];
+    for (node, _) in &circuit.outputs {
+        let mut stack = vec![StackEntry {
+            node: usize::try_from(*node).unwrap(),
+            way: 0,
+        }];
+        while !stack.is_empty() {
+            let top = stack.last_mut().unwrap();
+            let top_way = top.way;
+            let gidx = top.node - input_len;
+            if top_way == 0 {
+                if !visited[gidx] {
+                    visited[gidx] = true;
+                } else {
+                    stack.pop();
+                    continue;
+                }
+            }
+            if top_way < 3 {
+                top.way += 1;
+                let next = lop3nodes[gidx].args[top_way];
+                if next >= circuit.input_len {
+                    stack.push(StackEntry {
+                        node: usize::try_from(next).unwrap(),
+                        way: 0,
+                    });
+                }
+            } else {
+                stack.pop();
+            }
+        }
+    }
+    visited
 }
 
 #[cfg(test)]
