@@ -227,6 +227,7 @@ where
             mtuareas[i].improve_and_optimize_and_gen_lop3nodes(
                 &circuit,
                 &mut lop3nodes,
+                &mut lop3enableds,
                 &cov,
                 &subtrees,
                 &circuit_outputs,

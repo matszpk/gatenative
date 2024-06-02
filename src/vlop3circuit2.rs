@@ -598,6 +598,7 @@ where
         &mut self,
         circuit: &VBinOpCircuit<T>,
         lop3nodes: &mut [LOP3Node<T>],
+        lop3enableds: &mut [bool],
         cov: &[T],
         subtrees: &[SubTree<T>],
         circuit_outputs: &HashSet<T>,
@@ -725,6 +726,17 @@ where
             // update MTUarea
             if changes {
                 self.nodes = vec![]; // clear nodes
+                                     // clear all tree in lop3enableds (disable all tree)
+                for topt in &tree {
+                    if let Some(t) = topt {
+                        if *t >= circuit.input_len {
+                            let gi = usize::try_from(*t).unwrap() - input_len;
+                            if cov[gi] == root_subtree_index {
+                                lop3enableds[gi] = false;
+                            }
+                        }
+                    }
+                }
                 for touch_node in &all_touch_nodes {
                     let gi = usize::try_from(*touch_node).unwrap() - input_len;
                     for arg in &lop3nodes[gi].args {
@@ -732,6 +744,7 @@ where
                             let arggi = usize::try_from(*arg).unwrap() - input_len;
                             if cov[arggi] == root_subtree_index {
                                 self.add_node(*arg, *touch_node);
+                                lop3enableds[arggi] = true;
                             }
                         }
                     }
@@ -739,6 +752,8 @@ where
                 if keep_root && self.nodes.iter().all(|(n, _)| *n != self.root) {
                     // add root
                     self.nodes.push((self.root, vec![]));
+                    // enable lop3node
+                    lop3enableds[usize::try_from(self.root).unwrap() - input_len] = true;
                 }
             }
             checked_mtunode.insert(mtunode);
@@ -3134,10 +3149,12 @@ mod tests {
         let cov = gen_subtree_coverage(&circuit, &subtrees);
         let mut mtuarea = mtuarea.clone();
         let mut lop3nodes = lop3nodes.clone();
+        let mut lop3enableds = vec![false; circuit.gates.len()];
         let circuit_outputs = HashSet::from_iter(circuit.outputs.iter().map(|(x, _)| *x));
         mtuarea.improve_and_optimize_and_gen_lop3nodes(
             &circuit,
             &mut lop3nodes,
+            &mut lop3enableds,
             &cov,
             &subtrees,
             &circuit_outputs,
