@@ -1401,6 +1401,9 @@ where
     let gates = &circuit.gates;
     let mut visited = vec![false; gates.len()];
     for (node, _) in &circuit.outputs {
+        if *node < circuit.input_len {
+            continue;
+        }
         let mut stack = vec![StackEntry {
             node: usize::try_from(*node).unwrap(),
             way: 0,
