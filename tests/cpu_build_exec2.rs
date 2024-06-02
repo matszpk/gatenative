@@ -185,6 +185,7 @@ fn get_builder_configs() -> Vec<(
     let mut configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
         (NoExtension, &CLANG_WRITER_U64_TEST_NIMPL, None),
+        (NoExtension, &CLANG_WRITER_U64_TEST_LOP3, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
     ];
