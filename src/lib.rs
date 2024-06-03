@@ -11,6 +11,7 @@ use std::ops::{Range, RangeFrom};
 // TODO: add ability to execute in kernel circuit multiply times until some bit is not set.
 // TODO: CLangWriter: add handling array-like types to handle longer words and
 // groupped executions. Hint: Add parameter to configs, write transparent to CLangWriterConfigs.
+// Next hint: use embed array to structure to better handling types in C.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
