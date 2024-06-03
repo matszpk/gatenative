@@ -1010,13 +1010,35 @@ pub fn get_preferred_work_group_size(device: &Device) -> usize {
     usize::try_from(group_len).unwrap()
 }
 
+pub fn detect_nvidia_lop3(device: &Device) -> bool {
+    if let Ok(comp_cap_major) = device.compute_capability_major_nv() {
+        if let Ok(comp_cap_minor) = device.compute_capability_minor_nv() {
+            // lop3 available from ComputeCapability >= 4.3
+            (comp_cap_major, comp_cap_minor) >= (4, 3)
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
 impl<'a> OpenCLBuilder<'a> {
     pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
+        let lop3 = detect_nvidia_lop3(device);
         let mut writer = if config.group_vec {
-            CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+            if config.lop3 && lop3 {
+                CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC.writer()
+            } else {
+                CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+            }
         } else {
-            CLANG_WRITER_OPENCL_U32.writer()
+            if config.lop3 && lop3 {
+                CLANG_WRITER_OPENCL_U32_LOP3.writer()
+            } else {
+                CLANG_WRITER_OPENCL_U32.writer()
+            }
         };
         writer.prolog();
         Self {
@@ -1033,10 +1055,23 @@ impl<'a> OpenCLBuilder<'a> {
 
     pub fn new_with_context(context: Arc<Context>, config: Option<OpenCLBuilderConfig>) -> Self {
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
+        let lop3 = {
+            let device_id = context.devices()[0];
+            let device = Device::from(device_id);
+            detect_nvidia_lop3(&device)
+        };
         let mut writer = if config.group_vec {
-            CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+            if config.lop3 && lop3 {
+                CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC.writer()
+            } else {
+                CLANG_WRITER_OPENCL_U32_GROUP_VEC.writer()
+            }
         } else {
-            CLANG_WRITER_OPENCL_U32.writer()
+            if config.lop3 && lop3 {
+                CLANG_WRITER_OPENCL_U32_LOP3.writer()
+            } else {
+                CLANG_WRITER_OPENCL_U32.writer()
+            }
         };
         writer.prolog();
         let device = Device::new(context.devices()[0]);
