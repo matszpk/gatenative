@@ -340,11 +340,36 @@ pub struct CPUBuilderConfig {
     pub optimize_negs: bool,
     // if some then parallel - value is parallel chunk length
     pub parallel: Option<usize>,
+    // length of array (by default 1) - to handle longer types than vector types
+    pub array_len: Option<usize>,
+}
+
+impl CPUBuilderConfig {
+    pub fn new() -> Self {
+        Self {
+            optimize_negs: false,
+            parallel: None,
+            array_len: None,
+        }
+    }
+    pub fn optimize_negs(mut self, optimize_negs: bool) -> Self {
+        self.optimize_negs = optimize_negs;
+        self
+    }
+    pub fn parallel(mut self, parallel: Option<usize>) -> Self {
+        self.parallel = parallel;
+        self
+    }
+    pub fn array_len(mut self, array_len: Option<usize>) -> Self {
+        self.array_len = array_len;
+        self
+    }
 }
 
 pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
     parallel: None,
+    array_len: None,
 };
 
 #[derive(Clone)]

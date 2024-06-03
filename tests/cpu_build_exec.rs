@@ -235,14 +235,8 @@ fn get_builder_configs() -> Vec<(
     Option<CPUBuilderConfig>,
 )> {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let mut configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -2911,14 +2905,8 @@ fn test_cpu_builder_and_exec_with_pop_from_buffer() {
 
 #[test]
 fn test_cpu_data_holder() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
     {

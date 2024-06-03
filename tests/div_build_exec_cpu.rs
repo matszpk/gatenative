@@ -202,14 +202,8 @@ fn get_mul_add_circuit() -> Circuit<u32> {
 
 #[test]
 fn test_div_builder_and_exec_cpu() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     for (config_num, (writer_config, builder_config)) in [
         (&CLANG_WRITER_U32, &no_opt_neg_config),
@@ -566,14 +560,8 @@ fn test_div_executor_cpu_clone() {
 #[test]
 fn test_cpu_div_builder_and_exec_with_arg_input() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -661,14 +649,8 @@ fn test_cpu_div_builder_and_exec_with_arg_input() {
 #[test]
 fn test_cpu_div_builder_and_exec_with_elem_input() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -951,14 +933,8 @@ const COMB_AGGR_OUTPUT_CODE: &str = r##"{
 #[test]
 fn test_cpu_div_builder_and_exec_with_aggr_output() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -1071,14 +1047,8 @@ xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
 #[test]
 fn test_cpu_div_builder_and_exec_with_pop_input() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -1314,14 +1284,8 @@ fn test_cpu_div_builder_and_exec_with_pop_input() {
 #[test]
 fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -1558,14 +1522,8 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
 #[test]
 fn test_cpu_div_builder_and_exec_with_aggr_output_to_buffer() {
     use CPUExtension::*;
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),

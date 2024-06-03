@@ -12,14 +12,8 @@ use std::sync::{
 
 #[test]
 fn test_basic_mapper_builder_and_exec() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     for (config_num, (writer_config, builder_config)) in [
         (&CLANG_WRITER_U32, &no_opt_neg_config),
@@ -454,14 +448,8 @@ const COMB_CIRCUIT_EXPECTED: [u32; 128] = [
 
 #[test]
 fn test_basic_mapper_builder_and_exec_with_aggr_output() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
     for (config_num, (writer_config, builder_config)) in [
@@ -591,14 +579,8 @@ xor(135,138) xor(139,14) and(131,132) xor(140,141) and(142,16):11}(20)"##;
 
 #[test]
 fn test_basic_mapper_builder_and_exec_with_pop_from_buffer() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let circuit2 = Circuit::<u32>::from_str(COMB_CIRCUIT2).unwrap();
     let circuit2_out = (0..1u32 << 20)
@@ -712,14 +694,8 @@ fn test_basic_mapper_builder_and_exec_with_pop_from_buffer() {
 
 #[test]
 fn test_basic_mapper_builder_and_exec_info() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
     for (config_num, (writer_config, builder_config)) in [
@@ -768,14 +744,8 @@ fn test_basic_mapper_builder_and_exec_info() {
 
 #[test]
 fn test_par_basic_mapper_builder_and_exec() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     for (config_num, (writer_config, builder_config)) in [
         (&CLANG_WRITER_U32, &no_opt_neg_config),
@@ -1149,14 +1119,8 @@ fn test_par_basic_mapper_builder_and_exec() {
 
 #[test]
 fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
     for (config_num, (writer_config, builder_config)) in [
@@ -1273,14 +1237,8 @@ fn test_par_basic_mapper_builder_and_exec_with_aggr_output() {
 
 #[test]
 fn test_par_basic_mapper_builder_and_exec_info() {
-    let no_opt_neg_config = CPUBuilderConfig {
-        optimize_negs: false,
-        parallel: None,
-    };
-    let opt_neg_config = CPUBuilderConfig {
-        optimize_negs: true,
-        parallel: None,
-    };
+    let no_opt_neg_config = CPUBuilderConfig::new();
+    let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
 
     let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT_CODE).unwrap();
     for (config_num, (writer_config, builder_config)) in [
