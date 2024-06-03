@@ -11,11 +11,6 @@ use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 use crate::vlop3circuit::*;
 
-// TODO: Later: separate circuit traversal logic (number ways, ways, first way...)
-// from gen_var_allocs, gen_func_code into some traits and use that traits.
-// If can be better if adding new type of circuits.
-// Hint: Join circuit and swap_args together as circuit object.
-
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
