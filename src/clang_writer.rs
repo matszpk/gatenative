@@ -1439,16 +1439,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn alloc_vars(&mut self, var_num: usize) {
-        let array_postfix = if let Some(alen) = self.writer.array_len {
-            format!("[{}]", alen)
-        } else {
-            String::new()
-        };
         for i in 0..var_num {
             writeln!(
                 self.writer.out,
-                "    {} v{}{};",
-                self.writer.config.type_name, i, array_postfix
+                "    {} v{};",
+                self.writer.config.type_name, i
             )
             .unwrap();
         }
