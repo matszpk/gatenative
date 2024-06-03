@@ -1832,6 +1832,14 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                 .extend(self.config.elem_index.low_bits_init.as_bytes());
             self.out.push(b'\n');
         }
+        if let Some(alen) = self.array_len {
+            write!(
+                self.out,
+                "typedef struct _gate_sys_type {{\n    {} array[{}];\n}} gate_sys_type;\n",
+                self.config.type_name, alen
+            )
+            .unwrap();
+        }
         write!(
             self.out,
             "#define TYPE_LEN ({})\n#define TYPE_NAME {}\n",
@@ -1839,30 +1847,84 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             self.calc_type_name()
         )
         .unwrap();
+        let macro_internal_prefix = if self.array_len.is_some() {
+            "__INT_"
+        } else {
+            ""
+        };
         writeln!(
             self.out,
-            "#define GET_U32(D,X,I) {}",
-            self.config.get_u32_op
+            "#define {}GET_U32(D,X,I) {}",
+            macro_internal_prefix, self.config.get_u32_op
         )
         .unwrap();
         writeln!(
             self.out,
-            "#define GET_U32_ALL(D,X) {}",
-            self.config.get_u32_all_op
+            "#define {}GET_U32_ALL(D,X) {}",
+            macro_internal_prefix, self.config.get_u32_all_op
         )
         .unwrap();
         writeln!(
             self.out,
-            "#define SET_U32(X,S,I) {}",
-            self.config.set_u32_op
+            "#define {}SET_U32(X,S,I) {}",
+            macro_internal_prefix, self.config.set_u32_op
         )
         .unwrap();
         writeln!(
             self.out,
-            "#define SET_U32_ALL(X,S) {}",
-            self.config.set_u32_all_op
+            "#define {}SET_U32_ALL(X,S) {}",
+            macro_internal_prefix, self.config.set_u32_all_op
         )
         .unwrap();
+
+        if let Some(alen) = self.array_len {
+            let int_type_word_len = self.config.type_bit_len >> 5;
+            // real macro definition for array_len
+            write!(
+                self.out,
+                r##"#define GET_U32(D,X,I) \
+    __INT_GET_U32((D).array[(I) / {0}], (X).array[(I) / {0}], (I) % {0})
+"##,
+                int_type_word_len
+            )
+            .unwrap();
+
+            write!(
+                self.out,
+                r##"#define GET_ALL_U32(D,X) {{ \
+    unsigned int i; \
+    for (i = 0; i < {}; i++) {{ \
+        __INT_GET_U32_ALL((D).array[i], (X).array[i]); \
+    }} \
+}}
+"##,
+                alen
+            )
+            .unwrap();
+
+            write!(
+                self.out,
+                r##"#define SET_U32(X,S,I) \
+    __INT_SET_U32((X).array[(I) / {0}], (S).array[(I) / {0}], (I) % {0})
+"##,
+                int_type_word_len
+            )
+            .unwrap();
+
+            write!(
+                self.out,
+                r##"#define SET_ALL_U32(X,S) {{ \
+    unsigned int i; \
+    for (i = 0; i < {}; i++) {{ \
+        __INT_SET_U32_ALL((X).array[i], (S).array[i]); \
+    }} \
+}}
+"##,
+                alen
+            )
+            .unwrap();
+        }
+
         if let Some((lop3_def, _)) = self.config.lop3_op {
             self.out.extend(lop3_def.as_bytes());
             self.out.extend(b"\n");
