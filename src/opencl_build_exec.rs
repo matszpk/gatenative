@@ -1013,8 +1013,8 @@ pub fn get_preferred_work_group_size(device: &Device) -> usize {
 pub fn detect_nvidia_lop3(device: &Device) -> bool {
     if let Ok(comp_cap_major) = device.compute_capability_major_nv() {
         if let Ok(comp_cap_minor) = device.compute_capability_minor_nv() {
-            // lop3 available from ComputeCapability >= 4.3
-            (comp_cap_major, comp_cap_minor) >= (4, 3)
+            // lop3 available from ComputeCapability >= 5.0
+            (comp_cap_major, comp_cap_minor) >= (5, 0)
         } else {
             false
         }
