@@ -1938,13 +1938,64 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
 
     fn transform_helpers(&mut self) {
         if !self.transform_helpers_added {
+            let alen_prefix = if self.array_len.is_some() {
+                "__INT_"
+            } else {
+                ""
+            };
             let mut transform = self.config.transform_config.transform();
             transform.init_defs();
             for i in 1..=32 {
-                transform.gen_input_transform(i);
-                transform.gen_output_transform(i);
+                transform.gen_input_transform_with_prefix(i, alen_prefix);
+                transform.gen_output_transform_with_prefix(i, alen_prefix);
             }
             self.user_defs(&transform.out());
+            if let Some(alen) = self.array_len {
+                // real macros for output transform
+                use std::fmt::Write;
+                let mut real_macros = String::new();
+                for bits in 1..=32 {
+                    writeln!(
+                        real_macros,
+                        r##"#define INPUT_TRANSFORM_B{0}({1}, {2}) {{ \
+    unsigned int i; \
+    for (i = 0; i < {4}; i++) {{ \
+        __INT_INPUT_TRANSFORM_B{0}({3}, ({2}).array[i]) \
+    }} \
+}}
+"##,
+                        bits,
+                        &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
+                        "S",
+                        &((0..bits)
+                            .map(|i| format!("(D{}).array[i]", i))
+                            .collect::<Vec<_>>())
+                        .join(", "),
+                        alen
+                    )
+                    .unwrap();
+                    writeln!(
+                        real_macros,
+                        r##"#define OUTPUT_TRANSFORM_B{0}({1}, {2}) {{ \
+    unsigned int i; \
+    for (i = 0; i < {4}; i++) {{ \
+        __INT_OUTPUT_TRANSFORM_B{0}(({1}).array[i], ({3})) \
+    }} \
+}}
+"##,
+                        bits,
+                        "D",
+                        &((0..bits).map(|i| format!("S{}", i)).collect::<Vec<_>>()).join(", "),
+                        &((0..bits)
+                            .map(|i| format!("(S{}).array[i]", i))
+                            .collect::<Vec<_>>())
+                        .join(", "),
+                        alen
+                    )
+                    .unwrap();
+                }
+                self.user_defs(&real_macros);
+            }
         }
     }
 

@@ -1608,7 +1608,7 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
-    pub fn gen_input_transform(&mut self, bits: usize) {
+    pub fn gen_input_transform_with_prefix(&mut self, bits: usize, prefix: &'a str) {
         let (inputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
             (
                 (0..32)
@@ -1652,7 +1652,8 @@ impl<'a> CLangTransform<'a> {
         mvars.set_usage_mode();
         writeln!(
             &mut self.out,
-            "#define INPUT_TRANSFORM_B{}({}, {}) \\",
+            "#define {}INPUT_TRANSFORM_B{}({}, {}) \\",
+            prefix,
             bits,
             &((0..bits).map(|i| format!("D{}", i)).collect::<Vec<_>>()).join(", "),
             "S",
@@ -1697,6 +1698,10 @@ impl<'a> CLangTransform<'a> {
             }
         }
         self.out.write_str("}\n").unwrap();
+    }
+
+    pub fn gen_input_transform(&mut self, bits: usize) {
+        self.gen_input_transform_with_prefix(bits, "")
     }
 
     fn gen_output_transform_int(&mut self, mvars: &mut CLangMacroVars, bits: usize) {
@@ -1892,7 +1897,7 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
-    pub fn gen_output_transform(&mut self, bits: usize) {
+    pub fn gen_output_transform_with_prefix(&mut self, bits: usize, prefix: &'a str) {
         let (outputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
             (
                 (0..32)
@@ -1927,7 +1932,8 @@ impl<'a> CLangTransform<'a> {
         mvars.set_usage_mode();
         writeln!(
             &mut self.out,
-            "#define OUTPUT_TRANSFORM_B{}({}, {}) \\",
+            "#define {}OUTPUT_TRANSFORM_B{}({}, {}) \\",
+            prefix,
             bits,
             "D",
             &((0..bits).map(|i| format!("S{}", i)).collect::<Vec<_>>()).join(", "),
@@ -1980,6 +1986,10 @@ impl<'a> CLangTransform<'a> {
             self.out.write_str("    }\\\n").unwrap();
         }
         self.out.write_str("}\n").unwrap();
+    }
+
+    pub fn gen_output_transform(&mut self, bits: usize) {
+        self.gen_output_transform_with_prefix(bits, "")
     }
 
     pub fn out(self) -> String {
