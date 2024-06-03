@@ -234,6 +234,7 @@ fn gen_mul_add_input(word_len: usize) -> (Vec<u32>, Vec<u32>) {
 fn test_opencl_builder_and_exec() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -246,7 +247,9 @@ fn test_opencl_builder_and_exec() {
         (OpenCLBuilder::new(&device, Some(no_opt_neg_config.clone())).word_len() >> 5) as usize;
     let (mul_add_input, mul_add_output) = gen_mul_add_input(word_len);
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::new(
@@ -561,6 +564,7 @@ fn test_opencl_builder_and_exec() {
 fn test_opencl_builder_and_exec_with_arg_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -569,7 +573,9 @@ fn test_opencl_builder_and_exec_with_arg_input() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         // with arg_input
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
@@ -648,6 +654,7 @@ fn test_opencl_builder_and_exec_with_arg_input() {
 fn test_opencl_builder_and_exec_with_elem_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -656,7 +663,9 @@ fn test_opencl_builder_and_exec_with_elem_input() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         // with elem_index
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
@@ -852,6 +861,7 @@ fn test_opencl_builder_and_exec_group_vec() {
     let opt_neg_config = OpenCLBuilderConfig::new()
         .optimize_negs(true)
         .group_vec(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true).group_vec(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -865,82 +875,85 @@ fn test_opencl_builder_and_exec_group_vec() {
     let (mul_add_input, mul_add_output) = gen_mul_add_input(word_len);
     println!("WordLen: {}", word_len);
 
-    let circuit = mul_add_circuit();
-    let mut builder = OpenCLBuilder::new(&device, Some(opt_neg_config));
-    builder.add("mul_add", circuit, None, None, None);
+    for (config_num, builder_config) in [opt_neg_config, lop3_config].into_iter().enumerate() {
+        let circuit = mul_add_circuit();
+        let mut builder = OpenCLBuilder::new(&device, Some(builder_config));
+        builder.add("mul_add", circuit, None, None, None);
 
-    // for single_buffer
-    let circuit = Circuit::new(
-        4,
-        [
-            Gate::new_and(0, 2),
-            Gate::new_and(1, 2),
-            Gate::new_and(0, 3),
-            Gate::new_and(1, 3),
-            // add a1*b0 + a0*b1
-            Gate::new_xor(5, 6),
-            Gate::new_and(5, 6),
-            // add c(a1*b0 + a0*b1) + a1*b1
-            Gate::new_xor(7, 9),
-            Gate::new_and(7, 9),
-        ],
-        [(4, false), (8, false), (10, false), (11, false)],
-    )
-    .unwrap();
-    builder.add_with_config(
-        "mul2x2sb",
-        circuit.clone(),
-        CodeConfig::new().single_buffer(true),
-    );
+        // for single_buffer
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(0, 2),
+                Gate::new_and(1, 2),
+                Gate::new_and(0, 3),
+                Gate::new_and(1, 3),
+                // add a1*b0 + a0*b1
+                Gate::new_xor(5, 6),
+                Gate::new_and(5, 6),
+                // add c(a1*b0 + a0*b1) + a1*b1
+                Gate::new_xor(7, 9),
+                Gate::new_and(7, 9),
+            ],
+            [(4, false), (8, false), (10, false), (11, false)],
+        )
+        .unwrap();
+        builder.add_with_config(
+            "mul2x2sb",
+            circuit.clone(),
+            CodeConfig::new().single_buffer(true),
+        );
 
-    let mut execs = builder.build().unwrap();
-    let mul_add_input = execs[0].new_data_from_vec(mul_add_input.clone());
-    let out = execs[0].execute(&mul_add_input, 0).unwrap().release();
-    for (i, v) in mul_add_output.iter().enumerate() {
-        assert_eq!(*v, out[i], "{}", i);
-    }
-    let mut out = execs[0].new_data(mul_add_input.len() / 3);
-    execs[0].execute_reuse(&mul_add_input, 0, &mut out).unwrap();
-    let out = out.release();
-    for (i, v) in mul_add_output.iter().enumerate() {
-        assert_eq!(*v, out[i], "{}", i);
-    }
-
-    // single buffer
-    let mul2x2_more_input_combs = {
-        let mut input = vec![];
-        let mut s = 0x34251u32;
-        for _ in 0..word_len * 4 * 24 {
-            input.push(s & 15);
-            s = (s ^ (s.overflowing_mul(1895952115).0.overflowing_add(159502151).0)) ^ 0xba001a4;
-            s = s.rotate_right(s & 15);
+        let mut execs = builder.build().unwrap();
+        let mul_add_input = execs[0].new_data_from_vec(mul_add_input.clone());
+        let out = execs[0].execute(&mul_add_input, 0).unwrap().release();
+        for (i, v) in mul_add_output.iter().enumerate() {
+            assert_eq!(*v, out[i], "{} {}", config_num, i);
         }
-        input
-    };
-    let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
-    for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
-        let idx = (i >> 5) / word_len;
-        let half_idx = (i >> 5) % word_len;
-        let shift = i & 31;
-        more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
-        more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
-        more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
-        more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
-    }
-    let mut more_input_holder = execs[1].new_data_from_vec(more_input);
-    execs[1].execute_single(&mut more_input_holder, 0).unwrap();
-    let out = more_input_holder.release();
-    for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
-        let idx = (i >> 5) / word_len;
-        let half_idx = (i >> 5) % word_len;
-        let shift = i & 31;
-        let a = v & 3;
-        let b = v >> 2;
-        let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
-            + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
-            + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
-            + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
-        assert_eq!((a * b) & 15, c, "{}", i);
+        let mut out = execs[0].new_data(mul_add_input.len() / 3);
+        execs[0].execute_reuse(&mul_add_input, 0, &mut out).unwrap();
+        let out = out.release();
+        for (i, v) in mul_add_output.iter().enumerate() {
+            assert_eq!(*v, out[i], "{} {}", config_num, i);
+        }
+
+        // single buffer
+        let mul2x2_more_input_combs = {
+            let mut input = vec![];
+            let mut s = 0x34251u32;
+            for _ in 0..word_len * 4 * 24 {
+                input.push(s & 15);
+                s = (s ^ (s.overflowing_mul(1895952115).0.overflowing_add(159502151).0))
+                    ^ 0xba001a4;
+                s = s.rotate_right(s & 15);
+            }
+            input
+        };
+        let mut more_input = vec![0; (mul2x2_more_input_combs.len() >> 6) * 4 * 2];
+        for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
+            let shift = i & 31;
+            more_input[idx * 4 * word_len + 0 + half_idx] |= (v & 1) << shift;
+            more_input[idx * 4 * word_len + word_len + half_idx] |= ((v >> 1) & 1) << shift;
+            more_input[idx * 4 * word_len + 2 * word_len + half_idx] |= ((v >> 2) & 1) << shift;
+            more_input[idx * 4 * word_len + 3 * word_len + half_idx] |= ((v >> 3) & 1) << shift;
+        }
+        let mut more_input_holder = execs[1].new_data_from_vec(more_input);
+        execs[1].execute_single(&mut more_input_holder, 0).unwrap();
+        let out = more_input_holder.release();
+        for (i, &v) in mul2x2_more_input_combs.iter().enumerate() {
+            let idx = (i >> 5) / word_len;
+            let half_idx = (i >> 5) % word_len;
+            let shift = i & 31;
+            let a = v & 3;
+            let b = v >> 2;
+            let c = ((out[idx * 4 * word_len + 0 + half_idx] >> shift) & 1)
+                + (((out[idx * 4 * word_len + word_len + half_idx] >> shift) & 1) << 1)
+                + (((out[idx * 4 * word_len + 2 * word_len + half_idx] >> shift) & 1) << 2)
+                + (((out[idx * 4 * word_len + 3 * word_len + half_idx] >> shift) & 1) << 3);
+            assert_eq!((a * b) & 15, c, "{} {}", config_num, i);
+        }
     }
 }
 
@@ -1044,6 +1057,7 @@ const AGGR_OUTPUT_EXPECTED: [u32; 128] = [
 fn test_opencl_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1052,7 +1066,9 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
@@ -1399,6 +1415,7 @@ const COMB_AGGR_OUTPUT_CODE_WITH_HELPERS: &str = r##"{
 fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1407,7 +1424,9 @@ fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
@@ -1439,6 +1458,7 @@ fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
 fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -1513,7 +1533,9 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
         })
         .collect::<Vec<_>>();
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let comb_aggr_output_code = r##"{
@@ -1990,6 +2012,7 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
 fn test_opencl_builder_and_exec_with_pop_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2059,7 +2082,9 @@ fn test_opencl_builder_and_exec_with_pop_input() {
         })
         .collect::<Vec<_>>();
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let pop_input_code = r##"{
@@ -2587,6 +2612,7 @@ fn test_opencl_builder_and_exec_with_pop_input() {
 fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2618,7 +2644,9 @@ fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
             circuit2_out[x as usize]
         })
         .collect::<Vec<_>>();
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         println!("Config: {}", config_num);
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
@@ -2662,6 +2690,7 @@ fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
 fn test_opencl_builder_and_exec_with_pop_from_buffer() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
         *get_all_devices(CL_DEVICE_TYPE_GPU)
@@ -2711,7 +2740,9 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
             circuit2_out[x as usize]
         })
         .collect::<Vec<_>>();
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config].into_iter().enumerate()
+    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
+        .into_iter()
+        .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let pop_input_code = r##"{
