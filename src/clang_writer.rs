@@ -1111,6 +1111,9 @@ pub struct CLangWriter<'a> {
 impl<'a> CLangWriterConfig<'a> {
     pub fn writer_with_array_len(&'a self, array_len: Option<usize>) -> CLangWriter<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
+        if let Some(alen) = array_len {
+            assert_ne!(alen, 0);
+        }
         CLangWriter {
             config: self,
             elem_low_bits: self
@@ -1436,11 +1439,16 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn alloc_vars(&mut self, var_num: usize) {
+        let array_postfix = if let Some(alen) = self.writer.array_len {
+            format!("[{}]", alen)
+        } else {
+            String::new()
+        };
         for i in 0..var_num {
             writeln!(
                 self.writer.out,
-                "    {} v{};",
-                self.writer.config.type_name, i
+                "    {} v{}{};",
+                self.writer.config.type_name, i, array_postfix
             )
             .unwrap();
         }
@@ -1778,7 +1786,12 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         }
     }
     fn word_len(&self) -> u32 {
-        self.config.type_bit_len
+        if let Some(alen) = self.array_len {
+            u32::try_from(u64::from(self.config.type_bit_len) * u64::try_from(alen).unwrap())
+                .unwrap()
+        } else {
+            self.config.type_bit_len
+        }
     }
     fn max_var_num(&self) -> usize {
         usize::MAX
