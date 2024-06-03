@@ -1453,7 +1453,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 if let Some(arg_modifier) = self.writer.config.arg_modifier {
                     writeln!(
                         self.writer.out,
-                        "    buffer = (const {0} void*)(((const {0} char*)buffer) + 4*buffer_shift);",
+                        concat!(
+                            "    buffer = (const {0} void*)",
+                            "(((const {0} char*)buffer) + 4*buffer_shift);"
+                        ),
                         arg_modifier
                     )
                     .unwrap();
