@@ -1104,10 +1104,12 @@ pub struct CLangWriter<'a> {
     elem_low_bits: u32,
     out: Vec<u8>,
     transform_helpers_added: bool,
+    // array length
+    array_len: Option<usize>,
 }
 
 impl<'a> CLangWriterConfig<'a> {
-    pub fn writer(&'a self) -> CLangWriter<'a> {
+    pub fn writer_with_array_len(&'a self, array_len: Option<usize>) -> CLangWriter<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
         CLangWriter {
             config: self,
@@ -1119,7 +1121,11 @@ impl<'a> CLangWriterConfig<'a> {
                 .unwrap_or(16) as u32,
             out: vec![],
             transform_helpers_added: false,
+            array_len,
         }
+    }
+    pub fn writer(&'a self) -> CLangWriter<'a> {
+        self.writer_with_array_len(None)
     }
 }
 

@@ -1040,6 +1040,9 @@ impl<'a> OpenCLBuilder<'a> {
                 CLANG_WRITER_OPENCL_U32.writer()
             }
         };
+        if let Some(group_len) = config.group_len {
+            assert_ne!(group_len, 0);
+        }
         writer.prolog();
         Self {
             entries: vec![],
@@ -1073,6 +1076,9 @@ impl<'a> OpenCLBuilder<'a> {
                 CLANG_WRITER_OPENCL_U32.writer()
             }
         };
+        if let Some(group_len) = config.group_len {
+            assert_ne!(group_len, 0);
+        }
         writer.prolog();
         let device = Device::new(context.devices()[0]);
         Self {

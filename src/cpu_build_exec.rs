@@ -1242,9 +1242,18 @@ impl<'a> CPUBuilder<'a> {
         clang_config: &'a CLangWriterConfig,
         config: Option<CPUBuilderConfig>,
     ) -> Self {
-        let mut writer = clang_config.writer();
-        writer.prolog();
         let config = config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
+        let array_len = if let Some(alen) = config.array_len {
+            assert_ne!(alen, 0);
+            Some(alen)
+        } else {
+            None
+        };
+        if let Some(par_chunk_len) = config.parallel {
+            assert_ne!(par_chunk_len, 0);
+        }
+        let mut writer = clang_config.writer_with_array_len(array_len);
+        writer.prolog();
         Self {
             cpu_ext,
             entries: vec![],
