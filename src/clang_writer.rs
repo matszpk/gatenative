@@ -1177,6 +1177,15 @@ impl<'a> CLangWriter<'a> {
             format!("v{}", reg)
         }
     }
+
+    // to get calculation type name
+    fn calc_type_name(&self) -> &'a str {
+        if self.array_len.is_some() {
+            "gate_sys_type"
+        } else {
+            self.config.type_name
+        }
+    }
 }
 
 impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
@@ -1230,7 +1239,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 {
                     "void"
                 } else {
-                    self.writer.config.type_name
+                    self.writer.calc_type_name()
                 }
             )
         } else {
@@ -1245,12 +1254,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 if self.pop_input_code.is_some() && self.pop_input_map.is_empty() {
                     "void"
                 } else {
-                    self.writer.config.type_name
+                    self.writer.calc_type_name()
                 },
                 if self.aggr_output_code.is_some() && !self.aggr_to_buffer {
                     "void"
                 } else {
-                    self.writer.config.type_name
+                    self.writer.calc_type_name()
                 }
             )
         };
@@ -1358,7 +1367,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 "    const {} zero = {};",
-                self.writer.config.type_name, zero_value
+                self.writer.calc_type_name(),
+                zero_value
             )
             .unwrap();
         }
@@ -1370,7 +1380,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 "    const {} one = {};",
-                self.writer.config.type_name, one_value
+                self.writer.calc_type_name(),
+                one_value
             )
             .unwrap();
         }
@@ -1379,7 +1390,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 writeln!(
                     self.writer.out,
                     "    const {} elem_low_bit{} = {};",
-                    self.writer.config.type_name,
+                    self.writer.calc_type_name(),
                     i,
                     self.writer.config.elem_index.low_bits_defs[i as usize]
                 )
@@ -1443,7 +1454,8 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 "    {} v{};",
-                self.writer.config.type_name, i
+                self.writer.calc_type_name(),
+                i
             )
             .unwrap();
         }
@@ -1823,7 +1835,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
         write!(
             self.out,
             "#define TYPE_LEN ({})\n#define TYPE_NAME {}\n",
-            self.config.type_bit_len, self.config.type_name
+            self.word_len(),
+            self.calc_type_name()
         )
         .unwrap();
         writeln!(
