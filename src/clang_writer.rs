@@ -2094,7 +2094,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define INPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_INPUT_TRANSFORM_B{0}({3}, {2}) \
+        __INT_INPUT_TRANSFORM_B{0}({3}, {2}); \
     }} \
 }}
 "##,
@@ -2113,7 +2113,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define OUTPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_OUTPUT_TRANSFORM_B{0}({1}, {3}) \
+        __INT_OUTPUT_TRANSFORM_B{0}({1}, {3}); \
     }} \
 }}
 "##,
