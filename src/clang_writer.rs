@@ -2094,7 +2094,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define INPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_INPUT_TRANSFORM_B{0}({3}, {2}); \
+        __INT_INPUT_TRANSFORM_B{0}({3}, {5}); \
     }} \
 }}
 "##,
@@ -2105,7 +2105,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                             .map(|i| format!("(D{}).array[i]", i))
                             .collect::<Vec<_>>())
                         .join(", "),
-                        alen
+                        alen,
+                        format!("(&((S)[{}*i]))", self.config.type_bit_len),
                     )
                     .unwrap();
                     writeln!(
@@ -2113,7 +2114,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define OUTPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_OUTPUT_TRANSFORM_B{0}({1}, {3}); \
+        __INT_OUTPUT_TRANSFORM_B{0}({5}, {3}); \
     }} \
 }}
 "##,
@@ -2124,7 +2125,8 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                             .map(|i| format!("(S{}).array[i]", i))
                             .collect::<Vec<_>>())
                         .join(", "),
-                        alen
+                        alen,
+                        format!("(&((D)[{}*i]))", self.config.type_bit_len),
                     )
                     .unwrap();
                 }
