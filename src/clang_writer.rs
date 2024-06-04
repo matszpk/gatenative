@@ -1220,7 +1220,13 @@ impl<'a, 'c> CLangFuncWriter<'a, 'c> {
             }
         } else if let Some(elem_bit) = self.elem_input_map.get(&input) {
             if *elem_bit < (self.writer.elem_low_bits as usize) {
-                writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
+                writeln!(
+                    self.writer.out,
+                    "    {} = elem_low_bit{};",
+                    self.writer.format_reg(reg, aidx),
+                    *elem_bit
+                )
+                .unwrap();
             } else {
                 let idx_value_postfix = if self.writer.array_len.is_some() {
                     format!("{}", aidx)
