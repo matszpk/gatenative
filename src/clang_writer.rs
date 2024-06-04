@@ -1889,18 +1889,17 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             )
             .unwrap();
 
-            write!(
-                self.out,
-                r##"#define GET_ALL_U32(D,X) {{ \
-    unsigned int i; \
-    for (i = 0; i < {}; i++) {{ \
-        __INT_GET_U32_ALL((D).array[i], (X).array[i]); \
-    }} \
-}}
-"##,
-                alen
-            )
-            .unwrap();
+            // GET_ALL_U32
+            self.out.extend(b"#define GET_ALL_U32(D,X) {\n");
+            for i in 0..alen {
+                writeln!(
+                    self.out,
+                    "    __INT_GET_U32_ALL((D).array[{0}], (X).array[{0}]);",
+                    i
+                )
+                .unwrap();
+            }
+            self.out.extend(b"}\n");
 
             write!(
                 self.out,
@@ -1911,18 +1910,17 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             )
             .unwrap();
 
-            write!(
-                self.out,
-                r##"#define SET_ALL_U32(X,S) {{ \
-    unsigned int i; \
-    for (i = 0; i < {}; i++) {{ \
-        __INT_SET_U32_ALL((X).array[i], (S).array[i]); \
-    }} \
-}}
-"##,
-                alen
-            )
-            .unwrap();
+            // SET_ALL_U32
+            self.out.extend(b"#define SET_ALL_U32(X,S) {\n");
+            for i in 0..alen {
+                writeln!(
+                    self.out,
+                    "    __INT_SET_U32_ALL((X).array[{0}], (S).array[{0}]);",
+                    i
+                )
+                .unwrap();
+            }
+            self.out.extend(b"}\n");
         }
 
         if let Some((lop3_def, _)) = self.config.lop3_op {
