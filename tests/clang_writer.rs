@@ -1211,6 +1211,54 @@ kernel void gate_sys_func1(unsigned long n,
 "##,
         write_test_code_with_not(&CLANG_WRITER_OPENCL_U32, false, false)
     );
+    // opencl
+    assert_eq!(
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+#define GET_U32(D,X,I) { (D) = (X); }
+#define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
+inline uint lop3(uint a, uint b, uint c, uint imm)
+{
+    uint r;
+    asm("lop3.b32 %0, %1, %2, %3, %4;"
+        : "=r" (r)
+        : "r" (a), "r" (b), "r" (c), "i" (imm));
+    return r;
+}
+
+kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_global_id(0);
+    const size_t ivn = 3 * idx + input_shift;
+    const size_t ovn = 2 * idx + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = input[ivn + 0];
+    v1 = input[ivn + 1];
+    v0 = input[ivn + 2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    v3 = lop3(v2, v1, v0, 167);
+    output[ovn + 1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + 0] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32_LOP3, false, false)
+    );
     assert_eq!(
         r##"#define TYPE_LEN (32)
 #define TYPE_NAME uint
@@ -1584,6 +1632,55 @@ kernel void gate_sys_func1(unsigned long n,
 }
 "##,
         write_test_code(&CLANG_WRITER_OPENCL_U32_GROUP_VEC, false, false)
+    );
+    assert_eq!(
+        r##"#define TYPE_LEN (32)
+#define TYPE_NAME uint
+#define GET_U32(D,X,I) { (D) = (X); }
+#define GET_U32_ALL(D,X) { (D)[0] = (X); }
+#define SET_U32(X,S,I) { (X) = (S); }
+#define SET_U32_ALL(X,S) { (X) = (S)[0]; }
+inline uint lop3(uint a, uint b, uint c, uint imm)
+{
+    uint r;
+    asm("lop3.b32 %0, %1, %2, %3, %4;"
+        : "=r" (r)
+        : "r" (a), "r" (b), "r" (c), "i" (imm));
+    return r;
+}
+
+kernel void gate_sys_func1(unsigned long n, 
+    unsigned long input_shift, unsigned long output_shift,
+    const global uint* input,
+    global uint* output) {
+    const size_t idx = get_group_id(0);
+    const uint lidx = get_local_id(0);
+    const uint llen = get_local_size(0);
+    const size_t ivn = llen * (3 * idx) + input_shift;
+    const size_t ovn = llen * (2 * idx) + output_shift;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    if (idx >= n) return;
+    v2 = input[ivn + llen*0 + lidx];
+    v1 = input[ivn + llen*1 + lidx];
+    v0 = input[ivn + llen*2 + lidx];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    v3 = lop3(v2, v1, v0, 167);
+    output[ovn + llen*1 + lidx] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[ovn + llen*0 + lidx] = v4;
+}
+"##,
+        write_test_code(&CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC, false, false)
     );
     assert_eq!(
         r##"#define TYPE_LEN (32)
