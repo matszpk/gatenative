@@ -1281,6 +1281,11 @@ impl<'a, 'c> CLangFuncWriter<'a, 'c> {
                     format!("{}[{}]", arg_name, input),
                 )
             };
+            let r = if self.writer.array_len.is_some() {
+                format!("({}.array[{}])", r, aidx)
+            } else {
+                r
+            };
             if let Some(ld_op) = self.writer.config.load_op {
                 write!(self.writer.out, "    {} = ", dst).unwrap();
                 CLangWriter::<'a>::write_op(&mut self.writer.out, ld_op, &[r.as_bytes()]);
@@ -1416,6 +1421,11 @@ impl<'a, 'c> CLangFuncWriter<'a, 'c> {
             }
         } else {
             (format!("output[{}]", output), format!("{}", arg))
+        };
+        let dst = if self.writer.array_len.is_some() {
+            format!("({}.array[{}])", dst, aidx)
+        } else {
+            dst
         };
         if let Some(st_op) = self.writer.config.store_op {
             self.writer.out.extend(b"    ");
@@ -1610,8 +1620,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 "    const {} zero = {};",
-                self.writer.calc_type_name(),
-                zero_value
+                self.writer.config.type_name, zero_value
             )
             .unwrap();
         }
@@ -1623,8 +1632,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             writeln!(
                 self.writer.out,
                 "    const {} one = {};",
-                self.writer.calc_type_name(),
-                one_value
+                self.writer.config.type_name, one_value
             )
             .unwrap();
         }
@@ -1633,7 +1641,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 writeln!(
                     self.writer.out,
                     "    const {} elem_low_bit{} = {};",
-                    self.writer.calc_type_name(),
+                    self.writer.config.type_name,
                     i,
                     self.writer.config.elem_index.low_bits_defs[i as usize]
                 )
