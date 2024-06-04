@@ -43,6 +43,9 @@ fn write_test_code(
     if (supported_ops & (1u64 << INSTR_OP_VALUE_IMPL)) != 0 {
         fw.gen_op(InstrOp::Impl, VNegs::NoNegs, 3, 2, 1);
     }
+    if (supported_ops & (1u64 << INSTR_OP_VALUE_LOP3)) != 0 {
+        fw.gen_op3(InstrOp::Lop3(167), 3, 2, 1, 0);
+    }
     fw.gen_store(true, 1, 3);
     fw.gen_op(InstrOp::Or, VNegs::NegOutput, 2, 2, 3);
     fw.gen_op(InstrOp::Xor, VNegs::NegOutput, 4, 1, 3);
@@ -284,6 +287,53 @@ void gate_sys_func1(const uint32_t* input,
 }
 "##,
             write_test_code_with_not(&CLANG_WRITER_U32, false, false)
+        );
+
+        // with LOP3
+        assert_eq!(
+            r##"#include <stdint.h>
+#include <stddef.h>
+#define TYPE_LEN (64)
+#define TYPE_NAME uint64_t
+#define GET_U32(D,X,I) { (D) = ((X) >> ((I)<<5)); }
+#define GET_U32_ALL(D,X) { (D)[0] = (uint32_t)(X); (D)[1] = (uint32_t)((X) >> 32); }
+#define SET_U32(X,S,I) { uint64_t mask = (0xffffffffULL << ((I)<<5)); \
+    (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
+#define SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
+static inline uint64_t lop3_test(uint64_t a, uint64_t b, uint64_t c, uint8_t comb) {
+    return ((~a & ~b & ~c & (0ULL - (((uint64_t)comb) & 1))) |
+        (~a & ~b & c & (0ULL - ((((uint64_t)comb) >> 1) & 1))) |
+        (~a & b & ~c & (0ULL - ((((uint64_t)comb) >> 2) & 1))) |
+        (~a & b & c & (0ULL - ((((uint64_t)comb) >> 3) & 1))) |
+        (a & ~b & ~c & (0ULL - ((((uint64_t)comb) >> 4) & 1))) |
+        (a & ~b & c & (0ULL - ((((uint64_t)comb) >> 5) & 1))) |
+        (a & b & ~c & (0ULL - ((((uint64_t)comb) >> 6) & 1))) |
+        (a & b & c & (0ULL - ((((uint64_t)comb) >> 7) & 1))));
+}
+void gate_sys_func1(const uint64_t* input,
+    uint64_t* output, size_t idx) {
+    uint64_t v0;
+    uint64_t v1;
+    uint64_t v2;
+    uint64_t v3;
+    uint64_t v4;
+    v2 = input[0];
+    v1 = input[1];
+    v0 = input[2];
+    v2 = (v0 & v1);
+    v1 = (v2 | v1);
+    v3 = (v0 ^ v1);
+    v3 = ~(v0 & v1);
+    v3 = lop3_test(v2, v1, v0, 167);
+    output[1] = ~v3;
+    v2 = ~(v2 | v3);
+    v4 = ~(v1 ^ v3);
+    v4 = (v4 & ~v1);
+    v4 = (v4 ^ ~v1);
+    output[0] = v4;
+}
+"##,
+            write_test_code(&CLANG_WRITER_U64_TEST_LOP3, false, false)
         );
 
         assert_eq!(
