@@ -1167,14 +1167,15 @@ impl<'a> CLangWriter<'a> {
         }
     }
 
-    fn format_neg_arg(config: &CLangWriterConfig, neg: bool, reg: usize) -> String {
+    // aidx - array_index for array_len
+    fn format_neg_arg(&self, neg: bool, reg: usize, aidx: usize) -> String {
         if neg {
-            let arg = format!("v{}", reg);
+            let arg = self.format_reg(reg, aidx);
             let mut out_str = vec![];
-            CLangWriter::write_neg(&config, &mut out_str, arg.as_bytes());
+            CLangWriter::write_neg(self.config, &mut out_str, arg.as_bytes());
             String::from_utf8_lossy(&out_str).to_string()
         } else {
-            format!("v{}", reg)
+            self.format_reg(reg, aidx)
         }
     }
 
@@ -1184,6 +1185,15 @@ impl<'a> CLangWriter<'a> {
             "gate_sys_type"
         } else {
             self.config.type_name
+        }
+    }
+
+    fn format_reg(&self, reg: usize, array_index: usize) -> String {
+        if let Some(alen) = self.array_len {
+            assert!(array_index < alen);
+            format!("v{}.array[{}]", reg, array_index)
+        } else {
+            format!("v{}", reg)
         }
     }
 }
@@ -1560,20 +1570,21 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
+        let aidx = 0; // array index
         if let Some(arg_bit) = self.arg_input_map.get(&input) {
             if *arg_bit < 32 {
                 writeln!(
                     self.writer.out,
-                    "    v{} = ((arg & {}) != 0) ? one : zero;",
-                    reg,
+                    "    {} = ((arg & {}) != 0) ? one : zero;",
+                    self.writer.format_reg(reg, aidx),
                     1u32 << arg_bit
                 )
                 .unwrap();
             } else {
                 writeln!(
                     self.writer.out,
-                    "    v{} = ((arg2 & {}) != 0) ? one : zero;",
-                    reg,
+                    "    {} = ((arg2 & {}) != 0) ? one : zero;",
+                    self.writer.format_reg(reg, aidx),
                     1u32 << (*arg_bit - 32)
                 )
                 .unwrap();
@@ -1586,16 +1597,16 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 if ebit < 32 {
                     writeln!(
                         self.writer.out,
-                        "    v{} = ((idxl & {}) != 0) ? one : zero;",
-                        reg,
+                        "    {} = ((idxl & {}) != 0) ? one : zero;",
+                        self.writer.format_reg(reg, aidx),
                         1u32 << ebit
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         self.writer.out,
-                        "    v{} = ((idxh & {}) != 0) ? one : zero;",
-                        reg,
+                        "    {} = ((idxh & {}) != 0) ? one : zero;",
+                        self.writer.format_reg(reg, aidx),
                         1u32 << (ebit - 32)
                     )
                     .unwrap();
@@ -1619,17 +1630,20 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             let (dst, r) = if self.writer.config.init_index.is_some() {
                 if self.writer.config.init_local_index.is_some() {
                     (
-                        format!("v{}", reg),
+                        self.writer.format_reg(reg, aidx),
                         format!("{}[ivn + llen*{} + lidx]", arg_name, input),
                     )
                 } else {
                     (
-                        format!("v{}", reg),
+                        self.writer.format_reg(reg, aidx),
                         format!("{}[ivn + {}]", arg_name, input),
                     )
                 }
             } else {
-                (format!("v{}", reg), format!("{}[{}]", arg_name, input))
+                (
+                    self.writer.format_reg(reg, aidx),
+                    format!("{}[{}]", arg_name, input),
+                )
             };
             if let Some(ld_op) = self.writer.config.load_op {
                 write!(self.writer.out, "    {} = ", dst).unwrap();
@@ -1642,9 +1656,11 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
-        let arg0 = format!("v{}", arg0);
-        let arg1 =
-            CLangWriter::<'a>::format_neg_arg(self.writer.config, negs == VNegs::NegInput1, arg1);
+        let aidx = 0;
+        let arg0 = self.writer.format_reg(arg0, aidx);
+        let arg1 = self
+            .writer
+            .format_neg_arg(negs == VNegs::NegInput1, arg1, aidx);
         let mut op_vec = vec![];
         let args = [arg0.as_bytes(), arg1.as_bytes()];
         match op {
@@ -1669,7 +1685,12 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 panic!("This is not 2-argument operation");
             }
         };
-        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
         if negs == VNegs::NegOutput {
             CLangWriter::<'a>::write_neg(self.writer.config, &mut self.writer.out, &op_vec);
         } else {
@@ -1679,9 +1700,10 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize) {
-        let arg0 = format!("v{}", arg0);
-        let arg1 = format!("v{}", arg1);
-        let arg2 = format!("v{}", arg2);
+        let aidx = 0;
+        let arg0 = self.writer.format_reg(arg0, aidx);
+        let arg1 = self.writer.format_reg(arg1, aidx);
+        let arg2 = self.writer.format_reg(arg2, aidx);
         let mut op_vec = vec![];
         let args = [arg0.as_bytes(), arg1.as_bytes(), arg2.as_bytes()];
         match op {
@@ -1698,19 +1720,31 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 panic!("This is not 3-argument operation");
             }
         };
-        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
         self.writer.out.extend(op_vec);
         self.writer.out.extend(b";\n");
     }
 
     fn gen_not(&mut self, dst_arg: usize, arg: usize) {
-        write!(self.writer.out, "    v{} = ", dst_arg).unwrap();
-        let arg = format!("v{}", arg);
+        let aidx = 0;
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
+        let arg = self.writer.format_reg(arg, aidx);
         CLangWriter::write_neg(&self.writer.config, &mut self.writer.out, arg.as_bytes());
         self.writer.out.extend(b";\n");
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
+        let aidx = 0;
         let output = if let Some(real_output) = self.output_map.get(&output) {
             self.output_placement
                 .map(|(p, _)| p[*real_output])
@@ -1722,7 +1756,7 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
         } else {
             panic!("Unexpected output in gen_store!");
         };
-        let arg = CLangWriter::<'a>::format_neg_arg(self.writer.config, neg, reg);
+        let arg = self.writer.format_neg_arg(neg, reg, aidx);
         let (dst, src) = if self.writer.config.init_index.is_some() {
             if self.writer.config.init_local_index.is_some() {
                 (
