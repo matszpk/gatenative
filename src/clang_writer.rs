@@ -1198,6 +1198,239 @@ impl<'a> CLangWriter<'a> {
     }
 }
 
+impl<'a, 'c> CLangFuncWriter<'a, 'c> {
+    fn gen_load_int(&mut self, reg: usize, input: usize, aidx: usize) {
+        if let Some(arg_bit) = self.arg_input_map.get(&input) {
+            if *arg_bit < 32 {
+                writeln!(
+                    self.writer.out,
+                    "    {} = ((arg & {}) != 0) ? one : zero;",
+                    self.writer.format_reg(reg, aidx),
+                    1u32 << arg_bit
+                )
+                .unwrap();
+            } else {
+                writeln!(
+                    self.writer.out,
+                    "    {} = ((arg2 & {}) != 0) ? one : zero;",
+                    self.writer.format_reg(reg, aidx),
+                    1u32 << (*arg_bit - 32)
+                )
+                .unwrap();
+            }
+        } else if let Some(elem_bit) = self.elem_input_map.get(&input) {
+            if *elem_bit < (self.writer.elem_low_bits as usize) {
+                writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
+            } else {
+                let idx_value_postfix = if self.writer.array_len.is_some() {
+                    format!("{}", aidx)
+                } else {
+                    String::new()
+                };
+                let ebit = *elem_bit - (self.writer.elem_low_bits as usize);
+                if ebit < 32 {
+                    writeln!(
+                        self.writer.out,
+                        "    {} = ((idxl{} & {}) != 0) ? one : zero;",
+                        self.writer.format_reg(reg, aidx),
+                        idx_value_postfix,
+                        1u32 << ebit
+                    )
+                    .unwrap();
+                } else {
+                    writeln!(
+                        self.writer.out,
+                        "    {} = ((idxh{} & {}) != 0) ? one : zero;",
+                        self.writer.format_reg(reg, aidx),
+                        idx_value_postfix,
+                        1u32 << (ebit - 32)
+                    )
+                    .unwrap();
+                }
+            }
+        } else {
+            let arg_name = if self.single_buffer {
+                "output"
+            } else {
+                "input"
+            };
+            let input = if let Some(real_input) = self.input_map.get(&input) {
+                self.input_placement
+                    .map(|(p, _)| p[*real_input])
+                    .unwrap_or(*real_input)
+            } else if self.input_map.is_empty() {
+                self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
+            } else {
+                panic!("Unexpected input in gen_load!");
+            };
+            let (dst, r) = if self.writer.config.init_index.is_some() {
+                if self.writer.config.init_local_index.is_some() {
+                    (
+                        self.writer.format_reg(reg, aidx),
+                        format!("{}[ivn + llen*{} + lidx]", arg_name, input),
+                    )
+                } else {
+                    (
+                        self.writer.format_reg(reg, aidx),
+                        format!("{}[ivn + {}]", arg_name, input),
+                    )
+                }
+            } else {
+                (
+                    self.writer.format_reg(reg, aidx),
+                    format!("{}[{}]", arg_name, input),
+                )
+            };
+            if let Some(ld_op) = self.writer.config.load_op {
+                write!(self.writer.out, "    {} = ", dst).unwrap();
+                CLangWriter::<'a>::write_op(&mut self.writer.out, ld_op, &[r.as_bytes()]);
+                self.writer.out.extend(b";\n");
+            } else {
+                writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
+            }
+        }
+    }
+
+    fn gen_op_int(
+        &mut self,
+        op: InstrOp,
+        negs: VNegs,
+        dst_arg: usize,
+        arg0: usize,
+        arg1: usize,
+        aidx: usize,
+    ) {
+        let arg0 = self.writer.format_reg(arg0, aidx);
+        let arg1 = self
+            .writer
+            .format_neg_arg(negs == VNegs::NegInput1, arg1, aidx);
+        let mut op_vec = vec![];
+        let args = [arg0.as_bytes(), arg1.as_bytes()];
+        match op {
+            InstrOp::And => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.and_op, &args)
+            }
+            InstrOp::Or => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.or_op, &args)
+            }
+            InstrOp::Xor => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.xor_op, &args)
+            }
+            InstrOp::Impl => {
+                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.impl_op.unwrap(), &args)
+            }
+            InstrOp::Nimpl => CLangWriter::<'a>::write_op(
+                &mut op_vec,
+                self.writer.config.nimpl_op.unwrap(),
+                &args,
+            ),
+            _ => {
+                panic!("This is not 2-argument operation");
+            }
+        };
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
+        if negs == VNegs::NegOutput {
+            CLangWriter::<'a>::write_neg(self.writer.config, &mut self.writer.out, &op_vec);
+        } else {
+            self.writer.out.extend(op_vec);
+        }
+        self.writer.out.extend(b";\n");
+    }
+
+    fn gen_op3_int(
+        &mut self,
+        op: InstrOp,
+        dst_arg: usize,
+        arg0: usize,
+        arg1: usize,
+        arg2: usize,
+        aidx: usize,
+    ) {
+        let arg0 = self.writer.format_reg(arg0, aidx);
+        let arg1 = self.writer.format_reg(arg1, aidx);
+        let arg2 = self.writer.format_reg(arg2, aidx);
+        let mut op_vec = vec![];
+        let args = [arg0.as_bytes(), arg1.as_bytes(), arg2.as_bytes()];
+        match op {
+            InstrOp::Lop3(comb) => {
+                let comb_str = comb.to_string();
+                let args = [args[0], args[1], args[2], comb_str.as_bytes()];
+                CLangWriter::<'a>::write_op(
+                    &mut op_vec,
+                    self.writer.config.lop3_op.unwrap().1,
+                    &args,
+                )
+            }
+            _ => {
+                panic!("This is not 3-argument operation");
+            }
+        };
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
+        self.writer.out.extend(op_vec);
+        self.writer.out.extend(b";\n");
+    }
+
+    fn gen_not_int(&mut self, dst_arg: usize, arg: usize, aidx: usize) {
+        write!(
+            self.writer.out,
+            "    {} = ",
+            self.writer.format_reg(dst_arg, aidx)
+        )
+        .unwrap();
+        let arg = self.writer.format_reg(arg, aidx);
+        CLangWriter::write_neg(&self.writer.config, &mut self.writer.out, arg.as_bytes());
+        self.writer.out.extend(b";\n");
+    }
+
+    fn gen_store_int(&mut self, neg: bool, output: usize, reg: usize, aidx: usize) {
+        let output = if let Some(real_output) = self.output_map.get(&output) {
+            self.output_placement
+                .map(|(p, _)| p[*real_output])
+                .unwrap_or(*real_output)
+        } else if self.output_map.is_empty() {
+            self.output_placement
+                .map(|(p, _)| p[output])
+                .unwrap_or(output)
+        } else {
+            panic!("Unexpected output in gen_store!");
+        };
+        let arg = self.writer.format_neg_arg(neg, reg, aidx);
+        let (dst, src) = if self.writer.config.init_index.is_some() {
+            if self.writer.config.init_local_index.is_some() {
+                (
+                    format!("output[ovn + llen*{} + lidx]", output),
+                    format!("{}", arg),
+                )
+            } else {
+                (format!("output[ovn + {}]", output), format!("{}", arg))
+            }
+        } else {
+            (format!("output[{}]", output), format!("{}", arg))
+        };
+        if let Some(st_op) = self.writer.config.store_op {
+            self.writer.out.extend(b"    ");
+            CLangWriter::<'a>::write_op(
+                &mut self.writer.out,
+                st_op,
+                &[dst.as_bytes(), src.as_bytes()],
+            );
+            self.writer.out.extend(b";\n");
+        } else {
+            writeln!(self.writer.out, "    {} = {};", dst, src).unwrap();
+        }
+    }
+}
+
 impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     fn func_start(&mut self) {
         let shift_args = if self.writer.config.buffer_shift {
@@ -1587,222 +1820,52 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
     }
 
     fn gen_load(&mut self, reg: usize, input: usize) {
-        let aidx = 0; // array index
-        if let Some(arg_bit) = self.arg_input_map.get(&input) {
-            if *arg_bit < 32 {
-                writeln!(
-                    self.writer.out,
-                    "    {} = ((arg & {}) != 0) ? one : zero;",
-                    self.writer.format_reg(reg, aidx),
-                    1u32 << arg_bit
-                )
-                .unwrap();
-            } else {
-                writeln!(
-                    self.writer.out,
-                    "    {} = ((arg2 & {}) != 0) ? one : zero;",
-                    self.writer.format_reg(reg, aidx),
-                    1u32 << (*arg_bit - 32)
-                )
-                .unwrap();
-            }
-        } else if let Some(elem_bit) = self.elem_input_map.get(&input) {
-            if *elem_bit < (self.writer.elem_low_bits as usize) {
-                writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
-            } else {
-                let idx_value_postfix = if self.writer.array_len.is_some() {
-                    format!("{}", aidx)
-                } else {
-                    String::new()
-                };
-                let ebit = *elem_bit - (self.writer.elem_low_bits as usize);
-                if ebit < 32 {
-                    writeln!(
-                        self.writer.out,
-                        "    {} = ((idxl{} & {}) != 0) ? one : zero;",
-                        self.writer.format_reg(reg, aidx),
-                        idx_value_postfix,
-                        1u32 << ebit
-                    )
-                    .unwrap();
-                } else {
-                    writeln!(
-                        self.writer.out,
-                        "    {} = ((idxh{} & {}) != 0) ? one : zero;",
-                        self.writer.format_reg(reg, aidx),
-                        idx_value_postfix,
-                        1u32 << (ebit - 32)
-                    )
-                    .unwrap();
-                }
+        if let Some(alen) = self.writer.array_len {
+            for i in 0..alen {
+                self.gen_load_int(reg, input, i);
             }
         } else {
-            let arg_name = if self.single_buffer {
-                "output"
-            } else {
-                "input"
-            };
-            let input = if let Some(real_input) = self.input_map.get(&input) {
-                self.input_placement
-                    .map(|(p, _)| p[*real_input])
-                    .unwrap_or(*real_input)
-            } else if self.input_map.is_empty() {
-                self.input_placement.map(|(p, _)| p[input]).unwrap_or(input)
-            } else {
-                panic!("Unexpected input in gen_load!");
-            };
-            let (dst, r) = if self.writer.config.init_index.is_some() {
-                if self.writer.config.init_local_index.is_some() {
-                    (
-                        self.writer.format_reg(reg, aidx),
-                        format!("{}[ivn + llen*{} + lidx]", arg_name, input),
-                    )
-                } else {
-                    (
-                        self.writer.format_reg(reg, aidx),
-                        format!("{}[ivn + {}]", arg_name, input),
-                    )
-                }
-            } else {
-                (
-                    self.writer.format_reg(reg, aidx),
-                    format!("{}[{}]", arg_name, input),
-                )
-            };
-            if let Some(ld_op) = self.writer.config.load_op {
-                write!(self.writer.out, "    {} = ", dst).unwrap();
-                CLangWriter::<'a>::write_op(&mut self.writer.out, ld_op, &[r.as_bytes()]);
-                self.writer.out.extend(b";\n");
-            } else {
-                writeln!(self.writer.out, "    {} = {};", dst, r).unwrap();
-            }
+            self.gen_load_int(reg, input, 0);
         }
     }
 
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize) {
-        let aidx = 0;
-        let arg0 = self.writer.format_reg(arg0, aidx);
-        let arg1 = self
-            .writer
-            .format_neg_arg(negs == VNegs::NegInput1, arg1, aidx);
-        let mut op_vec = vec![];
-        let args = [arg0.as_bytes(), arg1.as_bytes()];
-        match op {
-            InstrOp::And => {
-                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.and_op, &args)
+        if let Some(alen) = self.writer.array_len {
+            for i in 0..alen {
+                self.gen_op_int(op, negs, dst_arg, arg0, arg1, i);
             }
-            InstrOp::Or => {
-                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.or_op, &args)
-            }
-            InstrOp::Xor => {
-                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.xor_op, &args)
-            }
-            InstrOp::Impl => {
-                CLangWriter::<'a>::write_op(&mut op_vec, self.writer.config.impl_op.unwrap(), &args)
-            }
-            InstrOp::Nimpl => CLangWriter::<'a>::write_op(
-                &mut op_vec,
-                self.writer.config.nimpl_op.unwrap(),
-                &args,
-            ),
-            _ => {
-                panic!("This is not 2-argument operation");
-            }
-        };
-        write!(
-            self.writer.out,
-            "    {} = ",
-            self.writer.format_reg(dst_arg, aidx)
-        )
-        .unwrap();
-        if negs == VNegs::NegOutput {
-            CLangWriter::<'a>::write_neg(self.writer.config, &mut self.writer.out, &op_vec);
         } else {
-            self.writer.out.extend(op_vec);
+            self.gen_op_int(op, negs, dst_arg, arg0, arg1, 0);
         }
-        self.writer.out.extend(b";\n");
     }
 
     fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize) {
-        let aidx = 0;
-        let arg0 = self.writer.format_reg(arg0, aidx);
-        let arg1 = self.writer.format_reg(arg1, aidx);
-        let arg2 = self.writer.format_reg(arg2, aidx);
-        let mut op_vec = vec![];
-        let args = [arg0.as_bytes(), arg1.as_bytes(), arg2.as_bytes()];
-        match op {
-            InstrOp::Lop3(comb) => {
-                let comb_str = comb.to_string();
-                let args = [args[0], args[1], args[2], comb_str.as_bytes()];
-                CLangWriter::<'a>::write_op(
-                    &mut op_vec,
-                    self.writer.config.lop3_op.unwrap().1,
-                    &args,
-                )
+        if let Some(alen) = self.writer.array_len {
+            for i in 0..alen {
+                self.gen_op3_int(op, dst_arg, arg0, arg1, arg2, i);
             }
-            _ => {
-                panic!("This is not 3-argument operation");
-            }
-        };
-        write!(
-            self.writer.out,
-            "    {} = ",
-            self.writer.format_reg(dst_arg, aidx)
-        )
-        .unwrap();
-        self.writer.out.extend(op_vec);
-        self.writer.out.extend(b";\n");
+        } else {
+            self.gen_op3_int(op, dst_arg, arg0, arg1, arg2, 0);
+        }
     }
 
     fn gen_not(&mut self, dst_arg: usize, arg: usize) {
-        let aidx = 0;
-        write!(
-            self.writer.out,
-            "    {} = ",
-            self.writer.format_reg(dst_arg, aidx)
-        )
-        .unwrap();
-        let arg = self.writer.format_reg(arg, aidx);
-        CLangWriter::write_neg(&self.writer.config, &mut self.writer.out, arg.as_bytes());
-        self.writer.out.extend(b";\n");
+        if let Some(alen) = self.writer.array_len {
+            for i in 0..alen {
+                self.gen_not_int(dst_arg, arg, i);
+            }
+        } else {
+            self.gen_not_int(dst_arg, arg, 0);
+        }
     }
 
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize) {
-        let aidx = 0;
-        let output = if let Some(real_output) = self.output_map.get(&output) {
-            self.output_placement
-                .map(|(p, _)| p[*real_output])
-                .unwrap_or(*real_output)
-        } else if self.output_map.is_empty() {
-            self.output_placement
-                .map(|(p, _)| p[output])
-                .unwrap_or(output)
-        } else {
-            panic!("Unexpected output in gen_store!");
-        };
-        let arg = self.writer.format_neg_arg(neg, reg, aidx);
-        let (dst, src) = if self.writer.config.init_index.is_some() {
-            if self.writer.config.init_local_index.is_some() {
-                (
-                    format!("output[ovn + llen*{} + lidx]", output),
-                    format!("{}", arg),
-                )
-            } else {
-                (format!("output[ovn + {}]", output), format!("{}", arg))
+        if let Some(alen) = self.writer.array_len {
+            for i in 0..alen {
+                self.gen_store_int(neg, output, reg, i);
             }
         } else {
-            (format!("output[{}]", output), format!("{}", arg))
-        };
-        if let Some(st_op) = self.writer.config.store_op {
-            self.writer.out.extend(b"    ");
-            CLangWriter::<'a>::write_op(
-                &mut self.writer.out,
-                st_op,
-                &[dst.as_bytes(), src.as_bytes()],
-            );
-            self.writer.out.extend(b";\n");
-        } else {
-            writeln!(self.writer.out, "    {} = {};", dst, src).unwrap();
+            self.gen_store_int(neg, output, reg, 0);
         }
     }
 
