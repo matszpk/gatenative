@@ -2019,18 +2019,19 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             write!(
                 self.out,
                 r##"#define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / {0}], (X).array[(I) / {0}], (I) % {0})
+    __INT_GET_U32((D), (X).array[(I) / {0}], (I) % {0})
 "##,
                 int_type_word_len
             )
             .unwrap();
 
             // GET_ALL_U32
-            self.out.extend(b"#define GET_ALL_U32(D,X) { \\\n");
+            self.out.extend(b"#define GET_U32_ALL(D,X) { \\\n");
             for i in 0..alen {
                 writeln!(
                     self.out,
-                    "    __INT_GET_U32_ALL((D).array[{0}], (X).array[{0}]); \\",
+                    "    __INT_GET_U32_ALL((&((D)[{0}])), (X).array[{1}]); \\",
+                    i * usize::try_from(int_type_word_len).unwrap(),
                     i
                 )
                 .unwrap();
@@ -2040,19 +2041,20 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             write!(
                 self.out,
                 r##"#define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / {0}], (S).array[(I) / {0}], (I) % {0})
+    __INT_SET_U32((X).array[(I) / {0}], (S), (I) % {0})
 "##,
                 int_type_word_len
             )
             .unwrap();
 
             // SET_ALL_U32
-            self.out.extend(b"#define SET_ALL_U32(X,S) { \\\n");
+            self.out.extend(b"#define SET_U32_ALL(X,S) { \\\n");
             for i in 0..alen {
                 writeln!(
                     self.out,
-                    "    __INT_SET_U32_ALL((X).array[{0}], (S).array[{0}]); \\",
-                    i
+                    "    __INT_SET_U32_ALL((X).array[{0}], (&((S)[{1}]))); \\",
+                    i,
+                    i * usize::try_from(int_type_word_len).unwrap(),
                 )
                 .unwrap();
             }

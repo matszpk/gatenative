@@ -45,20 +45,20 @@ typedef struct _gate_sys_type {
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
 #define __INT_SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 2], (X).array[(I) / 2], (I) % 2)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 2], (I) % 2)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[2])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[4])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[6])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 2], (S).array[(I) / 2], (I) % 2)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 2], (S), (I) % 2)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[2]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[4]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[6]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, size_t idx) {
@@ -160,20 +160,20 @@ typedef struct _gate_sys_type {
 }
 #define __INT_SET_U32_ALL(X,S) { (X) = _mm256_loadu_si256((__m256i*)(S)); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 8], (X).array[(I) / 8], (I) % 8)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 8], (I) % 8)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[8])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[16])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[24])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 8], (S).array[(I) / 8], (I) % 8)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 8], (S), (I) % 8)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[8]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[16]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[24]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, size_t idx) {
@@ -266,20 +266,20 @@ typedef struct _gate_sys_type {
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
 #define __INT_SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 2], (X).array[(I) / 2], (I) % 2)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 2], (I) % 2)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[2])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[4])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[6])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 2], (S).array[(I) / 2], (I) % 2)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 2], (S), (I) % 2)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[2]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[4]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[6]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, unsigned int arg, unsigned int arg2, size_t idx) {
@@ -405,20 +405,20 @@ typedef struct _gate_sys_type {
 }
 #define __INT_SET_U32_ALL(X,S) { (X) = _mm256_loadu_ps((float*)(S)); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 8], (X).array[(I) / 8], (I) % 8)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 8], (I) % 8)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[8])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[16])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[24])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 8], (S).array[(I) / 8], (I) % 8)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 8], (S), (I) % 8)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[8]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[16]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[24]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, unsigned int arg, unsigned int arg2, size_t idx) {
@@ -542,20 +542,20 @@ typedef struct _gate_sys_type {
     (X) = ((X) & ~mask) | (((uint64_t)(S) << ((I)<<5)) & mask); }
 #define __INT_SET_U32_ALL(X,S) { (X) = ((uint64_t)((S)[0])) | (((uint64_t)((S)[1]))<<32); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 2], (X).array[(I) / 2], (I) % 2)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 2], (I) % 2)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[2])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[4])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[6])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 2], (S).array[(I) / 2], (I) % 2)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 2], (S), (I) % 2)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[2]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[4]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[6]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, size_t idx) {
@@ -760,20 +760,20 @@ typedef struct _gate_sys_type {
 }
 #define __INT_SET_U32_ALL(X,S) { (X) = _mm256_loadu_si256((__m256i*)(S)); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 8], (X).array[(I) / 8], (I) % 8)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 8], (I) % 8)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[8])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[16])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[24])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 8], (S).array[(I) / 8], (I) % 8)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 8], (S), (I) % 8)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[8]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[16]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[24]))); \
 }
 void gate_sys_blab(const gate_sys_type* input,
     gate_sys_type* output, size_t idx) {
@@ -1040,20 +1040,20 @@ typedef struct _gate_sys_type {
 }
 #define __INT_SET_U32_ALL(X,S) { (X) = _mm_loadu_si128((__m128i*)(S)); }
 #define GET_U32(D,X,I) \
-    __INT_GET_U32((D).array[(I) / 4], (X).array[(I) / 4], (I) % 4)
-#define GET_ALL_U32(D,X) { \
-    __INT_GET_U32_ALL((D).array[0], (X).array[0]); \
-    __INT_GET_U32_ALL((D).array[1], (X).array[1]); \
-    __INT_GET_U32_ALL((D).array[2], (X).array[2]); \
-    __INT_GET_U32_ALL((D).array[3], (X).array[3]); \
+    __INT_GET_U32((D), (X).array[(I) / 4], (I) % 4)
+#define GET_U32_ALL(D,X) { \
+    __INT_GET_U32_ALL((&((D)[0])), (X).array[0]); \
+    __INT_GET_U32_ALL((&((D)[4])), (X).array[1]); \
+    __INT_GET_U32_ALL((&((D)[8])), (X).array[2]); \
+    __INT_GET_U32_ALL((&((D)[12])), (X).array[3]); \
 }
 #define SET_U32(X,S,I) \
-    __INT_SET_U32((X).array[(I) / 4], (S).array[(I) / 4], (I) % 4)
-#define SET_ALL_U32(X,S) { \
-    __INT_SET_U32_ALL((X).array[0], (S).array[0]); \
-    __INT_SET_U32_ALL((X).array[1], (S).array[1]); \
-    __INT_SET_U32_ALL((X).array[2], (S).array[2]); \
-    __INT_SET_U32_ALL((X).array[3], (S).array[3]); \
+    __INT_SET_U32((X).array[(I) / 4], (S), (I) % 4)
+#define SET_U32_ALL(X,S) { \
+    __INT_SET_U32_ALL((X).array[0], (&((S)[0]))); \
+    __INT_SET_U32_ALL((X).array[1], (&((S)[4]))); \
+    __INT_SET_U32_ALL((X).array[2], (&((S)[8]))); \
+    __INT_SET_U32_ALL((X).array[3], (&((S)[12]))); \
 }
 void gate_sys_mulxx(gate_sys_type* output, unsigned int arg, unsigned int arg2, void* buffer, size_t idx) {
     const __m128i zero = *((const __m128i*)zero_value);
