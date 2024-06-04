@@ -175,6 +175,8 @@ fn get_builder_configs() -> Vec<(
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig::new();
     let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
+    let array_len_8_config = CPUBuilderConfig::new().array_len(Some(8));
+    let array_len_2_config = CPUBuilderConfig::new().array_len(Some(2));
 
     let mut configs = vec![
         (NoExtension, &CLANG_WRITER_U64_TEST_IMPL, None),
@@ -223,6 +225,18 @@ fn get_builder_configs() -> Vec<(
     }
     if *CPU_EXTENSION == ARMNEON {
         configs.push((ARMNEON, &CLANG_WRITER_ARM_NEON, None));
+    }
+    configs.push((
+        NoExtension,
+        &CLANG_WRITER_U64_TEST_IMPL,
+        Some(array_len_8_config),
+    ));
+    if *CPU_EXTENSION == IntelAVX512 || *CPU_EXTENSION == IntelAVX2 {
+        configs.push((
+            IntelAVX2,
+            &CLANG_WRITER_INTEL_AVX2,
+            Some(array_len_2_config),
+        ));
     }
     // double for parallel
     let configs = configs

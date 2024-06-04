@@ -1112,6 +1112,7 @@ impl<'a> CLangWriterConfig<'a> {
     pub fn writer_with_array_len(&'a self, array_len: Option<usize>) -> CLangWriter<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
         if let Some(alen) = array_len {
+            println!("ArrayLen: {}", alen);
             assert_ne!(alen, 0);
         }
         CLangWriter {
@@ -1657,14 +1658,14 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 for i in 0..alen {
                     writeln!(
                         self.writer.out,
-                        "    const unsigned int idxl{0} = (idx + {0}) & 0xffffffff;",
-                        i
+                        "    const unsigned int idxl{0} = (idx * {1} + {0}) & 0xffffffff;",
+                        i, alen
                     )
                     .unwrap();
                     writeln!(
                         self.writer.out,
-                        "    const unsigned int idxh{0} = (idx + {0}) >> 32;",
-                        i
+                        "    const unsigned int idxh{0} = (idx * {1} + {0}) >> 32;",
+                        i, alen
                     )
                     .unwrap();
                 }
@@ -2093,7 +2094,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define INPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_INPUT_TRANSFORM_B{0}({3}, ({2}).array[i]) \
+        __INT_INPUT_TRANSFORM_B{0}({3}, {2}) \
     }} \
 }}
 "##,
@@ -2112,7 +2113,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                         r##"#define OUTPUT_TRANSFORM_B{0}({1}, {2}) {{ \
     unsigned int i; \
     for (i = 0; i < {4}; i++) {{ \
-        __INT_OUTPUT_TRANSFORM_B{0}(({1}).array[i], ({3})) \
+        __INT_OUTPUT_TRANSFORM_B{0}({1}, {3}) \
     }} \
 }}
 "##,
