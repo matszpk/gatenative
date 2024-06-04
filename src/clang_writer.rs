@@ -1406,12 +1406,29 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                 )
                 .unwrap();
             }
-            self.writer
-                .out
-                .extend(b"    const unsigned int idxl = idx & 0xffffffff;\n");
-            self.writer
-                .out
-                .extend(b"    const unsigned int idxh = idx >> 32;\n");
+            if let Some(alen) = self.writer.array_len {
+                for i in 0..alen {
+                    writeln!(
+                        self.writer.out,
+                        "    const unsigned int idxl{0} = (idx + {0}) & 0xffffffff;",
+                        i
+                    )
+                    .unwrap();
+                    writeln!(
+                        self.writer.out,
+                        "    const unsigned int idxh{0} = (idx + {0}) >> 32;",
+                        i
+                    )
+                    .unwrap();
+                }
+            } else {
+                self.writer
+                    .out
+                    .extend(b"    const unsigned int idxl = idx & 0xffffffff;\n");
+                self.writer
+                    .out
+                    .extend(b"    const unsigned int idxh = idx >> 32;\n");
+            }
         }
         if let Some(iter_max) = self.inner_loop {
             writeln!(
@@ -1593,20 +1610,27 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
             if *elem_bit < (self.writer.elem_low_bits as usize) {
                 writeln!(self.writer.out, "    v{} = elem_low_bit{};", reg, *elem_bit).unwrap();
             } else {
+                let idx_value_postfix = if self.writer.array_len.is_some() {
+                    format!("{}", aidx)
+                } else {
+                    String::new()
+                };
                 let ebit = *elem_bit - (self.writer.elem_low_bits as usize);
                 if ebit < 32 {
                     writeln!(
                         self.writer.out,
-                        "    {} = ((idxl & {}) != 0) ? one : zero;",
+                        "    {} = ((idxl{} & {}) != 0) ? one : zero;",
                         self.writer.format_reg(reg, aidx),
+                        idx_value_postfix,
                         1u32 << ebit
                     )
                     .unwrap();
                 } else {
                     writeln!(
                         self.writer.out,
-                        "    {} = ((idxh & {}) != 0) ? one : zero;",
+                        "    {} = ((idxh{} & {}) != 0) ? one : zero;",
                         self.writer.format_reg(reg, aidx),
+                        idx_value_postfix,
                         1u32 << (ebit - 32)
                     )
                     .unwrap();
