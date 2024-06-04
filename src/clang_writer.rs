@@ -2011,11 +2011,11 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             .unwrap();
 
             // GET_ALL_U32
-            self.out.extend(b"#define GET_ALL_U32(D,X) {\n");
+            self.out.extend(b"#define GET_ALL_U32(D,X) { \\\n");
             for i in 0..alen {
                 writeln!(
                     self.out,
-                    "    __INT_GET_U32_ALL((D).array[{0}], (X).array[{0}]);",
+                    "    __INT_GET_U32_ALL((D).array[{0}], (X).array[{0}]); \\",
                     i
                 )
                 .unwrap();
@@ -2032,11 +2032,11 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
             .unwrap();
 
             // SET_ALL_U32
-            self.out.extend(b"#define SET_ALL_U32(X,S) {\n");
+            self.out.extend(b"#define SET_ALL_U32(X,S) { \\\n");
             for i in 0..alen {
                 writeln!(
                     self.out,
-                    "    __INT_SET_U32_ALL((X).array[{0}], (S).array[{0}]);",
+                    "    __INT_SET_U32_ALL((X).array[{0}], (S).array[{0}]); \\",
                     i
                 )
                 .unwrap();
