@@ -672,8 +672,8 @@ __attribute__((aligned(32))) = {
             "",
         ],
     },
-    load_op: Some("_mm256_loadu_si256((const float*)&{})"),
-    store_op: Some("_mm256_storeu_si256((float*)&{}, {})"),
+    load_op: Some("_mm256_loadu_si256((const __m256i*)&{})"),
+    store_op: Some("_mm256_storeu_si256((__m256i*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[8]; \
     _mm256_storeu_si256((__m256i*)temp, (X)); \
     (D) = temp[(I)]; \

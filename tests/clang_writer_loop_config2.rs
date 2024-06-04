@@ -112,10 +112,10 @@ fn test_clang_writer_loop_config_2() {
     __m256i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm256_loadu_si256((const float*)&input[0]);
-    v1 = _mm256_loadu_si256((const float*)&input[1]);
-    v2 = _mm256_loadu_si256((const float*)&input[2]);
-    v3 = _mm256_loadu_si256((const float*)&input[3]);
+    v0 = _mm256_loadu_si256((const __m256i*)&input[0]);
+    v1 = _mm256_loadu_si256((const __m256i*)&input[1]);
+    v2 = _mm256_loadu_si256((const __m256i*)&input[2]);
+    v3 = _mm256_loadu_si256((const __m256i*)&input[3]);
     }
     v4 = _mm256_and_si256(v2, v3);
     v2 = _mm256_xor_si256(v2, v3);
@@ -1565,52 +1565,52 @@ fn test_clang_writer_loop_config_2() {
 #undef i12
 #undef i13
     if (iter == 0) {
-    v0 = _mm256_loadu_si256((const float*)&input[0]);
-    v1 = _mm256_loadu_si256((const float*)&input[1]);
-    v4 = _mm256_loadu_si256((const float*)&input[2]);
-    v6 = _mm256_loadu_si256((const float*)&input[3]);
-    v9 = _mm256_loadu_si256((const float*)&input[4]);
-    v11 = _mm256_loadu_si256((const float*)&input[5]);
-    v14 = _mm256_loadu_si256((const float*)&input[6]);
-    v15 = _mm256_loadu_si256((const float*)&input[7]);
+    v0 = _mm256_loadu_si256((const __m256i*)&input[0]);
+    v1 = _mm256_loadu_si256((const __m256i*)&input[1]);
+    v4 = _mm256_loadu_si256((const __m256i*)&input[2]);
+    v6 = _mm256_loadu_si256((const __m256i*)&input[3]);
+    v9 = _mm256_loadu_si256((const __m256i*)&input[4]);
+    v11 = _mm256_loadu_si256((const __m256i*)&input[5]);
+    v14 = _mm256_loadu_si256((const __m256i*)&input[6]);
+    v15 = _mm256_loadu_si256((const __m256i*)&input[7]);
     }
     v16 = _mm256_xor_si256(v0, v4);
-    _mm256_storeu_si256((float*)&output[0], v16);
+    _mm256_storeu_si256((__m256i*)&output[0], v16);
     v17 = _mm256_xor_si256(v1, v5);
     v0 = _mm256_and_si256(v0, v4);
     v4 = _mm256_xor_si256(v17, v0);
-    _mm256_storeu_si256((float*)&output[1], v4);
+    _mm256_storeu_si256((__m256i*)&output[1], v4);
     v18 = _mm256_xor_si256(v2, v6);
     v0 = _mm256_and_si256(v17, v0);
     v1 = _mm256_and_si256(v1, v5);
     v0 = _mm256_or_si256(v0, v1);
     v1 = _mm256_xor_si256(v18, v0);
-    _mm256_storeu_si256((float*)&output[2], v1);
+    _mm256_storeu_si256((__m256i*)&output[2], v1);
     v3 = _mm256_xor_si256(v3, v7);
     v0 = _mm256_and_si256(v18, v0);
     v2 = _mm256_and_si256(v2, v6);
     v0 = _mm256_or_si256(v0, v2);
     v0 = _mm256_xor_si256(v3, v0);
-    _mm256_storeu_si256((float*)&output[3], v0);
+    _mm256_storeu_si256((__m256i*)&output[3], v0);
     v2 = _mm256_xor_si256(v8, v12);
-    _mm256_storeu_si256((float*)&output[4], v2);
+    _mm256_storeu_si256((__m256i*)&output[4], v2);
     v3 = _mm256_xor_si256(v9, v13);
     v5 = _mm256_andnot_si256(v12, v8);
     v5 = _mm256_andnot_si256(v5, v2);
     v6 = _mm256_xor_si256(v3, v5);
-    _mm256_storeu_si256((float*)&output[5], v6);
+    _mm256_storeu_si256((__m256i*)&output[5], v6);
     v7 = _mm256_xor_si256(v10, v14);
     v3 = _mm256_or_si256(v3, v5);
     v5 = _mm256_andnot_si256(v13, v9);
     v3 = _mm256_andnot_si256(v5, v3);
     v5 = _mm256_xor_si256(v7, v3);
-    _mm256_storeu_si256((float*)&output[6], v5);
+    _mm256_storeu_si256((__m256i*)&output[6], v5);
     v8 = _mm256_xor_si256(v11, v15);
     v3 = _mm256_or_si256(v7, v3);
     v7 = _mm256_andnot_si256(v14, v10);
     v3 = _mm256_andnot_si256(v7, v3);
     v3 = _mm256_xor_si256(v8, v3);
-    _mm256_storeu_si256((float*)&output[7], v3);
+    _mm256_storeu_si256((__m256i*)&output[7], v3);
 #define o0 (v16)
 #define o2 (v1)
 #define o3 (v0)
@@ -1621,14 +1621,14 @@ fn test_clang_writer_loop_config_2() {
 #undef o3
 #undef o5
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_si256((float*)&output[0], v16);
-    _mm256_storeu_si256((float*)&output[1], v4);
-    _mm256_storeu_si256((float*)&output[2], v1);
-    _mm256_storeu_si256((float*)&output[3], v0);
-    _mm256_storeu_si256((float*)&output[4], v2);
-    _mm256_storeu_si256((float*)&output[5], v6);
-    _mm256_storeu_si256((float*)&output[6], v5);
-    _mm256_storeu_si256((float*)&output[7], v3);
+    _mm256_storeu_si256((__m256i*)&output[0], v16);
+    _mm256_storeu_si256((__m256i*)&output[1], v4);
+    _mm256_storeu_si256((__m256i*)&output[2], v1);
+    _mm256_storeu_si256((__m256i*)&output[3], v0);
+    _mm256_storeu_si256((__m256i*)&output[4], v2);
+    _mm256_storeu_si256((__m256i*)&output[5], v6);
+    _mm256_storeu_si256((__m256i*)&output[6], v5);
+    _mm256_storeu_si256((__m256i*)&output[7], v3);
     } else {
     v11 = v6;
     v6 = v0;
@@ -2402,12 +2402,12 @@ fn test_clang_writer_loop_config_2() {
 #undef i6
 #undef i10
     if (iter == 0) {
-    v0 = _mm256_loadu_si256((const float*)&input[0]);
-    v1 = _mm256_loadu_si256((const float*)&input[2]);
-    v5 = _mm256_loadu_si256((const float*)&input[1]);
-    v7 = _mm256_loadu_si256((const float*)&input[3]);
-    v8 = _mm256_loadu_si256((const float*)&input[5]);
-    v9 = _mm256_loadu_si256((const float*)&input[7]);
+    v0 = _mm256_loadu_si256((const __m256i*)&input[0]);
+    v1 = _mm256_loadu_si256((const __m256i*)&input[2]);
+    v5 = _mm256_loadu_si256((const __m256i*)&input[1]);
+    v7 = _mm256_loadu_si256((const __m256i*)&input[3]);
+    v8 = _mm256_loadu_si256((const __m256i*)&input[5]);
+    v9 = _mm256_loadu_si256((const __m256i*)&input[7]);
     }
     v10 = elem_low_bit0;
     v11 = _mm256_xor_si256(v0, v10);
@@ -2415,24 +2415,24 @@ fn test_clang_writer_loop_config_2() {
     v13 = _mm256_xor_si256(v1, v12);
     v0 = _mm256_and_si256(v0, v10);
     v10 = _mm256_xor_si256(v13, v0);
-    _mm256_storeu_si256((float*)&output[5], v10);
+    _mm256_storeu_si256((__m256i*)&output[5], v10);
     v14 = _mm256_xor_si256(v2, v4);
     v0 = _mm256_and_si256(v13, v0);
     v1 = _mm256_and_si256(v1, v12);
     v0 = _mm256_or_si256(v0, v1);
     v1 = _mm256_xor_si256(v14, v0);
-    _mm256_storeu_si256((float*)&output[7], v1);
+    _mm256_storeu_si256((__m256i*)&output[7], v1);
     v12 = elem_low_bit2;
     v3 = _mm256_xor_si256(v3, v12);
     v0 = _mm256_and_si256(v14, v0);
     v2 = _mm256_and_si256(v2, v4);
     v0 = _mm256_or_si256(v0, v2);
     v0 = _mm256_xor_si256(v3, v0);
-    _mm256_storeu_si256((float*)&output[3], v0);
+    _mm256_storeu_si256((__m256i*)&output[3], v0);
     v2 = elem_low_bit3;
     v3 = ((arg & 1) != 0) ? one : zero;
     v4 = _mm256_xor_si256(v2, v3);
-    _mm256_storeu_si256((float*)&output[2], v4);
+    _mm256_storeu_si256((__m256i*)&output[2], v4);
     v12 = ((arg & 2) != 0) ? one : zero;
     v13 = _mm256_xor_si256(v5, v12);
     v2 = _mm256_andnot_si256(v3, v2);
@@ -2443,13 +2443,13 @@ fn test_clang_writer_loop_config_2() {
     v5 = _mm256_andnot_si256(v12, v5);
     v2 = _mm256_andnot_si256(v5, v2);
     v5 = _mm256_xor_si256(v14, v2);
-    _mm256_storeu_si256((float*)&output[0], v5);
+    _mm256_storeu_si256((__m256i*)&output[0], v5);
     v7 = _mm256_xor_si256(v7, v9);
     v2 = _mm256_or_si256(v14, v2);
     v6 = _mm256_andnot_si256(v8, v6);
     v2 = _mm256_andnot_si256(v6, v2);
     v2 = _mm256_xor_si256(v7, v2);
-    _mm256_storeu_si256((float*)&output[1], v2);
+    _mm256_storeu_si256((__m256i*)&output[1], v2);
 #define o0 (v11)
 #define o2 (v1)
 #define o3 (v0)
@@ -2460,12 +2460,12 @@ fn test_clang_writer_loop_config_2() {
 #undef o3
 #undef o5
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_si256((float*)&output[5], v10);
-    _mm256_storeu_si256((float*)&output[7], v1);
-    _mm256_storeu_si256((float*)&output[3], v0);
-    _mm256_storeu_si256((float*)&output[2], v4);
-    _mm256_storeu_si256((float*)&output[0], v5);
-    _mm256_storeu_si256((float*)&output[1], v2);
+    _mm256_storeu_si256((__m256i*)&output[5], v10);
+    _mm256_storeu_si256((__m256i*)&output[7], v1);
+    _mm256_storeu_si256((__m256i*)&output[3], v0);
+    _mm256_storeu_si256((__m256i*)&output[2], v4);
+    _mm256_storeu_si256((__m256i*)&output[0], v5);
+    _mm256_storeu_si256((__m256i*)&output[1], v2);
     } else {
     v7 = v0;
     v9 = v1;

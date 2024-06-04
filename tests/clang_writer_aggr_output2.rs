@@ -1044,36 +1044,36 @@ fn test_clang_writer_aggregate_output_to_buffer_2() {
 #undef i3
 #undef i6
 #undef i10
-    v4 = _mm256_loadu_si256((const float*)&output[0]);
+    v4 = _mm256_loadu_si256((const __m256i*)&output[0]);
     v5 = elem_low_bit0;
     v6 = _mm256_xor_si256(v4, v5);
-    v7 = _mm256_loadu_si256((const float*)&output[2]);
+    v7 = _mm256_loadu_si256((const __m256i*)&output[2]);
     v8 = elem_low_bit1;
     v9 = _mm256_xor_si256(v7, v8);
     v4 = _mm256_and_si256(v4, v5);
     v5 = _mm256_xor_si256(v9, v4);
-    v10 = _mm256_loadu_si256((const float*)&output[5]);
-    _mm256_storeu_si256((float*)&output[5], v5);
+    v10 = _mm256_loadu_si256((const __m256i*)&output[5]);
+    _mm256_storeu_si256((__m256i*)&output[5], v5);
     v5 = _mm256_xor_si256(v0, v2);
     v4 = _mm256_and_si256(v9, v4);
     v7 = _mm256_and_si256(v7, v8);
     v4 = _mm256_or_si256(v4, v7);
     v7 = _mm256_xor_si256(v5, v4);
-    v8 = _mm256_loadu_si256((const float*)&output[7]);
-    _mm256_storeu_si256((float*)&output[7], v7);
+    v8 = _mm256_loadu_si256((const __m256i*)&output[7]);
+    _mm256_storeu_si256((__m256i*)&output[7], v7);
     v9 = elem_low_bit2;
     v1 = _mm256_xor_si256(v1, v9);
     v4 = _mm256_and_si256(v5, v4);
     v0 = _mm256_and_si256(v0, v2);
     v0 = _mm256_or_si256(v4, v0);
     v0 = _mm256_xor_si256(v1, v0);
-    v1 = _mm256_loadu_si256((const float*)&output[3]);
-    _mm256_storeu_si256((float*)&output[3], v0);
+    v1 = _mm256_loadu_si256((const __m256i*)&output[3]);
+    _mm256_storeu_si256((__m256i*)&output[3], v0);
     v2 = elem_low_bit3;
     v4 = ((arg & 1) != 0) ? one : zero;
     v5 = _mm256_xor_si256(v2, v4);
-    _mm256_storeu_si256((float*)&output[2], v5);
-    v9 = _mm256_loadu_si256((const float*)&output[1]);
+    _mm256_storeu_si256((__m256i*)&output[2], v5);
+    v9 = _mm256_loadu_si256((const __m256i*)&output[1]);
     v11 = ((arg & 2) != 0) ? one : zero;
     v12 = _mm256_xor_si256(v9, v11);
     v2 = _mm256_andnot_si256(v4, v2);
@@ -1084,13 +1084,13 @@ fn test_clang_writer_aggregate_output_to_buffer_2() {
     v9 = _mm256_andnot_si256(v11, v9);
     v2 = _mm256_andnot_si256(v9, v2);
     v9 = _mm256_xor_si256(v5, v2);
-    _mm256_storeu_si256((float*)&output[0], v9);
+    _mm256_storeu_si256((__m256i*)&output[0], v9);
     v1 = _mm256_xor_si256(v1, v8);
     v2 = _mm256_or_si256(v5, v2);
     v3 = _mm256_andnot_si256(v10, v3);
     v2 = _mm256_andnot_si256(v3, v2);
     v1 = _mm256_xor_si256(v1, v2);
-    _mm256_storeu_si256((float*)&output[1], v1);
+    _mm256_storeu_si256((__m256i*)&output[1], v1);
 #define o0 (v6)
 #define o2 (v7)
 #define o3 (v0)
