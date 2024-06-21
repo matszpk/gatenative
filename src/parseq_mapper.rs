@@ -14,6 +14,7 @@ use std::sync::{
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
+#[derive(Clone, Debug)]
 pub enum ParSeqObject<T1, T2> {
     Par(T1),
     Seq(T2),
@@ -705,7 +706,7 @@ pub enum ParSeqMapperBuilderError<PE, SE> {
     SeqError(usize, SE),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ParSeqDynamicConfig<'a> {
     pub init_code: Option<&'a str>,
     pub pop_input_code: Option<&'a str>,

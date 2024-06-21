@@ -40,7 +40,7 @@ mod vlop3circuit3;
 
 pub use opencl3;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct CodeConfig<'a> {
     // determine place of circuit input bits in input bits and its length.
     // first: index - circuit input bit, value - destination input bit. second - input length.
@@ -184,7 +184,7 @@ pub fn default_pop_input_len(word_len: u32) -> usize {
 }
 
 #[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum InstrOp {
     And,
     Or,
