@@ -464,6 +464,125 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
     }
 }
 
+// Returns final placements in buffer:
+// First tuple for circuit's input, second for circuit's output.
+// structure of input tuples:
+// * list of position in input:
+//   index - circuit's input
+//   value - position in input buffer
+// * length of bits in input buffer
+// structure of output tuples:
+// * list of position in output:
+//   index - circuit's output
+//   value - position in output buffer
+// * length of bits in output buffer
+pub fn get_final_placements<T>(
+    circuit: &Circuit<T>,
+    code_config: &CodeConfig,
+) -> ((Vec<Option<usize>>, usize), (Vec<Option<usize>>, usize))
+where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    let input_len = usize::try_from(circuit.input_len()).unwrap();
+    let output_len = circuit.outputs().len();
+
+    let input_placement = if !code_config.pop_input_code.is_some()
+        || !code_config.pop_from_buffer.is_none()
+    {
+        let arg_input_map = if let Some(arg_inputs) = code_config.arg_inputs {
+            HashMap::from_iter(arg_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+        } else {
+            HashMap::new()
+        };
+        let elem_input_map = if let Some(elem_inputs) = code_config.elem_inputs {
+            HashMap::from_iter(elem_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+        } else {
+            HashMap::new()
+        };
+        let pop_input_map = if code_config.pop_input_code.is_some() {
+            if let Some(pop_inputs) = code_config.pop_from_buffer {
+                HashMap::from_iter(pop_inputs.into_iter().enumerate().map(|(i, x)| (*x, i)))
+            } else {
+                HashMap::new()
+            }
+        } else {
+            HashMap::new()
+        };
+        let mut input_map = vec![];
+        let input_map =
+            if !arg_input_map.is_empty() || !elem_input_map.is_empty() || !pop_input_map.is_empty()
+            {
+                let mut count = 0;
+                for i in 0..input_len {
+                    if !arg_input_map.contains_key(&i)
+                        && !elem_input_map.contains_key(&i)
+                        && !pop_input_map.contains_key(&i)
+                    {
+                        input_map.push(Some(count));
+                        count += 1;
+                    } else {
+                        input_map.push(None);
+                    }
+                }
+                (input_map, count)
+            } else {
+                ((0..input_len).map(|x| Some(x)).collect(), input_len)
+            };
+        if let Some((ip, is)) = code_config.input_placement {
+            (
+                input_map
+                    .0
+                    .into_iter()
+                    .map(|p| p.map(|x| ip[x]))
+                    .collect::<Vec<_>>(),
+                is,
+            )
+        } else {
+            input_map
+        }
+    } else {
+        (vec![None; input_len], 0)
+    };
+
+    let output_placement =
+        if !code_config.aggr_output_code.is_some() || !code_config.aggr_to_buffer.is_none() {
+            let output_map = if let Some(excl_outputs) = code_config.exclude_outputs {
+                let mut output_map = vec![];
+                let excl_set = HashSet::<usize>::from_iter(excl_outputs.iter().copied());
+                let mut count = 0;
+                for i in 0..output_len {
+                    if !excl_set.contains(&i) {
+                        output_map.push(Some(count));
+                        count += 1;
+                    }
+                }
+                (output_map, count)
+            } else {
+                ((0..output_len).map(|x| Some(x)).collect(), output_len)
+            };
+            if let Some((op, os)) = code_config.output_placement {
+                (
+                    output_map
+                        .0
+                        .into_iter()
+                        .map(|p| p.map(|x| op[x]))
+                        .collect::<Vec<_>>(),
+                    os,
+                )
+            } else {
+                output_map
+            }
+        } else {
+            (vec![None; output_len], 0)
+        };
+
+    (input_placement, output_placement)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
