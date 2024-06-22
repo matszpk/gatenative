@@ -476,20 +476,11 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
 //   index - circuit's output
 //   value - position in output buffer
 // * length of bits in output buffer
-pub fn get_final_placements<T>(
-    circuit: &Circuit<T>,
+pub fn get_final_placements(
+    input_len: usize,
+    output_len: usize,
     code_config: &CodeConfig,
-) -> ((Vec<Option<usize>>, usize), (Vec<Option<usize>>, usize))
-where
-    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
-    T: Default + TryFrom<usize>,
-    <T as TryFrom<usize>>::Error: Debug,
-    usize: TryFrom<T>,
-    <usize as TryFrom<T>>::Error: Debug,
-{
-    let input_len = usize::try_from(circuit.input_len()).unwrap();
-    let output_len = circuit.outputs().len();
-
+) -> ((Vec<Option<usize>>, usize), (Vec<Option<usize>>, usize)) {
     let input_placement = if !code_config.pop_input_code.is_some()
         || !code_config.pop_from_buffer.is_none()
     {
@@ -558,6 +549,8 @@ where
                     if !excl_set.contains(&i) {
                         output_map.push(Some(count));
                         count += 1;
+                    } else {
+                        output_map.push(None)
                     }
                 }
                 (output_map, count)
@@ -694,5 +687,205 @@ mod tests {
             mvar_alloc_tool.use_var(1, t10); // **., ..*
             mvar_alloc_tool.use_var(0, t6); // *.., ..*
         }
+    }
+
+    #[test]
+    fn test_get_final_placements() {
+        assert_eq!(
+            (
+                (vec![Some(0), Some(1), Some(2), Some(3)], 4),
+                (vec![Some(0), Some(1), Some(2), Some(3), Some(4)], 5),
+            ),
+            get_final_placements(4, 5, &CodeConfig::new()),
+        );
+        assert_eq!(
+            (
+                (vec![Some(4), Some(5), Some(1), Some(7)], 8),
+                (vec![Some(2), Some(4), Some(6), Some(1), Some(9)], 11),
+            ),
+            get_final_placements(
+                4,
+                5,
+                &CodeConfig::new()
+                    .input_placement(Some((&[4, 5, 1, 7], 8)))
+                    .output_placement(Some((&[2, 4, 6, 1, 9], 11))),
+            ),
+        );
+        assert_eq!(
+            (
+                (
+                    vec![
+                        Some(0),
+                        None,
+                        None,
+                        Some(1),
+                        None,
+                        Some(2),
+                        Some(3),
+                        Some(4),
+                        Some(5)
+                    ],
+                    6
+                ),
+                (vec![Some(0), Some(1), Some(2), Some(3), Some(4)], 5),
+            ),
+            get_final_placements(9, 5, &CodeConfig::new().arg_inputs(Some(&[2, 4, 1]))),
+        );
+        assert_eq!(
+            (
+                (
+                    vec![
+                        None,
+                        Some(0),
+                        None,
+                        Some(1),
+                        None,
+                        None,
+                        Some(2),
+                        None,
+                        Some(3)
+                    ],
+                    4
+                ),
+                (vec![Some(0), Some(1), Some(2), Some(3), Some(4)], 5),
+            ),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .pop_from_buffer(Some(&[7, 0]))
+            ),
+        );
+        assert_eq!(
+            (
+                (
+                    vec![
+                        None,
+                        Some(6),
+                        None,
+                        Some(5),
+                        None,
+                        None,
+                        Some(9),
+                        None,
+                        Some(2)
+                    ],
+                    12
+                ),
+                (vec![Some(7), None, Some(2), None, Some(11)], 14),
+            ),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .pop_from_buffer(Some(&[7, 0]))
+                    .exclude_outputs(Some(&[1, 3]))
+                    .input_placement(Some((&[6, 5, 9, 2], 12)))
+                    .output_placement(Some((&[7, 2, 11], 14)))
+            ),
+        );
+        assert_eq!(
+            (
+                (
+                    vec![
+                        None,
+                        Some(6),
+                        None,
+                        Some(5),
+                        None,
+                        None,
+                        Some(9),
+                        None,
+                        Some(2)
+                    ],
+                    12
+                ),
+                (vec![Some(7), None, Some(2), None, Some(11)], 14),
+            ),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .pop_from_buffer(Some(&[7, 0]))
+                    .exclude_outputs(Some(&[1, 3]))
+                    .aggr_output_code(Some("yyy"))
+                    .aggr_to_buffer(Some(&[3, 4]))
+                    .input_placement(Some((&[6, 5, 9, 2], 12)))
+                    .output_placement(Some((&[7, 2, 11], 14)))
+            ),
+        );
+        assert_eq!(
+            (
+                (
+                    vec![
+                        None,
+                        Some(6),
+                        None,
+                        Some(5),
+                        None,
+                        None,
+                        Some(9),
+                        None,
+                        Some(2)
+                    ],
+                    12
+                ),
+                (vec![None; 5], 0),
+            ),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .pop_from_buffer(Some(&[7, 0]))
+                    .aggr_output_code(Some("yyyy"))
+                    .exclude_outputs(Some(&[1, 3]))
+                    .input_placement(Some((&[6, 5, 9, 2], 12)))
+                    .output_placement(Some((&[7, 2, 11], 14)))
+            ),
+        );
+        assert_eq!(
+            (
+                (vec![None; 9], 0),
+                (vec![Some(7), None, Some(2), None, Some(11)], 14),
+            ),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .exclude_outputs(Some(&[1, 3]))
+                    .input_placement(Some((&[6, 5, 9, 2], 12)))
+                    .output_placement(Some((&[7, 2, 11], 14)))
+            ),
+        );
+        assert_eq!(
+            ((vec![None; 9], 0), (vec![None; 5], 0)),
+            get_final_placements(
+                9,
+                5,
+                &CodeConfig::new()
+                    .arg_inputs(Some(&[2, 4]))
+                    .elem_inputs(Some(&[5]))
+                    .pop_input_code(Some("xxx"))
+                    .aggr_output_code(Some("xxx"))
+                    .exclude_outputs(Some(&[1, 3]))
+                    .input_placement(Some((&[6, 5, 9, 2], 12)))
+                    .output_placement(Some((&[7, 2, 11], 14)))
+            ),
+        );
     }
 }
