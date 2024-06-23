@@ -176,6 +176,50 @@ impl<'a> CodeConfig<'a> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct CodeConfigCopy {
+    pub input_placement: Option<(Vec<usize>, usize)>,
+    pub output_placement: Option<(Vec<usize>, usize)>,
+    pub arg_inputs: Option<Vec<usize>>,
+    pub elem_inputs: Option<Vec<usize>>,
+    pub single_buffer: bool,
+    pub init_code: Option<String>,
+    pub pop_input_code: Option<String>,
+    pub pop_input_len: Option<usize>,
+    pub aggr_output_code: Option<String>,
+    pub aggr_output_len: Option<usize>, // length in 32-bit words
+    pub pop_from_buffer: Option<Vec<usize>>,
+    pub aggr_to_buffer: Option<Vec<usize>>,
+    pub exclude_outputs: Option<Vec<usize>>,
+    pub dont_clear_outputs: bool,
+    pub inner_loop: Option<u32>,
+}
+
+impl CodeConfigCopy {
+    pub fn to_ref(&self) -> CodeConfig {
+        CodeConfig {
+            input_placement: self.input_placement.as_ref().map(|x| (x.0.as_slice(), x.1)),
+            output_placement: self
+                .output_placement
+                .as_ref()
+                .map(|x| (x.0.as_slice(), x.1)),
+            arg_inputs: self.arg_inputs.as_ref().map(|x| x.as_slice()),
+            elem_inputs: self.elem_inputs.as_ref().map(|x| x.as_slice()),
+            single_buffer: self.single_buffer,
+            init_code: self.init_code.as_ref().map(|x| x.as_str()),
+            pop_input_code: self.pop_input_code.as_ref().map(|x| x.as_str()),
+            pop_input_len: self.pop_input_len,
+            aggr_output_code: self.aggr_output_code.as_ref().map(|x| x.as_str()),
+            aggr_output_len: self.aggr_output_len,
+            pop_from_buffer: self.pop_from_buffer.as_ref().map(|x| x.as_slice()),
+            aggr_to_buffer: self.aggr_to_buffer.as_ref().map(|x| x.as_slice()),
+            exclude_outputs: self.exclude_outputs.as_ref().map(|x| x.as_slice()),
+            dont_clear_outputs: self.dont_clear_outputs,
+            inner_loop: self.inner_loop,
+        }
+    }
+}
+
 pub fn default_aggr_output_len(word_len: u32) -> usize {
     (word_len as usize) >> 5
 }
