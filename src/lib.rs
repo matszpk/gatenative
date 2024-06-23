@@ -218,6 +218,92 @@ impl CodeConfigCopy {
             inner_loop: self.inner_loop,
         }
     }
+
+    pub fn new() -> Self {
+        Self {
+            input_placement: None,
+            output_placement: None,
+            arg_inputs: None,
+            elem_inputs: None,
+            single_buffer: false,
+            init_code: None,
+            pop_input_code: None,
+            pop_input_len: None,
+            aggr_output_code: None,
+            aggr_output_len: None,
+            pop_from_buffer: None,
+            aggr_to_buffer: None,
+            exclude_outputs: None,
+            dont_clear_outputs: false,
+            inner_loop: None,
+        }
+    }
+
+    pub fn input_placement(mut self, p: Option<(Vec<usize>, usize)>) -> Self {
+        self.input_placement = p;
+        self
+    }
+    pub fn output_placement(mut self, p: Option<(Vec<usize>, usize)>) -> Self {
+        self.output_placement = p;
+        self
+    }
+    pub fn arg_inputs(mut self, arg: Option<Vec<usize>>) -> Self {
+        self.arg_inputs = arg;
+        self
+    }
+    pub fn elem_inputs(mut self, elem: Option<Vec<usize>>) -> Self {
+        self.elem_inputs = elem;
+        self
+    }
+    pub fn single_buffer(mut self, s: bool) -> Self {
+        self.single_buffer = s;
+        self
+    }
+    pub fn init_code(mut self, init: Option<String>) -> Self {
+        self.init_code = init;
+        self
+    }
+    pub fn pop_input_code(mut self, pop: Option<String>) -> Self {
+        self.pop_input_code = pop;
+        self
+    }
+    pub fn pop_input_len(mut self, pop: Option<usize>) -> Self {
+        self.pop_input_len = pop;
+        self
+    }
+    pub fn aggr_output_code(mut self, aggr: Option<String>) -> Self {
+        self.aggr_output_code = aggr;
+        self
+    }
+    pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
+        self.aggr_output_len = aggr;
+        self
+    }
+    pub fn pop_from_buffer(mut self, pop: Option<Vec<usize>>) -> Self {
+        self.pop_from_buffer = pop;
+        self
+    }
+    pub fn aggr_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
+        self.aggr_to_buffer = aggr;
+        self
+    }
+    pub fn exclude_outputs(mut self, excl: Option<Vec<usize>>) -> Self {
+        self.exclude_outputs = excl;
+        self
+    }
+    pub fn aggr_only_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
+        self.aggr_to_buffer = aggr.clone();
+        self.exclude_outputs = aggr;
+        self
+    }
+    pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
+        self.dont_clear_outputs = ignore;
+        self
+    }
+    pub fn inner_loop(mut self, l: Option<u32>) -> Self {
+        self.inner_loop = l;
+        self
+    }
 }
 
 pub fn default_aggr_output_len(word_len: u32) -> usize {
