@@ -425,6 +425,7 @@ impl<'a> CLangDataTransform<'a> {
 
     pub fn input_transform(
         &mut self,
+        name: &str,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
@@ -432,7 +433,7 @@ impl<'a> CLangDataTransform<'a> {
         assert_eq!((input_elem_len & 31), 0);
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
-        self.function_start("input_data_transform", false);
+        self.function_start(name, false);
         writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
         writeln!(
@@ -507,6 +508,7 @@ impl<'a> CLangDataTransform<'a> {
 
     pub fn output_transform(
         &mut self,
+        name: &str,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
@@ -514,7 +516,7 @@ impl<'a> CLangDataTransform<'a> {
         assert_eq!((output_elem_len & 31), 0);
         assert!(output_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(input_elem_len >= bit_mapping.len());
-        self.function_start("output_data_transform", true);
+        self.function_start(name, true);
         writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
         writeln!(
