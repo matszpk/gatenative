@@ -377,23 +377,33 @@ impl<'a> CLangDataTransform<'a> {
         self.out.extend(b"}\n");
     }
 
-    fn index_to_circuit_elem_ptr(&self, elem_len: usize) -> String {
+    // return (typeword_index stmt, index in circuit elem pointer)
+    fn index_to_circuit_elem_ptr(&self, elem_len: usize) -> (String, String) {
         let typewords_per_word = self.word_len / self.config.type_bit_len;
         if typewords_per_word == 1 {
-            format!("{}idx", elem_len)
+            (
+                "    size_t tpidx = 0;".to_string(),
+                format!("{}*idx", elem_len),
+            )
         } else if typewords_per_word.count_ones() == 1 {
             // power of two
             let mask = typewords_per_word - 1;
-            format!(
-                "{0}*(idx & ~(size_t){1}) + (idx & {1})",
-                (typewords_per_word as usize) * elem_len,
-                mask
+            (
+                format!("    size_t tpidx = idx & {};", mask),
+                format!(
+                    "{0}*(idx & ~(size_t){1}) + tpidx)",
+                    (typewords_per_word as usize) * elem_len,
+                    mask
+                ),
             )
         } else {
-            format!(
-                "{0}*((idx / {1}) * {1}) + (idx % {1})",
-                (typewords_per_word as usize) * elem_len,
-                typewords_per_word
+            (
+                format!("    size_t tpidx = idx % {};", typewords_per_word),
+                format!(
+                    "{0}*((idx / {1}) * {1}) + tpidx)",
+                    (typewords_per_word as usize) * elem_len,
+                    typewords_per_word
+                ),
             )
         }
     }
@@ -443,12 +453,15 @@ impl<'a> CLangDataTransform<'a> {
             (input_elem_len >> 5) * (self.word_len as usize),
         )
         .unwrap();
+        let (tpidx_stmt, idxptr) = self.index_to_circuit_elem_ptr(output_elem_len);
+        self.out.extend(tpidx_stmt.as_bytes());
+        self.out.extend(b"\n");
         writeln!(
             self.out,
             "    {} {}* outelem = output + {};",
             self.config.arg_modifier.unwrap_or(""),
             self.config.type_name,
-            self.index_to_circuit_elem_ptr(output_elem_len)
+            idxptr
         )
         .unwrap();
         // get reversed bit mapping
@@ -461,45 +474,44 @@ impl<'a> CLangDataTransform<'a> {
         let typewords_per_word = (self.word_len / self.config.type_bit_len) as usize;
         // main routine to convert
         for (i, (dword_bits, bit_num)) in reversed_bit_mapping.into_iter().enumerate() {
-            for j in 0..typewords_per_word {
-                // load to temp table
-                let type_bit_len = self.config.type_bit_len as usize;
-                for k in 0..type_bit_len {
-                    let k = k as usize;
-                    writeln!(
-                        self.out,
-                        "    temp[{}] = inelem[{}];",
-                        k,
-                        (input_elem_len >> 5) * (j * type_bit_len + k) + i
-                    )
-                    .unwrap();
-                }
-                let mut var_count = 0;
-                let mut dests = vec![];
-                for b in dword_bits.iter().take(bit_num as usize) {
-                    if b.is_some() {
-                        dests.push(format!("v{}", var_count));
-                        var_count += 1;
-                    } else {
-                        dests.push("unused".to_string());
-                    }
-                }
-                // call transform
+            // load to temp table
+            let type_bit_len = self.config.type_bit_len as usize;
+            for k in 0..type_bit_len {
+                let k = k as usize;
                 writeln!(
                     self.out,
-                    "    INPUT_TRANSFORM_B{}({}, temp);",
-                    bit_num,
-                    dests.join(",")
+                    "    temp[{}] = inelem[{}*tpidx+{}];",
+                    k,
+                    input_elem_len >> 5,
+                    (input_elem_len >> 5) * k + i,
                 )
                 .unwrap();
-                // store to output
-                let mut var_count = 0;
-                for b in dword_bits.iter().take(bit_num as usize) {
-                    if let Some(b) = b {
-                        let place = format!("outelem[{}]", b * typewords_per_word + j);
-                        self.gen_store_op(var_count, &place);
-                        var_count += 1;
-                    }
+            }
+            let mut var_count = 0;
+            let mut dests = vec![];
+            for b in dword_bits.iter().take(bit_num as usize) {
+                if b.is_some() {
+                    dests.push(format!("v{}", var_count));
+                    var_count += 1;
+                } else {
+                    dests.push("unused".to_string());
+                }
+            }
+            // call transform
+            writeln!(
+                self.out,
+                "    INPUT_TRANSFORM_B{}({}, temp);",
+                bit_num,
+                dests.join(",")
+            )
+            .unwrap();
+            // store to output
+            let mut var_count = 0;
+            for b in dword_bits.iter().take(bit_num as usize) {
+                if let Some(b) = b {
+                    let place = format!("outelem[{}]", b * typewords_per_word);
+                    self.gen_store_op(var_count, &place);
+                    var_count += 1;
                 }
             }
         }
@@ -519,12 +531,15 @@ impl<'a> CLangDataTransform<'a> {
         self.function_start(name, true);
         writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
+        let (tpidx_stmt, idxptr) = self.index_to_circuit_elem_ptr(output_elem_len);
+        self.out.extend(tpidx_stmt.as_bytes());
+        self.out.extend(b"\n");
         writeln!(
             self.out,
             "    const {} {}* inelem = input + {};",
             self.config.arg_modifier.unwrap_or(""),
             self.config.type_name,
-            self.index_to_circuit_elem_ptr(input_elem_len)
+            idxptr,
         )
         .unwrap();
         writeln!(
@@ -544,47 +559,46 @@ impl<'a> CLangDataTransform<'a> {
         let typewords_per_word = (self.word_len / self.config.type_bit_len) as usize;
         // main routine to convert
         for (i, (dword_bits, bit_num)) in reversed_bit_mapping.into_iter().enumerate() {
-            for j in 0..typewords_per_word {
-                // load from input
-                let mut var_count = 0;
-                for b in dword_bits.iter().take(bit_num as usize) {
-                    if let Some(b) = b {
-                        let place = format!("inelem[{}]", b * typewords_per_word + j);
-                        self.gen_load_op(var_count, &place);
-                        var_count += 1;
-                    }
+            // load from input
+            let mut var_count = 0;
+            for b in dword_bits.iter().take(bit_num as usize) {
+                if let Some(b) = b {
+                    let place = format!("inelem[{}]", b * typewords_per_word);
+                    self.gen_load_op(var_count, &place);
+                    var_count += 1;
                 }
-                // prapare sources
-                let mut var_count = 0;
-                let mut srcs = vec![];
-                for b in dword_bits.iter().take(bit_num as usize) {
-                    if b.is_some() {
-                        srcs.push(format!("v{}", var_count));
-                        var_count += 1;
-                    } else {
-                        srcs.push("zero".to_string());
-                    }
+            }
+            // prapare sources
+            let mut var_count = 0;
+            let mut srcs = vec![];
+            for b in dword_bits.iter().take(bit_num as usize) {
+                if b.is_some() {
+                    srcs.push(format!("v{}", var_count));
+                    var_count += 1;
+                } else {
+                    srcs.push("zero".to_string());
                 }
-                // call transform
+            }
+            // call transform
+            writeln!(
+                self.out,
+                "    OUTPUT_TRANSFORM_B{}(temp, {});",
+                bit_num,
+                srcs.join(",")
+            )
+            .unwrap();
+            // store from temp table
+            let type_bit_len = self.config.type_bit_len as usize;
+            for k in 0..type_bit_len {
+                let k = k as usize;
                 writeln!(
                     self.out,
-                    "    OUTPUT_TRANSFORM_B{}(temp, {});",
-                    bit_num,
-                    srcs.join(",")
+                    "    outelem[{}*tpidx+{}] = temp[{}];",
+                    input_elem_len >> 5,
+                    (input_elem_len >> 5) * k + i,
+                    k,
                 )
                 .unwrap();
-                // store from temp table
-                let type_bit_len = self.config.type_bit_len as usize;
-                for k in 0..type_bit_len {
-                    let k = k as usize;
-                    writeln!(
-                        self.out,
-                        "    outelem[{}] = temp[{}];",
-                        (output_elem_len >> 5) * (j * type_bit_len + k) + i,
-                        k,
-                    )
-                    .unwrap();
-                }
             }
         }
         self.function_end();
