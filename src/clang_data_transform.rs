@@ -266,19 +266,72 @@ impl<'a> CLangDataTransform<'a> {
         }
     }
 
+    pub fn prolog(&mut self) {
+        if let Some(include_name) = self.config.include_name {
+            writeln!(self.out, "#include <{}>", include_name).unwrap();
+        }
+        if let Some(include_name_2) = self.config.include_name_2 {
+            writeln!(self.out, "#include <{}>", include_name_2).unwrap();
+        }
+        if let Some(include_name_3) = self.config.include_name_3 {
+            writeln!(self.out, "#include <{}>", include_name_3).unwrap();
+        }
+        if !self.config.zero_value.0.is_empty() {
+            self.out.extend(self.config.zero_value.0.as_bytes());
+            self.out.push(b'\n');
+        }
+    }
+
+    pub fn function_start(&mut self, name: &str) {
+        writeln!(
+            self.out,
+            "{} void {}(unsigned long n, const {} {}* input, {} {}* output) {{",
+            self.config.func_modifier.unwrap_or(""),
+            name,
+            self.config.arg_modifier.unwrap_or(""),
+            self.config.type_name,
+            self.config.arg_modifier.unwrap_or(""),
+            self.config.type_name
+        )
+        .unwrap();
+        if let Some(init_index) = self.config.init_index {
+            writeln!(self.out, "    {}", init_index);
+        } else {
+            self.out
+                .extend(b"    size_t i;\n    for (i = 0; i < n; i++) {\n");
+        }
+    }
+
+    pub fn function_end(&mut self, name: &str) {
+        if self.config.init_index.is_none() {
+            self.out.extend(b"    }\n");
+        }
+        self.out.extend(b"}\n");
+    }
+
     pub fn input_transform(
+        &mut self,
         word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) {
+        assert_eq!((word_len & 31), 0);
+        assert_eq!((input_elem_len & 31), 0);
+        assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(output_elem_len >= bit_mapping.len());
     }
 
     pub fn output_transform(
+        &mut self,
         word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) {
+        assert_eq!((word_len & 31), 0);
+        assert_eq!((output_elem_len & 31), 0);
+        assert!(output_elem_len >= bit_mapping.iter().copied().max().unwrap());
+        assert!(input_elem_len >= bit_mapping.len());
     }
 }

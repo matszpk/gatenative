@@ -100,7 +100,7 @@ pub struct OpenCLDataInputTransformer {
 }
 
 impl OpenCLDataInputTransformer {
-    /// An bit_mapping - index is bit of output's element, value is bit of input's element.
+    /// A bit_mapping - index is bit of output's element, value is bit of input's element.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
@@ -318,7 +318,7 @@ pub struct OpenCLDataOutputTransformer {
 impl OpenCLDataOutputTransformer {
     /// An output_elem_len - number of bits of really single input element.
     /// An input_elem_len - number of bits of really single output element.
-    /// An bit_mapping - index is bit of really input's element,
+    /// A bit_mapping - index is bit of really input's element,
     //  value is bit of really output's element.
     pub fn new(
         context: Arc<Context>,

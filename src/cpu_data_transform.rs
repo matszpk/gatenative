@@ -16,7 +16,7 @@ pub struct CPUDataInputTransformer {
 }
 
 impl CPUDataInputTransformer {
-    /// An bit_mapping - index is bit of output's element, value is bit of input's element.
+    /// A bit_mapping - index is bit of output's element, value is bit of input's element.
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
@@ -143,7 +143,7 @@ pub struct CPUDataOutputTransformer {
 impl CPUDataOutputTransformer {
     /// An output_elem_len - number of bits of really single input element.
     /// An input_elem_len - number of bits of really single output element.
-    /// An bit_mapping - index is bit of really input's element,
+    /// A bit_mapping - index is bit of really input's element,
     //  value is bit of really output's element.
     pub fn new(
         word_len: u32,
