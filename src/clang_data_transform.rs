@@ -348,7 +348,8 @@ impl<'a> CLangDataTransform<'a> {
             .unwrap_or(String::new());
         writeln!(
             self.out,
-            "{}void {}(unsigned long n, const {}{}* input, {}{}* output) {{",
+            r##"{}void {}(unsigned long n,
+    const {}{}* input, {}{}* output) {{"##,
             func_modifier,
             name,
             arg_modifier,

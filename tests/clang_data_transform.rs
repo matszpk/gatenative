@@ -10,7 +10,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const unsigned int* input, uint32_t* output) {
+        r##"void blable(unsigned long n,
+    const unsigned int* input, uint32_t* output) {
     const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
@@ -55,7 +56,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const unsigned int* input, uint32_t* output) {
+        r##"void blable(unsigned long n,
+    const unsigned int* input, uint32_t* output) {
     const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
@@ -100,7 +102,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const unsigned int* input, uint32_t* output) {
+        r##"void blable(unsigned long n,
+    const unsigned int* input, uint32_t* output) {
     const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
@@ -146,7 +149,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const unsigned int* input, __m256* output) {
+        r##"void blable(unsigned long n,
+    const unsigned int* input, __m256* output) {
     const __m256 zero = *((const __m256*)zero_value);
     __m256 unused;
     size_t k;
@@ -191,7 +195,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const unsigned int* input, __m128i* output) {
+        r##"void blable(unsigned long n,
+    const unsigned int* input, __m128i* output) {
     const __m128i zero = *((const __m128i*)zero_value);
     __m128i unused;
     size_t k;
@@ -237,7 +242,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"kernel void blable(unsigned long n, const global unsigned int* input, global uint* output) {
+        r##"kernel void blable(unsigned long n,
+    const global unsigned int* input, global uint* output) {
     const uint zero = 0;
     uint unused;
     size_t k;
@@ -281,7 +287,8 @@ fn test_clang_data_transform_input() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"kernel void blable(unsigned long n, const global unsigned int* input, global uint* output) {
+        r##"kernel void blable(unsigned long n,
+    const global unsigned int* input, global uint* output) {
     const uint zero = 0;
     uint unused;
     size_t k;
@@ -329,7 +336,8 @@ fn test_clang_data_transform_output() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"void blable(unsigned long n, const uint32_t* input, unsigned int* output) {
+        r##"void blable(unsigned long n,
+    const uint32_t* input, unsigned int* output) {
     const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
@@ -375,7 +383,8 @@ fn test_clang_data_transform_output() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"kernel void blable(unsigned long n, const global uint* input, global unsigned int* output) {
+        r##"kernel void blable(unsigned long n,
+    const global uint* input, global unsigned int* output) {
     const uint zero = 0;
     uint unused;
     size_t k;
@@ -419,7 +428,8 @@ fn test_clang_data_transform_output() {
         &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
     );
     assert_eq!(
-        r##"kernel void blable(unsigned long n, const global uint* input, global unsigned int* output) {
+        r##"kernel void blable(unsigned long n,
+    const global uint* input, global unsigned int* output) {
     const uint zero = 0;
     uint unused;
     size_t k;
