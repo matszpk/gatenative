@@ -366,4 +366,93 @@ fn test_clang_data_transform_output() {
 "##,
         String::from_utf8(dt.out()).unwrap()
     );
+    // OpenCL
+    let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(32);
+    dt.output_transform(
+        "blable",
+        10,
+        64,
+        &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
+    );
+    assert_eq!(
+        r##"kernel void blable(unsigned long n, const global uint* input, global unsigned int* output) {
+    const uint zero = 0;
+    uint unused;
+    size_t k;
+    const size_t idx = get_local_id(0);
+    if (idx >= n) return;
+    unsigned int temp[32];
+    const size_t tpidx = 0;
+    const global uint* inelem = input + 10*idx;
+    global unsigned int* outelem = output + 64*idx;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    v0 = inelem[7];
+    v1 = inelem[2];
+    v2 = inelem[9];
+    v3 = inelem[5];
+    v4 = inelem[8];
+    v5 = inelem[1];
+    OUTPUT_TRANSFORM_B7(temp, v0,v1,v2,v3,zero,v4,v5);
+    for (k = 0; k < 32; k++)
+        outelem[64*tpidx + 2*k + 0] = temp[k];
+    v0 = inelem[4];
+    v1 = inelem[6];
+    v2 = inelem[0];
+    v3 = inelem[3];
+    OUTPUT_TRANSFORM_B6(temp, v0,v1,v2,zero,zero,v3);
+    for (k = 0; k < 32; k++)
+        outelem[64*tpidx + 2*k + 1] = temp[k];
+}
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
+    let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(192);
+    dt.output_transform(
+        "blable",
+        10,
+        64,
+        &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
+    );
+    assert_eq!(
+        r##"kernel void blable(unsigned long n, const global uint* input, global unsigned int* output) {
+    const uint zero = 0;
+    uint unused;
+    size_t k;
+    const size_t idx = get_local_id(0);
+    if (idx >= n) return;
+    unsigned int temp[32];
+    const size_t tpidx = idx % 6;
+    const global uint* inelem = input + 10*(idx - tpidx) + tpidx;
+    global unsigned int* outelem = output + 384*idx;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    v0 = inelem[42];
+    v1 = inelem[12];
+    v2 = inelem[54];
+    v3 = inelem[30];
+    v4 = inelem[48];
+    v5 = inelem[6];
+    OUTPUT_TRANSFORM_B7(temp, v0,v1,v2,v3,zero,v4,v5);
+    for (k = 0; k < 32; k++)
+        outelem[64*tpidx + 2*k + 0] = temp[k];
+    v0 = inelem[24];
+    v1 = inelem[36];
+    v2 = inelem[0];
+    v3 = inelem[18];
+    OUTPUT_TRANSFORM_B6(temp, v0,v1,v2,zero,zero,v3);
+    for (k = 0; k < 32; k++)
+        outelem[64*tpidx + 2*k + 1] = temp[k];
+}
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
 }
