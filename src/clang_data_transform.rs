@@ -288,7 +288,7 @@ impl<'a> CLangDataTransform<'a> {
     fn gen_store_op(&mut self, varidx: usize, place: &str) {
         self.out.extend(b"        ");
         let v = format!("v{}", varidx);
-        if let Some(store_op) = self.config.load_op {
+        if let Some(store_op) = self.config.store_op {
             Self::write_op(&mut self.out, store_op, &[place.as_bytes(), v.as_bytes()]);
         } else {
             writeln!(self.out, "{} = {}", place, v).unwrap();
@@ -296,7 +296,7 @@ impl<'a> CLangDataTransform<'a> {
         self.out.extend(b";\n");
     }
 
-    fn input_transform_helpers(&mut self) {
+    pub fn input_transform_helpers(&mut self) {
         if !self.input_transform_helpers_added {
             let mut transform = self.config.transform_config.transform();
             transform.init_defs();
@@ -307,7 +307,7 @@ impl<'a> CLangDataTransform<'a> {
             self.input_transform_helpers_added = true;
         }
     }
-    fn output_transform_helpers(&mut self) {
+    pub fn output_transform_helpers(&mut self) {
         if !self.output_transform_helpers_added {
             let mut transform = self.config.transform_config.transform();
             transform.init_defs();
@@ -532,6 +532,59 @@ impl<'a> CLangDataTransform<'a> {
             (output_elem_len >> 5) * (self.word_len as usize)
         )
         .unwrap();
+        // get reversed bit mapping
+        let (reversed_bit_mapping, max_var_num) =
+            Self::reversed_bit_mapping(input_elem_len, bit_mapping);
+        // allocate variables
+        for v in 0..max_var_num {
+            writeln!(self.out, "    {} v{};", self.config.type_name, v).unwrap();
+        }
+        let typewords_per_word = (self.word_len / self.config.type_bit_len) as usize;
+        // main routine to convert
+        for (i, (dword_bits, bit_num)) in reversed_bit_mapping.into_iter().enumerate() {
+            for j in 0..typewords_per_word {
+                // load from input
+                let mut var_count = 0;
+                for b in dword_bits.iter().take(bit_num as usize) {
+                    if let Some(b) = b {
+                        let place = format!("inelem[{}]", b * typewords_per_word + j);
+                        self.gen_load_op(var_count, &place);
+                        var_count += 1;
+                    }
+                }
+                // prapare sources
+                let mut var_count = 0;
+                let mut srcs = vec![];
+                for b in dword_bits.iter().take(bit_num as usize) {
+                    if b.is_some() {
+                        srcs.push(format!("v{}", var_count));
+                        var_count += 1;
+                    } else {
+                        srcs.push("zero".to_string());
+                    }
+                }
+                // call transform
+                writeln!(
+                    self.out,
+                    "        OUTPUT_TRANSFORM_B{}(temp, {});",
+                    bit_num,
+                    srcs.join(",")
+                )
+                .unwrap();
+                // store from temp table
+                let type_bit_len = self.config.type_bit_len as usize;
+                for k in 0..type_bit_len {
+                    let k = k as usize;
+                    writeln!(
+                        self.out,
+                        "        outelem[{}] = temp[{}];",
+                        (output_elem_len >> 32) * (j * type_bit_len + k) + i,
+                        k,
+                    )
+                    .unwrap();
+                }
+            }
+        }
         self.function_end();
     }
 }
