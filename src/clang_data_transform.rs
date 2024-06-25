@@ -401,20 +401,12 @@ impl<'a> CLangDataTransform<'a> {
             let mask = typewords_per_word - 1;
             (
                 format!("    size_t tpidx = idx & {};", mask),
-                format!(
-                    "{0}*(idx & ~(size_t){1}) + tpidx)",
-                    (typewords_per_word as usize) * elem_len,
-                    mask
-                ),
+                format!("{0}*(idx & ~(size_t){1}) + tpidx", elem_len, mask),
             )
         } else {
             (
                 format!("    size_t tpidx = idx % {};", typewords_per_word),
-                format!(
-                    "{0}*((idx / {1}) * {1}) + tpidx)",
-                    (typewords_per_word as usize) * elem_len,
-                    typewords_per_word
-                ),
+                format!("{0}*(idx - tpidx) + tpidx", elem_len),
             )
         }
     }
