@@ -1,6 +1,33 @@
 use gatenative::clang_data_transform::*;
 
 #[test]
+fn test_clang_data_transform_prolog() {
+    let mut dt = CLANG_DATA_TRANSFORM_U32.data_transform(32);
+    dt.prolog();
+    assert_eq!(
+        r##"#include <stdint.h>
+#include <stddef.h>
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
+    let mut dt = CLANG_DATA_TRANSFORM_INTEL_AVX.data_transform(256);
+    dt.prolog();
+    assert_eq!(
+        r##"#include <immintrin.h>
+#include <stddef.h>
+#include <stdint.h>
+static const unsigned int zero_value[8] __attribute__((aligned(32))) = {
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
+    let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(32);
+    dt.prolog();
+    assert_eq!("", String::from_utf8(dt.out()).unwrap());
+}
+
+#[test]
 fn test_clang_data_transform_input() {
     let mut dt = CLANG_DATA_TRANSFORM_U32.data_transform(32);
     dt.input_transform(
