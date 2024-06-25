@@ -2134,6 +2134,7 @@ impl<'a, 'c> CodeWriter<'c, CLangFuncWriter<'a, 'c>> for CLangWriter<'a> {
                 }
                 self.user_defs(&real_macros);
             }
+            self.transform_helpers_added = true;
         }
     }
 
