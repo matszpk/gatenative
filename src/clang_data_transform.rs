@@ -482,7 +482,7 @@ impl<'a> CLangDataTransform<'a> {
                     self.out,
                     "    temp[{}] = inelem[{}*tpidx+{}];",
                     k,
-                    input_elem_len >> 5,
+                    (input_elem_len >> 5) * type_bit_len,
                     (input_elem_len >> 5) * k + i,
                 )
                 .unwrap();
@@ -594,7 +594,7 @@ impl<'a> CLangDataTransform<'a> {
                 writeln!(
                     self.out,
                     "    outelem[{}*tpidx+{}] = temp[{}];",
-                    input_elem_len >> 5,
+                    (input_elem_len >> 5) * type_bit_len,
                     (input_elem_len >> 5) * k + i,
                     k,
                 )
