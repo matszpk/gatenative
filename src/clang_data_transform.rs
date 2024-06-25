@@ -291,7 +291,7 @@ impl<'a> CLangDataTransform<'a> {
         if let Some(store_op) = self.config.store_op {
             Self::write_op(&mut self.out, store_op, &[place.as_bytes(), v.as_bytes()]);
         } else {
-            writeln!(self.out, "{} = {}", place, v).unwrap();
+            write!(self.out, "{} = {}", place, v).unwrap();
         }
         self.out.extend(b";\n");
     }
@@ -336,18 +336,28 @@ impl<'a> CLangDataTransform<'a> {
     }
 
     fn function_start(&mut self, name: &str, output: bool) {
+        let func_modifier = self
+            .config
+            .func_modifier
+            .map(|x| x.to_owned() + " ")
+            .unwrap_or(String::new());
+        let arg_modifier = self
+            .config
+            .arg_modifier
+            .map(|x| x.to_owned() + " ")
+            .unwrap_or(String::new());
         writeln!(
             self.out,
-            "{} void {}(unsigned long n, const {} {}* input, {} {}* output) {{",
-            self.config.func_modifier.unwrap_or(""),
+            "{}void {}(unsigned long n, const {}{}* input, {}{}* output) {{",
+            func_modifier,
             name,
-            self.config.arg_modifier.unwrap_or(""),
+            arg_modifier,
             if output {
                 self.config.type_name
             } else {
                 "unsigned int"
             },
-            self.config.arg_modifier.unwrap_or(""),
+            arg_modifier,
             if output {
                 "unsigned int"
             } else {
@@ -362,6 +372,7 @@ impl<'a> CLangDataTransform<'a> {
         )
         .unwrap();
         writeln!(self.out, "    {} unused;", self.config.type_name).unwrap();
+        self.out.extend(b"    size_t k;\n");
         if let Some(init_index) = self.config.init_index {
             writeln!(self.out, "    {}", init_index).unwrap();
         } else {
@@ -413,7 +424,7 @@ impl<'a> CLangDataTransform<'a> {
         data_elem_len: usize,
         bit_mapping: &[usize],
     ) -> (Vec<([Option<usize>; 32], u32)>, usize) {
-        let mut out = vec![([None; 32], 0); data_elem_len];
+        let mut out = vec![([None; 32], 0); data_elem_len >> 5];
         for (i, b) in bit_mapping.iter().enumerate() {
             out[*b >> 5].0[*b & 31] = Some(i);
         }
@@ -444,12 +455,22 @@ impl<'a> CLangDataTransform<'a> {
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
         self.function_start(name, false);
-        writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
+        let arg_modifier = self
+            .config
+            .arg_modifier
+            .map(|x| x.to_owned() + " ")
+            .unwrap_or(String::new());
+        writeln!(
+            self.out,
+            "    unsigned int temp[{}];",
+            self.config.type_bit_len
+        )
+        .unwrap();
         // define input and output elems pointers
         writeln!(
             self.out,
-            "    const {} unsigned int* inelem = input + {}*idx",
-            self.config.arg_modifier.unwrap_or(""),
+            "    const {}unsigned int* inelem = input + {}*idx",
+            arg_modifier,
             (input_elem_len >> 5) * (self.word_len as usize),
         )
         .unwrap();
@@ -458,10 +479,8 @@ impl<'a> CLangDataTransform<'a> {
         self.out.extend(b"\n");
         writeln!(
             self.out,
-            "    {} {}* outelem = output + {};",
-            self.config.arg_modifier.unwrap_or(""),
-            self.config.type_name,
-            idxptr
+            "    {}{}* outelem = output + {};",
+            arg_modifier, self.config.type_name, idxptr
         )
         .unwrap();
         // get reversed bit mapping
@@ -476,17 +495,15 @@ impl<'a> CLangDataTransform<'a> {
         for (i, (dword_bits, bit_num)) in reversed_bit_mapping.into_iter().enumerate() {
             // load to temp table
             let type_bit_len = self.config.type_bit_len as usize;
-            for k in 0..type_bit_len {
-                let k = k as usize;
-                writeln!(
-                    self.out,
-                    "    temp[{}] = inelem[{}*tpidx + {}];",
-                    k,
-                    (input_elem_len >> 5) * type_bit_len,
-                    (input_elem_len >> 5) * k + i,
-                )
-                .unwrap();
-            }
+            writeln!(self.out, "    for (k = 0; k < {}; k++)", type_bit_len).unwrap();
+            writeln!(
+                self.out,
+                "        temp[k] = inelem[{}*tpidx + {}*k + {}];",
+                (input_elem_len >> 5) * type_bit_len,
+                (input_elem_len >> 5),
+                i,
+            )
+            .unwrap();
             let mut var_count = 0;
             let mut dests = vec![];
             for b in dword_bits.iter().take(bit_num as usize) {
@@ -529,6 +546,11 @@ impl<'a> CLangDataTransform<'a> {
         assert!(output_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(input_elem_len >= bit_mapping.len());
         self.function_start(name, true);
+        let arg_modifier = self
+            .config
+            .arg_modifier
+            .map(|x| x.to_owned() + " ")
+            .unwrap_or(String::new());
         writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
         let (tpidx_stmt, idxptr) = self.index_to_circuit_elem_ptr(output_elem_len);
@@ -536,16 +558,14 @@ impl<'a> CLangDataTransform<'a> {
         self.out.extend(b"\n");
         writeln!(
             self.out,
-            "    const {} {}* inelem = input + {};",
-            self.config.arg_modifier.unwrap_or(""),
-            self.config.type_name,
-            idxptr,
+            "    const {}{}* inelem = input + {};",
+            arg_modifier, self.config.type_name, idxptr,
         )
         .unwrap();
         writeln!(
             self.out,
-            "    {} unsigned int* outelem = output + {}*idx",
-            self.config.arg_modifier.unwrap_or(""),
+            "    {}unsigned int* outelem = output + {}*idx",
+            arg_modifier,
             (output_elem_len >> 5) * (self.word_len as usize)
         )
         .unwrap();
@@ -589,18 +609,20 @@ impl<'a> CLangDataTransform<'a> {
             .unwrap();
             // store from temp table
             let type_bit_len = self.config.type_bit_len as usize;
-            for k in 0..type_bit_len {
-                let k = k as usize;
-                writeln!(
-                    self.out,
-                    "    outelem[{}*tpidx + {}] = temp[{}];",
-                    (input_elem_len >> 5) * type_bit_len,
-                    (input_elem_len >> 5) * k + i,
-                    k,
-                )
-                .unwrap();
-            }
+            writeln!(self.out, "    for (k = 0; k < {}; k++)", type_bit_len).unwrap();
+            writeln!(
+                self.out,
+                "        outelem[{}*tpidx + {}*k + {}] = temp[k];",
+                (input_elem_len >> 5) * type_bit_len,
+                (input_elem_len >> 5),
+                i,
+            )
+            .unwrap();
         }
         self.function_end();
+    }
+
+    pub fn out(self) -> Vec<u8> {
+        self.out
     }
 }
