@@ -228,16 +228,23 @@ pub struct CLangDataTransform<'a> {
     out: Vec<u8>,
     input_transform_helpers_added: bool,
     output_transform_helpers_added: bool,
+    word_len: u32,
 }
 
 impl<'a> CLangDataTransformConfig<'a> {
-    pub fn data_transform(&'a self) -> CLangDataTransform<'a> {
+    pub fn data_transform(&'a self, word_len: u32) -> CLangDataTransform<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
+        let mut config = self;
+        // find config to match word_len (word_len must be multiple of type_bit_len.
+        while (word_len % config.type_bit_len) != 0 {
+            config = config.previous.unwrap();
+        }
         CLangDataTransform {
-            config: self,
+            config,
             out: vec![],
             input_transform_helpers_added: false,
             output_transform_helpers_added: false,
+            word_len,
         }
     }
 }
@@ -282,56 +289,125 @@ impl<'a> CLangDataTransform<'a> {
         }
     }
 
-    pub fn function_start(&mut self, name: &str) {
+    fn function_start(&mut self, name: &str, output: bool) {
         writeln!(
             self.out,
             "{} void {}(unsigned long n, const {} {}* input, {} {}* output) {{",
             self.config.func_modifier.unwrap_or(""),
             name,
             self.config.arg_modifier.unwrap_or(""),
-            self.config.type_name,
+            if output {
+                self.config.type_name
+            } else {
+                "unsigned int"
+            },
             self.config.arg_modifier.unwrap_or(""),
-            self.config.type_name
+            if output {
+                "unsigned int"
+            } else {
+                self.config.type_name
+            }
+        )
+        .unwrap();
+        writeln!(
+            self.out,
+            "    const {} zero = {};",
+            self.config.type_name, self.config.zero_value.1
         )
         .unwrap();
         if let Some(init_index) = self.config.init_index {
-            writeln!(self.out, "    {}", init_index);
+            writeln!(self.out, "    {}", init_index).unwrap();
         } else {
             self.out
-                .extend(b"    size_t i;\n    for (i = 0; i < n; i++) {\n");
+                .extend(b"    size_t idx;\n    for (idx = 0; idx < n; idx++) {\n");
         }
     }
 
-    pub fn function_end(&mut self, name: &str) {
+    fn function_end(&mut self) {
         if self.config.init_index.is_none() {
             self.out.extend(b"    }\n");
         }
         self.out.extend(b"}\n");
     }
 
+    fn index_to_circuit_elem_ptr(&self, elem_len: usize) -> String {
+        let typewords_per_word = self.word_len / self.config.type_bit_len;
+        if typewords_per_word == 1 {
+            format!("{}idx", elem_len)
+        } else if typewords_per_word.count_ones() == 1 {
+            // power of two
+            let mask = typewords_per_word - 1;
+            format!(
+                "{0}*(idx & ~(size_t){1}) + (idx & {1})",
+                (typewords_per_word as usize) * elem_len,
+                mask
+            )
+        } else {
+            format!(
+                "{0}*((idx / {1}) * {1}) + (idx % {1})",
+                (typewords_per_word as usize) * elem_len,
+                typewords_per_word
+            )
+        }
+    }
+
     pub fn input_transform(
         &mut self,
-        word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) {
-        assert_eq!((word_len & 31), 0);
         assert_eq!((input_elem_len & 31), 0);
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
+        self.function_start("input_data_transform", false);
+        // define input and output elems pointers
+        let typewords_per_word = self.word_len / self.config.type_bit_len;
+        writeln!(
+            self.out,
+            "    const unsigned int {}* inelem = input + {}*idx",
+            self.config.arg_modifier.unwrap_or(""),
+            input_elem_len * (typewords_per_word as usize),
+        )
+        .unwrap();
+        writeln!(
+            self.out,
+            "    {} {}* outelem = output + {};",
+            self.config.arg_modifier.unwrap_or(""),
+            self.config.type_name,
+            self.index_to_circuit_elem_ptr(output_elem_len)
+        )
+        .unwrap();
+        self.function_end();
     }
 
     pub fn output_transform(
         &mut self,
-        word_len: u32,
         input_elem_len: usize,
         output_elem_len: usize,
         bit_mapping: &[usize],
     ) {
-        assert_eq!((word_len & 31), 0);
         assert_eq!((output_elem_len & 31), 0);
         assert!(output_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(input_elem_len >= bit_mapping.len());
+        self.function_start("output_data_transform", true);
+        // define input and output elems pointers
+        let typewords_per_word = self.word_len / self.config.type_bit_len;
+        writeln!(
+            self.out,
+            "    const {} {}* inelem = input + {};",
+            self.config.arg_modifier.unwrap_or(""),
+            self.config.type_name,
+            self.index_to_circuit_elem_ptr(input_elem_len)
+        )
+        .unwrap();
+        writeln!(
+            self.out,
+            "    unsigned int {}* outelem = output + {}*idx",
+            self.config.arg_modifier.unwrap_or(""),
+            output_elem_len * (typewords_per_word as usize)
+        )
+        .unwrap();
+        self.function_end();
     }
 }
