@@ -351,6 +351,31 @@ impl<'a> CLangDataTransform<'a> {
         }
     }
 
+    // return 32-tuple bits with inverse mapping and max variables to use
+    fn inverse_bit_mapping(
+        data_elem_len: usize,
+        bit_mapping: &[usize],
+    ) -> (Vec<([Option<usize>; 32], u32)>, usize) {
+        let mut out = vec![([None; 32], 0); data_elem_len];
+        for (i, b) in bit_mapping.iter().enumerate() {
+            out[*b >> 5].0[*b & 31] = Some(i);
+        }
+        let mut max_var_num = 0;
+        for (bits, max_bit) in out.iter_mut() {
+            *max_bit = u32::try_from(
+                bits.iter()
+                    .enumerate()
+                    .rev()
+                    .find(|(_, x)| x.is_some())
+                    .map(|(c, _)| c + 1)
+                    .unwrap_or(0),
+            )
+            .unwrap();
+            max_var_num = std::cmp::max(bits.iter().filter(|x| x.is_some()).count(), max_var_num);
+        }
+        (out, max_var_num)
+    }
+
     pub fn input_transform(
         &mut self,
         input_elem_len: usize,
