@@ -2,7 +2,6 @@ use crate::*;
 
 use crate::clang_transform::*;
 
-use std::collections::{HashMap, HashSet};
 use std::io::Write;
 
 #[derive(Clone, Debug)]
@@ -250,6 +249,53 @@ impl<'a> CLangDataTransformConfig<'a> {
 }
 
 impl<'a> CLangDataTransform<'a> {
+    fn write_op(out: &mut Vec<u8>, op: &str, args: &[&[u8]]) {
+        let mut rest = op;
+        let mut arg_index = 0;
+        while let Some(p) = rest.find('{') {
+            out.extend(rest[..p].as_bytes());
+            rest = &rest[p + 1..];
+            if let Some(endr) = rest.find('}') {
+                if rest[..endr].is_empty() {
+                    // fetch next argument
+                    out.extend(args[arg_index]);
+                    arg_index += 1;
+                } else {
+                    // fetch argument with index given between {}
+                    let index = usize::from_str_radix(&rest[..endr], 10).unwrap();
+                    out.extend(args[index]);
+                }
+                rest = &rest[endr + 1..];
+            } else {
+                panic!("Unexpected");
+            }
+        }
+        if !rest.is_empty() {
+            out.extend(rest.as_bytes());
+        }
+    }
+
+    fn gen_load_op(&mut self, varidx: usize, place: &str) {
+        write!(self.out, "        v{} = ", varidx).unwrap();
+        if let Some(load_op) = self.config.load_op {
+            Self::write_op(&mut self.out, load_op, &[place.as_bytes()]);
+        } else {
+            self.out.extend(place.as_bytes());
+        }
+        self.out.extend(b";\n");
+    }
+
+    fn gen_store_op(&mut self, varidx: usize, place: &str) {
+        self.out.extend(b"        ");
+        let v = format!("v{}", varidx);
+        if let Some(store_op) = self.config.load_op {
+            Self::write_op(&mut self.out, store_op, &[place.as_bytes(), v.as_bytes()]);
+        } else {
+            writeln!(self.out, "{} = {}", place, v).unwrap();
+        }
+        self.out.extend(b";\n");
+    }
+
     fn input_transform_helpers(&mut self) {
         if !self.input_transform_helpers_added {
             let mut transform = self.config.transform_config.transform();
@@ -315,6 +361,7 @@ impl<'a> CLangDataTransform<'a> {
             self.config.type_name, self.config.zero_value.1
         )
         .unwrap();
+        writeln!(self.out, "    {} unused;", self.config.type_name).unwrap();
         if let Some(init_index) = self.config.init_index {
             writeln!(self.out, "    {}", init_index).unwrap();
         } else {
@@ -352,7 +399,7 @@ impl<'a> CLangDataTransform<'a> {
     }
 
     // return 32-tuple bits with inverse mapping and max variables to use
-    fn inverse_bit_mapping(
+    fn reversed_bit_mapping(
         data_elem_len: usize,
         bit_mapping: &[usize],
     ) -> (Vec<([Option<usize>; 32], u32)>, usize) {
@@ -386,13 +433,13 @@ impl<'a> CLangDataTransform<'a> {
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(output_elem_len >= bit_mapping.len());
         self.function_start("input_data_transform", false);
+        writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
-        let typewords_per_word = self.word_len / self.config.type_bit_len;
         writeln!(
             self.out,
             "    const {} unsigned int* inelem = input + {}*idx",
             self.config.arg_modifier.unwrap_or(""),
-            input_elem_len * (typewords_per_word as usize),
+            (input_elem_len >> 5) * (self.word_len as usize),
         )
         .unwrap();
         writeln!(
@@ -403,6 +450,58 @@ impl<'a> CLangDataTransform<'a> {
             self.index_to_circuit_elem_ptr(output_elem_len)
         )
         .unwrap();
+        // get reversed bit mapping
+        let (reversed_bit_mapping, max_var_num) =
+            Self::reversed_bit_mapping(input_elem_len, bit_mapping);
+        // allocate variables
+        for v in 0..max_var_num {
+            writeln!(self.out, "    {} v{};", self.config.type_name, v).unwrap();
+        }
+        let typewords_per_word = (self.word_len / self.config.type_bit_len) as usize;
+        // main routine to convert
+        for (i, (dword_bits, bit_num)) in reversed_bit_mapping.into_iter().enumerate() {
+            for j in 0..typewords_per_word {
+                // load to temp table
+                let type_bit_len = self.config.type_bit_len as usize;
+                for k in 0..type_bit_len {
+                    let k = k as usize;
+                    writeln!(
+                        self.out,
+                        "        temp[{}] = inelem[{}];",
+                        k,
+                        (input_elem_len >> 32) * (j * type_bit_len + k) + i
+                    )
+                    .unwrap();
+                }
+                let mut var_count = 0;
+                let mut dests = vec![];
+                for b in dword_bits.iter().take(bit_num as usize) {
+                    if b.is_some() {
+                        dests.push(format!("v{}", var_count));
+                        var_count += 1;
+                    } else {
+                        dests.push("unused".to_string());
+                    }
+                }
+                // call transform
+                writeln!(
+                    self.out,
+                    "        INPUT_TRANSFORM_B{}({}, temp);",
+                    bit_num,
+                    dests.join(",")
+                )
+                .unwrap();
+                // store to output
+                let mut var_count = 0;
+                for b in dword_bits.iter().take(bit_num as usize) {
+                    if let Some(b) = b {
+                        let place = format!("outelem[{}]", b * typewords_per_word + j);
+                        self.gen_store_op(var_count, &place);
+                        var_count += 1;
+                    }
+                }
+            }
+        }
         self.function_end();
     }
 
@@ -416,8 +515,8 @@ impl<'a> CLangDataTransform<'a> {
         assert!(output_elem_len >= bit_mapping.iter().copied().max().unwrap());
         assert!(input_elem_len >= bit_mapping.len());
         self.function_start("output_data_transform", true);
+        writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
         // define input and output elems pointers
-        let typewords_per_word = self.word_len / self.config.type_bit_len;
         writeln!(
             self.out,
             "    const {} {}* inelem = input + {};",
@@ -430,7 +529,7 @@ impl<'a> CLangDataTransform<'a> {
             self.out,
             "    {} unsigned int* outelem = output + {}*idx",
             self.config.arg_modifier.unwrap_or(""),
-            output_elem_len * (typewords_per_word as usize)
+            (output_elem_len >> 5) * (self.word_len as usize)
         )
         .unwrap();
         self.function_end();
