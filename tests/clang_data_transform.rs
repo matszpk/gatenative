@@ -273,6 +273,50 @@ fn test_clang_data_transform_input() {
 "##,
         String::from_utf8(dt.out()).unwrap()
     );
+    let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(192);
+    dt.input_transform(
+        "blable",
+        64,
+        10,
+        &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
+    );
+    assert_eq!(
+        r##"kernel void blable(unsigned long n, const global unsigned int* input, global uint* output) {
+    const uint zero = 0;
+    uint unused;
+    size_t k;
+    const size_t idx = get_local_id(0);
+    if (idx >= n) return;
+    unsigned int temp[32];
+    const global unsigned int* inelem = input + 384*idx;
+    size_t tpidx = idx % 6;
+    global uint* outelem = output + 10*(idx - tpidx) + tpidx;
+    uint v0;
+    uint v1;
+    uint v2;
+    uint v3;
+    uint v4;
+    uint v5;
+    for (k = 0; k < 32; k++)
+        temp[k] = inelem[64*tpidx + 2*k + 0];
+    INPUT_TRANSFORM_B7(v0,v1,v2,v3,unused,v4,v5, temp);
+    outelem[42] = v0;
+    outelem[12] = v1;
+    outelem[54] = v2;
+    outelem[30] = v3;
+    outelem[48] = v4;
+    outelem[6] = v5;
+    for (k = 0; k < 32; k++)
+        temp[k] = inelem[64*tpidx + 2*k + 1];
+    INPUT_TRANSFORM_B6(v0,v1,v2,unused,unused,v3, temp);
+    outelem[24] = v0;
+    outelem[36] = v1;
+    outelem[0] = v2;
+    outelem[18] = v3;
+}
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
 }
 
 #[test]
