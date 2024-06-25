@@ -469,7 +469,7 @@ impl<'a> CLangDataTransform<'a> {
                         self.out,
                         "        temp[{}] = inelem[{}];",
                         k,
-                        (input_elem_len >> 32) * (j * type_bit_len + k) + i
+                        (input_elem_len >> 5) * (j * type_bit_len + k) + i
                     )
                     .unwrap();
                 }
@@ -578,7 +578,7 @@ impl<'a> CLangDataTransform<'a> {
                     writeln!(
                         self.out,
                         "        outelem[{}] = temp[{}];",
-                        (output_elem_len >> 32) * (j * type_bit_len + k) + i,
+                        (output_elem_len >> 5) * (j * type_bit_len + k) + i,
                         k,
                     )
                     .unwrap();
