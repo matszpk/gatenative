@@ -461,7 +461,7 @@ impl<'a> CLangDataTransform<'a> {
         // define input and output elems pointers
         writeln!(
             self.out,
-            "    const {}unsigned int* inelem = input + {}*idx",
+            "    const {}unsigned int* inelem = input + {}*idx;",
             arg_modifier,
             (input_elem_len >> 5) * (self.word_len as usize),
         )
@@ -543,9 +543,14 @@ impl<'a> CLangDataTransform<'a> {
             .arg_modifier
             .map(|x| x.to_owned() + " ")
             .unwrap_or(String::new());
-        writeln!(self.out, "unsigned int temp[{}];", self.config.type_bit_len).unwrap();
+        writeln!(
+            self.out,
+            "    unsigned int temp[{}];",
+            self.config.type_bit_len
+        )
+        .unwrap();
         // define input and output elems pointers
-        let (tpidx_stmt, idxptr) = self.index_to_circuit_elem_ptr(output_elem_len);
+        let (tpidx_stmt, idxptr) = self.index_to_circuit_elem_ptr(input_elem_len);
         self.out.extend(tpidx_stmt.as_bytes());
         self.out.extend(b"\n");
         writeln!(
@@ -556,14 +561,14 @@ impl<'a> CLangDataTransform<'a> {
         .unwrap();
         writeln!(
             self.out,
-            "    {}unsigned int* outelem = output + {}*idx",
+            "    {}unsigned int* outelem = output + {}*idx;",
             arg_modifier,
             (output_elem_len >> 5) * (self.word_len as usize)
         )
         .unwrap();
         // get reversed bit mapping
         let (reversed_bit_mapping, max_var_num) =
-            Self::reversed_bit_mapping(input_elem_len, bit_mapping);
+            Self::reversed_bit_mapping(output_elem_len, bit_mapping);
         // allocate variables
         for v in 0..max_var_num {
             writeln!(self.out, "    {} v{};", self.config.type_name, v).unwrap();
@@ -605,8 +610,8 @@ impl<'a> CLangDataTransform<'a> {
             writeln!(
                 self.out,
                 "        outelem[{}*tpidx + {}*k + {}] = temp[k];",
-                (input_elem_len >> 5) * type_bit_len,
-                (input_elem_len >> 5),
+                (output_elem_len >> 5) * type_bit_len,
+                (output_elem_len >> 5),
                 i,
             )
             .unwrap();
