@@ -394,19 +394,19 @@ impl<'a> CLangDataTransform<'a> {
         let typewords_per_word = self.word_len / self.config.type_bit_len;
         if typewords_per_word == 1 {
             (
-                "    size_t tpidx = 0;".to_string(),
+                "    const size_t tpidx = 0;".to_string(),
                 format!("{}*idx", elem_len),
             )
         } else if typewords_per_word.count_ones() == 1 {
             // power of two
             let mask = typewords_per_word - 1;
             (
-                format!("    size_t tpidx = idx & {};", mask),
+                format!("    const size_t tpidx = idx & {};", mask),
                 format!("{0}*(idx & ~(size_t){1}) + tpidx", elem_len, mask),
             )
         } else {
             (
-                format!("    size_t tpidx = idx % {};", typewords_per_word),
+                format!("    const size_t tpidx = idx % {};", typewords_per_word),
                 format!("{0}*(idx - tpidx) + tpidx", elem_len),
             )
         }

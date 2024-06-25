@@ -18,7 +18,7 @@ fn test_clang_data_transform_input() {
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[32];
     const unsigned int* inelem = input + 64*idx;
-    size_t tpidx = 0;
+    const size_t tpidx = 0;
     uint32_t* outelem = output + 10*idx;
     uint32_t v0;
     uint32_t v1;
@@ -63,7 +63,7 @@ fn test_clang_data_transform_input() {
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[32];
     const unsigned int* inelem = input + 320*idx;
-    size_t tpidx = idx % 5;
+    const size_t tpidx = idx % 5;
     uint32_t* outelem = output + 10*(idx - tpidx) + tpidx;
     uint32_t v0;
     uint32_t v1;
@@ -108,7 +108,7 @@ fn test_clang_data_transform_input() {
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[32];
     const unsigned int* inelem = input + 512*idx;
-    size_t tpidx = idx & 7;
+    const size_t tpidx = idx & 7;
     uint32_t* outelem = output + 10*(idx & ~(size_t)7) + tpidx;
     uint32_t v0;
     uint32_t v1;
@@ -154,7 +154,7 @@ fn test_clang_data_transform_input() {
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[256];
     const unsigned int* inelem = input + 512*idx;
-    size_t tpidx = 0;
+    const size_t tpidx = 0;
     __m256* outelem = output + 10*idx;
     __m256 v0;
     __m256 v1;
@@ -199,7 +199,7 @@ fn test_clang_data_transform_input() {
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[128];
     const unsigned int* inelem = input + 1280*idx;
-    size_t tpidx = idx % 5;
+    const size_t tpidx = idx % 5;
     __m128i* outelem = output + 10*(idx - tpidx) + tpidx;
     __m128i v0;
     __m128i v1;
@@ -245,7 +245,7 @@ fn test_clang_data_transform_input() {
     if (idx >= n) return;
     unsigned int temp[32];
     const global unsigned int* inelem = input + 64*idx;
-    size_t tpidx = 0;
+    const size_t tpidx = 0;
     global uint* outelem = output + 10*idx;
     uint v0;
     uint v1;
@@ -289,7 +289,7 @@ fn test_clang_data_transform_input() {
     if (idx >= n) return;
     unsigned int temp[32];
     const global unsigned int* inelem = input + 384*idx;
-    size_t tpidx = idx % 6;
+    const size_t tpidx = idx % 6;
     global uint* outelem = output + 10*(idx - tpidx) + tpidx;
     uint v0;
     uint v1;
@@ -336,7 +336,7 @@ fn test_clang_data_transform_output() {
     size_t idx;
     for (idx = 0; idx < n; idx++) {
     unsigned int temp[32];
-    size_t tpidx = 0;
+    const size_t tpidx = 0;
     const uint32_t* inelem = input + 10*idx;
     unsigned int* outelem = output + 64*idx;
     uint32_t v0;
