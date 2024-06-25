@@ -276,7 +276,7 @@ impl<'a> CLangDataTransform<'a> {
     }
 
     fn gen_load_op(&mut self, varidx: usize, place: &str) {
-        write!(self.out, "        v{} = ", varidx).unwrap();
+        write!(self.out, "    v{} = ", varidx).unwrap();
         if let Some(load_op) = self.config.load_op {
             Self::write_op(&mut self.out, load_op, &[place.as_bytes()]);
         } else {
@@ -286,7 +286,7 @@ impl<'a> CLangDataTransform<'a> {
     }
 
     fn gen_store_op(&mut self, varidx: usize, place: &str) {
-        self.out.extend(b"        ");
+        self.out.extend(b"    ");
         let v = format!("v{}", varidx);
         if let Some(store_op) = self.config.store_op {
             Self::write_op(&mut self.out, store_op, &[place.as_bytes(), v.as_bytes()]);
@@ -467,7 +467,7 @@ impl<'a> CLangDataTransform<'a> {
                     let k = k as usize;
                     writeln!(
                         self.out,
-                        "        temp[{}] = inelem[{}];",
+                        "    temp[{}] = inelem[{}];",
                         k,
                         (input_elem_len >> 5) * (j * type_bit_len + k) + i
                     )
@@ -486,7 +486,7 @@ impl<'a> CLangDataTransform<'a> {
                 // call transform
                 writeln!(
                     self.out,
-                    "        INPUT_TRANSFORM_B{}({}, temp);",
+                    "    INPUT_TRANSFORM_B{}({}, temp);",
                     bit_num,
                     dests.join(",")
                 )
@@ -566,7 +566,7 @@ impl<'a> CLangDataTransform<'a> {
                 // call transform
                 writeln!(
                     self.out,
-                    "        OUTPUT_TRANSFORM_B{}(temp, {});",
+                    "    OUTPUT_TRANSFORM_B{}(temp, {});",
                     bit_num,
                     srcs.join(",")
                 )
@@ -577,7 +577,7 @@ impl<'a> CLangDataTransform<'a> {
                     let k = k as usize;
                     writeln!(
                         self.out,
-                        "        outelem[{}] = temp[{}];",
+                        "    outelem[{}] = temp[{}];",
                         (output_elem_len >> 5) * (j * type_bit_len + k) + i,
                         k,
                     )
