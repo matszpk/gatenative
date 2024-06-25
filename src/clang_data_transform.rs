@@ -365,7 +365,7 @@ impl<'a> CLangDataTransform<'a> {
         let typewords_per_word = self.word_len / self.config.type_bit_len;
         writeln!(
             self.out,
-            "    const unsigned int {}* inelem = input + {}*idx",
+            "    const {} unsigned int* inelem = input + {}*idx",
             self.config.arg_modifier.unwrap_or(""),
             input_elem_len * (typewords_per_word as usize),
         )
@@ -403,7 +403,7 @@ impl<'a> CLangDataTransform<'a> {
         .unwrap();
         writeln!(
             self.out,
-            "    unsigned int {}* outelem = output + {}*idx",
+            "    {} unsigned int* outelem = output + {}*idx",
             self.config.arg_modifier.unwrap_or(""),
             output_elem_len * (typewords_per_word as usize)
         )
