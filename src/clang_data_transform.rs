@@ -207,7 +207,7 @@ pub const CLANG_DATA_TRANSFORM_ARM_NEON: CLangDataTransformConfig<'_> = CLangDat
 pub const CLANG_DATA_TRANSFORM_OPENCL_U32: CLangDataTransformConfig<'_> =
     CLangDataTransformConfig {
         func_modifier: Some("kernel"),
-        init_index: Some("const size_t idx = get_group_id(0);"),
+        init_index: Some("const size_t idx = get_local_id(0);"),
         buffer_shift: true,
         include_name: None,
         include_name_2: None,
@@ -375,6 +375,7 @@ impl<'a> CLangDataTransform<'a> {
         self.out.extend(b"    size_t k;\n");
         if let Some(init_index) = self.config.init_index {
             writeln!(self.out, "    {}", init_index).unwrap();
+            self.out.extend(b"    if (idx >= n) return;\n");
         } else {
             self.out
                 .extend(b"    size_t idx;\n    for (idx = 0; idx < n; idx++) {\n");
