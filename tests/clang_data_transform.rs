@@ -677,6 +677,52 @@ fn test_clang_data_transform_output() {
 "##,
         String::from_utf8(dt.out()).unwrap()
     );
+    let mut dt = CLANG_DATA_TRANSFORM_ARM_NEON.data_transform(128);
+    dt.output_transform(
+        "blable",
+        10,
+        64,
+        &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
+    );
+    assert_eq!(
+        r##"void blable(unsigned long n,
+    const uint32x4_t* input, unsigned int* output) {
+    const uint32x4_t zero = { 0, 0, 0, 0 };
+    uint32x4_t unused;
+    size_t k;
+    size_t idx;
+    for (idx = 0; idx < n; idx++) {
+    unsigned int temp[128];
+    const size_t tpidx = 0;
+    const uint32x4_t* inelem = input + 10*idx;
+    unsigned int* outelem = output + 256*idx;
+    uint32x4_t v0;
+    uint32x4_t v1;
+    uint32x4_t v2;
+    uint32x4_t v3;
+    uint32x4_t v4;
+    uint32x4_t v5;
+    v0 = inelem[7];
+    v1 = inelem[2];
+    v2 = inelem[9];
+    v3 = inelem[5];
+    v4 = inelem[8];
+    v5 = inelem[1];
+    OUTPUT_TRANSFORM_B7(temp, v0,v1,v2,v3,zero,v4,v5);
+    for (k = 0; k < 128; k++)
+        outelem[256*tpidx + 2*k + 0] = temp[k];
+    v0 = inelem[4];
+    v1 = inelem[6];
+    v2 = inelem[0];
+    v3 = inelem[3];
+    OUTPUT_TRANSFORM_B6(temp, v0,v1,v2,zero,zero,v3);
+    for (k = 0; k < 128; k++)
+        outelem[256*tpidx + 2*k + 1] = temp[k];
+    }
+}
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
     // OpenCL
     let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(32);
     dt.output_transform(
