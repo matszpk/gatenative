@@ -631,6 +631,52 @@ fn test_clang_data_transform_output() {
 "##,
         String::from_utf8(dt.out()).unwrap()
     );
+    let mut dt = CLANG_DATA_TRANSFORM_INTEL_SSE2.data_transform(128 * 9);
+    dt.output_transform(
+        "blable",
+        10,
+        64,
+        &[32 + 2, 6, 1, 32 + 5, 32, 3, 32 + 1, 0, 5, 2],
+    );
+    assert_eq!(
+        r##"void blable(unsigned long n,
+    const __m128i* input, unsigned int* output) {
+    const __m128i zero = *((const __m128i*)zero_value);
+    __m128i unused;
+    size_t k;
+    size_t idx;
+    for (idx = 0; idx < n; idx++) {
+    unsigned int temp[128];
+    const size_t tpidx = idx % 9;
+    const __m128i* inelem = input + 10*(idx - tpidx) + tpidx;
+    unsigned int* outelem = output + 2304*idx;
+    __m128i v0;
+    __m128i v1;
+    __m128i v2;
+    __m128i v3;
+    __m128i v4;
+    __m128i v5;
+    v0 = _mm_loadu_si128((const __m128i*)&inelem[63]);
+    v1 = _mm_loadu_si128((const __m128i*)&inelem[18]);
+    v2 = _mm_loadu_si128((const __m128i*)&inelem[81]);
+    v3 = _mm_loadu_si128((const __m128i*)&inelem[45]);
+    v4 = _mm_loadu_si128((const __m128i*)&inelem[72]);
+    v5 = _mm_loadu_si128((const __m128i*)&inelem[9]);
+    OUTPUT_TRANSFORM_B7(temp, v0,v1,v2,v3,zero,v4,v5);
+    for (k = 0; k < 128; k++)
+        outelem[256*tpidx + 2*k + 0] = temp[k];
+    v0 = _mm_loadu_si128((const __m128i*)&inelem[36]);
+    v1 = _mm_loadu_si128((const __m128i*)&inelem[54]);
+    v2 = _mm_loadu_si128((const __m128i*)&inelem[0]);
+    v3 = _mm_loadu_si128((const __m128i*)&inelem[27]);
+    OUTPUT_TRANSFORM_B6(temp, v0,v1,v2,zero,zero,v3);
+    for (k = 0; k < 128; k++)
+        outelem[256*tpidx + 2*k + 1] = temp[k];
+    }
+}
+"##,
+        String::from_utf8(dt.out()).unwrap()
+    );
     // OpenCL
     let mut dt = CLANG_DATA_TRANSFORM_OPENCL_U32.data_transform(32);
     dt.output_transform(
