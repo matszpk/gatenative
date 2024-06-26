@@ -366,13 +366,16 @@ impl<'a> CLangDataTransform<'a> {
             }
         )
         .unwrap();
-        writeln!(
-            self.out,
-            "    const {} zero = {};",
-            self.config.type_name, self.config.zero_value.1
-        )
-        .unwrap();
-        writeln!(self.out, "    {} unused;", self.config.type_name).unwrap();
+        if output {
+            writeln!(
+                self.out,
+                "    const {} zero = {};",
+                self.config.type_name, self.config.zero_value.1
+            )
+            .unwrap();
+        } else {
+            writeln!(self.out, "    {} unused;", self.config.type_name).unwrap();
+        }
         self.out.extend(b"    size_t k;\n");
         if let Some(init_index) = self.config.init_index {
             writeln!(self.out, "    {}", init_index).unwrap();

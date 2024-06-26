@@ -39,7 +39,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, uint32_t* output) {
-    const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
     size_t idx;
@@ -85,7 +84,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, uint32_t* output) {
-    const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
     size_t idx;
@@ -131,7 +129,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, uint32_t* output) {
-    const uint32_t zero = 0;
     uint32_t unused;
     size_t k;
     size_t idx;
@@ -178,7 +175,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, __m256* output) {
-    const __m256 zero = *((const __m256*)zero_value);
     __m256 unused;
     size_t k;
     size_t idx;
@@ -224,7 +220,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, __m128i* output) {
-    const __m128i zero = *((const __m128i*)zero_value);
     __m128i unused;
     size_t k;
     size_t idx;
@@ -270,7 +265,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"void blable(unsigned long n,
     const unsigned int* input, uint32x4_t* output) {
-    const uint32x4_t zero = { 0, 0, 0, 0 };
     uint32x4_t unused;
     size_t k;
     size_t idx;
@@ -317,7 +311,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"kernel void blable(unsigned long n,
     const global unsigned int* input, global uint* output) {
-    const uint zero = 0;
     uint unused;
     size_t k;
     const size_t idx = get_local_id(0);
@@ -362,7 +355,6 @@ fn test_clang_data_transform_input() {
     assert_eq!(
         r##"kernel void blable(unsigned long n,
     const global unsigned int* input, global uint* output) {
-    const uint zero = 0;
     uint unused;
     size_t k;
     const size_t idx = get_local_id(0);
@@ -412,7 +404,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const uint32_t* input, unsigned int* output) {
     const uint32_t zero = 0;
-    uint32_t unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -458,7 +449,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const uint32_t* input, unsigned int* output) {
     const uint32_t zero = 0;
-    uint32_t unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -504,7 +494,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const uint32_t* input, unsigned int* output) {
     const uint32_t zero = 0;
-    uint32_t unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -550,7 +539,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const __m128i* input, unsigned int* output) {
     const __m128i zero = *((const __m128i*)zero_value);
-    __m128i unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -596,7 +584,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const uint64_t* input, unsigned int* output) {
     const uint64_t zero = 0ULL;
-    uint64_t unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -642,7 +629,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const __m128i* input, unsigned int* output) {
     const __m128i zero = *((const __m128i*)zero_value);
-    __m128i unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -688,7 +674,6 @@ fn test_clang_data_transform_output() {
         r##"void blable(unsigned long n,
     const uint32x4_t* input, unsigned int* output) {
     const uint32x4_t zero = { 0, 0, 0, 0 };
-    uint32x4_t unused;
     size_t k;
     size_t idx;
     for (idx = 0; idx < n; idx++) {
@@ -735,7 +720,6 @@ fn test_clang_data_transform_output() {
         r##"kernel void blable(unsigned long n,
     const global uint* input, global unsigned int* output) {
     const uint zero = 0;
-    uint unused;
     size_t k;
     const size_t idx = get_local_id(0);
     if (idx >= n) return;
@@ -780,7 +764,6 @@ fn test_clang_data_transform_output() {
         r##"kernel void blable(unsigned long n,
     const global uint* input, global unsigned int* output) {
     const uint zero = 0;
-    uint unused;
     size_t k;
     const size_t idx = get_local_id(0);
     if (idx >= n) return;
