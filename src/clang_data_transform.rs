@@ -624,4 +624,8 @@ impl<'a> CLangDataTransform<'a> {
     pub fn out(self) -> Vec<u8> {
         self.out
     }
+
+    pub fn type_len(&self) -> u32 {
+        self.config.type_bit_len
+    }
 }
