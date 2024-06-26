@@ -1259,6 +1259,8 @@ where
 // About using DataTransformers and DataTransforms.
 // These data transformations designed to be light and used only once,
 // because they are not too much fast.
+// If transformations used many times then it recommeded to use
+// INPUT_TRANSFORM and OUTPUT_TRANSFORM inside populated input code or aggregated output code.
 pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     type ErrorType;
 
