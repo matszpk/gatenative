@@ -116,7 +116,7 @@ pub const CLANG_DATA_TRANSFORM_INTEL_SSE2: CLangDataTransformConfig<'_> =
         load_op: Some("_mm_loadu_si128((const __m128i*)&{})"),
         store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
         transform_config: &CLANG_TRANSFORM_INTEL_SSE2,
-        previous: Some(&CLANG_DATA_TRANSFORM_INTEL_MMX),
+        previous: Some(&CLANG_DATA_TRANSFORM_U64),
     };
 
 pub const CLANG_DATA_TRANSFORM_INTEL_AVX: CLangDataTransformConfig<'_> = CLangDataTransformConfig {
