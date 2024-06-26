@@ -395,7 +395,6 @@ pub struct CPUExecutor {
     parallel: Option<usize>,
     dont_clear_outputs: bool,
     inner_loop: Option<u32>,
-    cpu_ext: CPUExtension,
 }
 
 impl CPUExecutor {
@@ -1409,7 +1408,6 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
                     parallel: self.parallel,
                     dont_clear_outputs: e.dont_clear_outputs,
                     inner_loop: e.inner_loop,
-                    cpu_ext: self.cpu_ext,
                 }
             })
             .collect::<Vec<_>>())
