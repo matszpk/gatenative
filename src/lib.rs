@@ -1257,7 +1257,7 @@ where
 }
 
 // About using DataTransformers and DataTransforms.
-// This data transformations designed to be light and used only once,
+// These data transformations designed to be light and used only once,
 // because they are not too much fast.
 pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     type ErrorType;
