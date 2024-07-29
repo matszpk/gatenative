@@ -11,9 +11,6 @@ use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 use crate::vlop3circuit::*;
 
-// TODO: optimize negation usage and remove swap_args - simplify gen_var_allocs and
-//       gen_func_code_for_circuit
-
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
