@@ -1267,14 +1267,6 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
 
-        // generate swap_args - it used to preserve order original traverse from original circuit.
-        // if true then argument should be swapped while choosen way.
-        // let swap_args = circuit
-        //     .gates()
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(i, g)| g.i0 != vcircuit.gates[i].i0)
-        //     .collect::<Vec<_>>();
         gen_func_code_for_circuit(
             &mut func_writer,
             &vcircuit,
@@ -1335,14 +1327,6 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
 
-        // generate swap_args - it used to preserve order original traverse from original circuit.
-        // if true then argument should be swapped while choosen way.
-        // let swap_args = circuit
-        //     .gates()
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(i, g)| g.i0 != vcircuit.gates[i].0.i0)
-        //     .collect::<Vec<_>>();
         gen_func_code_for_circuit(
             &mut func_writer,
             &vcircuit,
