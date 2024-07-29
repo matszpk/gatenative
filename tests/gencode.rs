@@ -1323,6 +1323,91 @@ EndFunc
 EndFunc
 "##
     );
+    let circuit = Circuit::new(
+        4,
+        [],
+        [
+            (0, false),
+            (3, true),
+            (2, false),
+            (1, true),
+            (1, false),
+            (2, true),
+            (0, true),
+            (3, false),
+            (1, true),
+            (2, false),
+            (0, false),
+            (3, true),
+        ],
+    )
+    .unwrap();
+    cw_impl.out.clear();
+    generate_code(
+        &mut cw_impl,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_impl.out.clone()).unwrap(),
+        r##"Func test1(4 12)
+    vars v0..4
+    v0 = I0
+    O0 = v0
+    v1 = I3
+    O1 = ~v1
+    v2 = I2
+    O2 = v2
+    v3 = I1
+    O3 = ~v3
+    O4 = v3
+    O5 = ~v2
+    O6 = ~v0
+    O7 = v1
+    O8 = ~v3
+    O9 = v2
+    O10 = v0
+    O11 = ~v1
+EndFunc
+"##
+    );
+    cw_basic.out.clear();
+    generate_code(
+        &mut cw_basic,
+        "test1",
+        circuit.clone(),
+        false,
+        None,
+        None,
+        None,
+    );
+    assert_eq!(
+        String::from_utf8(cw_basic.out.clone()).unwrap(),
+        r##"Func test1(4 12)
+    vars v0..4
+    v0 = I0
+    O0 = v0
+    v1 = I3
+    O1 = ~v1
+    v2 = I2
+    O2 = v2
+    v3 = I1
+    O3 = ~v3
+    O4 = v3
+    O5 = ~v2
+    O6 = ~v0
+    O7 = v1
+    O8 = ~v3
+    O9 = v2
+    O10 = v0
+    O11 = ~v1
+EndFunc
+"##
+    );
 
     //
     // extra single buffer tests
