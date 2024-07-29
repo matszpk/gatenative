@@ -240,9 +240,9 @@ fn test_generate_code() {
     v3 = I2
     v4 = (v3 xor v2)
     O0 = v4
-    v2 = (v3 and v2)
     v0 = (v0 impl v1)
-    v0 = (v0 impl v2)
+    v1 = (v3 and v2)
+    v0 = (v0 impl v1)
     O1 = ~v0
 EndFunc
 "##
@@ -269,9 +269,9 @@ EndFunc
     v3 = I44
     v4 = (v3 xor v2)
     O48 = v4
-    v2 = (v3 and v2)
     v0 = (v0 impl v1)
-    v0 = (v0 impl v2)
+    v1 = (v3 and v2)
+    v0 = (v0 impl v1)
     O72 = ~v0
 EndFunc
 "##
@@ -299,9 +299,9 @@ EndFunc
     v3 = bit(arg, 1)
     v4 = (v3 xor v2)
     O0 = v4
-    v2 = (v3 and v2)
     v0 = (v0 impl v1)
-    v0 = (v0 impl v2)
+    v1 = (v3 and v2)
+    v0 = (v0 impl v1)
     O1 = ~v0
 EndFunc
 "##
@@ -386,9 +386,9 @@ EndFunc
     v3 = O2
     v4 = (v3 xor v2)
     O0 = v4
-    v2 = (v3 and v2)
     v0 = (v0 impl v1)
-    v0 = (v0 impl v2)
+    v1 = (v3 and v2)
+    v0 = (v0 impl v1)
     O1 = ~v0
 EndFunc
 "##
@@ -532,7 +532,7 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(4 2)
-    vars v0..9
+    vars v0..10
     v0 = I0
     v1 = I1
     v2 = (v0 nimpl v1)
@@ -543,18 +543,18 @@ EndFunc
     v5 = (v0 and v4)
     v5 = (v4 and v5)
     v5 = (v4 xor v5)
-    v6 = (v2 nimpl v5)
-    v3 = (v3 xor v6)
-    v7 = (v2 or v5)
-    v8 = (v7 nimpl v0)
-    v2 = (v2 and v5)
-    v5 = (v1 or v2)
-    v5 = (v8 xor v5)
-    v3 = (v5 nimpl v3)
+    v6 = (v2 or v5)
+    v7 = (v6 nimpl v0)
+    v8 = (v2 and v5)
+    v9 = (v1 or v8)
+    v7 = (v7 xor v9)
+    v2 = (v2 nimpl v5)
+    v3 = (v3 xor v2)
+    v3 = (v7 nimpl v3)
     O0 = ~v3
-    v0 = (v0 nimpl v7)
-    v0 = (v2 nimpl v0)
-    v1 = (v1 nimpl v6)
+    v0 = (v0 nimpl v6)
+    v0 = (v8 nimpl v0)
+    v1 = (v1 nimpl v2)
     v1 = (v4 nimpl v1)
     v0 = (v0 xor v1)
     O1 = v0
@@ -742,7 +742,7 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(4 8)
-    vars v0..9
+    vars v0..10
     v0 = I0
     v1 = I1
     v2 = (v0 nimpl v1)
@@ -753,21 +753,21 @@ EndFunc
     v5 = (v0 and v4)
     v5 = (v4 and v5)
     v5 = (v4 xor v5)
-    v6 = (v2 nimpl v5)
-    v3 = (v3 xor v6)
-    v7 = (v2 or v5)
-    v8 = (v7 nimpl v0)
-    v2 = (v2 and v5)
-    v5 = (v1 or v2)
-    v5 = (v8 xor v5)
-    v3 = (v5 nimpl v3)
+    v6 = (v2 or v5)
+    v7 = (v6 nimpl v0)
+    v8 = (v2 and v5)
+    v9 = (v1 or v8)
+    v7 = (v7 xor v9)
+    v2 = (v2 nimpl v5)
+    v3 = (v3 xor v2)
+    v3 = (v7 nimpl v3)
     O0 = ~v3
     O1 = v3
-    v5 = (v0 nimpl v7)
-    v2 = (v2 nimpl v5)
-    v5 = (v1 nimpl v6)
-    v4 = (v4 nimpl v5)
-    v2 = (v2 xor v4)
+    v5 = (v0 nimpl v6)
+    v5 = (v8 nimpl v5)
+    v2 = (v1 nimpl v2)
+    v2 = (v4 nimpl v2)
+    v2 = (v5 xor v2)
     O2 = ~v2
     O3 = v2
     O4 = v0
@@ -953,7 +953,7 @@ EndFunc
     assert_eq!(
         String::from_utf8(cw_nimpl.out.clone()).unwrap(),
         r##"Func test1(4 4 sb)
-    vars v0..9
+    vars v0..10
     v0 = O0
     v1 = O1
     v2 = (v0 nimpl v1)
@@ -964,19 +964,19 @@ EndFunc
     v5 = (v0 and v4)
     v5 = (v4 and v5)
     v5 = (v4 xor v5)
-    v6 = (v2 nimpl v5)
-    v3 = (v3 xor v6)
-    v7 = (v2 or v5)
-    v8 = (v7 nimpl v0)
-    v2 = (v2 and v5)
-    v5 = (v1 or v2)
-    v5 = (v8 xor v5)
-    v3 = (v5 nimpl v3)
+    v6 = (v2 or v5)
+    v7 = (v6 nimpl v0)
+    v8 = (v2 and v5)
+    v9 = (v1 or v8)
+    v7 = (v7 xor v9)
+    v2 = (v2 nimpl v5)
+    v3 = (v3 xor v2)
+    v3 = (v7 nimpl v3)
     O0 = ~v3
     O2 = v3
-    v0 = (v0 nimpl v7)
-    v0 = (v2 nimpl v0)
-    v1 = (v1 nimpl v6)
+    v0 = (v0 nimpl v6)
+    v0 = (v8 nimpl v0)
+    v1 = (v1 nimpl v2)
     v1 = (v4 nimpl v1)
     v0 = (v0 xor v1)
     O1 = v0
@@ -1077,13 +1077,13 @@ EndFunc
         String::from_utf8(cw_basic.out.clone()).unwrap(),
         r##"Func test1(3 1)
     vars v0..3
-    v0 = I0
-    v1 = I1
-    v0 = (v0 and v1)
-    v2 = I2
-    v2 = (v1 and v2)
-    v0 = (v2 or ~v0)
-    v0 = (v0 or v1)
+    v0 = I1
+    v1 = I2
+    v1 = (v0 and v1)
+    v2 = I0
+    v2 = (v2 and v0)
+    v1 = (v1 or ~v2)
+    v0 = (v1 or v0)
     O0 = v0
 EndFunc
 "##

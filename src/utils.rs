@@ -70,11 +70,7 @@ pub(crate) trait CircuitTrait<T> {
     fn input_len(&self) -> T;
     fn len(&self) -> usize;
     fn gate_input_num(&self, gate: usize) -> usize;
-    // SPECIAL INFO: get gate input for tree traversal to keep tree traversal order
-    // between various circuit forms used in gencode.
     fn gate_input(&self, gate: usize, input: usize) -> T;
-    // SPECIAL INFO: get gate input for operation setup.
-    fn gate_op_input(&self, gate: usize, input: usize) -> T;
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs);
     fn outputs(&self) -> &[(T, bool)];
 }
@@ -101,15 +97,6 @@ where
             }
         }
     }
-    fn gate_op_input(&self, gate: usize, input: usize) -> T {
-        match input {
-            0 => self.gates()[gate].i0,
-            1 => self.gates()[gate].i1,
-            _ => {
-                panic!("No more input");
-            }
-        }
-    }
     fn gate_op(&self, _gate: usize) -> (InstrOp, VNegs) {
         panic!("Unsupported");
     }
@@ -119,44 +106,23 @@ where
 }
 
 // vcircuit with swap_args - vcircuit with table of swapping arguments
-impl<T> CircuitTrait<T> for (VCircuit<T>, Vec<bool>)
+impl<T> CircuitTrait<T> for VCircuit<T>
 where
     T: Clone + Copy,
 {
     fn input_len(&self) -> T {
-        self.0.input_len
+        self.input_len
     }
     fn len(&self) -> usize {
-        self.0.gates.len()
+        self.gates.len()
     }
     fn gate_input_num(&self, _gate: usize) -> usize {
         2
     }
     fn gate_input(&self, gate: usize, input: usize) -> T {
         match input {
-            0 => {
-                if self.1[gate] {
-                    self.0.gates[gate].i1
-                } else {
-                    self.0.gates[gate].i0
-                }
-            }
-            1 => {
-                if self.1[gate] {
-                    self.0.gates[gate].i0
-                } else {
-                    self.0.gates[gate].i1
-                }
-            }
-            _ => {
-                panic!("No more input");
-            }
-        }
-    }
-    fn gate_op_input(&self, gate: usize, input: usize) -> T {
-        match input {
-            0 => self.0.gates[gate].i0,
-            1 => self.0.gates[gate].i1,
+            0 => self.gates[gate].i0,
+            1 => self.gates[gate].i1,
             _ => {
                 panic!("No more input");
             }
@@ -164,7 +130,7 @@ where
     }
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
         (
-            match self.0.gates[gate].func {
+            match self.gates[gate].func {
                 VGateFunc::And => InstrOp::And,
                 VGateFunc::Or => InstrOp::Or,
                 VGateFunc::Impl => InstrOp::Impl,
@@ -178,49 +144,28 @@ where
         )
     }
     fn outputs(&self) -> &[(T, bool)] {
-        &self.0.outputs
+        &self.outputs
     }
 }
 
 // vbinopcircuit with swap_args - vcircuit with table of swapping arguments
-impl<T> CircuitTrait<T> for (VBinOpCircuit<T>, Vec<bool>)
+impl<T> CircuitTrait<T> for VBinOpCircuit<T>
 where
     T: Clone + Copy,
 {
     fn input_len(&self) -> T {
-        self.0.input_len
+        self.input_len
     }
     fn len(&self) -> usize {
-        self.0.gates.len()
+        self.gates.len()
     }
     fn gate_input_num(&self, _gate: usize) -> usize {
         2
     }
     fn gate_input(&self, gate: usize, input: usize) -> T {
         match input {
-            0 => {
-                if self.1[gate] {
-                    self.0.gates[gate].0.i1
-                } else {
-                    self.0.gates[gate].0.i0
-                }
-            }
-            1 => {
-                if self.1[gate] {
-                    self.0.gates[gate].0.i0
-                } else {
-                    self.0.gates[gate].0.i1
-                }
-            }
-            _ => {
-                panic!("No more input");
-            }
-        }
-    }
-    fn gate_op_input(&self, gate: usize, input: usize) -> T {
-        match input {
-            0 => self.0.gates[gate].0.i0,
-            1 => self.0.gates[gate].0.i1,
+            0 => self.gates[gate].0.i0,
+            1 => self.gates[gate].0.i1,
             _ => {
                 panic!("No more input");
             }
@@ -228,7 +173,7 @@ where
     }
     fn gate_op(&self, gate: usize) -> (InstrOp, VNegs) {
         (
-            match self.0.gates[gate].0.func {
+            match self.gates[gate].0.func {
                 VGateFunc::And => InstrOp::And,
                 VGateFunc::Or => InstrOp::Or,
                 VGateFunc::Xor => InstrOp::Xor,
@@ -236,11 +181,11 @@ where
                     panic!("Unsupported InstrOp")
                 }
             },
-            self.0.gates[gate].1,
+            self.gates[gate].1,
         )
     }
     fn outputs(&self) -> &[(T, bool)] {
-        &self.0.outputs
+        &self.outputs
     }
 }
 
@@ -262,16 +207,6 @@ where
         }
     }
     fn gate_input(&self, gate: usize, input: usize) -> T {
-        match input {
-            0 => self.gates[gate].i0,
-            1 => self.gates[gate].i1,
-            2 => self.gates[gate].i2,
-            _ => {
-                panic!("No more input");
-            }
-        }
-    }
-    fn gate_op_input(&self, gate: usize, input: usize) -> T {
         match input {
             0 => self.gates[gate].i0,
             1 => self.gates[gate].i1,
