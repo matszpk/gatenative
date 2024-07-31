@@ -3,6 +3,7 @@ use gatesim::Circuit;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::marker::PhantomData;
 use std::ops::{Range, RangeFrom};
 
 // TODO: Add special Builder that for arg_input execute differently optimized circuit
@@ -645,6 +646,94 @@ pub trait RangedData {
     #[inline]
     fn set_range_from(&mut self, range: RangeFrom<usize>) {
         self.set_range(range.start..usize::MAX);
+    }
+}
+
+// ParentDataHolder with specified range that honored while changing range.
+pub struct ParentDataHolder<'a, DR, DW, D>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW> + RangedData,
+{
+    range: Range<usize>,
+    child: D,
+    dr: PhantomData<&'a DR>,
+    dw: PhantomData<&'a DW>,
+}
+
+impl<'a, DR, DW, D> ParentDataHolder<'a, DR, DW, D>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW> + RangedData,
+{
+    pub fn new(range: Range<usize>, mut child: D) -> Self {
+        child.set_range(range.clone());
+        Self {
+            range,
+            child,
+            dr: PhantomData,
+            dw: PhantomData,
+        }
+    }
+}
+
+impl<'a, DR, DW, D> DataHolder<'a, DR, DW> for ParentDataHolder<'a, DR, DW, D>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW> + RangedData,
+{
+    fn len(&self) -> usize {
+        self.child.len()
+    }
+    fn get(&'a self) -> DR {
+        self.child.get()
+    }
+    fn get_mut(&'a mut self) -> DW {
+        self.child.get_mut()
+    }
+    fn process<F, Out>(&self, f: F) -> Out
+    where
+        F: FnMut(&[u32]) -> Out,
+    {
+        self.child.process(f)
+    }
+    fn process_mut<F, Out>(&mut self, f: F) -> Out
+    where
+        F: FnMut(&mut [u32]) -> Out,
+    {
+        self.child.process_mut(f)
+    }
+    fn copy(&self) -> Self {
+        let c = self.child.copy();
+        Self::new(0..c.len(), c)
+    }
+    fn fill(&mut self, value: u32) {
+        self.child.fill(value)
+    }
+    fn release(self) -> Vec<u32> {
+        self.child.release()
+    }
+    fn free(self) {
+        self.child.free()
+    }
+}
+
+impl<'a, DR, DW, D> RangedData for ParentDataHolder<'a, DR, DW, D>
+where
+    DR: DataReader,
+    DW: DataWriter,
+    D: DataHolder<'a, DR, DW> + RangedData,
+{
+    // set range
+    fn set_range(&mut self, range: Range<usize>) {
+        let range_len = self.range.end - self.range.start;
+        assert!(range.start < range_len);
+        assert!(range.end < range_len);
+        self.child
+            .set_range(self.range.start + range.start..self.range.start + range.end);
     }
 }
 
