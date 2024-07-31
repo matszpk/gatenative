@@ -730,10 +730,10 @@ where
     // set range
     fn set_range(&mut self, range: Range<usize>) {
         let range_len = self.range.end - self.range.start;
-        assert!(range.start < range_len);
-        assert!(range.end < range_len);
+        assert!(range.start <= range_len);
+        let end = std::cmp::min(range.end, range_len);
         self.child
-            .set_range(self.range.start + range.start..self.range.start + range.end);
+            .set_range(self.range.start + range.start..self.range.start + end);
     }
 }
 
