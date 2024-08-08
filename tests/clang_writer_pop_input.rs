@@ -1508,7 +1508,7 @@ fn test_clang_writer_populate_input_from_buffer() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
 #define i0 (v0)
 #define i1 (v1)
 #define i3 (v2)
@@ -1559,7 +1559,7 @@ fn test_clang_writer_populate_input_from_buffer() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
 #define i0 (v0)
 #define i1 (v1)
 #define i3 (v2)
@@ -2085,7 +2085,7 @@ fn test_clang_writer_populate_input_from_buffer() {
     uint v4;
     uint v5;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
 #define i1 (v0)
 #define i2 (v1)
 #define i4 (v2)
@@ -2281,7 +2281,7 @@ fn test_clang_writer_populate_input_from_buffer() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
 #define i0 (v0)
 #define i1 (v1)
 #define i3 (v2)

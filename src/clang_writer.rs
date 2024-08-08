@@ -1741,16 +1741,16 @@ impl<'a, 'c> FuncWriter for CLangFuncWriter<'a, 'c> {
                     writeln!(
                         self.writer.out,
                         concat!(
-                            "    buffer = (const {0} void*)",
-                            "(((const {0} char*)buffer) + 4*buffer_shift);"
+                            "    buffer = ({0} void*)",
+                            "((({0} char*)buffer) + 4*buffer_shift);"
                         ),
                         arg_modifier
                     )
                     .unwrap();
                 } else {
-                    self.writer.out.extend(
-                        b"    buffer = (const void*)(((const char*)buffer) + 4*buffer_shift);\n",
-                    );
+                    self.writer
+                        .out
+                        .extend(b"    buffer = (void*)(((char*)buffer) + 4*buffer_shift);\n");
                 }
             } else {
                 if self.pop_input_code.is_some() && !self.single_buffer {

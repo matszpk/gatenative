@@ -116,7 +116,7 @@ fn test_clang_writer_loop_config_opencl() {
     uint v14;
     uint v15;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
 #define i2 (v2)
 #define i3 (v3)
@@ -264,7 +264,7 @@ fn test_clang_writer_loop_config_opencl() {
     uint v14;
     uint v15;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
 #define i2 (v2)
 #define i3 (v3)

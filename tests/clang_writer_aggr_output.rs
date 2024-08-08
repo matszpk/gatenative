@@ -1207,7 +1207,7 @@ fn test_clang_writer_aggregate_output_to_buffer() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + 0];
     v1 = input[ivn + 1];
@@ -1944,7 +1944,7 @@ fn test_clang_writer_aggregate_output_to_buffer() {
     uint v2;
     uint v3;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + 0];
     output[ovn + 0] = v0;
@@ -2006,7 +2006,7 @@ fn test_clang_writer_aggregate_output_to_buffer() {
     uint v2;
     uint v3;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + llen*0 + lidx];
     output[ovn + llen*0 + lidx] = v0;

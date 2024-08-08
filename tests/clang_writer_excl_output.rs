@@ -539,7 +539,7 @@ fn test_clang_writer_exclude_output() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
     v0 = input[ivn + 0];
     v1 = input[ivn + 1];
@@ -779,7 +779,7 @@ fn test_clang_writer_exclude_output() {
     uint v3;
     uint v4;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
     v0 = output[ivn + 0];
     v1 = output[ivn + 1];
@@ -967,7 +967,7 @@ fn test_clang_writer_exclude_output() {
     uint v4;
     uint v5;
     if (idx >= n) return;
-    buffer = (const global void*)(((const global char*)buffer) + 4*buffer_shift);
+    buffer = (global void*)(((global char*)buffer) + 4*buffer_shift);
     unsigned int xxx = 1111;
 #define i1 (v0)
 #define i4 (v1)
