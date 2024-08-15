@@ -1,4 +1,4 @@
-use crate::gatesim::*;
+use gatesim::*;
 
 use std::fmt::Debug;
 

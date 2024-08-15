@@ -1441,7 +1441,7 @@ where
 mod tests {
     use super::*;
 
-    use crate::gatesim::*;
+    use gatesim::*;
     use crate::vcircuit::*;
     use crate::VNegs::{self, *};
 

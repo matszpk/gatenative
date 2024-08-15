@@ -1,4 +1,4 @@
-use crate::gatesim::*;
+use gatesim::*;
 
 use std::collections::HashSet;
 use std::fmt::Debug;

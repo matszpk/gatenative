@@ -1378,7 +1378,7 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 mod tests {
     use super::*;
 
-    use crate::gatesim::*;
+    use gatesim::*;
 
     fn gen_var_allocs_old<T>(
         circuit: &Circuit<T>,
