@@ -1,5 +1,4 @@
 use crate::utils::{gen_var_usage, CircuitTrait, VarAllocator};
-use gatesim::*;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
@@ -1378,6 +1377,8 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use crate::gatesim::*;
 
     fn gen_var_allocs_old<T>(
         circuit: &Circuit<T>,

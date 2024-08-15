@@ -39,8 +39,8 @@ mod vlop3circuit;
 mod vlop3circuit2;
 mod vlop3circuit3;
 
-pub use gatesim;
 pub use gateutil;
+pub use gateutil::gatesim;
 pub use libloading;
 pub use opencl3;
 pub use rayon;
