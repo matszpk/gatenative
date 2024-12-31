@@ -1,5 +1,5 @@
-use gatesim::*;
 use crate::utils::{gen_var_usage, VarAllocator};
+use gatesim::*;
 
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Debug;

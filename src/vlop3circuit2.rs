@@ -1441,9 +1441,9 @@ where
 mod tests {
     use super::*;
 
-    use gatesim::*;
     use crate::vcircuit::*;
     use crate::VNegs::{self, *};
+    use gatesim::*;
 
     fn gen_subtree_coverage_from_circuit(circuit: Circuit<u32>) -> Vec<u32> {
         let binop_circuit = VBinOpCircuit::from(circuit.clone());

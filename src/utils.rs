@@ -273,14 +273,7 @@ pub(crate) fn get_timestamp() -> u128 {
     old
 }
 
-pub const fn calc_log_bits(n: usize) -> usize {
-    let nbits = usize::BITS - n.leading_zeros();
-    if (1 << (nbits - 1)) == n {
-        (nbits - 1) as usize
-    } else {
-        nbits as usize
-    }
-}
+pub(super) use gate_calc_log_bits::calc_log_bits;
 
 pub struct MultiVarAllocTool<T> {
     var_allocs: Vec<VarAllocator<T>>,
