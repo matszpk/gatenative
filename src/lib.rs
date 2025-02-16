@@ -1,3 +1,76 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The library allows to execute simulation of the Gate circuit on CPU or GPU (by using OpenCL).
+//! It provides complex configuration of execution including passing data circuit's inputs.
+//! This library executes parallel simulation of circuit that runs many circuits.
+//! The execution organized as threads (elements) in single execution. One circuit simulation
+//! mapped to one bit of word of processor. For modern CPU a word can have 64 to 512 bits.
+//! The library uses vector processing instruction to run simulation efficiently on CPU.
+//!
+//! Additional feature is ability to write code to process passing and processing inputs before
+//! calling the simulation and write code to process outputs after calling the simulation.
+//! The code that process inputs called as 'populating code' and the code that process
+//! outputs called as 'aggregating code'.
+//!
+//! Next feature is ability to make loop for execution of simulation. Inside that loop
+//! is possible to process inputs and outputs between simulations and use a GPU local memory.
+//! Just it possible to call multiple simulation executions (iterations) under single
+//! kernel call.
+//!
+//! This library organizes simulation's execution in two steps: in the first step build code to
+//! execute simulation that native for processor or GPU, in second step just execute built code
+//! to make simulation.
+//!
+//! The organization of simulation is shown under image:
+//! ```text
+//! +---------------------------------------------------------------------------------+
+//! | SIM(0)....SIM(N-1) | SIM(N)....SIM(2*N-1) | ..... | SIM((K-1)*N)....SIM((K)*N-1)|
+//! +---------------------------------------------------------------------------------+
+//! ```
+//! In this image `SIM(X)` is Xth simulation. Simulation are groupped into processor words
+//! with length N bits and all execution contains K*N simulation. If a processor has
+//! 256-bit word then can execute 256 simulations under single thread.
+//! A GPU uses only 32-bit words, however simulation also groupped by group size (group length).
+//! that can have even 256 threads. A special option treat whole group as processor's word,
+//! however in many cases is not usable.
+//!
+//! Input data or output data organized as bits in processor's word. One bit per one
+//! element (thread). If you want convert data organized as packs from/to data organized per
+//! bit you should use data transformer.
+//!
+//! In this library it used terminology:
+//! * Builder - object to built code for simulate circuits. Builder can hold many
+//!   simulation configurations for same circuit.
+//! * Simulation configuration - it holds circuit and its configuration for simulation.
+//! * Code configuration - part of simulation configuration. It holds circuit's inputs
+//!   and outputs configuration, populating and aggregating code, loop setup, etc.
+//! * Execution - execution of simulations with specified size that will be run under
+//!   single execution on GPU (as single execution of kernel) or CPU.
+//! * Executor - object to call simulation. Single executor for single simulation configuration.
+//! * MapperBuilder - builder to simplify multiple execution with more elements
+//!   than can have single simulation.
+//! * MapperExecutor - executor that execute multiple simulations.
+//! * Data holder - object that holds data used while simulation
+//!   (as input or output or other data). Data will be in device that will run simulation.
+//! * Data reader - object that allows read data from data holder.
+//! * Data writer - object that allows write data in data holder.
+//! * Populating input code - code in the C language that generate data to populate for
+//!   some specified circuit's inputs.
+//! * Aggregating output code - code in the C language that process output data from
+//!   some specified circuit's outputs.
+//! * Word - processor's word used while executing simulation.
+//! * Element - single simulation
+//! * Element index - index of simulation.
+//! * Argument input - circuit input that retrieved from argument from execution call.
+//! * FuncWriter - trait defines object to write native code of function.
+//! * CodeWriter - trait defines object to write native code.
+//! * Data transformer - object to convert input data for circuit simulation and
+//!   convert output data from circuit simulation. Because single simulation done by one bit
+//!   of word then data should be converted into packs (pack per element).
+//!
+//! The library reads environment variable to get important setup:
+//! * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
+//! * `GATE_SYS_CC` - path to C compiler that will be used while building code for simulation.
+
 use gatesim::Circuit;
 
 use std::collections::HashSet;
