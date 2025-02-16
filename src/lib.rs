@@ -57,8 +57,11 @@
 //!   some specified circuit's inputs.
 //! * Aggregating output code - code in the C language that process output data from
 //!   some specified circuit's outputs.
-//! * Word - processor's word used while executing simulation.
-//! * Element - single simulation
+//! * Word - generally is processor's word , however if `group_len` is set then
+//!   it is multipla: group_len*word_len.
+//! * Type in Code - processor's word used while executing simulation. It is used in native code
+//!   and in a populating and an aggregating code.
+//! * Element - single simulation.
 //! * Element index - index of simulation.
 //! * Element input - circuit input that value is element index.
 //! * Argument input - circuit input that obtained from argument from execution call.
