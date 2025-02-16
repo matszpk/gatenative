@@ -60,7 +60,8 @@
 //! * Word - processor's word used while executing simulation.
 //! * Element - single simulation
 //! * Element index - index of simulation.
-//! * Argument input - circuit input that retrieved from argument from execution call.
+//! * Element input - circuit input that value is element index.
+//! * Argument input - circuit input that obtained from argument from execution call.
 //! * FuncWriter - trait defines object to write native code of function.
 //! * CodeWriter - trait defines object to write native code.
 //! * Data transformer - object to convert input data for circuit simulation and
