@@ -33,7 +33,28 @@
 //! that can have even 256 threads. A special option treat whole group as processor's word,
 //! however in many cases is not usable.
 //!
-//! Input data or output data organized as bits in processor's word. One bit per one
+//! Circuit inputs and circuit outputs are organized as pack of processor words that
+//! groupped in greater stream. Data can contain more that packs if number of elements
+//! is greater than number of bits of processor word.
+//!
+//! ```text
+//! +----------------------------------------------------------------------------------------+
+//! |D(0)(0)B(0)...D(0)(0)B(N)|D(0)(1)B(0)...D(0)(1)B(N)|............|D(0)(1)B0...D(0)(1)B(N)|
+//! +----------------------------------------------------------------------------------------+
+//! |D(1)(0)B(0)...D(1)(0)B(N)|D(1)(1)B(0)...D(1)(1)B(N)|............|D(1)(1)B0...D(1)(1)B(N)|
+//! +----------------------------------------------------------------------------------------+
+//! |........................................................................................|
+//! +----------------------------------------------------------------------------------------+
+//! |D(T)(0)B(0)...D(T)(0)B(N)|D(T)(1)B(0)...D(T)(1)B(N)|............|D(T)(1)B0...D(T)(1)B(N)|
+//! +----------------------------------------------------------------------------------------+
+//! ```
+//! D(I)(X)B(Y) - Yth bit in Xth pack element in Ith group. That bit assigned to I*N+Y element
+//! (thread).
+//!
+//! By default ith pack element assigned to ith circuit input or ith circuit output.
+//! It can be changed by using input placement or output placement.
+//!
+//! Input data or output data organized as bits in processor word. One bit per one
 //! element (thread). If you want convert data organized as packs from/to data organized per
 //! bit you should use data transformer.
 //!
@@ -53,10 +74,10 @@
 //!   (as input or output or other data). Data will be in device that will run simulation.
 //! * Data reader - object that allows read data from data holder.
 //! * Data writer - object that allows write data in data holder.
-//! * Populating input code - code in the C language that generate data to populate for
-//!   some specified circuit's inputs.
-//! * Aggregating output code - code in the C language that process output data from
-//!   some specified circuit's outputs.
+//! * Populating input code - code in the C language (or OpenCL C) that generate data to
+//!   populate for some specified circuit's inputs.
+//! * Aggregating output code - code in the C language (or OpenCL C) that process output
+//!   data from some specified circuit's outputs.
 //! * Word - generally is processor's word , however if `group_len` is set then
 //!   it is multipla: group_len*word_len.
 //! * Type in Code - processor's word used while executing simulation. It is used in native code
@@ -70,6 +91,18 @@
 //! * Data transformer - object to convert input data for circuit simulation and
 //!   convert output data from circuit simulation. Because single simulation done by one bit
 //!   of word then data should be converted into packs (pack per element).
+//! * Pack element - part of data that assigned to one circuit input or circuit output.
+//!
+//! Program should make few steps to run simulation:
+//! 1. Create builder.
+//! 2. Add circuits and their configurations that includes input and output setup, additional
+//!    code to process input and output data before and after simulation.
+//! 3. Built executors.
+//! 4. Prepare input data by using input data transformer if needed. Also it can put additional
+//!    data for populating code in buffers.
+//! 5. Execute simulation.
+//! 6. Retrieve output data by using output data transformer if needed. Also it can get additional
+//!    data processed by aggregating code.
 //!
 //! The library reads environment variable to get important setup:
 //! * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
@@ -91,10 +124,14 @@ use std::ops::{Range, RangeFrom};
 // groupped executions. Hint: Add parameter to configs, write transparent to CLangWriterConfigs.
 // Next hint: use embed array to structure to better handling types in C.
 
+/// Type negations for mainy internal usage.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum VNegs {
+    /// No negation.
     NoNegs,
-    NegInput1, // second input in gate
+    /// Negate second input of gate.
+    NegInput1,
+    /// Negate output of gate.
     NegOutput,
 }
 
@@ -121,20 +158,54 @@ pub use libloading;
 pub use opencl3;
 pub use rayon;
 
+/// Main structure to describe code configuration (part of simulation configuration).
+///
+/// This structure provides assignment for circuit's inputs and circuit's outputs,
+/// a polulating code, an aggregating code, loop setup, buffer setup.
+///
+/// Circuits inputs assigned to following sources:
+/// * provided data through execution call (as data).
+/// * single argument value provided through execution call.
+/// * element index (thread index).
+/// * populating code that can process data or data in additional buffer.
+///
+/// Circuit's outputs assigned to output data returned by execution call (as data).
+/// Some circuit's outputs can be excluded if aggregation code uses some outputs.
+///
+/// Input placement is setup refers to circuit's inputs that don't have assginment to
+/// other sources than assignment to provided data. Input placement contains list and number of
+/// total number of pack elements of input data. Map is list where index is circuit input index,
+/// and value is destination pack element. Similary, output placement contains list of
+/// placement and total number of pack elements of output data.
+/// Circuit inputs and circuit outputs are numbered from 0 in original order in that list
+/// (if circuit have 5 inputs and 1,3 are assigned to element index then inputs 0,2,4 have
+/// numberes 0,1,3 after removal).
+///
+/// For example (&[5, 1, 4, 2], 7) - data have 7 pack elements, and circuit input 0
+/// assigned to pack element 1 (starting from 0), circuit input 1 to pack element 1,
+/// circuit input 2 to pack element 4 and circuit input 3 to pack element 2.
+///
+/// In the most cases no reasons to use input/output placement.
 #[derive(Clone, Copy, Debug)]
 pub struct CodeConfig<'a> {
     // determine place of circuit input bits in input bits and its length.
     // first: index - circuit input bit, value - destination input bit. second - input length.
+    /// Input placement. See main description of structure.
     pub input_placement: Option<(&'a [usize], usize)>,
     // determine place of circuit output bits in input bits and its length.
     // first: index - circuit output bit, value - destination output bit. second - output length.
+    /// Output placement. See main description of structure.
     pub output_placement: Option<(&'a [usize], usize)>,
-    // determine what circuit input bits are assigned to argument passed to execute.
+    /// Arg inputs is list of circuit inputs assigned to argument inputs. Index is bit of
+    /// argument and value is cicrcuit input index.
     pub arg_inputs: Option<&'a [usize]>,
-    // determine what circuit input bits are assigned to element index.
+    /// Elem inputs is list of circuit inputs assigned to element index. Index is bit of
+    /// element index and value is cicrcuit input index.
     pub elem_inputs: Option<&'a [usize]>,
-    // use single buffer to store input and output.
+    /// Use single buffer that two buffers (for input and and output). In this case
+    /// input placement and output placement must have these same number of pack elements.
     pub single_buffer: bool,
+    /// Additional initialization code in C language (or OpenCL C)
     pub init_code: Option<&'a str>,
     // populate input code
     pub pop_input_code: Option<&'a str>,
