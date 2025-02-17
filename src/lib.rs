@@ -172,6 +172,8 @@ pub use rayon;
 /// Circuit's outputs assigned to output data returned by execution call (as data).
 /// Some circuit's outputs can be excluded if aggregation code uses some outputs.
 ///
+/// All four sources for circuit inputs must be defined exclusively (no shared circuit inputs).
+///
 /// Input placement is setup refers to circuit's inputs that don't have assginment to
 /// other sources than assignment to provided data. Input placement contains list and number of
 /// total number of pack elements of input data. Map is list where index is circuit input index,
@@ -186,6 +188,37 @@ pub use rayon;
 /// circuit input 2 to pack element 4 and circuit input 3 to pack element 2.
 ///
 /// In the most cases no reasons to use input/output placement.
+///
+/// A populating input code (`pop_input_code`) is code supplied by user and written in
+/// C language (or OpenCL C) to obtain input from data in buffer. Next `pop_from_buffer`
+/// field is list of circuit inputs that obtained by a pop_input_code. If `pop_from_buffer`
+/// is not supplied then all circuit inputs (except circuit inputs assigned to other sources)
+/// are obtained by pop_input_code and no other circuit inputs are assigned to data.
+/// If `pop_from_buffer` is supplied then only listed circuit inputs will be obtained from
+/// pop_input_code.
+///
+/// An aggregating output code (`aggr_output_code`) is code supplied by user and written in
+/// C language (or OpenCL C) to process circuit outputs and results into buffer. Next
+/// `aggr_to_buffer` field is list of circuit outputs that will be processed by aggr_output_code.
+/// If `aggr_to_buffer` is not supplied then all circuit outputs (except excluded outputs)
+/// will be processed by aggr_output_code and no other circuit outputs are assigned to data.
+/// If `aggr_to_buffer` is supplied then only listed circuit outputs will be processed by
+/// aggr_output_code. Special field `exclude_outputs` allows to exclude circuit outputs
+/// (mainly assigned to aggr_output_code).
+///
+/// Interface for pop_input_code and aggr_output_code is simple.
+/// A variable `iX` refers to circuit input X. A variable `oX` refers to circuit output X.
+/// Defined `TYPE_NAME` defines name of Type In Code. `TYPE_LEN` is length of type in bits.
+/// * `GET_U32(D,X,I)` gets ith 32-bit word stored in X variable of type Type In Code
+/// and store to `D` - 32-bit unsigned integer.
+/// * `GET_U32_ALL(D,X)` gets all words stored in X variable of type Type In Code and store to
+/// * `D` - array of 32-bit unsigned integers.
+/// * `SET_U32(X,S,I)` sets `S` value to ith 32-bit word in X variable of type Type In Code.
+/// * `SET_U32_ALL(X,S)` sets `S` 32-bit words to X variable of type Type In Code.
+/// * `idx` is index of pack in data.
+/// * `arg` is lower half of 64-bit argument.
+/// * `arg2` is higher half of 64-bit argument.
+/// * `lidx` (only for OpenCL C) is index of local thread (word) in group.
 #[derive(Clone, Copy, Debug)]
 pub struct CodeConfig<'a> {
     // determine place of circuit input bits in input bits and its length.
