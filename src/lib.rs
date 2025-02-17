@@ -200,8 +200,8 @@ pub use rayon;
 /// An aggregating output code (`aggr_output_code`) is code supplied by user and written in
 /// C language (or OpenCL C) to process circuit outputs and results into buffer. Next
 /// `aggr_to_buffer` field is list of circuit outputs that will be processed by aggr_output_code.
-/// If `aggr_to_buffer` is not supplied then all circuit outputs (except excluded outputs)
-/// will be processed by aggr_output_code and no other circuit outputs are assigned to data.
+/// If `aggr_to_buffer` is not supplied then all circuit outputs will be processed by
+/// aggr_output_code and no other circuit outputs are assigned to data.
 /// If `aggr_to_buffer` is supplied then only listed circuit outputs will be processed by
 /// aggr_output_code. Special field `exclude_outputs` allows to exclude circuit outputs
 /// (mainly assigned to aggr_output_code).
@@ -219,6 +219,7 @@ pub use rayon;
 /// * `arg` is lower half of 64-bit argument.
 /// * `arg2` is higher half of 64-bit argument.
 /// * `lidx` (only for OpenCL C) is index of local thread (word) in group.
+/// TODO: Describe input and output in this interface.
 #[derive(Clone, Copy, Debug)]
 pub struct CodeConfig<'a> {
     // determine place of circuit input bits in input bits and its length.
