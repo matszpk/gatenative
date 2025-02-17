@@ -190,25 +190,34 @@ pub use rayon;
 /// In the most cases no reasons to use input/output placement.
 ///
 /// A populating input code (`pop_input_code`) is code supplied by user and written in
-/// C language (or OpenCL C) to obtain input from data in buffer. Next `pop_from_buffer`
+/// C language (or OpenCL C) to obtain circuit input data from some source. Next `pop_from_buffer`
 /// field is list of circuit inputs that obtained by a pop_input_code. If `pop_from_buffer`
 /// is not supplied then all circuit inputs (except circuit inputs assigned to other sources)
 /// are obtained by pop_input_code and no other circuit inputs are assigned to data.
 /// If `pop_from_buffer` is supplied then only listed circuit inputs will be obtained from
-/// pop_input_code.
+/// pop_input_code. If pop_from_buffer is supplied then pop_input_code should read data from
+/// additional buffer, otherwise it should read data from input data buffer.
+/// `pop_input_len` specifies length of source in 32-bit words. That length shouldn't be
+/// exceeded.
 ///
 /// An aggregating output code (`aggr_output_code`) is code supplied by user and written in
-/// C language (or OpenCL C) to process circuit outputs and results into buffer. Next
-/// `aggr_to_buffer` field is list of circuit outputs that will be processed by aggr_output_code.
-/// If `aggr_to_buffer` is not supplied then all circuit outputs will be processed by
-/// aggr_output_code and no other circuit outputs are assigned to data.
+/// C language (or OpenCL C) to process circuit outputs and store results into some destination.
+/// Next `aggr_to_buffer` field is list of circuit outputs that will be processed by
+/// aggr_output_code. If `aggr_to_buffer` is not supplied then all circuit outputs will be
+/// processed by aggr_output_code and no other circuit outputs are assigned to data.
 /// If `aggr_to_buffer` is supplied then only listed circuit outputs will be processed by
 /// aggr_output_code. Special field `exclude_outputs` allows to exclude circuit outputs
-/// (mainly assigned to aggr_output_code).
+/// (mainly assigned to aggr_output_code). If aggr_to_buffer is supplied then aggr_output_code
+/// it should write data to additional buffer, otherwise to output data buffer.
+/// `aggr_output_len` specifies length of destination in 32-bit words. That length shouldn't be
+/// exceeded.
 ///
 /// Interface for pop_input_code and aggr_output_code is simple.
 /// A variable `iX` refers to circuit input X. A variable `oX` refers to circuit output X.
 /// Defined `TYPE_NAME` defines name of Type In Code. `TYPE_LEN` is length of type in bits.
+/// * `input` is input data normally holds circuit input data.
+/// * `output` is output data holds circuit output data.
+/// * `buffer` is additional buffer for a pop_input_code or an aggr_output_code.
 /// * `GET_U32(D,X,I)` gets ith 32-bit word stored in X variable of type Type In Code
 /// and store to `D` - 32-bit unsigned integer.
 /// * `GET_U32_ALL(D,X)` gets all words stored in X variable of type Type In Code and store to
@@ -219,15 +228,25 @@ pub use rayon;
 /// * `arg` is lower half of 64-bit argument.
 /// * `arg2` is higher half of 64-bit argument.
 /// * `lidx` (only for OpenCL C) is index of local thread (word) in group.
-/// TODO: Describe input and output in this interface.
+///
+/// About inner loop. Inner loop can be enabled by `inner_loop` field.
+//  pop_input_code and aggr_output_code are inside loop.
+/// Loop adds stop and iter variables to code:
+/// * stop - can be set by user supplied code. If have nonzero value then loop should be stopped.
+/// * iter - current loop iteration number starts from 0.
+/// * iter_max - read-only - number of iterations
+///
+/// Supplied parameter is max iteration number.
+/// If pop_input_code and aggr_output_code are executed for all iterations.
+/// User should put own code in required conditional blocks if it is needed.
+/// Aggr_output_code is executed before input update and iteration check and
+/// this code can have modify 'stop' variable to stop iteration.
+/// Because circuit are executed for word unconditionally then any conditional
+/// loop stopping at circuit must be implemented at same circuit.
 #[derive(Clone, Copy, Debug)]
 pub struct CodeConfig<'a> {
-    // determine place of circuit input bits in input bits and its length.
-    // first: index - circuit input bit, value - destination input bit. second - input length.
     /// Input placement. See main description of structure.
     pub input_placement: Option<(&'a [usize], usize)>,
-    // determine place of circuit output bits in input bits and its length.
-    // first: index - circuit output bit, value - destination output bit. second - output length.
     /// Output placement. See main description of structure.
     pub output_placement: Option<(&'a [usize], usize)>,
     /// Arg inputs is list of circuit inputs assigned to argument inputs. Index is bit of
@@ -239,42 +258,37 @@ pub struct CodeConfig<'a> {
     /// Use single buffer that two buffers (for input and and output). In this case
     /// input placement and output placement must have these same number of pack elements.
     pub single_buffer: bool,
-    /// Additional initialization code in C language (or OpenCL C)
+    /// Additional initialization code in C language (or OpenCL C).
     pub init_code: Option<&'a str>,
-    // populate input code
+    /// A pop_input code that written in C language (or OpenCL C) that obtains data
+    /// from additional source. See in main description of `CodeConfig`.
     pub pop_input_code: Option<&'a str>,
+    /// Length of source for pop_input_code in 32-bit words. That length shouldn't be exceeded in
+    /// pop_input_code code.
     pub pop_input_len: Option<usize>,
-    // aggregated output code - aggregates all outputs into single output.
+    /// An aggr_output_code written in C language (or OpenCL C) that process data
+    /// and write results to additional destination.
     pub aggr_output_code: Option<&'a str>,
-    pub aggr_output_len: Option<usize>, // length in 32-bit words
-    // if some then some choosen circuit inputs populated from buffer.
+    /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
+    /// exceeded in pop_input_code code.
+    pub aggr_output_len: Option<usize>,
+    /// List of circuit inputs that will be populated from additional source by
+    /// pop_input_code.
     pub pop_from_buffer: Option<&'a [usize]>,
-    // if some then aggregate some choosen circuit outputs to buffer.
-    // and keep storing circuit outputs to original output buffer.
+    /// List of circuit outputs that will be processed by aggr_output_code.
     pub aggr_to_buffer: Option<&'a [usize]>,
-    // exclude outputs
+    /// List of circuit outputs that will be excluded as output data.
     pub exclude_outputs: Option<&'a [usize]>,
-    // applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
-    // will not be cleared before single execution (to save time) and content of this buffer
-    // will be kept to later use.
+    /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
+    /// will not be cleared before single execution (to save time) and content of this buffer
+    /// will be kept to later use.
     pub dont_clear_outputs: bool,
-    // Enable inner loop. pop_input_code and aggr_output_code are inside loop.
-    // Loop adds stop and iter variables to code:
-    // stop - can be set by user supplied code. If have nonzero value then
-    //   loop should be stopped.
-    // iter - current loop iteration number starts from 0.
-    // iter_max - read-only - number of iterations
-    // Supplied parameter is max iteration number.
-    // If pop_input_code and aggr_output_code are executed for all iterations.
-    // User should put own code in required conditional blocks if it is needed.
-    // Aggr_output_code is executed before input update and iteration check and
-    // this code can have modify 'stop' variable to stop iteration.
-    // Because circuit are executed for word unconditionally then any conditional
-    // loop stopping at circuit must be implemented at same circuit.
+    /// If true then inner loop enabled.
     pub inner_loop: Option<u32>,
 }
 
 impl<'a> CodeConfig<'a> {
+    /// Creates new CodeConfig with empty setup.
     pub fn new() -> Self {
         Self {
             input_placement: None,
@@ -295,93 +309,140 @@ impl<'a> CodeConfig<'a> {
         }
     }
 
+    /// Sets input placement.
     pub fn input_placement(mut self, p: Option<(&'a [usize], usize)>) -> Self {
         self.input_placement = p;
         self
     }
+    /// Sets output placement.
     pub fn output_placement(mut self, p: Option<(&'a [usize], usize)>) -> Self {
         self.output_placement = p;
         self
     }
+    /// Sets arg inputs.
     pub fn arg_inputs(mut self, arg: Option<&'a [usize]>) -> Self {
         self.arg_inputs = arg;
         self
     }
+    /// Sets elem inputs.
     pub fn elem_inputs(mut self, elem: Option<&'a [usize]>) -> Self {
         self.elem_inputs = elem;
         self
     }
+    /// Sets single buffer.
     pub fn single_buffer(mut self, s: bool) -> Self {
         self.single_buffer = s;
         self
     }
+    /// Sets initialization code.
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
         self.init_code = init;
         self
     }
+    /// Sets pop_input_code (a populating input code).
     pub fn pop_input_code(mut self, pop: Option<&'a str>) -> Self {
         self.pop_input_code = pop;
         self
     }
+    /// Sets length of additional source for pop_input_code.
     pub fn pop_input_len(mut self, pop: Option<usize>) -> Self {
         self.pop_input_len = pop;
         self
     }
+    /// Sets aggr_output_code (an aggregating output code).
     pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
         self.aggr_output_code = aggr;
         self
     }
+    /// Sets length of additional destination for aggr_output_code.
     pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
         self.aggr_output_len = aggr;
         self
     }
+    /// Sets list of circuit inputs that will be populated from additional buffer.
     pub fn pop_from_buffer(mut self, pop: Option<&'a [usize]>) -> Self {
         self.pop_from_buffer = pop;
         self
     }
+    /// Sets list of circuit outputs that will be processed to additional buffer.
     pub fn aggr_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
         self.aggr_to_buffer = aggr;
         self
     }
+    /// Sets lists of circuit outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
         self.exclude_outputs = excl;
         self
     }
+    /// Sets list of circuit outputs that will be processed to additional buffer and
+    /// will not be in output data.
     pub fn aggr_only_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
         self.aggr_to_buffer = aggr;
         self.exclude_outputs = aggr;
         self
     }
+    /// Sets don't clear outputs.
     pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
         self.dont_clear_outputs = ignore;
         self
     }
+    /// Sets inner loop.
     pub fn inner_loop(mut self, l: Option<u32>) -> Self {
         self.inner_loop = l;
         self
     }
 }
 
+/// Helper for CodeConfig.
+///
+/// It is copy of code config that holds not references, but same copies.
+/// Some more at [CodeConfig].
 #[derive(Clone, Debug)]
 pub struct CodeConfigCopy {
+    /// Input placement. See main description of structure.
     pub input_placement: Option<(Vec<usize>, usize)>,
+    /// Output placement. See main description of structure.
     pub output_placement: Option<(Vec<usize>, usize)>,
+    /// Arg inputs is list of circuit inputs assigned to argument inputs. Index is bit of
+    /// argument and value is cicrcuit input index.
     pub arg_inputs: Option<Vec<usize>>,
+    /// Elem inputs is list of circuit inputs assigned to element index. Index is bit of
+    /// element index and value is cicrcuit input index.
     pub elem_inputs: Option<Vec<usize>>,
+    /// Use single buffer that two buffers (for input and and output). In this case
+    /// input placement and output placement must have these same number of pack elements.
     pub single_buffer: bool,
+    /// Additional initialization code in C language (or OpenCL C).
     pub init_code: Option<String>,
+    /// A pop_input code that written in C language (or OpenCL C) that obtains data
+    /// from additional source. See in main description of `CodeConfig`.
     pub pop_input_code: Option<String>,
+    /// Length of source for pop_input_code in 32-bit words. That length shouldn't be exceeded in
+    /// pop_input_code code.
     pub pop_input_len: Option<usize>,
+    /// An aggr_output_code written in C language (or OpenCL C) that process data
+    /// and write results to additional destination.
     pub aggr_output_code: Option<String>,
-    pub aggr_output_len: Option<usize>, // length in 32-bit words
+    /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
+    /// exceeded in pop_input_code code.
+    pub aggr_output_len: Option<usize>,
+    /// List of circuit inputs that will be populated from additional source by
+    /// pop_input_code.
     pub pop_from_buffer: Option<Vec<usize>>,
+    /// List of circuit outputs that will be processed by aggr_output_code.
     pub aggr_to_buffer: Option<Vec<usize>>,
+    /// List of circuit outputs that will be excluded as output data.
     pub exclude_outputs: Option<Vec<usize>>,
+    /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
+    /// will not be cleared before single execution (to save time) and content of this buffer
+    /// will be kept to later use.
     pub dont_clear_outputs: bool,
+    /// If true then inner loop enabled.
     pub inner_loop: Option<u32>,
 }
 
 impl CodeConfigCopy {
+    /// Makes reference from this copy.
     pub fn to_ref(&self) -> CodeConfig {
         CodeConfig {
             input_placement: self.input_placement.as_ref().map(|x| (x.0.as_slice(), x.1)),
@@ -405,6 +466,7 @@ impl CodeConfigCopy {
         }
     }
 
+    /// Creates new CodeConfig with empty setup.
     pub fn new() -> Self {
         Self {
             input_placement: None,
@@ -425,92 +487,119 @@ impl CodeConfigCopy {
         }
     }
 
+    /// Sets input placement.
     pub fn input_placement(mut self, p: Option<(Vec<usize>, usize)>) -> Self {
         self.input_placement = p;
         self
     }
+    /// Sets output placement.
     pub fn output_placement(mut self, p: Option<(Vec<usize>, usize)>) -> Self {
         self.output_placement = p;
         self
     }
+    /// Sets arg inputs.
     pub fn arg_inputs(mut self, arg: Option<Vec<usize>>) -> Self {
         self.arg_inputs = arg;
         self
     }
+    /// Sets elem inputs.
     pub fn elem_inputs(mut self, elem: Option<Vec<usize>>) -> Self {
         self.elem_inputs = elem;
         self
     }
+    /// Sets single buffer.
     pub fn single_buffer(mut self, s: bool) -> Self {
         self.single_buffer = s;
         self
     }
+    /// Sets initialization code.
     pub fn init_code(mut self, init: Option<String>) -> Self {
         self.init_code = init;
         self
     }
+    /// Sets pop_input_code (a populating input code).
     pub fn pop_input_code(mut self, pop: Option<String>) -> Self {
         self.pop_input_code = pop;
         self
     }
+    /// Sets length of additional source for pop_input_code.
     pub fn pop_input_len(mut self, pop: Option<usize>) -> Self {
         self.pop_input_len = pop;
         self
     }
+    /// Sets aggr_output_code (an aggregating output code).
     pub fn aggr_output_code(mut self, aggr: Option<String>) -> Self {
         self.aggr_output_code = aggr;
         self
     }
+    /// Sets length of additional destination for aggr_output_code.
     pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
         self.aggr_output_len = aggr;
         self
     }
+    /// Sets list of circuit inputs that will be populated from additional buffer.
     pub fn pop_from_buffer(mut self, pop: Option<Vec<usize>>) -> Self {
         self.pop_from_buffer = pop;
         self
     }
+    /// Sets list of circuit outputs that will be processed to additional buffer.
     pub fn aggr_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
         self.aggr_to_buffer = aggr;
         self
     }
+    /// Sets lists of circuit outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<Vec<usize>>) -> Self {
         self.exclude_outputs = excl;
         self
     }
+    /// Sets list of circuit outputs that will be processed to additional buffer and
+    /// will not be in output data.
     pub fn aggr_only_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
         self.aggr_to_buffer = aggr.clone();
         self.exclude_outputs = aggr;
         self
     }
+    /// Sets don't clear outputs.
     pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
         self.dont_clear_outputs = ignore;
         self
     }
+    /// Sets inner loop.
     pub fn inner_loop(mut self, l: Option<u32>) -> Self {
         self.inner_loop = l;
         self
     }
 }
 
+/// Returns default length of additional destination for aggr_output_code.
 pub fn default_aggr_output_len(word_len: u32) -> usize {
     (word_len as usize) >> 5
 }
+/// Returns default length of additional source for pop_input_code.
 pub fn default_pop_input_len(word_len: u32) -> usize {
     (word_len as usize) >> 5
 }
 
+/// Type of instruction operation. It is used by function writers.
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum InstrOp {
+    /// Boolean And operation
     And,
+    /// Boolean Or operation
     Or,
+    /// Boolean implication operation
     Impl,
+    /// Boolean negated implication operation
     Nimpl,
+    /// Boolean XOR operation.
     Xor,
+    /// NVIDIA LOP3 operation.
     Lop3(u8),
 }
 
 impl InstrOp {
+    /// Returns integer of value for self enumeration.
     pub fn int_value(self) -> usize {
         match self {
             InstrOp::And => 0,
@@ -521,6 +610,7 @@ impl InstrOp {
             InstrOp::Lop3(_) => 5,
         }
     }
+    /// Returns argument passed to instruction.
     pub fn arg_num(self) -> usize {
         if matches!(self, InstrOp::Lop3(_)) {
             3
@@ -530,13 +620,20 @@ impl InstrOp {
     }
 }
 
+/// Integer value for And operation.
 pub const INSTR_OP_VALUE_AND: u64 = 0;
+/// Integer value for Or operation.
 pub const INSTR_OP_VALUE_OR: u64 = 1;
+/// Integer value for implication operation.
 pub const INSTR_OP_VALUE_IMPL: u64 = 2;
+/// Integer value for negated implication operation.
 pub const INSTR_OP_VALUE_NIMPL: u64 = 3;
+/// Integer value for Xor operation.
 pub const INSTR_OP_VALUE_XOR: u64 = 4;
+/// Integer value for LOP3 operation.
 pub const INSTR_OP_VALUE_LOP3: u64 = 5;
 
+/// Function writer that writes function to execute simulation.
 pub trait FuncWriter {
     fn func_start(&mut self);
     /// Generates function end.
