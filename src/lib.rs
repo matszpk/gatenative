@@ -52,7 +52,8 @@
 //! (thread).
 //!
 //! By default ith pack element assigned to ith circuit input or ith circuit output.
-//! It can be changed by using input placement or output placement.
+//! It can be changed by using input placement or output placement. Number of element in single
+//! execution should be divisible by number of bit of word processor.
 //!
 //! Input data or output data organized as bits in processor word. One bit per one
 //! element (thread). If you want convert data organized as packs from/to data organized per
@@ -635,6 +636,7 @@ pub const INSTR_OP_VALUE_LOP3: u64 = 5;
 
 /// Function writer that writes function to execute simulation.
 pub trait FuncWriter {
+    /// Generates function start.
     fn func_start(&mut self);
     /// Generates function end.
     fn func_end(&mut self);
@@ -643,26 +645,28 @@ pub trait FuncWriter {
 
     /// Generates Load instruction from input.
     fn gen_load(&mut self, reg: usize, input: usize);
-    /// Generates operation.
+    /// Generates operation. `negs` determines place where is negation. `dst_arg`
+    /// is destination.
     fn gen_op(&mut self, op: InstrOp, negs: VNegs, dst_arg: usize, arg0: usize, arg1: usize);
-    /// Generates operation.
+    /// Generates operation. `dst_arg` is destination.
     fn gen_op3(&mut self, op: InstrOp, dst_arg: usize, arg0: usize, arg1: usize, arg2: usize);
-    /// Generates NOT operation.
+    /// Generates NOT operation. `dst_arg` is destination.
     fn gen_not(&mut self, dst_arg: usize, arg: usize);
-    /// Generates Store instruction into output.
+    /// Generates Store instruction into output. `output` is index in output data.
+    /// `neg` is negation (if true then value will be negated).
     fn gen_store(&mut self, neg: bool, output: usize, reg: usize);
-    /// Generates copy to register
+    /// Generates copy register to register. `dst_arg` is destination.
     fn gen_set(&mut self, dst_arg: usize, arg: usize);
 
-    /// Generates conditional for start of loop
+    /// Generates conditional for start of loop.
     fn gen_if_loop_start(&mut self);
-    /// Generates conditional for end of loop
+    /// Generates conditional for end of loop.
     fn gen_if_loop_end(&mut self);
-    /// Generates conditional for end of loop
+    /// Generates conditional for end of loop.
     fn gen_else(&mut self);
-    /// Generates end of conditional
+    /// Generates end of conditional.
     fn gen_end_if(&mut self);
-    /// Generates aggr_output_code
+    /// Generates aggr_output_code.
     fn gen_aggr_output_code(&mut self);
 }
 
@@ -699,6 +703,11 @@ fn check_placements(
     return true;
 }
 
+/// CodeWriter is main trait that defines code generator for simulation.
+///
+/// CodeWriter trait provides basic logic to implement code generator. Main it is
+/// checking of code configuration for simulation configuration.
+/// Mainly, CodeWriter is used internally by this library.
 pub trait CodeWriter<'a, FW: FuncWriter> {
     /// It returns bit mask of where bit position is InstrOp integer value - support Instr Ops.
     fn supported_ops(&self) -> u64;
@@ -716,11 +725,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn transform_helpers(&mut self);
     /// Generates epilog.
     fn epilog(&mut self);
-    /// Get function writer.
-    /// The input_placement and output_placement - real input and output area defintion:
-    /// first field - list of real indices. second field - real length.
-    /// The arg_inputs - list of circuit inputs that will be set by integer argument
-    /// (where bits just set input values).
+    /// Gets function writer - unsafe version used to internal purpose only.
     unsafe fn func_writer_internal(
         &'a mut self,
         name: &'a str,
@@ -730,6 +735,13 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         output_vars: Option<Vec<(usize, usize)>>,
     ) -> FW;
 
+    /// Gets function writer. `input_len` is number of circuit inputs or if input placement
+    /// is provided a total number of pack elements for input data.
+    /// `output_len` is number of circuit outputs or if output placement
+    /// is provided a total number of pack elements for output data.
+    /// `code_config` is code configuration. `output_vars` is list of bit_mapping
+    /// circuit wires to variables. This version checks code configuration before call
+    /// internal version.
     fn func_writer_with_config(
         &'a mut self,
         name: &'a str,
@@ -868,6 +880,14 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         unsafe { self.func_writer_internal(name, input_len, output_len, code_config, output_vars) }
     }
 
+    /// Gets function writer. `input_len` is number of circuit inputs or if input placement
+    /// is provided a total number of pack elements for input data.
+    /// `output_len` is number of circuit outputs or if output placement
+    /// is provided a total number of pack elements for output data.
+    /// `input_placement`, `output_placement` and `arg_inputs` are part of code configuration.
+    /// `output_vars` is list of bit_mapping
+    /// circuit wires to variables. This version checks code configuration before call
+    /// internal version.
     fn func_writer(
         &'a mut self,
         name: &'a str,
@@ -889,42 +909,74 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
         )
     }
 
+    /// Gets function writer. `input_len` is number of circuit inputs or if input placement
+    /// is provided a total number of pack elements for input data.
+    /// `output_len` is number of circuit outputs or if output placement
+    /// is provided a total number of pack elements for output data.
+    /// This version checks code configuration before call
+    /// internal version.
     fn func_writer_simple(&'a mut self, name: &'a str, input_len: usize, output_len: usize) -> FW {
         self.func_writer(name, input_len, output_len, None, None, None)
     }
 
+    /// Returns content of source code as bytes.
     fn out(self) -> Vec<u8>;
 }
 
+/// DataReader is simple trait for accessing to data from Data holder.
 pub trait DataReader {
+    /// Returns slice with data from Data holder.
     fn get(&self) -> &[u32];
 }
 
+/// DataWriter is simple trait for writing data to Data holder's data.
 pub trait DataWriter {
+    /// Returns mutable slice with data from Data holder.
     fn get_mut(&mut self) -> &mut [u32];
 }
 
+/// DataHolder is object to holds data.
+///
+/// DataHolder is object that provides access to data that can be placed in other device
+/// than CPU. It provides simple interface to read and write data from Data Holder.
+/// This is ability to write input data from simulation and read result data after simulation.
+///
+/// Data is stored as 32-bit words.
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
+    /// Returns current length of data.
     fn len(&self) -> usize;
+    /// Returns data reader to read data in data holder.
     fn get(&'a self) -> DR;
+    /// Returns data writer to write data to data holder.
     fn get_mut(&'a mut self) -> DW;
+    /// Processes data in data holder by given function `f` and returns its output value.
     fn process<F, Out>(&self, f: F) -> Out
     where
         F: FnMut(&[u32]) -> Out;
+    /// Processes data in data holder by given function `f` and returns its output value.
+    /// Function `f` can modify data.
     fn process_mut<F, Out>(&mut self, f: F) -> Out
     where
         F: FnMut(&mut [u32]) -> Out;
+    /// Make copy of DataHolder with data that holds Data holder.
     fn copy(&self) -> Self;
+    /// Fills data in data holder by given 32-bit value.
     fn fill(&mut self, value: u32);
-    /// release underlying data
+    /// Release data from data holder.
     fn release(self) -> Vec<u32>;
-    // free
+    /// Free data holder with same data.
     fn free(self);
 }
 
+/// Trait provides additional property to set range of data.
+///
+/// That property is range of index that can be accessed by user. Any data beyond will be
+/// unavailable while reading, writing and processing by simulation. To clear range and
+/// set availability all data back, `set_range_from(0)` should be call.
 pub trait RangedData {
-    // set range
+    /// Sets range of available data.
     fn set_range(&mut self, range: Range<usize>);
+    /// Sets range of available data.
     #[inline]
     fn set_range_from(&mut self, range: RangeFrom<usize>) {
         self.set_range(range.start..usize::MAX);
@@ -932,6 +984,10 @@ pub trait RangedData {
 }
 
 // ParentDataHolder with specified range that honored while changing range.
+/// This Data holder is wrapper to another data holder.
+///
+/// This Data holder behaves as data holder imposed range.  While using that data holder
+/// is not possible to revert range and it is make this data holder as safe.
 pub struct ParentDataHolder<'a, DR, DW, D>
 where
     DR: DataReader,
@@ -950,6 +1006,7 @@ where
     DW: DataWriter,
     D: DataHolder<'a, DR, DW> + RangedData,
 {
+    /// Creates new parent data holder with imposed range.
     pub fn new(range: Range<usize>, mut child: D) -> Self {
         child.set_range(range.clone());
         Self {
@@ -1019,20 +1076,67 @@ where
     }
 }
 
+/// This trait determines interface for executor of simulation.
+///
+/// Executor provides basic interface to run single execution. It should provides following
+/// methods to run execution:
+/// * `execute` - basic execution only for code configuration without single buffer and
+///   additional buffer (`pop_from_buffer` and `aggr_to_buffer` shouldn't be set).
+///   Output data will be returned by method.
+/// * `execute_reuse` - basic execution only for code configuration without single buffer and
+///   additional buffer (`pop_from_buffer` and `aggr_to_buffer` shouldn't be set).
+///   Output data will be stored in `output` data holder.
+/// * `execute_single` - execution only for code configuration with single buffer and
+///   additional buffer (`pop_from_buffer` and `aggr_to_buffer` shouldn't be set).
+/// * `execute_buffer` - execute only for code configuration with additional buffer
+///   (`pop_from_buffer` or `aggr_to_buffer` should be set). Data will be returned.
+/// * `execute_buffer_reuse` - execute only for code configuration without single buffer,
+///   with additional buffer (`pop_from_buffer` or `aggr_to_buffer` should be set).
+///   Data will be stored in `output` data holder.
+/// * `execute_buffer_single ` - execute only for code configuration with single buffer
+///   and additional buffer (`pop_from_buffer` or `aggr_to_buffer` should be set).
+///   Data will be stored in `output` data holder.
+///
+/// Executor provides additional methods to create data holders:
+/// `new_data`, `new_data_from_vec`, `new_data_input_elems` and `new_data_output_elems`.
+/// These methods simplify creation of data.
+///
+/// Basic unit in simulation is element (thread) that is part of pack. Pack contains
+/// N elements. N is number of bits of processor word. Number of element in single
+/// execution should be divisible by number of bit of word processor.
+/// If given data holder provides data for circuit inputs or outputs directly then
+//  data must match to element count. `new_data_input_elems` simplifies creation of data holder
+/// with correct length.
 pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
+    /// Error type used if error encountered while execution.
     type ErrorType;
-    /// Get circuit input length (number of inputs)
+    /// Returns circit input length.
     fn input_len(&self) -> usize;
-    /// Get circuit output length (number of outputs)
+    /// Returns circit output length.
     fn output_len(&self) -> usize;
-    /// Get real input length (number of entries in area of input placements)
+    /// Returns pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
-    /// Get real output length (number of entries in area of output placements)
+    /// Returns pack elements for output data (for assigned circuit outputs).
     fn real_output_len(&self) -> usize;
 
+    /// Returns element count based on input length in 32-bit words.
     fn elem_count(&self, input_len: usize) -> usize;
 
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must not have single buffer, `pop_from_buffer` and `aggr_to_buffer`.
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType>;
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must not have single buffer, `pop_from_buffer` and `aggr_to_buffer`.
     fn execute(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType> {
         assert!(!self.is_single_buffer());
         assert!(!(self.input_is_populated() && self.is_populated_from_buffer()));
@@ -1040,12 +1144,28 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_internal(input, arg_input) }
     }
 
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must not have single buffer, `pop_from_buffer` and `aggr_to_buffer`.
     unsafe fn execute_reuse_internal(
         &mut self,
         input: &D,
         arg_input: u64,
         output: &mut D,
     ) -> Result<(), Self::ErrorType>;
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must not have single buffer, `pop_from_buffer` and `aggr_to_buffer`.
     fn execute_reuse(
         &mut self,
         input: &D,
@@ -1058,11 +1178,27 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_reuse_internal(input, arg_input, output) }
     }
 
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `output` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must have single buffer, and it must not have
+    /// `pop_from_buffer` and `aggr_to_buffer`.
     unsafe fn execute_single_internal(
         &mut self,
         output: &mut D,
         arg_input: u64,
     ) -> Result<(), Self::ErrorType>;
+    /// Executes simulation. Input data passed by `output` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must have single buffer, and it must not have
+    /// `pop_from_buffer` and `aggr_to_buffer`.
     fn execute_single(&mut self, output: &mut D, arg_input: u64) -> Result<(), Self::ErrorType> {
         assert!(self.is_single_buffer());
         assert!(!(self.input_is_populated() && self.is_populated_from_buffer()));
@@ -1070,13 +1206,30 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_single_internal(output, arg_input) }
     }
 
-    // executes for additional buffers
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must not have single buffer and it must have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     unsafe fn execute_buffer_internal(
         &mut self,
         input: &D,
         arg_input: u64,
         buffer: &mut D,
     ) -> Result<D, Self::ErrorType>;
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method returns data holder with output data.
+    ///
+    /// Code configuration must not have single buffer and it must have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     fn execute_buffer(
         &mut self,
         input: &D,
@@ -1091,6 +1244,17 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_buffer_internal(input, arg_input, buffer) }
     }
 
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must not have single buffer and it must have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     unsafe fn execute_buffer_reuse_internal(
         &mut self,
         input: &D,
@@ -1098,6 +1262,15 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         output: &mut D,
         buffer: &mut D,
     ) -> Result<(), Self::ErrorType>;
+    /// Executes simulation. Input data passed by `input` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must not have single buffer and it must have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     fn execute_buffer_reuse(
         &mut self,
         input: &D,
@@ -1113,12 +1286,32 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_buffer_reuse_internal(input, arg_input, output, buffer) }
     }
 
+    /// Only for implementation.
+    ///
+    /// Executes simulation. Input data passed by `output` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must have single buffer, have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     unsafe fn execute_buffer_single_internal(
         &mut self,
         output: &mut D,
         arg_input: u64,
         buffer: &mut D,
     ) -> Result<(), Self::ErrorType>;
+    /// Executes simulation. Input data passed by `output` argument as data holder.
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
+    /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
+    /// data for `pop_input_code` or can be stored by `aggr_output_code`.
+    /// If execution successfully finished then method store output data into `output` data
+    /// holder and returns Ok.
+    ///
+    /// Code configuration must have single buffer, have `pop_from_buffer` or
+    /// `aggr_to_buffer`.
     fn execute_buffer_single(
         &mut self,
         output: &mut D,
@@ -1133,30 +1326,39 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         unsafe { self.execute_buffer_single_internal(output, arg_input, buffer) }
     }
 
-    /// Create new data - length is number of 32-bit words
+    /// Creates new data. It returns data holder with zeroed data with length `len` 32-bit words.
     fn new_data(&mut self, len: usize) -> D;
-    /// Create new data from vector.
+    /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
-    /// Create new data from slice.
+    /// Creates new data. It returns data holder with data supplied by slice `data`.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
-    /// try clone executor if possible
+    /// Try clone executor if possible.
     fn try_clone(&self) -> Option<Self>
     where
         Self: Sized;
-    // returns true if executor with single_buffer
+    /// Returns true if executor have single buffer property.
     fn is_single_buffer(&self) -> bool;
 
+    /// Returns number of bits of word processor.
     fn word_len(&self) -> u32;
 
+    /// Returns true if input data will be populated by `pop_input_code`.
     fn input_is_populated(&self) -> bool;
+    /// Returns true if input data will be populated from additional buffer.
     fn is_populated_from_buffer(&self) -> bool;
+    /// Returns true if output data will be processed by `aggr_output_code`.
     fn output_is_aggregated(&self) -> bool;
+    /// Returns true if output data will be processed by `aggr_output_code` and stored
+    /// to additional buffer.
     fn is_aggregated_to_buffer(&self) -> bool;
 
+    /// Returns length of additional buffer in 32-bit words.
     fn aggr_output_len(&self) -> Option<usize>;
+    /// Returns length of additional buffer in 32-bit words.
     fn pop_input_len(&self) -> Option<usize>;
 
-    // in 32-bit words
+    /// Returns input data (for circuit inputs) length in 32-bit words for given
+    /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.input_is_populated() && !self.is_populated_from_buffer() {
             self.pop_input_len().unwrap()
@@ -1168,7 +1370,8 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         }
     }
 
-    // in 32-bit words
+    /// Returns input data (for circuit outputs) length in 32-bit words for given
+    /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
         if self.output_is_aggregated() && !self.is_aggregated_to_buffer() {
@@ -1178,25 +1381,38 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         }
     }
 
+    /// Returns input data holder (for circuit inputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
+    /// Returns output data holder (for circuit outputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
     }
 
+    /// Returns true if dont_clear_outputs set.
     fn dont_clear_outputs(&self) -> bool;
 
+    /// Returns true if data should be cleared manually.
     fn need_clear_outputs(&self) -> bool {
         self.output_is_aggregated() && !self.is_aggregated_to_buffer() && !self.dont_clear_outputs()
     }
 
-    // return true if sequential execution
+    /// Returns true if executor executes simulation in sequentially (not parallel way).
     fn is_sequential_execution(&self) -> bool;
 
+    /// Returns inner loop property.
     fn inner_loop(&self) -> Option<u32>;
 }
 
+/// This trait determines interface for builder.
+///
+/// First step is adding simulation configurations to builder. Next step is building
+/// executors by using `build` method. Additional methods adds helpers and an user defined code.
+/// Builder after building should returns same number of executor as number of added
+/// simulation configurations.
 pub trait Builder<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -1204,13 +1420,28 @@ where
     D: DataHolder<'a, DR, DW>,
     E: Executor<'a, DR, DW, D>,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
+    /// Adds additional user definition to code of simulations.
     fn user_defs(&mut self, user_defs: &str);
-    /// add transform helpers
+
+    /// Adds transform helpers.
+    ///
+    /// Transform helpers provides macros that helps to transform data between form used while
+    /// simulating circuit and external usage. They can be used in pop_input_code and
+    /// aggr_output_code.
+    /// * Macro `INPUT_TRANSFORM_BXX(D0,...,DXX,S)` transforms data in X-bit integers stored as
+    /// 32-bit words to form fetched by simulation code. `DX` is output single pack element X,
+    /// `S` array of 32-bit words.
+    /// * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
+    /// code to data in X-bit integers stored as 32-bit words. `D` is output data array of
+    /// 32-bit words, `SX` is input pack element X.
     fn transform_helpers(&mut self);
 
-    // Add new circuit to built. arg_inputs - input that will be set by argument arg_input.
+    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// circuit to simulate. `input_placement`, `output_placement` and `arg_inputs` are
+    /// part of code configuration of this simulation configuration.
     fn add<T>(
         &mut self,
         name: &str,
@@ -1235,6 +1466,8 @@ where
         );
     }
 
+    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// circuit to simulate, `code_config` is code configuration.
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1243,6 +1476,8 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
+    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// circuit to simulate.
     fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1254,20 +1489,23 @@ where
         self.add(name, circuit, None, None, None);
     }
 
+    /// Build code to simulations. If build succeeded then returns executors for simulations.
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
-    /// word length in bits
+    /// Returns processor word in bits.
     fn word_len(&self) -> u32;
     /// type length in bits (includes only type length not word length if group_vec enabled).
     fn type_len(&self) -> u32;
-    // if no added circuit to built
+    /// Returns true if nothing added to build.
     fn is_empty(&self) -> bool;
-    /// executor can be used per thread
+    /// Returns true if any executor can be used per native thread.
     fn is_executor_per_thread() -> bool;
-    /// data holder can be used between any executor
+    /// Returns true if any data holder is global and it can be shared betweens any
+    /// executors from any builder of that type.
     fn is_data_holder_global() -> bool;
-    /// data holder can be used between any executor created by one builder
+    /// Returns true if any data holder is global and it can be shared betweens any
+    /// executors from this builder.
     fn is_data_holder_in_builder() -> bool;
-    // preferred input count for this builder
+    /// Returns hint about preferred count of input.
     fn preferred_input_count(&self) -> usize;
 }
 
