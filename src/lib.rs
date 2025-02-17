@@ -1437,6 +1437,8 @@ where
     /// * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
     /// code to data in X-bit integers stored as 32-bit words. `D` is output data array of
     /// 32-bit words, `SX` is input pack element X.
+    ///
+    /// Transform helpers are much faster than data transformers.
     fn transform_helpers(&mut self);
 
     /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
