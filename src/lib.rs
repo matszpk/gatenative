@@ -33,7 +33,7 @@
 //! that can have even 256 threads. A special option treat whole group as processor's word,
 //! however in many cases is not usable.
 //!
-//! Circuit inputs and circuit's outputs are organized as pack of processor words that
+//! Circuit's inputs and circuit's outputs are organized as pack of processor words that
 //! groupped in greater stream. Data can contain more that packs if number of elements
 //! is greater than number of bits of processor word.
 //!
@@ -62,12 +62,11 @@
 //! In this library it used terminology:
 //! * Builder - object to built code for simulate circuits. Builder can hold many
 //!   simulation configurations for same circuit.
-//! * Simulation configuration - it holds circuit and its configuration for simulation.
-//! * Code configuration - part of simulation configuration. It holds circuit's inputs
-//!   and outputs configuration, populating and aggregating code, loop setup, etc.
+//! * Code configuration - It holds circuit's inputs and outputs configuration,
+//!   populating and aggregating code, loop setup, etc.
 //! * Execution - execution of simulations with specified size that will be run under
 //!   single execution on GPU (as single execution of kernel) or CPU.
-//! * Executor - object to call simulation. Single executor for single simulation configuration.
+//! * Executor - object to call simulation. Single executor per single circuit.
 //! * MapperBuilder - builder to simplify multiple execution with more elements
 //!   than can have single simulation.
 //! * MapperExecutor - executor that execute multiple simulations.
@@ -159,7 +158,7 @@ pub use libloading;
 pub use opencl3;
 pub use rayon;
 
-/// Main structure to describe code configuration (part of simulation configuration).
+/// Main structure to describe code configuration.
 ///
 /// This structure provides assignment for circuit's inputs and circuit's outputs,
 /// a polulating code, an aggregating code, loop setup, buffer setup.
@@ -706,8 +705,7 @@ fn check_placements(
 /// CodeWriter is main trait that defines code generator for simulation.
 ///
 /// CodeWriter trait provides basic logic to implement code generator. Main it is
-/// checking of code configuration for simulation configuration.
-/// Mainly, CodeWriter is used internally by this library.
+/// checking of code configuration. Mainly, CodeWriter is used internally by this library.
 pub trait CodeWriter<'a, FW: FuncWriter> {
     /// It returns bit mask of where bit position is InstrOp integer value - support Instr Ops.
     fn supported_ops(&self) -> u64;
@@ -1409,7 +1407,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
 
 /// This trait determines interface for builder.
 ///
-/// First step is adding simulation configurations to builder. Next step is building
+/// First step is adding circuits to builder. Next step is building
 /// executors by using `build` method. Additional methods adds helpers and an user defined code.
 /// Builder after building should returns same number of executor as number of added
 /// simulation configurations.
@@ -1441,7 +1439,7 @@ where
     /// Transform helpers are much faster than data transformers.
     fn transform_helpers(&mut self);
 
-    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// Adds circuit to builder. `name` is name of function, `circuit` is
     /// circuit to simulate. `input_placement`, `output_placement` and `arg_inputs` are
     /// part of code configuration of this simulation configuration.
     fn add<T>(
@@ -1468,7 +1466,7 @@ where
         );
     }
 
-    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// Adds circuit to builder. `name` is name of function, `circuit` is
     /// circuit to simulate, `code_config` is code configuration.
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -1478,7 +1476,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
-    /// Adds simulation configuration to builder. `name` is name of function, `circuit` is
+    /// Adds circuit to builder. `name` is name of function, `circuit` is
     /// circuit to simulate.
     fn add_simple<T>(&mut self, name: &str, circuit: Circuit<T>)
     where
