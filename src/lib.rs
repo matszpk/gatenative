@@ -236,7 +236,7 @@ pub use rayon;
 /// * iter - current loop iteration number starts from 0.
 /// * iter_max - read-only - number of iterations
 ///
-/// Supplied parameter is max iteration number.
+/// `inner_loop` supplied parameter is max iteration number.
 /// If pop_input_code and aggr_output_code are executed for all iterations.
 /// User should put own code in required conditional blocks if it is needed.
 /// Aggr_output_code is executed before input update and iteration check and
@@ -283,7 +283,7 @@ pub struct CodeConfig<'a> {
     /// will not be cleared before single execution (to save time) and content of this buffer
     /// will be kept to later use.
     pub dont_clear_outputs: bool,
-    /// If true then inner loop enabled.
+    /// If some then it holds maximal number of iterations for loop in single execution.
     pub inner_loop: Option<u32>,
 }
 
@@ -1108,13 +1108,13 @@ where
 pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     /// Error type used if error encountered while execution.
     type ErrorType;
-    /// Returns circit input length.
+    /// Returns number of circuit's inputs.
     fn input_len(&self) -> usize;
-    /// Returns circit output length.
+    /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
-    /// Returns pack elements for input data (for assigned circuit's inputs).
+    /// Returns number of pack elements for input data (for assigned circuit's inputs).
     fn real_input_len(&self) -> usize;
-    /// Returns pack elements for output data (for assigned circuit's outputs).
+    /// Returns number of pack elements for output data (for assigned circuit's outputs).
     fn real_output_len(&self) -> usize;
 
     /// Returns element count based on input length in 32-bit words.
@@ -1328,7 +1328,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn new_data(&mut self, len: usize) -> D;
     /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
-    /// Creates new data. It returns data holder with data supplied by slice `data`.
+    /// Create new data from slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
     /// Try clone executor if possible.
     fn try_clone(&self) -> Option<Self>
@@ -1337,7 +1337,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Returns true if executor have single buffer property.
     fn is_single_buffer(&self) -> bool;
 
-    /// Returns number of bits of word processor.
+    /// Returns processor word length.
     fn word_len(&self) -> u32;
 
     /// Returns true if input data will be populated by `pop_input_code`.
@@ -1350,9 +1350,9 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// to additional buffer.
     fn is_aggregated_to_buffer(&self) -> bool;
 
-    /// Returns length of additional buffer in 32-bit words.
+    /// Returns length of additional buffer in 32-bit words for `aggr_output_code`.
     fn aggr_output_len(&self) -> Option<usize>;
-    /// Returns length of additional buffer in 32-bit words.
+    /// Returns length of additional buffer in 32-bit words for `pop_input_code`.
     fn pop_input_len(&self) -> Option<usize>;
 
     /// Returns input data (for circuit's inputs) length in 32-bit words for given
@@ -1401,13 +1401,13 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Returns true if executor executes simulation in sequentially (not parallel way).
     fn is_sequential_execution(&self) -> bool;
 
-    /// Returns inner loop property.
+    /// Returns inner loop maximal number of iterations.
     fn inner_loop(&self) -> Option<u32>;
 }
 
 /// This trait determines interface for builder.
 ///
-/// First step is adding circuits to builder. Next step is building
+/// Usage of builder is simple: first step is adding circuits to builder. Next step is building
 /// executors by using `build` method. Additional methods adds helpers and an user defined code.
 /// Builder after building should returns same number of executor as number of added
 /// simulation configurations.
@@ -1489,11 +1489,13 @@ where
         self.add(name, circuit, None, None, None);
     }
 
-    /// Build code to simulations. If build succeeded then returns executors for simulations.
+    /// Build code to simulations. If build succeeded then returns executors for simulations
+    /// in addition order.
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
-    /// Returns processor word in bits.
+    /// Returns length processor word in bits.
     fn word_len(&self) -> u32;
-    /// type length in bits (includes only type length not word length if group_vec enabled).
+    /// Returns type length in bits (includes only type length not word length if
+    /// group_vec enabled).
     fn type_len(&self) -> u32;
     /// Returns true if nothing added to build.
     fn is_empty(&self) -> bool;
@@ -1509,21 +1511,34 @@ where
     fn preferred_input_count(&self) -> usize;
 }
 
+/// Executor of mapper executes simulation multiple times.
+///
+/// This executor comes from MapperBuilder. Arg input is counter of execution of simulations
+/// and will be passed to circuit's input assigned to arg input.
+/// Simulations are independents and they can execute parallel way. Output data for each
+/// simulation will be processed by supplied function that returns output. `stop` functions
+/// determines whether stop execution of simulations.
 pub trait MapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader,
     DW: DataWriter,
     D: DataHolder<'a, DR, DW>,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
-    /// Get circuit input length (number of inputs)
+    /// Returns number of circuit's inputs.
     fn input_len(&self) -> usize;
-    /// Get real input length (number of entries in area of input placements)
+    /// Returns number of pack elements for input data (for assigned circuit's inputs).
     fn real_input_len(&self) -> usize;
-    /// Get circuit output length (number of outputs)
+    /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
-    // function: F - main reduce function: F(input data, output data, arg_input)
+
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution and
+    /// `stop` checks whether whole execution should be stopped (then function should return
+    /// true in this case). Function `f` read data from data holders. Arg input value is counter
+    /// that increase for every single execution.
     fn execute<Out, F, Stop>(
         &mut self,
         input: &D,
@@ -1535,7 +1550,11 @@ where
         F: FnMut(Out, &D, &D, u64) -> Out,
         Stop: FnMut(&Out) -> bool;
 
-    // function: F - main reduce function: F(input data, output data, arg_input)
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution and
+    /// `stop` checks whether whole execution should be stopped (then function should return
+    /// true in this case). Function `f` read data from slice. Arg input value is counter
+    /// that increase for every single execution.
     fn execute_direct<'b, Out: Clone, F, Stop>(
         &mut self,
         input: &'b D,
@@ -1558,7 +1577,13 @@ where
             stop,
         )
     }
-    // executes for additional buffers
+
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `buffer` is additional buffer (for pop_input_code and aggr_output_code).
+    /// `f` is function that process output data from single execution and
+    /// `stop` checks whether whole execution should be stopped (then function should return
+    /// true in this case). Function `f` read data from data holders. Arg input value is counter
+    /// that increase for every single execution.
     fn execute_buffer<Out, F, Stop>(
         &mut self,
         input: &D,
@@ -1571,6 +1596,12 @@ where
         F: FnMut(Out, &D, &D, &D, u64) -> Out,
         Stop: FnMut(&Out) -> bool;
 
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `buffer` is additional buffer (for pop_input_code and aggr_output_code).
+    /// `f` is function that process output data from single execution and
+    /// `stop` checks whether whole execution should be stopped (then function should return
+    /// true in this case). Function `f` read data from slice. Arg input value is counter
+    /// that increase for every single execution.
     fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
         &mut self,
         input: &'b D,
@@ -1599,44 +1630,66 @@ where
             stop,
         )
     }
-    /// Create new data - length is number of 32-bit words
+    /// Creates new data. It returns data holder with zeroed data with length `len` 32-bit words.
     fn new_data(&mut self, len: usize) -> D;
-    /// Create new data from vector.
+    /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
     /// Create new data from slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
 
+    /// Returns processor word length.
     fn word_len(&self) -> u32;
 
+    /// Returns element count for given input length in 32-bit words.
     fn elem_count(&self, input_len: usize) -> usize;
 
-    // in 32-bit words
+    /// Returns input data (for circuit's inputs) length in 32-bit words for given
+    /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    // in 32-bit words
+    /// Returns input data (for circuit's outputs) length in 32-bit words for given
+    /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
+    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
+    /// Returns output data holder (for circuit's outputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
     }
 
+    /// Returns true if output data will be processed by `aggr_output_code`.
     fn output_is_aggregated(&self) -> bool;
+    /// Returns true if output data will be processed by `aggr_output_code` and stored
+    /// to additional buffer.
     fn is_aggregated_to_buffer(&self) -> bool;
+    /// Returns true if input data will be populated by `pop_input_code`.
     fn input_is_populated(&self) -> bool;
+    /// Returns true if input data will be populated from additional buffer.
     fn is_populated_from_buffer(&self) -> bool;
 
+    /// Returns length of additional buffer in 32-bit words for `aggr_output_code`.
     fn aggr_output_len(&self) -> Option<usize>;
+    /// Returns length of additional buffer in 32-bit words for `pop_input_code`.
     fn pop_input_len(&self) -> Option<usize>;
 
-    // return true if sequential execution in single execution call of inner executor
+    /// Returns true if executor executes simulation in sequentially (not parallel way).
     fn is_sequential_execution(&self) -> bool;
 
+    /// Returns inner loop maximal number of iterations.
     fn inner_loop(&self) -> Option<u32>;
 }
 
+/// Trait defines builder for mapper.
+///
+/// Usage of builder is simple: first step is adding circuits to builder. Next step is building
+/// executors by using `build` method. Additional methods adds helpers and an user defined code.
+/// Builder after building should returns same number of executor as number of added
+/// simulation configurations. This builder returns MapperExecutors.
 pub trait MapperBuilder<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -1644,12 +1697,30 @@ where
     D: DataHolder<'a, DR, DW>,
     E: MapperExecutor<'a, DR, DW, D>,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
+    /// Adds additional user definition to code of simulations.
     fn user_defs(&mut self, user_defs: &str);
-    /// add transform helpers
+    /// Adds transform helpers.
+    ///
+    /// Transform helpers provides macros that helps to transform data between form used while
+    /// simulating circuit and external usage. They can be used in pop_input_code and
+    /// aggr_output_code.
+    /// * Macro `INPUT_TRANSFORM_BXX(D0,...,DXX,S)` transforms data in X-bit integers stored as
+    /// 32-bit words to form fetched by simulation code. `DX` is output single pack element X,
+    /// `S` array of 32-bit words.
+    /// * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
+    /// code to data in X-bit integers stored as 32-bit words. `D` is output data array of
+    /// 32-bit words, `SX` is input pack element X.
+    ///
+    /// Transform helpers are much faster than data transformers.
     fn transform_helpers(&mut self);
 
+    /// Only for implementation.
+    ///
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `code_config` is code configuration.
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1658,6 +1729,8 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `code_config` is code configuration.
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1675,6 +1748,8 @@ where
         }
     }
 
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `arg_inputs` are circuit's inputs to be assigned to arg input.
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1690,18 +1765,23 @@ where
         );
     }
 
+    /// Build code to simulations. If build succeeded then returns executors for simulations
+    /// in addition order.
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 
-    /// word length in bits
+    /// Returns length processor word in bits.
     fn word_len(&self) -> u32;
-    /// type length in bits (includes only type length not word length if group_vec enabled).
+    /// Returns type length in bits (includes only type length not word length if
+    /// group_vec enabled).
     fn type_len(&self) -> u32;
 
-    /// data holder can be used between any executor
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from any builder of that type.
     fn is_data_holder_global() -> bool;
-    /// data holder can be used between any executor created by one builder
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from this builder.
     fn is_data_holder_in_builder() -> bool;
-    // preferred input count for this builder
+    /// Returns hint about preferred count of input.
     fn preferred_input_count(&self) -> usize;
 }
 
