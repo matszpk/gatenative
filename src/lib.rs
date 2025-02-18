@@ -2023,12 +2023,24 @@ where
 // because they are not too much fast.
 // If transformations used many times then it recommeded to use
 // INPUT_TRANSFORM and OUTPUT_TRANSFORM inside populated input code or aggregated output code.
+
+/// Trat for data transformer.
+///
+/// Data transformer just transform data from form to another form. Mainly transforms
+/// from external form to input data form fetched to circuit before simulation and
+/// vice versa. Data are divided into elements.
 pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
+    /// Transforms data in `input` data holder. If succeeded then returns data holder
+    /// with transformed data.
     fn transform(&mut self, input: &D) -> Result<D, Self::ErrorType>;
+    /// Transforms data in `input` data holder. If succeeded then store transformed data
+    /// in `output` data holder.
     fn transform_reuse(&mut self, input: &D, output: &mut D) -> Result<(), Self::ErrorType>;
 
+    /// Returns output data length. `len` is input data (for transformer) length.
     fn output_data_len(&self, len: usize) -> usize {
         assert_eq!(
             usize::try_from(
@@ -2045,12 +2057,14 @@ pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, 
         .unwrap()
     }
 
-    // input elem length in bits
+    // Returns length of element for input data (for transformer) in bits.
     fn input_elem_len(&self) -> usize;
-    // output elem length in bits
+    // Returns length of element for output data (for transformer) in bits.
     fn output_elem_len(&self) -> usize;
 }
 
+// TODO: Doc.
+/// Trait for executors that includes data transformers.
 pub trait DataTransforms<'a, DR, DW, D, IDT, ODT>
 where
     DR: DataReader,
@@ -2059,13 +2073,16 @@ where
     IDT: DataTransformer<'a, DR, DW, D>,
     ODT: DataTransformer<'a, DR, DW, D>,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
+    /// Returns input data transfomer.
     fn input_transformer(
         &self,
         input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<IDT, Self::ErrorType>;
+    /// Returns output data transfomer.
     fn output_transformer(
         &self,
         output_elem_len: usize,
