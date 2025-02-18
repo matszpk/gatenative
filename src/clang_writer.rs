@@ -1,3 +1,14 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! Main code generator for simulation code.
+//!
+//! The module provides code generator for main code of simulation written in C language or
+//! OpenCL C language. Main routine generates code optimized for many CPU instruction set
+//! extensions (mainly vector extensions). `CLangWriterConfig` just describe configuration
+//! for given instruction set.
+//!
+//! For any circuit will be generated separate function (or OpenCL kernel) that performs
+//! circuit simulation including code configuration.
+
 use crate::*;
 
 use crate::clang_transform::*;
@@ -6,11 +17,12 @@ use std::collections::{HashMap, HashSet};
 use std::io::Write;
 
 #[derive(Clone, Debug)]
-pub struct ElemIndexConfig<'a> {
+struct ElemIndexConfig<'a> {
     low_bits_init: &'a str,
     low_bits_defs: [&'a str; 16],
 }
 
+/// Structure that describe configuration of generation of simulation code.
 #[derive(Clone, Debug)]
 pub struct CLangWriterConfig<'a> {
     func_modifier: Option<&'a str>,
@@ -43,6 +55,7 @@ pub struct CLangWriterConfig<'a> {
     transform_config: &'a CLangTransformConfig<'a>,
 }
 
+/// Configuration for standard 32-bit word.
 pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -94,6 +107,7 @@ pub const CLANG_WRITER_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_U32,
 };
 
+/// Configuration for standard 64-bit word.
 pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -146,6 +160,7 @@ pub const CLANG_WRITER_U64: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+/// Configuration for testing NVIDIA LOP3 on CPU. (Only for testing).
 pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -210,6 +225,7 @@ pub const CLANG_WRITER_U64_TEST_LOP3: CLangWriterConfig<'_> = CLangWriterConfig 
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+/// Configuration for testing with IMPL operation. (Only for testing).
 pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -262,6 +278,7 @@ pub const CLANG_WRITER_U64_TEST_IMPL: CLangWriterConfig<'_> = CLangWriterConfig 
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+/// Configuration for testing with NIMPL operation. (Only for testing).
 pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -314,6 +331,7 @@ pub const CLANG_WRITER_U64_TEST_NIMPL: CLangWriterConfig<'_> = CLangWriterConfig
     transform_config: &CLANG_TRANSFORM_U64,
 };
 
+/// Configuration for Intel MMX extensions.
 pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -381,6 +399,7 @@ pub const CLANG_WRITER_INTEL_MMX: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_INTEL_MMX,
 };
 
+/// Configuration for Intel SSE extensions.
 pub const CLANG_WRITER_INTEL_SSE: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -456,6 +475,7 @@ __attribute__((aligned(16))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_SSE,
 };
 
+/// Configuration for Intel SSE2 extensions.
 pub const CLANG_WRITER_INTEL_SSE2: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -531,6 +551,7 @@ __attribute__((aligned(16))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_SSE2,
 };
 
+/// Configuration for Intel AVX extensions.
 pub const CLANG_WRITER_INTEL_AVX: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -610,6 +631,7 @@ __attribute__((aligned(32))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_AVX,
 };
 
+/// Configuration for Intel AVX2 extensions.
 pub const CLANG_WRITER_INTEL_AVX2: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -689,6 +711,7 @@ __attribute__((aligned(32))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_AVX2,
 };
 
+/// Configuration for Intel AVX512 extensions (beta test).
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -780,6 +803,7 @@ __attribute__((aligned(64))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_AVX512,
 };
 
+/// Configuration for ARM NEON extensions (beta test).
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -838,6 +862,7 @@ pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_ARM_NEON,
 };
 
+/// Configuration for OpenCL C language with 32-bit word.
 pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: Some("kernel"),
     init_index: Some("const size_t idx = get_global_id(0);"),
@@ -889,6 +914,7 @@ pub const CLANG_WRITER_OPENCL_U32: CLangWriterConfig<'_> = CLangWriterConfig {
     transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
+/// Configuration for OpenCL C language with group_len*32-bit (group_vec option).
 pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: Some("kernel"),
     init_index: Some("const size_t idx = get_group_id(0);"),
@@ -943,6 +969,7 @@ pub const CLANG_WRITER_OPENCL_U32_GROUP_VEC: CLangWriterConfig<'_> = CLangWriter
     transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
+/// Configuration for OpenCL C language with 32-bit word for LOP3 testing (unusable).
 pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: Some("kernel"),
     init_index: Some("const size_t idx = get_global_id(0);"),
@@ -1008,6 +1035,8 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3: CLangWriterConfig<'_> = CLangWriterConfi
     transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
+/// Configuration for OpenCL C language with group_len*32-bit (group_vec option) for
+/// LOP3 (unusable).
 pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: Some("kernel"),
     init_index: Some("const size_t idx = get_group_id(0);"),
@@ -1076,6 +1105,7 @@ pub const CLANG_WRITER_OPENCL_U32_LOP3_GROUP_VEC: CLangWriterConfig<'_> = CLangW
     transform_config: &CLANG_TRANSFORM_OPENCL_U32,
 };
 
+/// Function writer for this code generator.
 pub struct CLangFuncWriter<'a, 'c> {
     writer: &'c mut CLangWriter<'a>,
     name: &'c str,
@@ -1099,6 +1129,7 @@ pub struct CLangFuncWriter<'a, 'c> {
     cond_nesting: usize,
 }
 
+/// This code generator object.
 pub struct CLangWriter<'a> {
     config: &'a CLangWriterConfig<'a>,
     elem_low_bits: u32,
@@ -1109,6 +1140,9 @@ pub struct CLangWriter<'a> {
 }
 
 impl<'a> CLangWriterConfig<'a> {
+    /// Returns code generator for simulation that includes array length.
+    /// If `array_len` then processor word will be `array_len` longer than normally by
+    /// using array type. This special feature used while implementing groups on CPUs.
     pub fn writer_with_array_len(&'a self, array_len: Option<usize>) -> CLangWriter<'a> {
         assert!(!self.buffer_shift || self.init_index.is_some());
         if let Some(alen) = array_len {
@@ -1128,6 +1162,7 @@ impl<'a> CLangWriterConfig<'a> {
             array_len,
         }
     }
+    /// Returns code generator for simulation.
     pub fn writer(&'a self) -> CLangWriter<'a> {
         self.writer_with_array_len(None)
     }
