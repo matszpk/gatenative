@@ -1515,9 +1515,9 @@ where
 ///
 /// This executor comes from MapperBuilder. Arg input is counter of execution of simulations
 /// and will be passed to circuit's input assigned to arg input.
-/// Simulations are independents and they will be executed sequentially. Output data for each
-/// simulation will be processed by supplied function that returns output. `stop` functions
-/// determines whether stop execution of simulations.
+/// Simulations are independents and they will be executed sequentially. Input and output
+/// data for each simulation will be processed by supplied function that returns output.
+/// `stop` functions determines whether stop execution of simulations.
 pub trait MapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader,
@@ -1535,7 +1535,8 @@ where
     fn output_len(&self) -> usize;
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
-    /// output. `f` is function that process output data from single execution and
+    /// output. `f` is function that process input and output data from single execution.
+    /// `f` function pass previous output, input data, output data and arg input value.
     /// `stop` checks whether whole execution should be stopped (then function should return
     /// true in this case). Function `f` read data from data holders. Arg input value is counter
     /// that increase for every single execution.
@@ -1551,10 +1552,11 @@ where
         Stop: FnMut(&Out) -> bool;
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
-    /// output. `f` is function that process output data from single execution and
+    /// output. `f` is function that process input and output data from single execution.
+    /// `f` function pass previous output, input data, output data and arg input value.
     /// `stop` checks whether whole execution should be stopped (then function should return
     /// true in this case). Function `f` read data from slice. Arg input value is counter
-    /// that increase for every single execution.
+    /// that will be increased for every single execution.
     fn execute_direct<'b, Out: Clone, F, Stop>(
         &mut self,
         input: &'b D,
@@ -1580,10 +1582,12 @@ where
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
     /// output. `buffer` is additional buffer (for pop_input_code and aggr_output_code).
-    /// `f` is function that process output data from single execution and
+    /// `f` is function that process input and output data from single execution.
+    /// `f` function pass previous output, input data, output data, additional buffer
+    /// and arg input value.
     /// `stop` checks whether whole execution should be stopped (then function should return
     /// true in this case). Function `f` read data from data holders. Arg input value is counter
-    /// that increase for every single execution.
+    /// that will be increased for every single execution.
     fn execute_buffer<Out, F, Stop>(
         &mut self,
         input: &D,
@@ -1598,10 +1602,11 @@ where
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
     /// output. `buffer` is additional buffer (for pop_input_code and aggr_output_code).
-    /// `f` is function that process output data from single execution and
+    /// `f` function pass previous output, input data, output data, additional buffer
+    /// and arg input value.
     /// `stop` checks whether whole execution should be stopped (then function should return
     /// true in this case). Function `f` read data from slice. Arg input value is counter
-    /// that increase for every single execution.
+    /// that will be increased for every single execution.
     fn execute_buffer_direct<'b, Out: Clone, F, Stop>(
         &mut self,
         input: &'b D,
@@ -1785,22 +1790,38 @@ where
     fn preferred_input_count(&self) -> usize;
 }
 
+/// Executor of parallel mapper executes simulation multiple times.
+///
+/// This executor comes from ParMapperBuilder. Arg input is counter of execution of simulations
+/// and will be passed to circuit's input assigned to arg input.
+/// Simulations are independents and they will be executed sequentially. Output data for each
+/// simulation will be processed by supplied function. Next function joins outputs from
+/// first function an join them. `stop` functions determines whether stop execution
+/// of simulations.
 pub trait ParMapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader + Send + Sync,
     DW: DataWriter + Send + Sync,
     D: DataHolder<'a, DR, DW> + Send + Sync,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
-    /// Get circuit input length (number of inputs)
+    /// Returns number of circuit's inputs.
     fn input_len(&self) -> usize;
-    /// Get real input length (number of entries in area of input placements)
+    /// Returns number of pack elements for input data (for assigned circuit's inputs).
     fn real_input_len(&self) -> usize;
-    /// Get circuit output length (number of outputs)
+    /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
-    /// execute. F - main reduce function: F(input data, output data, arg_input)
-    /// G - main join function
+
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution.
+    /// `f` function pass input data, output data and arg input value.
+    /// `g` is function that joins result from `f` function.
+    /// `stop` is function that checks whether whole execution should be stopped
+    /// (then function should return true in this case).
+    /// Function `f` read data from data holders. Arg input value is counter
+    /// that will be increased for every single execution.
     fn execute<Out, F, G, Stop>(
         &mut self,
         input: &D,
@@ -1815,8 +1836,14 @@ where
         Stop: Fn(&Out) -> bool + Send + Sync,
         Out: Clone + Send + Sync;
 
-    /// execute. F - main reduce function: F(input data, output data, arg_input)
-    /// G - main join function
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution.
+    /// `f` function pass input data, output data and arg input value.
+    /// `g` is function that joins result from `f` function.
+    /// `stop` is function that checks whether whole execution should be stopped
+    /// (then function should return true in this case).
+    /// Function `f` read data from slice. Arg input value is counter
+    /// that will be increased for every single execution.
     fn execute_direct<'b, Out: Clone, F, G, Stop>(
         &mut self,
         input: &D,
