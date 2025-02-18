@@ -1511,11 +1511,11 @@ where
     fn preferred_input_count(&self) -> usize;
 }
 
-/// Executor of mapper executes simulation multiple times.
+/// Executor of sequential mapper executes simulation multiple times.
 ///
 /// This executor comes from MapperBuilder. Arg input is counter of execution of simulations
 /// and will be passed to circuit's input assigned to arg input.
-/// Simulations are independents and they can execute parallel way. Output data for each
+/// Simulations are independents and they will be executed sequentially. Output data for each
 /// simulation will be processed by supplied function that returns output. `stop` functions
 /// determines whether stop execution of simulations.
 pub trait MapperExecutor<'a, DR, DW, D>
@@ -1684,7 +1684,7 @@ where
     fn inner_loop(&self) -> Option<u32>;
 }
 
-/// Trait defines builder for mapper.
+/// Trait defines builder for sequential mapper.
 ///
 /// Usage of builder is simple: first step is adding circuits to builder. Next step is building
 /// executors by using `build` method. Additional methods adds helpers and an user defined code.
