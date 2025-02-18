@@ -1,3 +1,8 @@
+//! The module provides basic mappers.
+//!
+//! This module implements mappers defined in main module. Mapper builders requires
+//! child builder that builds and creates executor to run simulation execution.
+
 use crate::*;
 
 use rayon::prelude::*;
@@ -11,6 +16,7 @@ use std::sync::{
 
 use std::marker::PhantomData;
 
+/// Basic mapper executor.
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -217,11 +223,13 @@ where
     D: DataHolder<'a, DR, DW>,
     E: Executor<'a, DR, DW, D>,
 {
+    /// Returns child executor used to execute simulation.
     pub fn executor(&self) -> &E {
         &self.executor
     }
 }
 
+/// Basic mapper builder.
 pub struct BasicMapperBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader,
@@ -246,6 +254,7 @@ where
     E: Executor<'a, DR, DW, D>,
     B: Builder<'a, DR, DW, D, E>,
 {
+    /// Creates new Basic mapper builder using child builder given in `builder`.
     pub fn new(builder: B) -> Self {
         assert!(builder.is_empty());
         Self {
@@ -356,6 +365,7 @@ impl<I: Iterator> Iterator for StoppableIterator<I> {
 }
 
 // parallel
+/// Basic parallel mapper executor.
 pub struct ParBasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader + Send + Sync,
@@ -546,6 +556,7 @@ where
     }
 }
 
+/// Basic parallel mapper builder.
 pub struct ParBasicMapperBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader + Send + Sync,
@@ -572,6 +583,7 @@ where
     B: Builder<'a, DR, DW, D, E>,
     E::ErrorType: Send,
 {
+    /// Creates new Basic parallel mapper builder using child builder given in `builder`.
     pub fn new(builder: B) -> Self {
         assert!(B::is_data_holder_global() && B::is_executor_per_thread());
         assert!(builder.is_empty());
@@ -662,8 +674,10 @@ where
 use crate::cpu_build_exec::*;
 use crate::opencl_build_exec::*;
 
+/// Type of Basic mapper executor that uses CPUExecutor.
 pub type CPUBasicMapperExecutor<'a> =
     BasicMapperExecutor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CPUExecutor>;
+/// Type of Basic mapper builder that uses CPUBuilder.
 pub type CPUBasicMapperBuilder<'a> = BasicMapperBuilder<
     'a,
     CPUDataReader<'a>,
@@ -673,6 +687,7 @@ pub type CPUBasicMapperBuilder<'a> = BasicMapperBuilder<
     CPUBuilder<'a>,
 >;
 
+/// Type of Basic mapper executor that uses OpenCLExecutor.
 pub type OpenCLBasicMapperExecutor<'a> = BasicMapperExecutor<
     'a,
     OpenCLDataReader<'a>,
@@ -680,6 +695,7 @@ pub type OpenCLBasicMapperExecutor<'a> = BasicMapperExecutor<
     OpenCLDataHolder,
     OpenCLExecutor,
 >;
+/// Type of Basic mapper builder that uses OpenCLBuilder.
 pub type OpenCLBasicMapperBuilder<'a> = BasicMapperBuilder<
     'a,
     OpenCLDataReader<'a>,
@@ -689,8 +705,10 @@ pub type OpenCLBasicMapperBuilder<'a> = BasicMapperBuilder<
     OpenCLBuilder<'a>,
 >;
 
+/// Type of Basic parallel mapper executor that uses CPUExecutor.
 pub type CPUParBasicMapperExecutor<'a> =
     ParBasicMapperExecutor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CPUExecutor>;
+/// Type of Basic parallel mapper builder that uses CPUBuilder.
 pub type CPUParBasicMapperBuilder<'a> = ParBasicMapperBuilder<
     'a,
     CPUDataReader<'a>,
