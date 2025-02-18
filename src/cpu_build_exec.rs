@@ -272,6 +272,8 @@ impl Drop for SharedLib {
 // CPU Builder
 
 /// CPU Data reader.
+///
+/// See more in [DataReader].
 pub struct CPUDataReader<'a> {
     buffer: &'a [u32],
 }
@@ -284,6 +286,8 @@ impl<'a> DataReader for CPUDataReader<'a> {
 }
 
 /// CPU Data writer.
+///
+/// See more in [DataWriter].
 pub struct CPUDataWriter<'a> {
     buffer: &'a mut [u32],
 }
@@ -296,6 +300,8 @@ impl<'a> DataWriter for CPUDataWriter<'a> {
 }
 
 /// CPU Data holder.
+///
+/// See more in [DataHolder].
 pub struct CPUDataHolder {
     buffer: Vec<u32>,
     range: Range<usize>,
@@ -423,6 +429,8 @@ pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
 };
 
 /// Main CPU executor.
+///
+/// See more in [Executor].
 #[derive(Clone)]
 pub struct CPUExecutor {
     input_len: usize,
@@ -1280,6 +1288,8 @@ struct CircuitEntry {
 }
 
 /// Main CPU builder.
+///
+/// See more in [Builder].
 pub struct CPUBuilder<'a> {
     cpu_ext: CPUExtension,
     entries: Vec<CircuitEntry>,
