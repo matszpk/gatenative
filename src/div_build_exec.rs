@@ -1,3 +1,16 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module provides builder that divides circuit code into smaller parts.
+//!
+//! The module provides DivBuilder and DivExecutor that is doing division of simulation function
+//! to smaller and this executor executes these smaller parts as single simulation.
+//! This builder is unnecessary and it can be treated as experiment. Perfomance of simulation
+//! will be degraded this builder.
+//!
+//! DivBuilder requires to create other Builder any type. Builder divides given circuit by
+//! by parts as many circuits. DivBuilder uses input and output placement to divide
+//! circuits parts and organize intermediate results. DivExecutor joins simulation execution
+//! together.
+
 use crate::divide::*;
 use crate::*;
 use std::fmt::Debug;
@@ -11,6 +24,13 @@ pub(crate) struct DivPlacements {
     output_ps: Option<Placement>, // output placement
 }
 
+/// DivExecutor is executor comes from DivBuilder.
+///
+/// This executor joins execution of simulation of smaller circuit set into simulation
+/// of original circuit.
+///
+/// Type parameters: `DR`, `DW` and `D` just data reader, writer and holder.
+/// E - child executor that executes simulations for smaller parts of circuit.
 pub struct DivExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -34,6 +54,7 @@ where
     D: DataHolder<'a, DR, DW>,
     E: Executor<'a, DR, DW, D>,
 {
+    /// Returns number of pack elements for internal buffer that holds intermediate results.
     pub fn buffer_len(&self) -> usize {
         self.buffer_len
     }
@@ -472,6 +493,7 @@ struct CircuitInfo {
     elem_input_len: Option<usize>,
 }
 
+/// DivBuilder that divides circuit into smaller parts.
 pub struct DivBuilder<'a, DR, DW, D, E, B>
 where
     DR: DataReader,
@@ -497,6 +519,8 @@ where
     E: Executor<'a, DR, DW, D>,
     B: Builder<'a, DR, DW, D, E>,
 {
+    /// Creates new DivBuilder. `builder` is child builder. `max_gates` is maximal
+    /// number of gates for smaller parts of circuit.
     pub fn new(builder: B, max_gates: usize) -> Self {
         assert!(builder.is_empty());
         DivBuilder {
