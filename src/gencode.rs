@@ -1,3 +1,6 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module provides basic function to generate code.
+
 use crate::utils::{gen_var_usage, CircuitTrait, VarAllocator};
 
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -1079,6 +1082,15 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
     }
 }
 
+/// Generates function code for single circuit including code configuration.
+///
+/// This function generates code for circuit. It uses code writer to write that code.
+/// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
+/// NVIDIA LOP3 operations.
+///
+/// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
+/// If `optimize_negs` is true then while generating negations will be optimized for
+/// standard boolean operations. `code_config` holds code configuration.
 pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,
@@ -1350,6 +1362,16 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     }
 }
 
+/// Generates function code for single circuit.
+///
+/// This function generates code for circuit. It uses code writer to write that code.
+/// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
+/// NVIDIA LOP3 operations.
+///
+/// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
+/// If `optimize_negs` is true then while generating negations will be optimized for
+/// standard boolean operations. `input_placement` and `output_placement` are placements.
+/// `arg_inputs` is list of circuit's inputs assigned to arg input.
 pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,
