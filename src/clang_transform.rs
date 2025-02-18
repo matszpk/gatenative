@@ -1,15 +1,34 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! Thee module provides code generator for transform helpers. It generates in C language
+//! or OpenCL C language. Main routine generates code optimized for many CPU instruction set
+//! extensions (mainly vector extensions). `CLangTransformConfig` just describe configuration
+//! for given instruction set.
+//!
+//! Transform helpers provides macros that helps to transform data between form used while
+//! simulating circuit and external usage. They can be used in pop_input_code and
+//! aggr_output_code.
+//! * Macro `INPUT_TRANSFORM_BXX(D0,...,DXX,S)` transforms data in X-bit integers stored as
+//! 32-bit words to form fetched by simulation code. `DX` is output single pack element X,
+//! `S` array of 32-bit words.
+//! * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
+//! code to data in X-bit integers stored as 32-bit words. `D` is output data array of
+//! 32-bit words, `SX` is input pack element X.
+//!
+//! Transform helpers are much faster than data transformers.
+
 use crate::utils::*;
 
 use std::collections::BTreeMap;
 use std::fmt::Write;
 
 #[derive(Clone, Debug)]
-pub struct FinalType<'a> {
+struct FinalType<'a> {
     final_type_bit_len: u32,
     load_op: Option<&'a str>,
     store_op: Option<&'a str>,
 }
 
+/// Structure that describe configuration of generation of transform helpers.
 #[derive(Clone, Debug)]
 pub struct CLangTransformConfig<'a> {
     comp_type_name: &'a str,
@@ -34,6 +53,7 @@ pub struct CLangTransformConfig<'a> {
     collect_constants: bool,
 }
 
+/// Configuration for standard 32-bit word.
 pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32_t",
     comp_type_bit_len: 32,
@@ -96,6 +116,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     collect_constants: false,
 };
 
+/// Configuration for standard 64-bit word.
 pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint64_t",
     comp_type_bit_len: 64,
@@ -164,6 +185,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     collect_constants: false,
 };
 
+/// Configuration for Intel MMX extensions.
 pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m64",
     comp_type_bit_len: 64,
@@ -271,6 +293,7 @@ static const unsigned int transform_const2_tbl[5*2] = {
     collect_constants: true,
 };
 
+/// Configuration for Intel SSE extensions.
 pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32_t",
     comp_type_bit_len: 32,
@@ -338,6 +361,7 @@ pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformCo
     collect_constants: false,
 };
 
+/// Configuration for Intel SSE2 extensions.
 pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m128i",
     comp_type_bit_len: 128,
@@ -449,6 +473,7 @@ __attribute__((aligned(16))) = {
     collect_constants: true,
 };
 
+/// Configuration for Intel AVX extensions.
 pub const CLANG_TRANSFORM_INTEL_AVX: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m128i",
     comp_type_bit_len: 128,
@@ -565,6 +590,7 @@ __attribute__((aligned(16))) = {
     collect_constants: true,
 };
 
+/// Configuration for Intel AVX2 extensions.
 pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m256i",
     comp_type_bit_len: 256,
@@ -699,6 +725,7 @@ __attribute__((aligned(32))) = {
     collect_constants: true,
 };
 
+/// Configuration for Intel AVX512 extensions (beta test).
 pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m512i",
     comp_type_bit_len: 512,
@@ -886,6 +913,7 @@ __attribute__((aligned(64))) = {
     collect_constants: true,
 };
 
+/// Configuration for ARM NEON extensions (beta test).
 pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32x4_t",
     comp_type_bit_len: 128,
@@ -978,6 +1006,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
     collect_constants: false,
 };
 
+/// Configuration for OpenCL C language with 32-bit word.
 pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint",
     comp_type_bit_len: 32,
@@ -1041,6 +1070,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
 };
 
 impl<'a> CLangTransformConfig<'a> {
+    /// Returns generator of transform helpers.
     pub fn transform(&'a self) -> CLangTransform<'a> {
         CLangTransform {
             config: self,
@@ -1049,6 +1079,7 @@ impl<'a> CLangTransformConfig<'a> {
     }
 }
 
+/// Object that generates code for transform helpers.
 pub struct CLangTransform<'a> {
     config: &'a CLangTransformConfig<'a>,
     out: String,
@@ -1176,6 +1207,7 @@ const BIT_MASK_TBL: [u32; 5 * 2] = [
 const SINGLE_BIT_MASK_TBL: [u32; 5] = [0x1, 0x3, 0xf, 0xff, 0xffff];
 
 impl<'a> CLangTransform<'a> {
+    /// Puts initialization defs.
     pub fn init_defs(&mut self) {
         self.out.push_str(self.config.init_defs);
         self.out.push('\n');
@@ -1213,15 +1245,19 @@ impl<'a> CLangTransform<'a> {
         out
     }
 
+    /// Generates element of `S` (input transformer).
     pub fn format_arg_s(arg: String) -> String {
         format!("((S)[{}])", arg)
     }
+    /// Generates `D` (input transformer).
     pub fn format_arg_d(arg: u32) -> String {
         format!("(D{})", arg)
     }
+    /// Generates `S` (for output transformer).
     pub fn format_arg_s_out(arg: u32) -> String {
         format!("(S{})", arg)
     }
+    /// Generates element of `S` (for output transformer).
     pub fn format_arg_d_out(&self, arg: String) -> String {
         if self.config.comp_type_bit_len <= 32 {
             format!("((D)[{}])", arg)
@@ -1229,6 +1265,7 @@ impl<'a> CLangTransform<'a> {
             format!("(dest[{}])", arg)
         }
     }
+    /// Generates load input operation `S + X`.
     pub fn format_load_input(&self, arg: String) -> String {
         if let Some(load_op) = self.config.load_op {
             Self::format_op(load_op, &[&format!("((S) + {})", arg)])
@@ -1608,6 +1645,7 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
+    /// Generates input transform with given prefix with `bits` length in bits.
     pub fn gen_input_transform_with_prefix(&mut self, bits: usize, prefix: &'a str) {
         let (inputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
             (
@@ -1700,6 +1738,7 @@ impl<'a> CLangTransform<'a> {
         self.out.write_str("}\n").unwrap();
     }
 
+    /// Generates input transform with `bits` length in bits.
     pub fn gen_input_transform(&mut self, bits: usize) {
         self.gen_input_transform_with_prefix(bits, "")
     }
@@ -1897,6 +1936,7 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
+    /// Generates output transform with given prefix with `bits` length in bits.
     pub fn gen_output_transform_with_prefix(&mut self, bits: usize, prefix: &'a str) {
         let (outputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
             (
@@ -1988,10 +2028,12 @@ impl<'a> CLangTransform<'a> {
         self.out.write_str("}\n").unwrap();
     }
 
+    /// Generates input transform with `bits` length in bits.
     pub fn gen_output_transform(&mut self, bits: usize) {
         self.gen_output_transform_with_prefix(bits, "")
     }
 
+    /// Returns code of transform helpers.
     pub fn out(self) -> String {
         self.out
     }
