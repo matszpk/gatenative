@@ -1,3 +1,18 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module with simulation execution on CPU.
+//!
+//! The module provides builder and executors to run simulation on CPU. It uses CLangWriter
+//! to generate code for specific instruction set extension for CPU. The Builder executes
+//! external compiler to build simulation code in C language. `GATE_SYS_CC` is environment
+//! variable that holds path to C compiler. By default is `clang` compiler from LLVM package.
+//! Source code compiled to shared library will be loaded after built and to call
+//! simulation code.
+//!
+//! `CPU_EXTENSION` holds current discovered CPU instruction set extension that will be
+//! by default while creating CPUBuilder.
+//!
+//! Additional structure is Shared that allows creating of shared library.
+
 use crate::clang_writer::*;
 use crate::cpu_data_transform::*;
 use crate::gencode::generate_code_with_config;
@@ -25,25 +40,38 @@ enum DetectCPUError {
     IOError(#[from] io::Error),
 }
 
+/// Build error type.
 #[derive(Error, Debug)]
 pub enum BuildError {
+    /// I/O error.
     #[error("IO error {0}")]
     IOError(#[from] io::Error),
+    /// Error while compiling.
     #[error("Compile error {0}")]
     CompileError(String),
+    /// Error while loading library.
     #[error("LibLoading error {0}")]
     LibLoadingError(#[from] libloading::Error),
 }
 
+/// Type for CPU instruction set extension.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CPUExtension {
+    /// No extension in CPU.
     NoExtension,
+    /// CPU has Intel MMX extensions.
     IntelMMX,
+    /// CPU has Intel SSE extensions.
     IntelSSE,
+    /// CPU has Intel SSE2 extensions.
     IntelSSE2,
+    /// CPU has Intel AVX extensions.
     IntelAVX,
+    /// CPU has Intel AVX2 extensions.
     IntelAVX2,
+    /// CPU has Intel AVX512 extensions.
     IntelAVX512,
+    /// CPU has ARM NEON extensions.
     ARMNEON,
 }
 
@@ -91,6 +119,7 @@ fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
     detect_cpu_from_file(BufReader::new(File::open("/proc/cpuinfo")?))
 }
 
+/// It holds currently discovered CPU instruction set extension.
 #[dynamic]
 pub static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
 
@@ -172,9 +201,11 @@ fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
 
 // shared library object
 
+/// It holds current value of `GATE_SYSCC` environment variable.
 #[dynamic]
 pub static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
 
+/// Object to create and manage shared library.
 pub struct SharedLib {
     cpu_ext: CPUExtension,
     source_path: PathBuf,
@@ -182,6 +213,8 @@ pub struct SharedLib {
 }
 
 impl SharedLib {
+    /// Creates shared library to built with including given CPU instruction extension in
+    /// `cpu_ext`.
     pub fn new_with_cpu_ext(cpu_ext: CPUExtension) -> Self {
         let temp_dir_path = temp_dir();
         let unix_time = get_timestamp();
@@ -192,6 +225,7 @@ impl SharedLib {
         }
     }
 
+    /// Builds source code to shared library. It succeded then it returns library object.
     pub fn build(self, source: &[u8]) -> Result<Library, BuildError> {
         fs::write(&self.source_path, source)?;
         let extra_flags = get_build_config(self.cpu_ext).extra_flags;
@@ -237,6 +271,7 @@ impl Drop for SharedLib {
 
 // CPU Builder
 
+/// CPU Data reader.
 pub struct CPUDataReader<'a> {
     buffer: &'a [u32],
 }
@@ -248,6 +283,7 @@ impl<'a> DataReader for CPUDataReader<'a> {
     }
 }
 
+/// CPU Data writer.
 pub struct CPUDataWriter<'a> {
     buffer: &'a mut [u32],
 }
@@ -259,12 +295,14 @@ impl<'a> DataWriter for CPUDataWriter<'a> {
     }
 }
 
+/// CPU Data holder.
 pub struct CPUDataHolder {
     buffer: Vec<u32>,
     range: Range<usize>,
 }
 
 impl CPUDataHolder {
+    /// Creates new CPU data holder with data from vector.
     #[inline]
     pub fn new(data: Vec<u32>) -> Self {
         let len = data.len();
@@ -273,6 +311,7 @@ impl CPUDataHolder {
             range: 0..len,
         }
     }
+    /// Creates new CPU data holder with data from slice.
     pub fn new_from_slice(data: &[u32]) -> Self {
         let len = data.len();
         Self {
@@ -335,16 +374,23 @@ impl RangedData for CPUDataHolder {
     }
 }
 
+/// Structure holds CPU builder configuration.
 #[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
+    /// If true then code generator optimize negation while creating code to simulate circuit.
     pub optimize_negs: bool,
     // if some then parallel - value is parallel chunk length
+    /// Sets parallel mode. If value supplied then value is chunk length in processor words.
+    /// Input and output data simulation will be divided in chunks that will be run
+    /// parallel way.
     pub parallel: Option<usize>,
-    // length of array (by default 1) - to handle longer types than vector types
+    /// If set then value is length of longer vector types as processor words. It preferred to be
+    /// a power of 2. In normal cases this property is not needed to be set.
     pub array_len: Option<usize>,
 }
 
 impl CPUBuilderConfig {
+    /// Creates new empty CPU buoilder configuration.
     pub fn new() -> Self {
         Self {
             optimize_negs: false,
@@ -352,26 +398,31 @@ impl CPUBuilderConfig {
             array_len: None,
         }
     }
+    /// Sets optimize negations.
     pub fn optimize_negs(mut self, optimize_negs: bool) -> Self {
         self.optimize_negs = optimize_negs;
         self
     }
+    /// Sets parallelism.
     pub fn parallel(mut self, parallel: Option<usize>) -> Self {
         self.parallel = parallel;
         self
     }
+    /// Sets array_len (longer vector types).
     pub fn array_len(mut self, array_len: Option<usize>) -> Self {
         self.array_len = array_len;
         self
     }
 }
 
+/// Default CPU builder configuration.
 pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
     parallel: None,
     array_len: None,
 };
 
+/// Main CPU executor.
 #[derive(Clone)]
 pub struct CPUExecutor {
     input_len: usize,
@@ -1228,6 +1279,7 @@ struct CircuitEntry {
     inner_loop: Option<u32>,
 }
 
+/// Main CPU builder.
 pub struct CPUBuilder<'a> {
     cpu_ext: CPUExtension,
     entries: Vec<CircuitEntry>,
@@ -1237,6 +1289,9 @@ pub struct CPUBuilder<'a> {
 }
 
 impl<'a> CPUBuilder<'a> {
+    /// Creates CPU builder with given CPU builder configuration if supplied, otherwise
+    /// it creates CPU builder with default configuration and includes given CPU instruction
+    /// extension and custom CLangWriter configuration.
     pub fn new_with_cpu_ext_and_clang_config(
         cpu_ext: CPUExtension,
         clang_config: &'a CLangWriterConfig,
@@ -1263,6 +1318,9 @@ impl<'a> CPUBuilder<'a> {
         }
     }
 
+    /// Creates CPU builder with given CPU builder configuration if supplied, otherwise
+    /// it creates CPU builder with default configuration and includes given CPU instruction
+    /// extension.
     pub fn new_with_cpu_ext(cpu_ext: CPUExtension, config: Option<CPUBuilderConfig>) -> Self {
         Self::new_with_cpu_ext_and_clang_config(
             cpu_ext,
@@ -1271,6 +1329,8 @@ impl<'a> CPUBuilder<'a> {
         )
     }
 
+    /// Creates new builder with given CPU builder configuration if supplied, otherwise
+    /// it creates CPU builder with default configuration.
     pub fn new(config: Option<CPUBuilderConfig>) -> Self {
         Self::new_with_cpu_ext_and_clang_config(
             *CPU_EXTENSION,
@@ -1279,6 +1339,10 @@ impl<'a> CPUBuilder<'a> {
         )
     }
 
+    /// Creates new builder with given parallel CPU builder configuration if supplied, otherwise
+    /// it creates CPU builder with default configuration. It CPU builder replaces
+    /// parallel property by `par_chunk_len` value in CPU builder configuration before
+    /// creation.
     pub fn new_parallel(config: Option<CPUBuilderConfig>, par_chunk_len: Option<usize>) -> Self {
         let mut config = config.unwrap_or(CPU_BUILDER_CONFIG_DEFAULT);
         config.parallel = Some(par_chunk_len.unwrap_or(4096));
