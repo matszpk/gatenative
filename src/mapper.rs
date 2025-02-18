@@ -17,6 +17,9 @@ use std::sync::{
 use std::marker::PhantomData;
 
 /// Basic mapper executor.
+///
+/// This mapper executor can reuses output buffer between consecutive executions efficiently
+/// and if dont_clear_outputs is set then omit clearing output buffer between executions.
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
