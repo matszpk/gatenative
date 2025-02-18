@@ -30,7 +30,7 @@ pub(crate) struct DivPlacements {
 /// of original circuit.
 ///
 /// Type parameters: `DR`, `DW` and `D` just data reader, writer and holder.
-/// `E` - child executor that executes simulations for smaller parts of circuit.
+/// `E` - inner executor that executes simulations for smaller parts of circuit.
 ///
 /// This executor provides data transformers by [DataTransforms]. See more in [Executor].
 pub struct DivExecutor<'a, DR, DW, D, E>
@@ -523,7 +523,7 @@ where
     E: Executor<'a, DR, DW, D>,
     B: Builder<'a, DR, DW, D, E>,
 {
-    /// Creates new DivBuilder. `builder` is child builder. `max_gates` is maximal
+    /// Creates new DivBuilder. `builder` is inner builder. `max_gates` is maximal
     /// number of gates for smaller parts of circuit.
     pub fn new(builder: B, max_gates: usize) -> Self {
         assert!(builder.is_empty());

@@ -1,7 +1,7 @@
 //! The module provides basic mappers.
 //!
 //! This module implements mappers defined in main module. Mapper builders requires
-//! child builder that builds and creates executor to run simulation execution.
+//! inner builder that builds and creates executor to run simulation execution.
 
 use crate::*;
 
@@ -228,7 +228,7 @@ where
     D: DataHolder<'a, DR, DW>,
     E: Executor<'a, DR, DW, D>,
 {
-    /// Returns child executor used to execute simulation.
+    /// Returns inner executor used to execute simulation.
     pub fn executor(&self) -> &E {
         &self.executor
     }
@@ -261,7 +261,7 @@ where
     E: Executor<'a, DR, DW, D>,
     B: Builder<'a, DR, DW, D, E>,
 {
-    /// Creates new Basic mapper builder using child builder given in `builder`.
+    /// Creates new Basic mapper builder using inner builder given in `builder`.
     pub fn new(builder: B) -> Self {
         assert!(builder.is_empty());
         Self {
@@ -595,7 +595,7 @@ where
     B: Builder<'a, DR, DW, D, E>,
     E::ErrorType: Send,
 {
-    /// Creates new Basic parallel mapper builder using child builder given in `builder`.
+    /// Creates new Basic parallel mapper builder using inner builder given in `builder`.
     pub fn new(builder: B) -> Self {
         assert!(B::is_data_holder_global() && B::is_executor_per_thread());
         assert!(builder.is_empty());
