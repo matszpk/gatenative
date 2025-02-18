@@ -1917,6 +1917,12 @@ where
     fn inner_loop(&self) -> Option<u32>;
 }
 
+/// Trait defines builder for parallel mapper.
+///
+/// Usage of builder is simple: first step is adding circuits to builder. Next step is building
+/// executors by using `build` method. Additional methods adds helpers and an user defined code.
+/// Builder after building should returns same number of executor as number of added
+/// simulation configurations. This builder returns MapperExecutors.
 pub trait ParMapperBuilder<'a, DR, DW, D, E>
 where
     DR: DataReader + Send + Sync,
@@ -1924,12 +1930,30 @@ where
     D: DataHolder<'a, DR, DW> + Send + Sync,
     E: ParMapperExecutor<'a, DR, DW, D>,
 {
+    /// Error type used if error encountered while execution.
     type ErrorType;
 
+    /// Adds additional user definition to code of simulations.
     fn user_defs(&mut self, user_defs: &str);
-    /// add transform helpers
+    /// Adds transform helpers.
+    ///
+    /// Transform helpers provides macros that helps to transform data between form used while
+    /// simulating circuit and external usage. They can be used in pop_input_code and
+    /// aggr_output_code.
+    /// * Macro `INPUT_TRANSFORM_BXX(D0,...,DXX,S)` transforms data in X-bit integers stored as
+    /// 32-bit words to form fetched by simulation code. `DX` is output single pack element X,
+    /// `S` array of 32-bit words.
+    /// * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
+    /// code to data in X-bit integers stored as 32-bit words. `D` is output data array of
+    /// 32-bit words, `SX` is input pack element X.
+    ///
+    /// Transform helpers are much faster than data transformers.
     fn transform_helpers(&mut self);
 
+    /// Only for implementation.
+    ///
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `code_config` is code configuration.
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1938,6 +1962,8 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `code_config` is code configuration.
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1955,6 +1981,8 @@ where
         }
     }
 
+    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// `arg_inputs` are circuit's inputs to be assigned to arg input.
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1970,18 +1998,23 @@ where
         );
     }
 
+    /// Build code to simulations. If build succeeded then returns executors for simulations
+    /// in addition order.
     fn build(self) -> Result<Vec<E>, Self::ErrorType>;
 
-    /// word length in bits
+    /// Returns length processor word in bits.
     fn word_len(&self) -> u32;
-    /// type length in bits (includes only type length not word length if group_vec enabled).
+    /// Returns type length in bits (includes only type length not word length if
+    /// group_vec enabled).
     fn type_len(&self) -> u32;
 
-    /// data holder can be used between any executor
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from any builder of that type.
     fn is_data_holder_global() -> bool;
-    /// data holder can be used between any executor created by one builder
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from this builder.
     fn is_data_holder_in_builder() -> bool;
-    // preferred input count for this builder
+    /// Returns hint about preferred count of input.
     fn preferred_input_count(&self) -> usize;
 }
 
