@@ -33,9 +33,10 @@
 //! that can have even 256 threads. A special option treat whole group as processor's word,
 //! however in many cases is not usable.
 //!
-//! Circuit's inputs and circuit's outputs are organized as pack of processor words that
+//! Circuit's inputs and circuit's output data are organized as pack of processor words that
 //! groupped in greater stream. Data can contain more that packs if number of elements
-//! is greater than number of bits of processor word.
+//! is greater than number of bits of processor word. Later, that form of data going to be
+//! called internal form.
 //!
 //! ```text
 //! +----------------------------------------------------------------------------------------+
@@ -88,9 +89,7 @@
 //! * Argument input - circuit's input that obtained from argument from execution call.
 //! * FuncWriter - trait defines object to write native code of function.
 //! * CodeWriter - trait defines object to write native code.
-//! * Data transformer - object to convert input data for circuit simulation and
-//!   convert output data from circuit simulation. Because single simulation done by one bit
-//!   of word then data should be converted into packs (pack per element).
+//! * Data transformer - object to convert input data in internal form to external form.
 //! * Pack element - part of data that assigned to one circuit's input or circuit's output.
 //!
 //! Program should make few steps to run simulation:
@@ -98,11 +97,13 @@
 //! 2. Add circuits and their configurations that includes input and output setup, additional
 //!    code to process input and output data before and after simulation.
 //! 3. Built executors.
-//! 4. Prepare input data by using input data transformer if needed. Also it can put additional
-//!    data for populating code in buffers.
+//! 4. Prepare input data to internal form by using input data transformer if needed.
+//!    Also it can put additional data for populating code in buffers.
 //! 5. Execute simulation.
-//! 6. Retrieve output data by using output data transformer if needed. Also it can get additional
-//!    data processed by aggregating code.
+//! 6. Retrieve output data in external form by using output data transformer if needed.
+//!    Also it can get additional data processed by aggregating code.
+//!
+//! Usage of data transformer is optional.
 //!
 //! The library reads environment variable to get important setup:
 //! * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
@@ -715,13 +716,13 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     fn max_var_num(&self) -> usize;
     /// Returns preferred variable number in words.
     fn preferred_var_num(&self) -> usize;
-    /// Generates prolog.
+    /// Generates prolog (begin of code).
     fn prolog(&mut self);
-    /// user definitions
+    /// Adds user definitions.
     fn user_defs(&mut self, user_defs: &str);
-    /// add transform helpers
+    /// Add transform helpers
     fn transform_helpers(&mut self);
-    /// Generates epilog.
+    /// Generates epilog (end of code).
     fn epilog(&mut self);
     /// Gets function writer - unsafe version used to internal purpose only.
     unsafe fn func_writer_internal(
@@ -939,7 +940,7 @@ pub trait DataWriter {
 /// than CPU. It provides simple interface to read and write data from Data Holder.
 /// This is ability to write input data from simulation and read result data after simulation.
 ///
-/// Data is stored as 32-bit words.
+/// Data holder only holds data. Data is stored as 32-bit words.
 pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
     /// Returns current length of data.
     fn len(&self) -> usize;
@@ -981,7 +982,7 @@ pub trait RangedData {
     }
 }
 
-// ParentDataHolder with specified range that honored while changing range.
+/// ParentDataHolder with specified range that honored while changing range.
 /// This Data holder is wrapper to another data holder.
 ///
 /// This Data holder behaves as data holder imposed range.  While using that data holder
@@ -1098,6 +1099,10 @@ where
 /// Executor provides additional methods to create data holders:
 /// `new_data`, `new_data_from_vec`, `new_data_input_elems` and `new_data_output_elems`.
 /// These methods simplify creation of data.
+/// Input data is in internal and output data generated internal form too if
+/// no that data are not used by pop_input_code or aggr_output_code.
+/// Additional buffer and input/output data are stored by in raw form and pop_input_code
+/// and aggr_output_code must decode/encode them.
 ///
 /// Basic unit in simulation is element (thread) that is part of pack. Pack contains
 /// N elements. N is number of bits of processor word. Number of element in single
@@ -1518,6 +1523,8 @@ where
 /// Simulations are independents and they will be executed sequentially. Input and output
 /// data for each simulation will be processed by supplied function that returns output.
 /// `stop` functions determines whether stop execution of simulations.
+///
+/// Read more about [Executor] figure out about single execution and about data.
 pub trait MapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader,
@@ -1798,6 +1805,8 @@ where
 /// simulation will be processed by supplied function. Next function joins outputs from
 /// first function an join them. `stop` functions determines whether stop execution
 /// of simulations.
+///
+/// Read more about [Executor] figure out about single execution and about data.
 pub trait ParMapperExecutor<'a, DR, DW, D>
 where
     DR: DataReader + Send + Sync,
@@ -2026,8 +2035,8 @@ where
 
 /// Trat for data transformer.
 ///
-/// Data transformer just transform data from form to another form. Mainly transforms
-/// from external form to input data form fetched to circuit before simulation and
+/// Data transformer just transform data from form to another form. Mainly, transformers
+/// transforms from data in external form to data in internal form. and
 /// vice versa. Data are divided into elements.
 pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     /// Error type used if error encountered while execution.
@@ -2063,8 +2072,13 @@ pub trait DataTransformer<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, 
     fn output_elem_len(&self) -> usize;
 }
 
-// TODO: Doc.
 /// Trait for executors that includes data transformers.
+///
+/// This trait provides standard interface to create data transformers. This interface
+/// simplify transformation from/to internal form.
+///
+/// Type parameter `IDT` refers to input data transformer, `ODT` refers to
+/// output data transformer.
 pub trait DataTransforms<'a, DR, DW, D, IDT, ODT>
 where
     DR: DataReader,
@@ -2077,7 +2091,7 @@ where
     type ErrorType;
 
     /// Returns input data transfomer. This transformer transforms input data in external form
-    /// to form accepted by simulation execution. Form of external input form described by
+    /// to internal form. Form of external input form described by
     /// `input_elem_len` and `bit_mapping`. `input_len` is length of input element in
     /// external form in bits and it should be aligned to 32-bit word.
     /// Bitmap is list of mapping: index of list is bit of output's element (pack element) and
@@ -2087,10 +2101,9 @@ where
         input_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<IDT, Self::ErrorType>;
-    /// Returns output data transfomer. This transformer transforms output data in form
-    /// generated by simulation execution to external form of output. Form of external output
-    /// form described by `output_elem_len` and `bit_mapping`.
-    /// `output_len` is length of output element in
+    /// Returns output data transfomer. This transformer transforms output data in internal form
+    /// to external form of output. Form of external output form described by
+    /// `output_elem_len` and `bit_mapping`. `output_len` is length of output element in
     /// external form in bits and it should be aligned to 32-bit word.
     /// Bitmap is list of mapping: index of list is bit of input's element (pack element) and
     /// value is bit of output's (in external form) element.
