@@ -1,5 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! Thee module provides code generator for transform helpers. It generates in C language
+//! Code generator for transform helpers.
+//!
+//! The module provides code generator for transform helpers. It generates in C language
 //! or OpenCL C language. Main routine generates code optimized for many CPU instruction set
 //! extensions (mainly vector extensions). `CLangTransformConfig` just describe configuration
 //! for given instruction set.
