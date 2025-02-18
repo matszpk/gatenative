@@ -30,7 +30,7 @@ pub(crate) struct DivPlacements {
 /// of original circuit.
 ///
 /// Type parameters: `DR`, `DW` and `D` just data reader, writer and holder.
-/// E - child executor that executes simulations for smaller parts of circuit.
+/// `E` - child executor that executes simulations for smaller parts of circuit.
 pub struct DivExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
