@@ -1328,7 +1328,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn new_data(&mut self, len: usize) -> D;
     /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
-    /// Create new data from slice.
+    /// Creates new data. It returns data holder with data supplied by slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
     /// Try clone executor if possible.
     fn try_clone(&self) -> Option<Self>
@@ -1639,7 +1639,7 @@ where
     fn new_data(&mut self, len: usize) -> D;
     /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
-    /// Create new data from slice.
+    /// Creates new data. It returns data holder with data supplied by slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
 
     /// Returns processor word length.
@@ -1794,7 +1794,7 @@ where
 ///
 /// This executor comes from ParMapperBuilder. Arg input is counter of execution of simulations
 /// and will be passed to circuit's input assigned to arg input.
-/// Simulations are independents and they will be executed sequentially. Output data for each
+/// Simulations are independents and they will be executed parrallel way. Output data for each
 /// simulation will be processed by supplied function. Next function joins outputs from
 /// first function an join them. `stop` functions determines whether stop execution
 /// of simulations.
@@ -1868,39 +1868,52 @@ where
             stop,
         )
     }
-    /// Create new data - length is number of 32-bit words
+    /// Creates new data. It returns data holder with zeroed data with length `len` 32-bit words.
     fn new_data(&mut self, len: usize) -> D;
-    /// Create new data from vector.
+    /// Creates new data. It returns data holder with data supplied by vector `data`.
     fn new_data_from_vec(&mut self, data: Vec<u32>) -> D;
-    /// Create new data from slice.
+    /// Creates new data. It returns data holder with data supplied by slice.
     fn new_data_from_slice(&mut self, data: &[u32]) -> D;
 
+    /// Returns processor word length.
     fn word_len(&self) -> u32;
 
+    /// Returns element count for given input length in 32-bit words.
     fn elem_count(&self, input_len: usize) -> usize;
 
-    // in 32-bit words
+    /// Returns input data (for circuit's inputs) length in 32-bit words for given
+    /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    // in 32-bit words
+    /// Returns input data (for circuit's outputs) length in 32-bit words for given
+    /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
+    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
+    /// Returns output data holder (for circuit's outputs) with zeroed data with length matched to
+    /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
     }
 
+    /// Returns true if output data will be processed by `aggr_output_code`.
     fn output_is_aggregated(&self) -> bool;
+    /// Returns true if output data will be processed by `aggr_output_code`.
     fn input_is_populated(&self) -> bool;
 
+    /// Returns length of additional buffer in 32-bit words for `aggr_output_code`.
     fn aggr_output_len(&self) -> Option<usize>;
+    /// Returns length of additional buffer in 32-bit words for `pop_input_code`.
     fn pop_input_len(&self) -> Option<usize>;
 
-    // return true if sequential execution in single execution call of inner executor
+    /// Returns true if executor executes simulation in sequentially (not parallel way).
     fn is_sequential_execution(&self) -> bool;
 
+    /// Returns inner loop maximal number of iterations.
     fn inner_loop(&self) -> Option<u32>;
 }
 
