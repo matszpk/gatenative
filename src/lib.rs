@@ -1922,7 +1922,7 @@ where
 /// Usage of builder is simple: first step is adding circuits to builder. Next step is building
 /// executors by using `build` method. Additional methods adds helpers and an user defined code.
 /// Builder after building should returns same number of executor as number of added
-/// simulation configurations. This builder returns MapperExecutors.
+/// simulation configurations. This builder returns ParMapperExecutors.
 pub trait ParMapperBuilder<'a, DR, DW, D, E>
 where
     DR: DataReader + Send + Sync,
