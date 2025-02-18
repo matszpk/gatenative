@@ -8,7 +8,7 @@
 //! Source code compiled to shared library will be loaded after built and to call
 //! simulation code.
 //!
-//! `CPU_EXTENSION` holds current discovered CPU instruction set extension that will be
+//! `CPU_EXTENSION` holds current recognized CPU instruction set extension that will be
 //! by default while creating CPUBuilder.
 //!
 //! Additional structure is Shared that allows creating of shared library.
@@ -119,7 +119,7 @@ fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
     detect_cpu_from_file(BufReader::new(File::open("/proc/cpuinfo")?))
 }
 
-/// It holds currently discovered CPU instruction set extension.
+/// It holds currently recognized CPU instruction set extension.
 #[dynamic]
 pub static CPU_EXTENSION: CPUExtension = detect_cpu().unwrap_or(CPUExtension::NoExtension);
 
@@ -1291,7 +1291,7 @@ pub struct CPUBuilder<'a> {
 impl<'a> CPUBuilder<'a> {
     /// Creates CPU builder with given CPU builder configuration if supplied, otherwise
     /// it creates CPU builder with default configuration and includes given CPU instruction
-    /// extension and custom CLangWriter configuration.
+    /// set extension and custom CLangWriter configuration.
     pub fn new_with_cpu_ext_and_clang_config(
         cpu_ext: CPUExtension,
         clang_config: &'a CLangWriterConfig,
@@ -1320,7 +1320,7 @@ impl<'a> CPUBuilder<'a> {
 
     /// Creates CPU builder with given CPU builder configuration if supplied, otherwise
     /// it creates CPU builder with default configuration and includes given CPU instruction
-    /// extension.
+    /// set extension.
     pub fn new_with_cpu_ext(cpu_ext: CPUExtension, config: Option<CPUBuilderConfig>) -> Self {
         Self::new_with_cpu_ext_and_clang_config(
             cpu_ext,
