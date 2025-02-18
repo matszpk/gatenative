@@ -430,7 +430,7 @@ pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
 
 /// Main CPU executor.
 ///
-/// See more in [Executor].
+/// This executor provides data transformers by [DataTransforms]. See more in [Executor].
 #[derive(Clone)]
 pub struct CPUExecutor {
     input_len: usize,

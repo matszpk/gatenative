@@ -21,7 +21,7 @@ use std::marker::PhantomData;
 /// This mapper executor can reuses output buffer between consecutive executions efficiently
 /// and if dont_clear_outputs is set then omit clearing output buffer between executions.
 ///
-/// See more in [MapperExecutor].
+/// This executor provides data transformers by [DataTransforms]. See more in [MapperExecutor].
 pub struct BasicMapperExecutor<'a, DR, DW, D, E>
 where
     DR: DataReader,
@@ -374,6 +374,7 @@ impl<I: Iterator> Iterator for StoppableIterator<I> {
 // parallel
 /// Basic parallel mapper executor.
 ///
+/// This executor provides data transformers by [DataTransforms].
 /// See more in [ParMapperExecutor].
 pub struct ParBasicMapperExecutor<'a, DR, DW, D, E>
 where
