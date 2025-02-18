@@ -2093,9 +2093,10 @@ where
     /// Returns input data transfomer. This transformer transforms input data in external form
     /// to internal form. Form of external input form described by
     /// `input_elem_len` and `bit_mapping`. `input_len` is length of input element in
-    /// external form in bits and it should be aligned to 32-bit word.
-    /// Bitmap is list of mapping: index of list is bit of output's element (pack element) and
-    /// value is bit of input's (in external form) element.
+    /// external form in bits and it should be divisible by to 32.
+    /// `bit_mapping` is list of mapping: index of list is bit of output's element (pack element)
+    /// and value is bit of input's (in external form) element. Input data is organized
+    /// as tuple of 32-bit words. Single element of input data has `input_elem_len` bits.
     fn input_transformer(
         &self,
         input_elem_len: usize,
@@ -2104,9 +2105,10 @@ where
     /// Returns output data transfomer. This transformer transforms output data in internal form
     /// to external form of output. Form of external output form described by
     /// `output_elem_len` and `bit_mapping`. `output_len` is length of output element in
-    /// external form in bits and it should be aligned to 32-bit word.
-    /// Bitmap is list of mapping: index of list is bit of input's element (pack element) and
-    /// value is bit of output's (in external form) element.
+    /// external form in bits and it should be divisble by 32-bit.
+    /// `bit_mapping` is list of mapping: index of list is bit of input's element (pack element)
+    //  and value is bit of output's (in external form) element. Output data is organized
+    /// as tuple of 32-bit words. Single element of input data has `output_elem_len` bits.
     fn output_transformer(
         &self,
         output_elem_len: usize,

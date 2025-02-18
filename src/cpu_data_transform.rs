@@ -1,3 +1,9 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module provides CPU data transformers.
+//!
+//! The data transformer in this module is working on CPU and it can transform data sequentially
+//! and parrallel way in multiple threads.
+
 use crate::cpu_build_exec::*;
 use crate::*;
 
@@ -5,7 +11,10 @@ use rayon::prelude::*;
 
 use std::convert::Infallible;
 
-/// convert input data into circuit input form.
+/// Input Transformer for CPU.
+///
+/// This transformer transforms data from external form to internal form. It can done that
+/// on single CPU thread or parallel on multiple threads.
 #[derive(Clone)]
 pub struct CPUDataInputTransformer {
     word_len: u32,
@@ -16,7 +25,16 @@ pub struct CPUDataInputTransformer {
 }
 
 impl CPUDataInputTransformer {
-    /// A bit_mapping - index is bit of output's element, value is bit of input's element.
+    // A bit_mapping - index is bit of output's element, value is bit of input's element.
+
+    /// Creates new CPU data input transformer. `word_len` is length of processor word in bits
+    /// and it must be divisible by 32. `input_elem_len` is length of element of input data in
+    /// bits and it must be divisible by 32. `output_elem_len` is length of element of output
+    /// data (in external form).
+    /// `bit_mapping` is list of mapping: index of list is bit of output's element (pack element)
+    /// and value is bit of input's (in external form) element.
+    /// `parallel` controls whether transformation will be done parallel way (if it set true)
+    /// or sequentially.
     pub fn new(
         word_len: u32,
         input_elem_len: usize,
@@ -130,6 +148,10 @@ impl<'a> DataTransformer<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder
     }
 }
 
+/// Output Transformer for CPU.
+///
+/// This transformer transforms data from internal form to external form. It can done that
+/// on single CPU thread or parallel on multiple threads.
 #[derive(Clone)]
 pub struct CPUDataOutputTransformer {
     word_len: u32,
@@ -141,17 +163,27 @@ pub struct CPUDataOutputTransformer {
 
 /// convert output data from circuit input form into output form.
 impl CPUDataOutputTransformer {
-    /// An output_elem_len - number of bits of really single input element.
-    /// An input_elem_len - number of bits of really single output element.
-    /// A bit_mapping - index is bit of really input's element,
+    // An output_elem_len - number of bits of really single input element.
+    // An input_elem_len - number of bits of really single output element.
+    // A bit_mapping - index is bit of really input's element,
     //  value is bit of really output's element.
+
+    /// Creates new CPU data output transformer. `word_len` is length of processor word in bits
+    /// and it must be divisible by 32. `input_elem_len` is length of element of input
+    /// data (in external form). `output_elem_len` is length of element of output data in
+    /// bits and it must be divisible by 32.
+    /// `bit_mapping` is list of mapping: index of list is bit of input's element (pack element)
+    /// and value is bit of output's (in external form) element.
+    /// `parallel` controls whether transformation will be done parallel way (if it set true)
+    /// or sequentially.
     pub fn new(
         word_len: u32,
-        output_elem_len: usize,
         input_elem_len: usize,
+        output_elem_len: usize,
         bit_mapping: &[usize],
         parallel: bool,
     ) -> Self {
+        let (output_elem_len, input_elem_len) = (input_elem_len, output_elem_len);
         assert_eq!((word_len & 31), 0);
         assert_eq!((input_elem_len & 31), 0);
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
