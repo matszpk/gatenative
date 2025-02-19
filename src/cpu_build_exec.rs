@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module provides simulation execution on CPU.
+//! Simulation execution on CPU.
 //!
 //! The module provides builder and executors to run simulation on CPU. It uses CLangWriter
 //! to generate code for specific instruction set extension for CPU. The Builder executes

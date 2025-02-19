@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module provides basic function to generate code.
+//! Basic functions to generate code for simulation.
 
 use crate::utils::{gen_var_usage, CircuitTrait, VarAllocator};
 

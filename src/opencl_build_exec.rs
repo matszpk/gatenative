@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module provides simulation execution on GPU using OpenCL standard.
+//! Simulation execution on GPU using OpenCL standard.
 //!
 //! The module provides builder and executors to run simulation on GPU using OpenCL standard.
 //! It uses CLangWriter to generate OpenCL C code. The code generator and builder

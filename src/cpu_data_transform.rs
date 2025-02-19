@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module provides CPU data transformers.
+//! CPU data transformers.
 //!
 //! The data transformer in this module is working on CPU and it can transform data sequentially
 //! and parrallel way in multiple threads.

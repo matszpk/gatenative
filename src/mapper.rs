@@ -1,4 +1,4 @@
-//! The module provides basic mappers.
+//! Basic mappers.
 //!
 //! This module implements mappers defined in main module. Mapper builders requires
 //! inner builder that builds and creates executor to run simulation execution.

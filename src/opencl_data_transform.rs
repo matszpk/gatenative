@@ -1,4 +1,4 @@
-//! The module provides OpenCL data transformers (for GPU).
+//! OpenCL data transformers (for GPU).
 //!
 //! The data transformer in this module is working on GPU using OpenCL standard.
 

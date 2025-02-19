@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module provides builder that divides circuit code into smaller parts.
+//! Builder that divides circuit code into smaller parts.
 //!
 //! The module provides DivBuilder and DivExecutor that is doing division of simulation function
 //! to smaller and this executor executes these smaller parts as single simulation.
