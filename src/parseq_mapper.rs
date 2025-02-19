@@ -1233,6 +1233,7 @@ where
 use crate::cpu_build_exec::*;
 use crate::opencl_build_exec::*;
 
+/// ParSeqMapper executor for CPU and OpenCL simulations.
 pub type CPUOpenCLParSeqMapperExecutor<'a> = ParSeqMapperExecutor<
     'a,
     CPUDataReader<'a>,
@@ -1244,6 +1245,7 @@ pub type CPUOpenCLParSeqMapperExecutor<'a> = ParSeqMapperExecutor<
     OpenCLDataHolder,
     OpenCLExecutor,
 >;
+/// ParSeqMapper builder for CPU and OpenCL simulations.
 pub type CPUOpenCLParSeqMapperBuilder<'a> = ParSeqMapperBuilder<
     'a,
     CPUDataReader<'a>,
