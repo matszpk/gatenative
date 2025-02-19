@@ -1731,7 +1731,7 @@ where
 
     /// Only for implementation.
     ///
-    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
     /// `code_config` is code configuration.
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -1741,7 +1741,7 @@ where
         usize: TryFrom<T>,
         <usize as TryFrom<T>>::Error: Debug;
 
-    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
     /// `code_config` is code configuration.
     fn add_with_config<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
@@ -1760,7 +1760,7 @@ where
         }
     }
 
-    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
     /// `arg_inputs` are circuit's inputs to be assigned to arg input.
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
@@ -1961,7 +1961,7 @@ where
 
     /// Only for implementation.
     ///
-    /// Adds circuit to builder. `name` is name of function, `circuit is circuit to simulate,
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
     /// `code_config` is code configuration.
     unsafe fn add_internal<T>(&mut self, name: &str, circuit: Circuit<T>, code_config: CodeConfig)
     where
