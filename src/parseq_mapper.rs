@@ -209,6 +209,15 @@ pub enum ParSeqMapperExecutorError<PE, SE> {
 
 /// Main ParSeqMapper executor.
 ///
+/// This executor comes from ParSeqMapperBuilder. Arg input is counter of execution of
+/// simulations and will be passed to circuit's input assigned to arg input.
+/// Simulations are independents and they will be executed parrallel way. Output data for each
+/// simulation will be processed by supplied function. Next function joins outputs from
+/// first function an join them. `stop` functions determines whether stop execution
+/// of simulations.
+///
+/// Read more about [Executor] figure out about single execution and about data.
+///
 /// Types parameters:
 /// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
 /// * `PE` - parrallel executor.
@@ -628,6 +637,18 @@ pub enum ParSeqMapperTransformsError<PE, SE> {
     SeqError(usize, SE),
 }
 
+/// Object to transforming data.
+///
+/// Object that allows to operate on data transforms from all inner executors for all
+/// simulations. Read more in `DataTransforms`.
+///
+/// Type parameters:
+/// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
+/// * `PE` - parrallel executor.
+/// * `PIDT`, `PODT` - input and output data transformers from parallel executors.
+/// * `SDR`, `SDW` and `SD` - sequential data reader, data writer and data holder.
+/// * `SE` - sequential executor.
+/// * `SIDT`, `SODT` - input and output data transformers from sequential executors.
 pub struct ParSeqMapperTransforms<
     'b,
     'a,
@@ -684,6 +705,7 @@ where
     SIDT: DataTransformer<'a, SDR, SDW, SD>,
     SODT: DataTransformer<'a, SDR, SDW, SD>,
 {
+    /// Creates new transform object. Argument `e` is ParSeqMapper executor.
     pub fn new(e: &'b mut ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>) -> Self {
         Self {
             executor: e,
@@ -694,6 +716,10 @@ where
         }
     }
 
+    /// Call function that operates on input transformers.
+    ///
+    /// Similary likes in DataTransforms::input_transformer, `input_elem_len` and `bit_mapping`
+    /// describes external format. Method calls function `f` that operates on input transformers.
     pub fn with_input_transforms<F>(
         &'b mut self,
         mut f: F,
@@ -740,6 +766,10 @@ where
         Ok(())
     }
 
+    /// Call function that operates on output transformers.
+    ///
+    /// Similary likes in DataTransforms::output_transformer, `output_elem_len` and `bit_mapping`
+    /// describes external format. Method calls function `f` that operates on output transformers.
     pub fn with_output_transforms<F>(
         &'b mut self,
         mut f: F,
@@ -787,6 +817,7 @@ where
     }
 }
 
+/// Type error for ParSeqMapper builder.
 #[derive(Error, Debug)]
 pub enum ParSeqMapperBuilderError<PE, SE> {
     /// Error from parallel simulation.
@@ -884,6 +915,11 @@ impl<'a> ParSeqDynamicConfig<'a> {
 
 /// Main ParSeqMapper builder.
 ///
+/// Usage of builder is simple: first step is adding circuits to builder. Next step is building
+/// executors by using `build` method. Additional methods adds helpers and an user defined code.
+/// Builder after building should returns same number of executor as number of added
+/// simulation configurations. This builder returns ParSeqMapperExecutors.
+///
 /// Types parameters:
 /// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
 /// * `PE` - parrallel executor.
@@ -936,6 +972,8 @@ where
     SE::ErrorType: Send,
     SB: Builder<'a, SDR, SDW, SD, SE>,
 {
+    /// Creates new builder. First `par_builder` is single builder for parallel simulation and
+    /// `seq_builders` is iterator of builders for sequential simulations.
     pub fn new(par_builder: PB, seq_builders: impl IntoIterator<Item = SB>) -> Self {
         assert!(par_builder.is_empty());
         Self {
@@ -960,6 +998,9 @@ where
         }
     }
 
+    /// Creates new builder. First `par_builder` is single builder for parallel simulation and
+    /// `seq_builders` is iterator of builders for sequential simulations.
+    /// `par_num_threads` is number of threads for parallell execution.
     pub fn new_with_num_threads(
         par_builder: PB,
         seq_builders: impl IntoIterator<Item = SB>,
@@ -988,6 +1029,8 @@ where
         }
     }
 
+    /// Adds additional user definition to code of simulations. Code provided by function
+    /// `user_defs` that returns code for given simulation.
     pub fn user_defs<'b>(&mut self, mut user_defs: impl FnMut(ParSeqSelection) -> &'b str) {
         self.par.user_defs(user_defs(ParSeqSelection::Par));
         for (i, s) in self.seqs.iter_mut().enumerate() {
@@ -995,6 +1038,19 @@ where
         }
     }
 
+    /// Adds transform helpers.
+    ///
+    /// Transform helpers provides macros that helps to transform data between form used while
+    /// simulating circuit and external usage. They can be used in pop_input_code and
+    /// aggr_output_code.
+    /// * Macro `INPUT_TRANSFORM_BXX(D0,...,DXX,S)` transforms data in X-bit integers stored as
+    /// 32-bit words to form fetched by simulation code. `DX` is output single pack element X,
+    /// `S` array of 32-bit words.
+    /// * Macro `OUTPUT_TRANSFORM_BXX(D,S0,....,SXX)` transforms from form fetched by simulation
+    /// code to data in X-bit integers stored as 32-bit words. `D` is output data array of
+    /// 32-bit words, `SX` is input pack element X.
+    ///
+    /// Transform helpers are much faster than data transformers.
     pub fn transform_helpers(&mut self) {
         self.par.transform_helpers();
         for s in self.seqs.iter_mut() {
@@ -1002,6 +1058,11 @@ where
         }
     }
 
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate.
+    /// `arg_inputs` is list of circuit's inputs assigned to arg input.
+    /// `elem_inputs` is list of circuit's inputs assigned to element input.
+    /// `dyn_config` is function that returns ParSeq dynamic code configuration for
+    /// given simulation.
     pub fn add_with_config<'b, T, DCF>(
         &mut self,
         name: &str,
@@ -1055,6 +1116,8 @@ where
         }
     }
 
+    /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate.
+    /// `arg_inputs` is list of circuit's inputs assigned to arg input.
     pub fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1068,6 +1131,8 @@ where
         });
     }
 
+    /// Build code to simulations. If build succeeded then returns executors for simulations
+    /// in addition order.
     pub fn build(
         self,
     ) -> Result<
@@ -1120,6 +1185,7 @@ where
             .collect::<Vec<_>>())
     }
 
+    /// Returns length processor word in bits.
     pub fn word_len(&self, sel: ParSeqSelection) -> u32 {
         match sel {
             ParSeqSelection::Par => self.par.word_len(),
@@ -1127,6 +1193,8 @@ where
         }
     }
 
+    /// Returns type length in bits (includes only type length not word length if
+    /// group_vec enabled).
     pub fn type_len(&self, sel: ParSeqSelection) -> u32 {
         match sel {
             ParSeqSelection::Par => self.par.type_len(),
@@ -1134,16 +1202,22 @@ where
         }
     }
 
+    /// Returns number of sequential builders.
     pub fn seq_builder_num(&self) -> usize {
         self.seqs.len()
     }
 
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from any builder of that type.
     pub fn is_data_holder_global() -> bool {
         PB::is_data_holder_global() && SB::is_data_holder_global()
     }
+    /// Returns true if any data holder is global and it can be shared between any
+    /// executors from this builder.
     pub fn is_data_holder_in_builder() -> bool {
         PB::is_data_holder_in_builder() && SB::is_data_holder_in_builder()
     }
+    /// Returns hint about preferred count of input.
     pub fn preferred_input_count(&self) -> usize {
         std::cmp::max(
             self.par.preferred_input_count(),
