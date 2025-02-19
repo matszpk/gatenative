@@ -109,7 +109,7 @@
 //! * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
 //! * `GATE_SYS_CC` - path to C compiler that will be used while building code for simulation.
 //!
-//! Example:
+//! Example 1:
 //! ```
 //! use gategen::boolvar::*;
 //! use gategen::gatesim::*;
@@ -132,28 +132,31 @@
 //! }
 //! 
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let b_start = 4782u16;
-//!     let c_start = 18941u16;
 //!     let circuit = mul_add_circuit();
 //!     let mut builder = CPUBuilder::new(None);
 //!     // Add circuit to builder.
-//!     builder.add_with_config(
-//!         "mul_add",
-//!         circuit,
-//!         CodeConfig::new()
-//!             // Assign circuit's inputs 'b' and 'c' to arg input ('c' higher).
-//!             .arg_inputs(Some(&(16..48).collect::<Vec<_>>()))
-//!             // Assign circuit input 'a' to element index.
-//!             .elem_inputs(Some(&(0..16).collect::<Vec<_>>())),
-//!     );
+//!     builder.add_simple("mul_add", circuit);
 //!     let mut execs = builder.build()?;
+//!     // Get input data transformer that converts 96-bit structure into 48-bit circuit input:
+//!     // 0 32-bit word - 'a', 1 32-bit word - 'b', 2 32-bit word - 'c'.
+//!     let mut it = execs[0].input_transformer(
+//!         96,
+//!         &((0..16).chain(32..48).chain(64..80).collect::<Vec<_>>()),
+//!     )?;
 //!     // Get output data transformer that converts 16-bit output into 32-bit array
 //!     // of elements.
 //!     let mut ot = execs[0].output_transformer(32, &((0..16).collect::<Vec<_>>()))?;
 //!     // Prepare empty input for execution.
-//!     let input = execs[0].new_data(16);
+//!     let input = execs[0].new_data_from_vec(
+//!         (0..4096u32)
+//!             .map(|x| [(x + 3) & 0xffff, (x + 1489u32) & 0xffff, (5 * x) & 0xffff])
+//!             .flatten()
+//!             .collect::<Vec<_>>(),
+//!     );
+//!     // transform input to internal form.
+//!     let input = it.transform(&input)?;
 //!     // Execute simulation. Set 'b' to b_start and 'c' to c_start by arg input.
-//!     let output = execs[0].execute(&input, ((c_start as u64) << 16) | (b_start as u64))?;
+//!     let output = execs[0].execute(&input, 0)?;
 //!     // Transform output to 32-bit array.
 //!     let output = ot.transform(&output)?;
 //!     // Release output data holder - just get its data.
