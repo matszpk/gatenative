@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-//! The module with simulation execution on CPU.
+//! The module provides simulation execution on CPU.
 //!
 //! The module provides builder and executors to run simulation on CPU. It uses CLangWriter
 //! to generate code for specific instruction set extension for CPU. The Builder executes
@@ -383,7 +383,7 @@ impl RangedData for CPUDataHolder {
 /// Structure holds CPU builder configuration.
 #[derive(Clone, Debug)]
 pub struct CPUBuilderConfig {
-    /// If true then code generator optimize negation while creating code to simulate circuit.
+    /// If true then code generator can optimize negation while creating code to simulate circuit.
     pub optimize_negs: bool,
     // if some then parallel - value is parallel chunk length
     /// Sets parallel mode. If value supplied then value is chunk length in processor words.

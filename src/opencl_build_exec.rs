@@ -1,3 +1,14 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! The module provides simulation execution on GPU using OpenCL standard.
+//!
+//! The module provides builder and executors to run simulation on GPU using OpenCL standard.
+//! It uses CLangWriter to generate OpenCL C code. The code generator and builder
+//! builts separate kernel for every circuit. Currently code for OpenCL devices supports
+//! 32-bit processor word, because almost GPU is natively uses that length.
+//!
+//! Every operation (simulation execution, reading and writing data) will be finished with
+//! OpenCL finish command to finish all operations.
+
 use crate::clang_writer::*;
 use crate::gencode::generate_code_with_config;
 use crate::opencl_data_transform::*;
@@ -17,6 +28,9 @@ use std::hash::Hash;
 use std::ops::Deref;
 use std::sync::Arc;
 
+/// OpenCL Data reader.
+///
+/// See more in [DataReader].
 pub struct OpenCLDataReader<'a> {
     holder: &'a OpenCLDataHolder,
     mem: &'a [u32],
@@ -72,6 +86,9 @@ impl<'a> Drop for OpenCLDataReader<'a> {
     }
 }
 
+/// CPU Data writer.
+///
+/// See more in [DataWriter].
 pub struct OpenCLDataWriter<'a> {
     holder: &'a OpenCLDataHolder,
     mem: &'a mut [u32],
@@ -129,6 +146,9 @@ impl<'a> Drop for OpenCLDataWriter<'a> {
     }
 }
 
+/// CPU Data holder.
+///
+/// See more in [DataHolder].
 pub struct OpenCLDataHolder {
     len: usize,
     context: Arc<Context>,
@@ -138,6 +158,9 @@ pub struct OpenCLDataHolder {
 }
 
 impl OpenCLDataHolder {
+    /// Creates new OpenCL data holder with `len` length. `context` is OpenCL context,
+    /// `cmd_queue` is OpenCL command queue tied with context.
+    /// `flags` are OpenCL memory flags.
     pub fn new(
         len: usize,
         context: Arc<Context>,
@@ -161,9 +184,11 @@ impl OpenCLDataHolder {
         }
     }
 
+    /// Returns reference to buffer that holds data.
     pub unsafe fn buffer(&self) -> &Buffer<u32> {
         &self.buffer
     }
+    /// Returns mutable reference to buffer that holds data.
     pub unsafe fn buffer_mut(&mut self) -> &mut Buffer<u32> {
         &mut self.buffer
     }
@@ -258,6 +283,9 @@ impl RangedData for OpenCLDataHolder {
     }
 }
 
+/// Main OpenCL executor.
+///
+/// This executor provides data transformers by [DataTransforms]. See more in [Executor].
 pub struct OpenCLExecutor {
     input_len: usize,
     output_len: usize,
@@ -285,12 +313,15 @@ pub struct OpenCLExecutor {
 }
 
 impl OpenCLExecutor {
+    /// Returns OpenCL context.
     pub unsafe fn context(&self) -> Arc<Context> {
         self.context.clone()
     }
+    /// Returns OpenCL command queue.
     pub unsafe fn command_queue(&self) -> Arc<CommandQueue> {
         self.cmd_queue.clone()
     }
+    /// Returns `group_len` (group length).
     pub unsafe fn group_len(&self) -> usize {
         self.group_len
     }
@@ -889,9 +920,12 @@ impl<'a>
     }
 }
 
+/// Error type for OpenCL builder.
 #[derive(Clone, Debug)]
 pub enum OpenCLBuildError {
+    /// OpenCL error.
     OpenCLError(i32),
+    /// Build error.
     BuildError(String),
 }
 
@@ -944,16 +978,23 @@ struct CircuitEntry {
     dont_clear_outputs: bool,
     inner_loop: Option<u32>,
 }
-
+/// Structure holds OpenCL builder configuration.
 #[derive(Clone, Debug)]
 pub struct OpenCLBuilderConfig {
+    /// If true then code generator optimizes negation while creating code to simulate circuit.
     pub optimize_negs: bool,
+    /// If true then use grouping threads making word processor longer.
     pub group_vec: bool,
+    /// If set then set group length for groupping. It must be not greater than maximal
+    /// group size for OpenCL device.
     pub group_len: Option<usize>,
+    /// Experimental and not recommended. Enables NVIDIA LOP3 instruction generation.
+    /// Unfortunatelly, it doesn't improve perfomance.
     pub lop3: bool,
 }
 
 impl OpenCLBuilderConfig {
+    /// Creates empty OpenCL builder configuration.
     pub fn new() -> Self {
         Self {
             optimize_negs: false,
@@ -962,24 +1003,29 @@ impl OpenCLBuilderConfig {
             lop3: false,
         }
     }
+    /// Sets optimizaton of negations.
     pub fn optimize_negs(mut self, optimize_negs: bool) -> Self {
         self.optimize_negs = optimize_negs;
         self
     }
+    /// Sets usage of grouping.
     pub fn group_vec(mut self, group_vec: bool) -> Self {
         self.group_vec = group_vec;
         self
     }
+    /// Sets length of groupping.
     pub fn group_len(mut self, group_len: Option<usize>) -> Self {
         self.group_len = group_len;
         self
     }
+    /// Sets NVIDIA LOP3 generation.
     pub fn lop3(mut self, lop3: bool) -> Self {
         self.lop3 = lop3;
         self
     }
 }
 
+/// Default CPU builder configuration.
 pub const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
     group_vec: false,
@@ -987,6 +1033,9 @@ pub const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConf
     lop3: false, // now is disabled in default config
 };
 
+/// Main OpenCL builder.
+///
+/// See more in [Builder].
 pub struct OpenCLBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
@@ -996,6 +1045,7 @@ pub struct OpenCLBuilder<'a> {
     context: Arc<Context>,
 }
 
+/// Returns preferred work group size for device (includes specifics of NVIDIA GPU's).
 pub fn get_preferred_work_group_size(device: &Device) -> usize {
     let group_len = if let Ok(vendor) = device.vendor() {
         if vendor.starts_with("NVIDIA") {
@@ -1010,6 +1060,7 @@ pub fn get_preferred_work_group_size(device: &Device) -> usize {
     usize::try_from(group_len).unwrap()
 }
 
+/// Detects whether NVIDIA GPU can execute LOP3 instruction.
 pub fn detect_nvidia_lop3(device: &Device) -> bool {
     if let Ok(comp_cap_major) = device.compute_capability_major_nv() {
         if let Ok(comp_cap_minor) = device.compute_capability_minor_nv() {
@@ -1024,6 +1075,8 @@ pub fn detect_nvidia_lop3(device: &Device) -> bool {
 }
 
 impl<'a> OpenCLBuilder<'a> {
+    /// Creates new OpenCL builder for given OpenCL device and given OpenCL
+    /// builder configuration from `config`.
     pub fn new(device: &Device, config: Option<OpenCLBuilderConfig>) -> Self {
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
         let lop3 = detect_nvidia_lop3(device);
@@ -1056,6 +1109,8 @@ impl<'a> OpenCLBuilder<'a> {
         }
     }
 
+    /// Creates new OpenCL builder for given OpenCL context and given OpenCL
+    /// builder configuration from `config`.
     pub fn new_with_context(context: Arc<Context>, config: Option<OpenCLBuilderConfig>) -> Self {
         let config = config.unwrap_or(OPENCL_BUILDER_CONFIG_DEFAULT);
         let lop3 = {
