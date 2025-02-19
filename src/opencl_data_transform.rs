@@ -1,3 +1,7 @@
+//! The module provides OpenCL data transformers (for GPU).
+//!
+//! The data transformer in this module is working on GPU using OpenCL standard.
+
 use crate::opencl_build_exec::*;
 use crate::*;
 use static_init::dynamic;
@@ -86,7 +90,9 @@ fn get_input_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBui
     }
 }
 
-/// convert input data into circuit input form.
+/// Input Transformer for OpenCL device.
+///
+/// This transformer transforms data from external form to internal form.
 pub struct OpenCLDataInputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -100,7 +106,14 @@ pub struct OpenCLDataInputTransformer {
 }
 
 impl OpenCLDataInputTransformer {
-    /// A bit_mapping - index is bit of output's element, value is bit of input's element.
+    /// Creates new OpenCL data input transformer. The OpenCL objects passed as context and
+    /// command queue as arguments `context` and `cmd_queue`.
+    /// `word_len` is length of processor word in bits
+    /// and it must be divisible by 32. `input_elem_len` is length of element of input data in
+    /// bits and it must be divisible by 32. `output_elem_len` is length of element of output
+    /// data (in external form).
+    /// `bit_mapping` is list of mapping: index of list is bit of output's element (pack element)
+    /// and value is bit of input's (in external form) element.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
@@ -302,7 +315,9 @@ fn get_output_tx_program(context: Arc<Context>) -> Result<Arc<Program>, OpenCLBu
     }
 }
 
-/// convert output data from circuit input form into output form.
+/// Output Transformer for OpenCL device.
+///
+/// This transformer transforms data from internal form to external form.
 pub struct OpenCLDataOutputTransformer {
     word_len: u32,
     input_elem_len: usize,
@@ -316,18 +331,28 @@ pub struct OpenCLDataOutputTransformer {
 }
 
 impl OpenCLDataOutputTransformer {
-    /// An output_elem_len - number of bits of really single input element.
-    /// An input_elem_len - number of bits of really single output element.
-    /// A bit_mapping - index is bit of really input's element,
+    // An output_elem_len - number of bits of really single input element.
+    // An input_elem_len - number of bits of really single output element.
+    // A bit_mapping - index is bit of really input's element,
     //  value is bit of really output's element.
+
+    /// Creates new OpenCL data output transformer. The OpenCL objects passed as context and
+    /// command queue as arguments `context` and `cmd_queue`.
+    /// `word_len` is length of processor word in bits
+    /// and it must be divisible by 32. `input_elem_len` is length of element of input
+    /// data (in external form). `output_elem_len` is length of element of output data in
+    /// bits and it must be divisible by 32.
+    /// `bit_mapping` is list of mapping: index of list is bit of input's element (pack element)
+    /// and value is bit of output's (in external form) element.
     pub fn new(
         context: Arc<Context>,
         cmd_queue: Arc<CommandQueue>,
         word_len: u32,
-        output_elem_len: usize,
         input_elem_len: usize,
+        output_elem_len: usize,
         bit_mapping: &[usize],
     ) -> Result<Self, OpenCLBuildError> {
+        let (output_elem_len, input_elem_len) = (input_elem_len, output_elem_len);
         assert_eq!((word_len & 31), 0);
         assert_eq!((input_elem_len & 31), 0);
         assert!(input_elem_len >= bit_mapping.iter().copied().max().unwrap());
