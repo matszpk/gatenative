@@ -2110,7 +2110,7 @@ where
     /// `output_elem_len` and `bit_mapping`. `output_len` is length of output element in
     /// external form in bits and it should be divisble by 32-bit.
     /// `bit_mapping` is list of mapping: index of list is bit of input's element (pack element)
-    //  and value is bit of output's (in external form) element. Output data is organized
+    ///  and value is bit of output's (in external form) element. Output data is organized
     /// as tuple of 32-bit words. Single element of input data has `output_elem_len` bits.
     fn output_transformer(
         &self,
