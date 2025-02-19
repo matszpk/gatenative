@@ -619,6 +619,7 @@ where
     }
 }
 
+/// Type error for ParSeqMapper data transformer.
 #[derive(Error, Debug)]
 pub enum ParSeqMapperTransformsError<PE, SE> {
     #[error("ParError {0}")]
@@ -788,26 +789,45 @@ where
 
 #[derive(Error, Debug)]
 pub enum ParSeqMapperBuilderError<PE, SE> {
+    /// Error from parallel simulation.
     #[error("ParError {0}")]
     ParError(#[from] PE),
+    /// Error from sequential simulation with given index.
     #[error("SeqError for {0} {1}")]
     SeqError(usize, SE),
 }
 
+/// Structure that holds some parts of code configuration for added circuits.
+///
+/// This structure used by function that returns that dynamic code configuration to builder.
 #[derive(Clone, Copy, Debug)]
 pub struct ParSeqDynamicConfig<'a> {
+    /// Additional initialization code in C language (or OpenCL C).
     pub init_code: Option<&'a str>,
+    /// A pop_input code that written in C language (or OpenCL C) that obtains data
+    /// from additional source. See in main description of `CodeConfig`.
     pub pop_input_code: Option<&'a str>,
+    /// Length of source for pop_input_code in 32-bit words. That length shouldn't be exceeded in
+    /// pop_input_code code.
     pub pop_input_len: Option<usize>,
+    /// An aggr_output_code written in C language (or OpenCL C) that process data
+    /// and write results to additional destination.
     pub aggr_output_code: Option<&'a str>,
+    /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
+    /// exceeded in pop_input_code code.
     pub aggr_output_len: Option<usize>,
-    // exclude outputs
+    /// List of circuit's outputs that will be excluded as output data.
     pub exclude_outputs: Option<&'a [usize]>,
+    /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
+    /// will not be cleared before single execution (to save time) and content of this buffer
+    /// will be kept to later use.
     pub dont_clear_outputs: bool,
+    /// If some then it holds maximal number of iterations for loop in single execution.
     pub inner_loop: Option<u32>,
 }
 
 impl<'a> ParSeqDynamicConfig<'a> {
+    /// Creates empty dynamic code configuration.
     pub fn new() -> Self {
         Self {
             init_code: None,
@@ -820,35 +840,42 @@ impl<'a> ParSeqDynamicConfig<'a> {
             inner_loop: None,
         }
     }
+    /// Sets initialization code.
     pub fn init_code(mut self, init: Option<&'a str>) -> Self {
         self.init_code = init;
         self
     }
+    /// Sets pop_input_code (a populating input code).
     pub fn pop_input_code(mut self, pop: Option<&'a str>) -> Self {
         self.pop_input_code = pop;
         self
     }
+    /// Sets length of additional source for pop_input_code.
     pub fn pop_input_len(mut self, pop: Option<usize>) -> Self {
         self.pop_input_len = pop;
         self
     }
+    /// Sets aggr_output_code (an aggregating output code).
     pub fn aggr_output_code(mut self, aggr: Option<&'a str>) -> Self {
         self.aggr_output_code = aggr;
         self
     }
+    /// Sets length of additional destination for aggr_output_code.
     pub fn aggr_output_len(mut self, aggr: Option<usize>) -> Self {
         self.aggr_output_len = aggr;
         self
     }
-
+    /// Sets lists of circuit's outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
         self.exclude_outputs = excl;
         self
     }
+    /// Sets don't clear outputs.
     pub fn dont_clear_outputs(mut self, ignore: bool) -> Self {
         self.dont_clear_outputs = ignore;
         self
     }
+    /// Sets inner loop.
     pub fn inner_loop(mut self, l: Option<u32>) -> Self {
         self.inner_loop = l;
         self
