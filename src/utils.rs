@@ -1,3 +1,6 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! Utilities sometimes to internal usage.
+
 use crate::*;
 
 use crate::vbinopcircuit::*;
@@ -12,6 +15,7 @@ use std::collections::BinaryHeap;
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// Variable allocator.
 #[derive(Clone)]
 pub struct VarAllocator<T> {
     free_list: BinaryHeap<std::cmp::Reverse<T>>,
@@ -26,6 +30,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    /// Creates new allocator.
     pub fn new() -> Self {
         Self {
             free_list: BinaryHeap::new(),
@@ -33,11 +38,13 @@ where
         }
     }
 
+    /// Returns number of variables.
     #[inline]
     pub fn len(&self) -> usize {
         self.alloc_map.len()
     }
 
+    /// Allocate variable and returns new its index.
     pub fn alloc(&mut self) -> T {
         if let Some(std::cmp::Reverse(index)) = self.free_list.pop() {
             let index_u = usize::try_from(index).unwrap();
@@ -50,6 +57,7 @@ where
         }
     }
 
+    /// Free variable with given index. Returns true if variables existed.
     pub fn free(&mut self, index: T) -> bool {
         let index_u = usize::try_from(index).unwrap();
         assert!(index_u < self.len());
@@ -275,6 +283,11 @@ pub(crate) fn get_timestamp() -> u128 {
 
 pub(super) use gate_calc_log_bits::calc_log_bits;
 
+/// Tool to variable allocation at many types (diferrent spaces).
+///
+/// This tool can works in two modes. In normal mode then allocation method allocates
+/// new variable and use_var count usage of variable. In usage mode allocation method
+/// do nothing and use_var decrease counter of usage and if it zeroed then remove variable.
 pub struct MultiVarAllocTool<T> {
     var_allocs: Vec<VarAllocator<T>>,
     var_usages: Vec<Vec<T>>,
@@ -291,6 +304,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    /// Creates multi var allocator with specified number of types.
     pub fn new(var_type_num: usize) -> Self {
         Self {
             var_allocs: vec![VarAllocator::new(); var_type_num],
@@ -301,14 +315,17 @@ where
         }
     }
 
+    /// Sets usage mode.
     pub fn set_usage_mode(&mut self) {
         self.usage_mode = true;
     }
 
+    /// Returns if allocator in usage mode.
     pub fn usage_mode(&self) -> bool {
         self.usage_mode
     }
 
+    /// Returns number of types.
     pub fn var_type_num(&self) -> usize {
         self.var_allocs.len()
     }
@@ -327,6 +344,7 @@ where
         }
     }
 
+    /// Method to allocate variable.
     pub fn new_var(&mut self, var_type: usize) -> T {
         if !self.usage_mode {
             // returned value is variable original index
@@ -345,6 +363,7 @@ where
         }
     }
 
+    /// Method to use variable.
     pub fn use_var(&mut self, var_type: usize, vt: T) {
         if !self.usage_mode {
             // vt is original variable index
@@ -358,6 +377,7 @@ where
         }
     }
 
+    /// Returns number of allocated variables for given type.
     pub fn alloc_var_num(&self, var_type: usize) -> usize {
         self.var_allocs[var_type].len()
     }
@@ -402,6 +422,16 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
 //   index - circuit's output
 //   value - position in output buffer
 // * length of bits in output buffer
+
+/// Utility that get final placements for circuit's inputs and outputs.
+///
+/// It returns:
+// structure of input tuples:
+/// * list of position in input: index - circuit's input, value - pack element index.
+/// * pack length
+/// structure of output tuples:
+/// * list of position in output: index - circuit's output, value - pack element index.
+/// * pack length
 pub fn get_final_placements(
     input_len: usize,
     output_len: usize,
