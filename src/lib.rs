@@ -136,7 +136,7 @@
 //!     let c_start = 18941u16;
 //!     let circuit = mul_add_circuit();
 //!     let mut builder = CPUBuilder::new(None);
-//!     // add circuit to builder.
+//!     // Add circuit to builder.
 //!     builder.add_with_config(
 //!         "mul_add",
 //!         circuit,
@@ -150,7 +150,7 @@
 //!     // Get output data transformer that converts 16-bit output into 32-bit array
 //!     // of elements.
 //!     let mut ot = execs[0].output_transformer(32, &((0..16).collect::<Vec<_>>()))?;
-//!     // prepare empty input for execution.
+//!     // Prepare empty input for execution.
 //!     let input = execs[0].new_data(16);
 //!     // Execute simulation. Set 'b' to b_start and 'c' to c_start by arg input.
 //!     let output = execs[0].execute(&input, ((c_start as u64) << 16) | (b_start as u64))?;
