@@ -1911,7 +1911,7 @@ where
 
     /// Returns true if output data will be processed by `aggr_output_code`.
     fn output_is_aggregated(&self) -> bool;
-    /// Returns true if output data will be processed by `aggr_output_code`.
+    /// Returns true if output data will be processed by `pop_input_code`.
     fn input_is_populated(&self) -> bool;
 
     /// Returns length of additional buffer in 32-bit words for `aggr_output_code`.

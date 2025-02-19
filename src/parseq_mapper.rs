@@ -67,7 +67,7 @@ pub enum ParSeqSelection {
 
 /// Data holder that holds all data for all simulations.
 ///
-/// Parameter types:
+/// Type parameters:
 /// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
 /// * `SDR`, `SDW` and `SD` - sequential data reader, data writer and data holder.
 pub struct ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
@@ -105,6 +105,8 @@ where
     }
 
     /// Process data for given simulation.
+    ///
+    /// To given function `f` passes data holder for selected simulation choosen by `sel`.
     pub fn process_single<F, Out>(&self, sel: ParSeqSelection, mut f: F) -> Out
     where
         F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
@@ -116,6 +118,8 @@ where
     }
 
     /// Process mutually data for given simulation.
+    ///
+    /// To given function `f` passes data holder for selected simulation choosen by `sel`.
     pub fn process_single_mut<F, Out>(&mut self, sel: ParSeqSelection, mut f: F) -> Out
     where
         F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,
@@ -127,6 +131,8 @@ where
     }
 
     /// Process data for all simulations.
+    ///
+    /// For each simulations, to given function `f` passes data holder for current simulation.
     pub fn process<F, Out>(&self, mut f: F) -> Vec<Out>
     where
         F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
@@ -140,6 +146,8 @@ where
     }
 
     /// Process mutually data for all simulations.
+    ///
+    /// For each simulations, to given function `f` passes data holder for current simulation.
     pub fn process_mut<F, Out>(&mut self, mut f: F) -> Vec<Out>
     where
         F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,
@@ -188,14 +196,24 @@ where
     }
 }
 
+/// Type error for ParSeqMapper executor.
 #[derive(Error, Debug)]
 pub enum ParSeqMapperExecutorError<PE, SE> {
+    /// Error from parallel simulation.
     #[error("ParError {0}")]
     ParError(#[from] PE),
+    /// Error from sequential simulation with given index.
     #[error("SeqError for {0} {1}")]
     SeqError(usize, SE),
 }
 
+/// Main ParSeqMapper executor.
+///
+/// Types parameters:
+/// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
+/// * `PE` - parrallel executor.
+/// * `SDR`, `SDW` and `SD` - sequential data reader, data writer and data holder.
+/// * `SE` - sequential executor.
 pub struct ParSeqMapperExecutor<'a, PDR, PDW, PD, PE, SDR, SDW, SD, SE>
 where
     PDR: DataReader + Send + Sync,
@@ -237,15 +255,26 @@ where
     SE: Executor<'a, SDR, SDW, SD> + Send,
     SE::ErrorType: Send,
 {
+    /// Returns number of circuit's inputs.
     pub fn input_len(&self) -> usize {
         self.par.input_len()
     }
+    /// Returns number of pack elements for input data (for assigned circuit's inputs).
     pub fn real_input_len(&self) -> usize {
         self.par.real_input_len()
     }
+    /// Returns number of circuit's outputs.
     pub fn output_len(&self) -> usize {
         self.par.output_len()
     }
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution.
+    /// `f` function pass simulation selection, input data, output data and arg input value.
+    /// `g` is function that joins result from `f` function.
+    /// `stop` is function that checks whether whole execution should be stopped
+    /// (then function should return true in this case).
+    /// Function `f` read data from data holders. Arg input value is counter
+    /// that will be increased for every single execution.
     pub fn execute<Out, F, G, Stop>(
         &mut self,
         input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
@@ -345,6 +374,14 @@ where
         })
     }
 
+    /// Executes many simulations. Input data passed by `input`. `init` is initial
+    /// output. `f` is function that process output data from single execution.
+    /// `f` function pass simulation selection, input data, output data and arg input value.
+    /// `g` is function that joins result from `f` function.
+    /// `stop` is function that checks whether whole execution should be stopped
+    /// (then function should return true in this case).
+    /// Function `f` read data from slice. Arg input value is counter
+    /// that will be increased for every single execution.
     pub fn execute_direct<Out: Clone, F, G, Stop>(
         &mut self,
         input: &'a ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>,
@@ -385,6 +422,7 @@ where
         )
     }
 
+    /// Creates new data. It returns data holder with zeroed data with length `len` 32-bit words.
     pub fn new_data(&mut self, len: usize) -> ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD> {
         assert!((len & 15) == 0);
         let out = ParSeqAllDataHolder {
@@ -405,6 +443,8 @@ where
         out
     }
 
+    /// Creates new data. It returns data holder with data supplied by function `data` that
+    /// returns data.
     pub fn new_data_from_vec(
         &mut self,
         mut data: impl FnMut(ParSeqSelection) -> Vec<u32>,
@@ -432,6 +472,8 @@ where
         out
     }
 
+    /// Creates new data. It returns data holder supplied by function `data` that
+    /// pass this executor and returns data holder.
     pub fn new_data_with_executor(
         &mut self,
         mut data: impl FnMut(ParSeqObject<&mut PE, (usize, &mut SE)>) -> ParSeqObject<PD, SD>,
@@ -468,6 +510,8 @@ where
         out
     }
 
+    /// Creates new data. It returns data holder with data supplied by function `data` that
+    /// returns slice.
     pub fn new_data_from_slice<'b>(
         &mut self,
         mut data: impl FnMut(ParSeqSelection) -> &'b [u32],
@@ -495,6 +539,8 @@ where
         out
     }
 
+    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// given number of elements.
     pub fn new_data_input_elems(
         &mut self,
         elem_num: usize,
@@ -521,16 +567,19 @@ where
         out
     }
 
+    /// Returns true if output data will be processed by `aggr_output_code`.
     #[inline]
     pub fn output_is_aggregated(&self) -> bool {
         self.par.output_is_aggregated()
     }
 
+    /// Returns true if output data will be processed by `pop_input_code`.
     #[inline]
     pub fn input_is_populated(&self) -> bool {
         self.par.input_is_populated()
     }
 
+    /// Returns length of additional buffer in 32-bit words for `pop_input_code`.
     #[inline]
     pub fn pop_input_len(&self, sel: ParSeqSelection) -> Option<usize> {
         match sel {
@@ -539,6 +588,11 @@ where
         }
     }
 
+    /// Make some operation with inner executors.
+    ///
+    /// Function `f` pass executor and that functions do something with that executor.
+    /// This method allows to make operations on same inner executors (for example
+    /// preparing data or processing output data).
     pub fn with_executor<F>(&self, mut f: F)
     where
         F: FnMut(ParSeqObject<&PE, (usize, &SE)>),
@@ -550,6 +604,7 @@ where
         }
     }
 
+    /// Returns true if executor executes simulation in sequentially (not parallel way).
     pub fn is_sequential_execution(&self, sel: ParSeqSelection) -> bool {
         match sel {
             ParSeqSelection::Par => self.par.is_sequential_execution(),
@@ -557,6 +612,7 @@ where
         }
     }
 
+    /// Returns inner loop maximal number of iterations.
     #[inline]
     pub fn inner_loop(&self) -> Option<u32> {
         self.par.inner_loop()
@@ -799,6 +855,15 @@ impl<'a> ParSeqDynamicConfig<'a> {
     }
 }
 
+/// Main ParSeqMapper builder.
+///
+/// Types parameters:
+/// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
+/// * `PE` - parrallel executor.
+/// * `PB` - parrallel builder.
+/// * `SDR`, `SDW` and `SD` - sequential data reader, data writer and data holder.
+/// * `SE` - sequential executor.
+/// * `SB` - sequential builder.
 pub struct ParSeqMapperBuilder<'a, PDR, PDW, PD, PE, PB, SDR, SDW, SD, SE, SB>
 where
     PDR: DataReader + Send + Sync,
