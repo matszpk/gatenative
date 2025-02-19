@@ -1,3 +1,17 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+//! Mapper that joins together two types of simulations (CPU and OpenCL).
+//!
+//! This mapper simplifies organization of heterogeneous simulations.
+//! The ParSeqMapper is mapper that join two types of simulation executions:
+//! * parallel executed (multiple executions on multiple threads) (for example on CPU).
+//! * sequentially executed (by only one thread) (for example on OpenCL device).
+//!
+//! It is working similar to ParMapper but runs simulation on devices of one of two types.
+//! It provides similar functionality by different interface, because uses two types of
+//! builder and executor objects. For parrallel simulation, mapper executes multiple simulations,
+//! however it can uses only one builder and executor (for circuit).
+//! Mapper can use multiple sequential simulations concurrently (for example multiple GPU).
+
 use crate::*;
 
 use thiserror::Error;
@@ -14,13 +28,17 @@ use std::sync::{
 
 // ParSeqMapper - mapper that join parallel and sequential mapper
 
+/// It can holds object of one of two types (for parallel and sequntial).
 #[derive(Clone, Debug)]
 pub enum ParSeqObject<T1, T2> {
+    /// Object for parrallel simulation.
     Par(T1),
+    /// Object for sequential simulation.
     Seq(T2),
 }
 
 impl<T1, T2> ParSeqObject<T1, T2> {
+    /// Returns object for parrallel simulation.
     pub fn par(self) -> Option<T1> {
         if let Self::Par(o) = self {
             Some(o)
@@ -28,6 +46,7 @@ impl<T1, T2> ParSeqObject<T1, T2> {
             None
         }
     }
+    /// Returns object for sequential simulation.
     pub fn seq(self) -> Option<T2> {
         if let Self::Seq(o) = self {
             Some(o)
@@ -37,12 +56,20 @@ impl<T1, T2> ParSeqObject<T1, T2> {
     }
 }
 
+/// Object that refers to selection of object for simulation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParSeqSelection {
+    /// This is parrallel simulation.
     Par,
+    /// This is sequential simulation with given index.
     Seq(usize),
 }
 
+/// Data holder that holds all data for all simulations.
+///
+/// Parameter types:
+/// * `PDR`, `PDW` and `PD` - parrallel data reader, data writer and data holder.
+/// * `SDR`, `SDW` and `SD` - sequential data reader, data writer and data holder.
 pub struct ParSeqAllDataHolder<'a, PDR, PDW, PD, SDR, SDW, SD>
 where
     PDR: DataReader + Send + Sync,
@@ -71,11 +98,13 @@ where
     SDW: DataWriter + Send + Sync,
     SD: DataHolder<'a, SDR, SDW> + Send + Sync,
 {
+    /// Returns length of data in data holder in 32-bit words.
     #[inline]
     pub fn len(&self) -> usize {
         self.par.len()
     }
 
+    /// Process data for given simulation.
     pub fn process_single<F, Out>(&self, sel: ParSeqSelection, mut f: F) -> Out
     where
         F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
@@ -86,6 +115,7 @@ where
         }
     }
 
+    /// Process mutually data for given simulation.
     pub fn process_single_mut<F, Out>(&mut self, sel: ParSeqSelection, mut f: F) -> Out
     where
         F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,
@@ -96,6 +126,7 @@ where
         }
     }
 
+    /// Process data for all simulations.
     pub fn process<F, Out>(&self, mut f: F) -> Vec<Out>
     where
         F: FnMut(ParSeqObject<&PD, (usize, &SD)>) -> Out,
@@ -108,6 +139,7 @@ where
         out
     }
 
+    /// Process mutually data for all simulations.
     pub fn process_mut<F, Out>(&mut self, mut f: F) -> Vec<Out>
     where
         F: FnMut(ParSeqObject<&mut PD, (usize, &mut SD)>) -> Out,

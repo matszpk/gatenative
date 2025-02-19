@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 //! Basic mappers.
 //!
 //! This module implements mappers defined in main module. Mapper builders requires
