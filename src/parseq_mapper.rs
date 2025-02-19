@@ -6,7 +6,7 @@
 //! * parallel executed (multiple executions on multiple threads) (for example on CPU).
 //! * sequentially executed (by only one thread) (for example on OpenCL device).
 //!
-//! It is working similar to ParMapper but runs simulation on devices of one of two types.
+//! It is working similar to ParMapper but runs concurrently (and parallel way) simulations.
 //! It provides similar functionality by different interface, because uses two types of
 //! builder and executor objects. For parrallel simulation, mapper executes multiple simulations,
 //! however it can uses only one builder and executor (for circuit).
