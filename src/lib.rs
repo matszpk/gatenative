@@ -1096,6 +1096,9 @@ where
 ///   and additional buffer (`pop_from_buffer` or `aggr_to_buffer` should be set).
 ///   Data will be stored in `output` data holder.
 ///
+/// Executor determines number of elements to process by input data length
+/// or circuit inputs assigned to element index if no input data needed.
+///
 /// Executor provides additional methods to create data holders:
 /// `new_data`, `new_data_from_vec`, `new_data_input_elems` and `new_data_output_elems`.
 /// These methods simplify creation of data.
