@@ -1446,7 +1446,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         }
     }
 
-    /// Returns input data (for circuit outputs) length in 32-bit words for given
+    /// Returns output data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
@@ -1732,7 +1732,7 @@ where
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data (for circuit outputs) length in 32-bit words for given
+    /// Returns output data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
@@ -1967,7 +1967,7 @@ where
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data (for circuit outputs) length in 32-bit words for given
+    /// Returns output data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
