@@ -1165,8 +1165,8 @@ where
 ///
 /// Executor determines number of elements to process by input data length
 /// or circuit inputs assigned to element index if no input data needed.
-/// Special case if pop_input_code uses input data as additional buffer then
-/// number of elements is 2^(input_len()-arg_input_len).
+/// Special case for execute without buffer: if pop_input_code uses input data as
+/// additional buffer then number of elements is 2^(input_len()-arg_input_len).
 ///
 /// Executor provides additional methods to create data holders:
 /// `new_data`, `new_data_from_vec`, `new_data_input_elems` and `new_data_output_elems`.
