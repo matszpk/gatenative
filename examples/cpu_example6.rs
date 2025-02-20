@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .pop_from_buffer(Some(&(32..48).collect::<Vec<_>>()))
             // Sets buffer length to 4 32-bit words.
             .pop_input_len(Some(4))
-            // Sets aggr_output_code to
+            // Sets aggr_output_code to calculate sum of results c.
             .aggr_output_code(Some(
                 r##"{
     size_t i;
