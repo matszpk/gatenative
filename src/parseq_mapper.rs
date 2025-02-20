@@ -210,7 +210,7 @@ pub enum ParSeqMapperExecutorError<PE, SE> {
 /// Main ParSeqMapper executor.
 ///
 /// This executor comes from ParSeqMapperBuilder. Arg input is counter of execution of
-/// simulations and will be passed to circuit's input assigned to arg input.
+/// simulations and will be passed to circuit input assigned to arg input.
 /// Simulations are independents and they will be executed parrallel way. Output data for each
 /// simulation will be processed by supplied function. Next function joins outputs from
 /// first function an join them. `stop` functions determines whether stop execution
@@ -264,11 +264,11 @@ where
     SE: Executor<'a, SDR, SDW, SD> + Send,
     SE::ErrorType: Send,
 {
-    /// Returns number of circuit's inputs.
+    /// Returns number of circuit inputs.
     pub fn input_len(&self) -> usize {
         self.par.input_len()
     }
-    /// Returns number of pack elements for input data (for assigned circuit's inputs).
+    /// Returns number of pack elements for input data (for assigned circuit inputs).
     pub fn real_input_len(&self) -> usize {
         self.par.real_input_len()
     }
@@ -548,7 +548,7 @@ where
         out
     }
 
-    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// Returns input data holder (for circuit inputs) with zeroed data with length matched to
     /// given number of elements.
     pub fn new_data_input_elems(
         &mut self,
@@ -1059,8 +1059,8 @@ where
     }
 
     /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate.
-    /// `arg_inputs` is list of circuit's inputs assigned to arg input.
-    /// `elem_inputs` is list of circuit's inputs assigned to element input.
+    /// `arg_inputs` is list of circuit inputs assigned to arg input.
+    /// `elem_inputs` is list of circuit inputs assigned to element input.
     /// `dyn_config` is function that returns ParSeq dynamic code configuration for
     /// given simulation.
     pub fn add_with_config<'b, T, DCF>(
@@ -1117,7 +1117,7 @@ where
     }
 
     /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate.
-    /// `arg_inputs` is list of circuit's inputs assigned to arg input.
+    /// `arg_inputs` is list of circuit inputs assigned to arg input.
     pub fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,

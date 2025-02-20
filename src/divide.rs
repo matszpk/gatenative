@@ -94,7 +94,7 @@ where
             }
         }
         if last {
-            // if last circuit then add to subcircuit's inputs circuit outputs
+            // if last circuit then add to subcircuit inputs circuit outputs
             for (o, _) in circuit.outputs() {
                 let o = usize::try_from(*o).unwrap();
                 if !cur_subc_gates.contains(&o) {

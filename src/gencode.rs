@@ -1371,7 +1371,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 /// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
 /// If `optimize_negs` is true then while generating negations will be optimized for
 /// standard boolean operations. `input_placement` and `output_placement` are placements.
-/// `arg_inputs` is list of circuit's inputs assigned to arg input.
+/// `arg_inputs` is list of circuit inputs assigned to arg input.
 pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,

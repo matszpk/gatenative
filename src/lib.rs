@@ -1,6 +1,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 //! The library allows to execute simulation of the Gate circuit on CPU or GPU (by using OpenCL).
-//! It provides complex configuration of execution including passing data circuit's inputs.
+//! It provides complex configuration of execution including passing data circuit inputs.
 //! This library executes parallel simulation of circuit that runs many circuits.
 //! The execution organized as threads (elements) in single execution. One circuit simulation
 //! mapped to one bit of word of processor. For modern CPU a word can have 64 to 512 bits.
@@ -35,7 +35,7 @@
 //! that can have even 256 threads. A special option treat whole group as processor's word,
 //! however in many cases is not usable.
 //!
-//! Circuit's inputs and circuit's output data are organized as pack of processor words that
+//! Circuit inputs and circuit's output data are organized as pack of processor words that
 //! groupped in greater stream. Data can contain more that packs if number of elements
 //! is greater than number of bits of processor word. Later, that form of data going to be
 //! called internal form.
@@ -54,9 +54,9 @@
 //! D(I)(X)B(Y) - Yth bit in Xth pack element in Ith group. That bit assigned to I*N+Y element
 //! (thread).
 //!
-//! By default ith pack element assigned to ith circuit's input or ith circuit's output.
+//! By default ith pack element assigned to ith circuit input or ith circuit's output.
 //! It can be changed by using input placement or output placement. Number of element in single
-//! execution should be divisible by number of bit of word processor.
+//! execution should be divisible by number of bit of processor word.
 //!
 //! Input data or output data organized as bits in processor word. One bit per one
 //! element (thread). If you want convert data organized as packs from/to data organized per
@@ -65,7 +65,7 @@
 //! In this library it used terminology:
 //! * Builder - object to built code for simulate circuits. Builder can hold many
 //!   simulation configurations for same circuit.
-//! * Code configuration - It holds circuit's inputs and outputs configuration,
+//! * Code configuration - It holds circuit inputs and outputs configuration,
 //!   populating and aggregating code, loop setup, etc.
 //! * Execution - execution of simulations with specified size that will be run under
 //!   single execution on GPU (as single execution of kernel) or CPU.
@@ -78,7 +78,7 @@
 //! * Data reader - object that allows read data from data holder.
 //! * Data writer - object that allows write data in data holder.
 //! * Populating input code - code in the C language (or OpenCL C) that generate data to
-//!   populate for some specified circuit's inputs.
+//!   populate for some specified circuit inputs.
 //! * Aggregating output code - code in the C language (or OpenCL C) that process output
 //!   data from some specified circuit's outputs.
 //! * Word - generally is processor's word , however if `group_len` is set then
@@ -87,12 +87,12 @@
 //!   and in a populating and an aggregating code.
 //! * Element - single simulation.
 //! * Element index - index of simulation.
-//! * Element input - circuit's input that value is element index.
-//! * Argument input - circuit's input that obtained from argument from execution call.
+//! * Element input - circuit input that value is element index.
+//! * Argument input - circuit input that obtained from argument from execution call.
 //! * FuncWriter - trait defines object to write native code of function.
 //! * CodeWriter - trait defines object to write native code.
 //! * Data transformer - object to convert input data in internal form to external form.
-//! * Pack element - part of data that assigned to one circuit's input or circuit's output.
+//! * Pack element - part of data that assigned to one circuit input or circuit's output.
 //!
 //! Program should make few steps to run simulation:
 //! 1. Create builder.
@@ -225,7 +225,7 @@ pub use rayon;
 
 /// Main structure to describe code configuration.
 ///
-/// This structure provides assignment for circuit's inputs and circuit's outputs,
+/// This structure provides assignment for circuit inputs and circuit's outputs,
 /// a polulating code, an aggregating code, loop setup, buffer setup.
 ///
 /// Circuits inputs assigned to following sources:
@@ -234,32 +234,32 @@ pub use rayon;
 /// * element index (thread index).
 /// * populating code that can process data or data in additional buffer.
 ///
-/// Circuit's outputs assigned to output data returned by execution call (as data).
+/// Circuit outputs assigned to output data returned by execution call (as data).
 /// Some circuit's outputs can be excluded if aggregation code uses some outputs.
 ///
-/// All four sources for circuit's inputs must be defined exclusively (no shared circuit's inputs).
+/// All four sources for circuit inputs must be defined exclusively (no shared circuit inputs).
 ///
-/// Input placement is setup refers to circuit's inputs that don't have assginment to
+/// Input placement is setup refers to circuit inputs that don't have assginment to
 /// other sources than assignment to provided data. Input placement contains list and number of
-/// total number of pack elements of input data. Map is list where index is circuit's input index,
+/// total number of pack elements of input data. Map is list where index is circuit input index,
 /// and value is destination pack element. Similary, output placement contains list of
 /// placement and total number of pack elements of output data.
 /// Circuit inputs and circuit's outputs are numbered from 0 in original order in that list
 /// (if circuit have 5 inputs and 1,3 are assigned to element index then inputs 0,2,4 have
 /// numberes 0,1,3 after removal).
 ///
-/// For example (&[5, 1, 4, 2], 7) - data have 7 pack elements, and circuit's input 0
-/// assigned to pack element 1 (starting from 0), circuit's input 1 to pack element 1,
-/// circuit's input 2 to pack element 4 and circuit's input 3 to pack element 2.
+/// For example (&[5, 1, 4, 2], 7) - data have 7 pack elements, and circuit input 0
+/// assigned to pack element 1 (starting from 0), circuit input 1 to pack element 1,
+/// circuit input 2 to pack element 4 and circuit input 3 to pack element 2.
 ///
 /// In the most cases no reasons to use input/output placement.
 ///
 /// A populating input code (`pop_input_code`) is code supplied by user and written in
-/// C language (or OpenCL C) to obtain circuit's input data from some source. Next `pop_from_buffer`
-/// field is list of circuit's inputs that obtained by a pop_input_code. If `pop_from_buffer`
-/// is not supplied then all circuit's inputs (except circuit's inputs assigned to other sources)
-/// are obtained by pop_input_code and no other circuit's inputs are assigned to data.
-/// If `pop_from_buffer` is supplied then only listed circuit's inputs will be obtained from
+/// C language (or OpenCL C) to obtain circuit input data from some source. Next `pop_from_buffer`
+/// field is list of circuit inputs that obtained by a pop_input_code. If `pop_from_buffer`
+/// is not supplied then all circuit inputs (except circuit inputs assigned to other sources)
+/// are obtained by pop_input_code and no other circuit inputs are assigned to data.
+/// If `pop_from_buffer` is supplied then only listed circuit inputs will be obtained from
 /// pop_input_code. If pop_from_buffer is supplied then pop_input_code should read data from
 /// additional buffer, otherwise it should read data from input data buffer.
 /// `pop_input_len` specifies length of source in 32-bit words. That length shouldn't be
@@ -282,9 +282,9 @@ pub use rayon;
 /// constraint if pop_input_code uses extra buffer (if pop_from_buffer is set).
 ///
 /// Interface for pop_input_code and aggr_output_code is simple.
-/// A variable `iX` refers to circuit's input X. A variable `oX` refers to circuit's output X.
+/// A variable `iX` refers to circuit input X. A variable `oX` refers to circuit's output X.
 /// Defined `TYPE_NAME` defines name of Type In Code. `TYPE_LEN` is length of type in bits.
-/// * `input` is input data normally holds circuit's input data.
+/// * `input` is input data normally holds circuit input data.
 /// * `output` is output data holds circuit's output data.
 /// * `buffer` is additional buffer for a pop_input_code or an aggr_output_code.
 /// * `GET_U32(D,X,I)` gets ith 32-bit word stored in X variable of type Type In Code
@@ -318,10 +318,10 @@ pub struct CodeConfig<'a> {
     pub input_placement: Option<(&'a [usize], usize)>,
     /// Output placement. See main description of structure.
     pub output_placement: Option<(&'a [usize], usize)>,
-    /// Arg inputs is list of circuit's inputs assigned to argument inputs. Index is bit of
+    /// Arg inputs is list of circuit inputs assigned to argument inputs. Index is bit of
     /// argument and value is cicrcuit's input index.
     pub arg_inputs: Option<&'a [usize]>,
-    /// Elem inputs is list of circuit's inputs assigned to element index. Index is bit of
+    /// Elem inputs is list of circuit inputs assigned to element index. Index is bit of
     /// element index and value is cicrcuit's input index.
     pub elem_inputs: Option<&'a [usize]>,
     /// Use single buffer that two buffers (for input and and output). In this case
@@ -341,7 +341,7 @@ pub struct CodeConfig<'a> {
     /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
     /// exceeded in pop_input_code code.
     pub aggr_output_len: Option<usize>,
-    /// List of circuit's inputs that will be populated from additional source by
+    /// List of circuit inputs that will be populated from additional source by
     /// pop_input_code.
     pub pop_from_buffer: Option<&'a [usize]>,
     /// List of circuit's outputs that will be processed by aggr_output_code.
@@ -428,7 +428,7 @@ impl<'a> CodeConfig<'a> {
         self.aggr_output_len = aggr;
         self
     }
-    /// Sets list of circuit's inputs that will be populated from additional buffer.
+    /// Sets list of circuit inputs that will be populated from additional buffer.
     pub fn pop_from_buffer(mut self, pop: Option<&'a [usize]>) -> Self {
         self.pop_from_buffer = pop;
         self
@@ -472,10 +472,10 @@ pub struct CodeConfigCopy {
     pub input_placement: Option<(Vec<usize>, usize)>,
     /// Output placement. See main description of structure.
     pub output_placement: Option<(Vec<usize>, usize)>,
-    /// Arg inputs is list of circuit's inputs assigned to argument inputs. Index is bit of
+    /// Arg inputs is list of circuit inputs assigned to argument inputs. Index is bit of
     /// argument and value is cicrcuit input index.
     pub arg_inputs: Option<Vec<usize>>,
-    /// Elem inputs is list of circuit's inputs assigned to element index. Index is bit of
+    /// Elem inputs is list of circuit inputs assigned to element index. Index is bit of
     /// element index and value is cicrcuit input index.
     pub elem_inputs: Option<Vec<usize>>,
     /// Use single buffer that two buffers (for input and and output). In this case
@@ -495,7 +495,7 @@ pub struct CodeConfigCopy {
     /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
     /// exceeded in pop_input_code code.
     pub aggr_output_len: Option<usize>,
-    /// List of circuit's inputs that will be populated from additional source by
+    /// List of circuit inputs that will be populated from additional source by
     /// pop_input_code.
     pub pop_from_buffer: Option<Vec<usize>>,
     /// List of circuit's outputs that will be processed by aggr_output_code.
@@ -606,7 +606,7 @@ impl CodeConfigCopy {
         self.aggr_output_len = aggr;
         self
     }
-    /// Sets list of circuit's inputs that will be populated from additional buffer.
+    /// Sets list of circuit inputs that will be populated from additional buffer.
     pub fn pop_from_buffer(mut self, pop: Option<Vec<usize>>) -> Self {
         self.pop_from_buffer = pop;
         self
@@ -1179,18 +1179,18 @@ where
 ///
 /// Basic unit in simulation is element (thread) that is part of pack. Pack contains
 /// N elements. N is number of bits of processor word. Number of element in single
-/// execution should be divisible by number of bit of word processor.
-/// If given data holder provides data for circuit's inputs or outputs directly then
+/// execution should be divisible by number of bit of processor word.
+/// If given data holder provides data for circuit inputs or outputs directly then
 //  data must match to element count. `new_data_input_elems` simplifies creation of data holder
 /// with correct length.
 pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>> {
     /// Error type used if error encountered while execution.
     type ErrorType;
-    /// Returns number of circuit's inputs.
+    /// Returns number of circuit inputs.
     fn input_len(&self) -> usize;
     /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
-    /// Returns number of pack elements for input data (for assigned circuit's inputs).
+    /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
     /// Returns number of pack elements for output data (for assigned circuit's outputs).
     fn real_output_len(&self) -> usize;
@@ -1201,14 +1201,14 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method returns data holder with output data.
     ///
     /// Code configuration must not have single buffer, `pop_from_buffer` and `aggr_to_buffer`.
     unsafe fn execute_internal(&mut self, input: &D, arg_input: u64) -> Result<D, Self::ErrorType>;
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method returns data holder with output data.
     ///
@@ -1223,7 +1223,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method store output data into `output` data
     /// holder and returns Ok.
@@ -1236,7 +1236,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         output: &mut D,
     ) -> Result<(), Self::ErrorType>;
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method store output data into `output` data
     /// holder and returns Ok.
@@ -1257,7 +1257,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `output` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method returns data holder with output data.
     ///
@@ -1269,7 +1269,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         arg_input: u64,
     ) -> Result<(), Self::ErrorType>;
     /// Executes simulation. Input data passed by `output` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored.
     /// If execution successfully finished then method returns data holder with output data.
     ///
@@ -1285,7 +1285,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method returns data holder with output data.
@@ -1299,7 +1299,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         buffer: &mut D,
     ) -> Result<D, Self::ErrorType>;
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method returns data holder with output data.
@@ -1323,7 +1323,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method store output data into `output` data
@@ -1339,7 +1339,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         buffer: &mut D,
     ) -> Result<(), Self::ErrorType>;
     /// Executes simulation. Input data passed by `input` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method store output data into `output` data
@@ -1365,7 +1365,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Only for implementation.
     ///
     /// Executes simulation. Input data passed by `output` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method store output data into `output` data
@@ -1380,7 +1380,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         buffer: &mut D,
     ) -> Result<(), Self::ErrorType>;
     /// Executes simulation. Input data passed by `output` argument as data holder.
-    /// Additionaly if some circuit's inputs assigned to arg input then `arg_input` will be used,
+    /// Additionaly if some circuit inputs assigned to arg input then `arg_input` will be used,
     /// otherwise `arg_input` will be ignored. Additional `buffer` data holder holds
     /// data for `pop_input_code` or can be stored by `aggr_output_code`.
     /// If execution successfully finished then method store output data into `output` data
@@ -1433,7 +1433,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     /// Returns length of additional buffer in 32-bit words for `pop_input_code`.
     fn pop_input_len(&self) -> Option<usize>;
 
-    /// Returns input data (for circuit's inputs) length in 32-bit words for given
+    /// Returns input data (for circuit inputs) length in 32-bit words for given
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize {
         if self.input_is_populated() && !self.is_populated_from_buffer() {
@@ -1457,7 +1457,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         }
     }
 
-    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// Returns input data holder (for circuit inputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
@@ -1592,7 +1592,7 @@ where
 /// Executor of sequential mapper executes simulation multiple times.
 ///
 /// This executor comes from MapperBuilder. Arg input is counter of execution of simulations
-/// and will be passed to circuit's input assigned to arg input.
+/// and will be passed to circuit input assigned to arg input.
 /// Simulations are independents and they will be executed sequentially. Input and output
 /// data for each simulation will be processed by supplied function that returns output.
 /// `stop` functions determines whether stop execution of simulations.
@@ -1607,9 +1607,9 @@ where
     /// Error type used if error encountered while execution.
     type ErrorType;
 
-    /// Returns number of circuit's inputs.
+    /// Returns number of circuit inputs.
     fn input_len(&self) -> usize;
-    /// Returns number of pack elements for input data (for assigned circuit's inputs).
+    /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
     /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
@@ -1728,7 +1728,7 @@ where
     /// Returns element count for given input length in 32-bit words.
     fn elem_count(&self, input_len: usize) -> usize;
 
-    /// Returns input data (for circuit's inputs) length in 32-bit words for given
+    /// Returns input data (for circuit inputs) length in 32-bit words for given
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
@@ -1736,7 +1736,7 @@ where
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// Returns input data holder (for circuit inputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
@@ -1834,7 +1834,7 @@ where
     }
 
     /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
-    /// `arg_inputs` are circuit's inputs to be assigned to arg input.
+    /// `arg_inputs` are circuit inputs to be assigned to arg input.
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1873,7 +1873,7 @@ where
 /// Executor of parallel mapper executes simulation multiple times.
 ///
 /// This executor comes from ParMapperBuilder. Arg input is counter of execution of simulations
-/// and will be passed to circuit's input assigned to arg input.
+/// and will be passed to circuit input assigned to arg input.
 /// Simulations are independents and they will be executed parrallel way. Output data for each
 /// simulation will be processed by supplied function. Next function joins outputs from
 /// first function an join them. `stop` functions determines whether stop execution
@@ -1889,9 +1889,9 @@ where
     /// Error type used if error encountered while execution.
     type ErrorType;
 
-    /// Returns number of circuit's inputs.
+    /// Returns number of circuit inputs.
     fn input_len(&self) -> usize;
-    /// Returns number of pack elements for input data (for assigned circuit's inputs).
+    /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
     /// Returns number of circuit's outputs.
     fn output_len(&self) -> usize;
@@ -1963,7 +1963,7 @@ where
     /// Returns element count for given input length in 32-bit words.
     fn elem_count(&self, input_len: usize) -> usize;
 
-    /// Returns input data (for circuit's inputs) length in 32-bit words for given
+    /// Returns input data (for circuit inputs) length in 32-bit words for given
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
@@ -1971,7 +1971,7 @@ where
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data holder (for circuit's inputs) with zeroed data with length matched to
+    /// Returns input data holder (for circuit inputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
@@ -2064,7 +2064,7 @@ where
     }
 
     /// Adds circuit to builder. `name` is name of function, `circuit` is circuit to simulate,
-    /// `arg_inputs` are circuit's inputs to be assigned to arg input.
+    /// `arg_inputs` are circuit inputs to be assigned to arg input.
     fn add<T>(&mut self, name: &str, circuit: Circuit<T>, arg_inputs: &[usize])
     where
         T: Clone + Copy + Ord + PartialEq + Eq + Hash,
