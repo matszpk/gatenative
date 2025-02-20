@@ -134,7 +134,9 @@
 //! }
 //! 
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     // Create circuit.
 //!     let circuit = mul_add_circuit();
+//!     // Create builder.
 //!     let mut builder = CPUBuilder::new(None);
 //!     // Add circuit to builder.
 //!     builder.add_simple("mul_add", circuit);
