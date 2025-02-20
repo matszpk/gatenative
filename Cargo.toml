@@ -38,6 +38,34 @@ path = "examples/cpu_example5.rs"
 name = "cpu_example6"
 path = "examples/cpu_example6.rs"
 
+[[example]]
+name = "opencl_example0"
+path = "examples/opencl_example0.rs"
+
+[[example]]
+name = "opencl_example1"
+path = "examples/opencl_example1.rs"
+
+[[example]]
+name = "opencl_example2"
+path = "examples/opencl_example2.rs"
+
+[[example]]
+name = "opencl_example3"
+path = "examples/opencl_example3.rs"
+
+[[example]]
+name = "opencl_example4"
+path = "examples/opencl_example4.rs"
+
+[[example]]
+name = "opencl_example5"
+path = "examples/opencl_example5.rs"
+
+[[example]]
+name = "opencl_example6"
+path = "examples/opencl_example6.rs"
+
 [dependencies]
 thiserror = "1.0"
 static_init = "1.0"
