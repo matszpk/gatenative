@@ -35,7 +35,7 @@
 //! that can have even 256 threads. A special option treat whole group as processor's word,
 //! however in many cases is not usable.
 //!
-//! Circuit inputs and circuit's output data are organized as pack of processor words that
+//! Circuit inputs and circuit output data are organized as pack of processor words that
 //! groupped in greater stream. Data can contain more that packs if number of elements
 //! is greater than number of bits of processor word. Later, that form of data going to be
 //! called internal form.
@@ -54,7 +54,7 @@
 //! D(I)(X)B(Y) - Yth bit in Xth pack element in Ith group. That bit assigned to I*N+Y element
 //! (thread).
 //!
-//! By default ith pack element assigned to ith circuit input or ith circuit's output.
+//! By default ith pack element assigned to ith circuit input or ith circuit output.
 //! It can be changed by using input placement or output placement. Number of element in single
 //! execution should be divisible by number of bit of processor word.
 //!
@@ -80,7 +80,7 @@
 //! * Populating input code - code in the C language (or OpenCL C) that generate data to
 //!   populate for some specified circuit inputs.
 //! * Aggregating output code - code in the C language (or OpenCL C) that process output
-//!   data from some specified circuit's outputs.
+//!   data from some specified circuit outputs.
 //! * Word - generally is processor's word , however if `group_len` is set then
 //!   it is multipla: group_len*word_len.
 //! * Type in Code - processor's word used while executing simulation. It is used in native code
@@ -92,7 +92,7 @@
 //! * FuncWriter - trait defines object to write native code of function.
 //! * CodeWriter - trait defines object to write native code.
 //! * Data transformer - object to convert input data in internal form to external form.
-//! * Pack element - part of data that assigned to one circuit input or circuit's output.
+//! * Pack element - part of data that assigned to one circuit input or circuit output.
 //!
 //! Program should make few steps to run simulation:
 //! 1. Create builder.
@@ -225,7 +225,7 @@ pub use rayon;
 
 /// Main structure to describe code configuration.
 ///
-/// This structure provides assignment for circuit inputs and circuit's outputs,
+/// This structure provides assignment for circuit inputs and circuit outputs,
 /// a polulating code, an aggregating code, loop setup, buffer setup.
 ///
 /// Circuits inputs assigned to following sources:
@@ -235,7 +235,7 @@ pub use rayon;
 /// * populating code that can process data or data in additional buffer.
 ///
 /// Circuit outputs assigned to output data returned by execution call (as data).
-/// Some circuit's outputs can be excluded if aggregation code uses some outputs.
+/// Some circuit outputs can be excluded if aggregation code uses some outputs.
 ///
 /// All four sources for circuit inputs must be defined exclusively (no shared circuit inputs).
 ///
@@ -244,7 +244,7 @@ pub use rayon;
 /// total number of pack elements of input data. Map is list where index is circuit input index,
 /// and value is destination pack element. Similary, output placement contains list of
 /// placement and total number of pack elements of output data.
-/// Circuit inputs and circuit's outputs are numbered from 0 in original order in that list
+/// Circuit inputs and circuit outputs are numbered from 0 in original order in that list
 /// (if circuit have 5 inputs and 1,3 are assigned to element index then inputs 0,2,4 have
 /// numberes 0,1,3 after removal).
 ///
@@ -266,12 +266,12 @@ pub use rayon;
 /// exceeded.
 ///
 /// An aggregating output code (`aggr_output_code`) is code supplied by user and written in
-/// C language (or OpenCL C) to process circuit's outputs and store results into some destination.
-/// Next `aggr_to_buffer` field is list of circuit's outputs that will be processed by
-/// aggr_output_code. If `aggr_to_buffer` is not supplied then all circuit's outputs will be
-/// processed by aggr_output_code and no other circuit's outputs are assigned to data.
-/// If `aggr_to_buffer` is supplied then only listed circuit's outputs will be processed by
-/// aggr_output_code. Special field `exclude_outputs` allows to exclude circuit's outputs
+/// C language (or OpenCL C) to process circuit outputs and store results into some destination.
+/// Next `aggr_to_buffer` field is list of circuit outputs that will be processed by
+/// aggr_output_code. If `aggr_to_buffer` is not supplied then all circuit outputs will be
+/// processed by aggr_output_code and no other circuit outputs are assigned to data.
+/// If `aggr_to_buffer` is supplied then only listed circuit outputs will be processed by
+/// aggr_output_code. Special field `exclude_outputs` allows to exclude circuit outputs
 /// (mainly assigned to aggr_output_code). If aggr_to_buffer is supplied then aggr_output_code
 /// it should write data to additional buffer, otherwise to output data buffer.
 /// `aggr_output_len` specifies length of destination in 32-bit words. That length shouldn't be
@@ -282,10 +282,10 @@ pub use rayon;
 /// constraint if pop_input_code uses extra buffer (if pop_from_buffer is set).
 ///
 /// Interface for pop_input_code and aggr_output_code is simple.
-/// A variable `iX` refers to circuit input X. A variable `oX` refers to circuit's output X.
+/// A variable `iX` refers to circuit input X. A variable `oX` refers to circuit output X.
 /// Defined `TYPE_NAME` defines name of Type In Code. `TYPE_LEN` is length of type in bits.
 /// * `input` is input data normally holds circuit input data.
-/// * `output` is output data holds circuit's output data.
+/// * `output` is output data holds circuit output data.
 /// * `buffer` is additional buffer for a pop_input_code or an aggr_output_code.
 /// * `GET_U32(D,X,I)` gets ith 32-bit word stored in X variable of type Type In Code
 /// and store to `D` - 32-bit unsigned integer.
@@ -344,9 +344,9 @@ pub struct CodeConfig<'a> {
     /// List of circuit inputs that will be populated from additional source by
     /// pop_input_code.
     pub pop_from_buffer: Option<&'a [usize]>,
-    /// List of circuit's outputs that will be processed by aggr_output_code.
+    /// List of circuit outputs that will be processed by aggr_output_code.
     pub aggr_to_buffer: Option<&'a [usize]>,
-    /// List of circuit's outputs that will be excluded as output data.
+    /// List of circuit outputs that will be excluded as output data.
     pub exclude_outputs: Option<&'a [usize]>,
     /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
     /// will not be cleared before single execution (to save time) and content of this buffer
@@ -433,17 +433,17 @@ impl<'a> CodeConfig<'a> {
         self.pop_from_buffer = pop;
         self
     }
-    /// Sets list of circuit's outputs that will be processed to additional buffer.
+    /// Sets list of circuit outputs that will be processed to additional buffer.
     pub fn aggr_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
         self.aggr_to_buffer = aggr;
         self
     }
-    /// Sets lists of circuit's outputs that will be excluded from output data.
+    /// Sets lists of circuit outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
         self.exclude_outputs = excl;
         self
     }
-    /// Sets list of circuit's outputs that will be processed to additional buffer and
+    /// Sets list of circuit outputs that will be processed to additional buffer and
     /// will not be in output data.
     pub fn aggr_only_to_buffer(mut self, aggr: Option<&'a [usize]>) -> Self {
         self.aggr_to_buffer = aggr;
@@ -498,9 +498,9 @@ pub struct CodeConfigCopy {
     /// List of circuit inputs that will be populated from additional source by
     /// pop_input_code.
     pub pop_from_buffer: Option<Vec<usize>>,
-    /// List of circuit's outputs that will be processed by aggr_output_code.
+    /// List of circuit outputs that will be processed by aggr_output_code.
     pub aggr_to_buffer: Option<Vec<usize>>,
-    /// List of circuit's outputs that will be excluded as output data.
+    /// List of circuit outputs that will be excluded as output data.
     pub exclude_outputs: Option<Vec<usize>>,
     /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
     /// will not be cleared before single execution (to save time) and content of this buffer
@@ -611,17 +611,17 @@ impl CodeConfigCopy {
         self.pop_from_buffer = pop;
         self
     }
-    /// Sets list of circuit's outputs that will be processed to additional buffer.
+    /// Sets list of circuit outputs that will be processed to additional buffer.
     pub fn aggr_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
         self.aggr_to_buffer = aggr;
         self
     }
-    /// Sets lists of circuit's outputs that will be excluded from output data.
+    /// Sets lists of circuit outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<Vec<usize>>) -> Self {
         self.exclude_outputs = excl;
         self
     }
-    /// Sets list of circuit's outputs that will be processed to additional buffer and
+    /// Sets list of circuit outputs that will be processed to additional buffer and
     /// will not be in output data.
     pub fn aggr_only_to_buffer(mut self, aggr: Option<Vec<usize>>) -> Self {
         self.aggr_to_buffer = aggr.clone();
@@ -807,7 +807,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     /// `output_len` is number of circuit outputs or if output placement
     /// is provided a total number of pack elements for output data.
     /// `code_config` is code configuration. `output_vars` is list of bit_mapping
-    /// circuit's wires to variables. This version checks code configuration before call
+    /// circuit wires to variables. This version checks code configuration before call
     /// internal version.
     fn func_writer_with_config(
         &'a mut self,
@@ -953,7 +953,7 @@ pub trait CodeWriter<'a, FW: FuncWriter> {
     /// is provided a total number of pack elements for output data.
     /// `input_placement`, `output_placement` and `arg_inputs` are part of code configuration.
     /// `output_vars` is list of bit_mapping
-    /// circuit's wires to variables. This version checks code configuration before call
+    /// circuit wires to variables. This version checks code configuration before call
     /// internal version.
     fn func_writer(
         &'a mut self,
@@ -1188,11 +1188,11 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     type ErrorType;
     /// Returns number of circuit inputs.
     fn input_len(&self) -> usize;
-    /// Returns number of circuit's outputs.
+    /// Returns number of circuit outputs.
     fn output_len(&self) -> usize;
     /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
-    /// Returns number of pack elements for output data (for assigned circuit's outputs).
+    /// Returns number of pack elements for output data (for assigned circuit outputs).
     fn real_output_len(&self) -> usize;
 
     /// Returns element count based on input length in 32-bit words.
@@ -1446,7 +1446,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
         }
     }
 
-    /// Returns input data (for circuit's outputs) length in 32-bit words for given
+    /// Returns input data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize {
         assert_eq!(elem_num % (self.word_len() as usize), 0);
@@ -1462,7 +1462,7 @@ pub trait Executor<'a, DR: DataReader, DW: DataWriter, D: DataHolder<'a, DR, DW>
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
-    /// Returns output data holder (for circuit's outputs) with zeroed data with length matched to
+    /// Returns output data holder (for circuit outputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
@@ -1611,7 +1611,7 @@ where
     fn input_len(&self) -> usize;
     /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
-    /// Returns number of circuit's outputs.
+    /// Returns number of circuit outputs.
     fn output_len(&self) -> usize;
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
@@ -1732,7 +1732,7 @@ where
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data (for circuit's outputs) length in 32-bit words for given
+    /// Returns input data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
@@ -1741,7 +1741,7 @@ where
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
-    /// Returns output data holder (for circuit's outputs) with zeroed data with length matched to
+    /// Returns output data holder (for circuit outputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))
@@ -1893,7 +1893,7 @@ where
     fn input_len(&self) -> usize;
     /// Returns number of pack elements for input data (for assigned circuit inputs).
     fn real_input_len(&self) -> usize;
-    /// Returns number of circuit's outputs.
+    /// Returns number of circuit outputs.
     fn output_len(&self) -> usize;
 
     /// Executes many simulations. Input data passed by `input`. `init` is initial
@@ -1967,7 +1967,7 @@ where
     /// number of elements.
     fn input_data_len(&self, elem_num: usize) -> usize;
 
-    /// Returns input data (for circuit's outputs) length in 32-bit words for given
+    /// Returns input data (for circuit outputs) length in 32-bit words for given
     /// number of elements.
     fn output_data_len(&self, elem_num: usize) -> usize;
 
@@ -1976,7 +1976,7 @@ where
     fn new_data_input_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.input_data_len(elem_num))
     }
-    /// Returns output data holder (for circuit's outputs) with zeroed data with length matched to
+    /// Returns output data holder (for circuit outputs) with zeroed data with length matched to
     /// given number of elements.
     fn new_data_output_elems(&mut self, elem_num: usize) -> D {
         self.new_data(self.output_data_len(elem_num))

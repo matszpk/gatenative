@@ -148,7 +148,7 @@ fn load_input_later(
 //          optional: map of output variables: key - circuit output number
 //                   value - (id of allocated variable for this circuit output,
 //                            optional: original variable for first sign occurred in
-//                            circuit's output list)
+//                            circuit output list)
 fn gen_var_allocs<T, CT>(
     circuit: &CT,
     input_placement: Option<(&[usize], usize)>,
@@ -1167,7 +1167,7 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         }
     });
     // output_map - circuit output index map: key - original output index,
-    // value - output index after excluding circuit's outputs.
+    // value - output index after excluding circuit outputs.
     // destination is same order as key.
     let output_map = if let Some(excls) = code_config.exclude_outputs {
         let mut excls = excls.to_vec();

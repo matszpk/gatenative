@@ -428,7 +428,7 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
 }
 
 // Returns final placements in buffer:
-// First tuple for circuit input, second for circuit's output.
+// First tuple for circuit input, second for circuit output.
 // structure of input tuples:
 // * list of position in input:
 //   index - circuit input
@@ -436,7 +436,7 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
 // * length of bits in input buffer
 // structure of output tuples:
 // * list of position in output:
-//   index - circuit's output
+//   index - circuit output
 //   value - position in output buffer
 // * length of bits in output buffer
 
@@ -447,7 +447,7 @@ pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
 /// * list of position in input: index - circuit input, value - pack element index.
 /// * pack length
 /// structure of output tuples:
-/// * list of position in output: index - circuit's output, value - pack element index.
+/// * list of position in output: index - circuit output, value - pack element index.
 /// * pack length
 pub fn get_final_placements(
     input_len: usize,

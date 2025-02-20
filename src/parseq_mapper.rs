@@ -272,7 +272,7 @@ where
     pub fn real_input_len(&self) -> usize {
         self.par.real_input_len()
     }
-    /// Returns number of circuit's outputs.
+    /// Returns number of circuit outputs.
     pub fn output_len(&self) -> usize {
         self.par.output_len()
     }
@@ -847,7 +847,7 @@ pub struct ParSeqDynamicConfig<'a> {
     /// Length of source for aggr_output_code in 32-bit words. That length shouldn't be
     /// exceeded in pop_input_code code.
     pub aggr_output_len: Option<usize>,
-    /// List of circuit's outputs that will be excluded as output data.
+    /// List of circuit outputs that will be excluded as output data.
     pub exclude_outputs: Option<&'a [usize]>,
     /// Applied to BasicMapper and ParSeqMapper - if true then aggregated output buffer
     /// will not be cleared before single execution (to save time) and content of this buffer
@@ -896,7 +896,7 @@ impl<'a> ParSeqDynamicConfig<'a> {
         self.aggr_output_len = aggr;
         self
     }
-    /// Sets lists of circuit's outputs that will be excluded from output data.
+    /// Sets lists of circuit outputs that will be excluded from output data.
     pub fn exclude_outputs(mut self, excl: Option<&'a [usize]>) -> Self {
         self.exclude_outputs = excl;
         self
