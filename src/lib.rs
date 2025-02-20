@@ -240,11 +240,11 @@ pub use rayon;
 /// All four sources for circuit inputs must be defined exclusively (no shared circuit inputs).
 ///
 /// Input placement is setup refers to circuit inputs that don't have assginment to
-/// other sources than assignment to provided data. Input placement contains number of
-/// total number of pack elements of input data and its number of pack elements.
+/// other sources than assignment to provided data. Input placement contains map (list) and
+/// number of total number of pack elements of input data.
 /// Map is list where index is circuit input index, and value is pack element.
-/// Similary, output placement contains list of
-/// placement and total number of pack elements of output data.
+/// Similary, output placement contains map (list) of placement and total number of
+/// pack elements of output data.
 /// Circuit inputs and circuit outputs are numbered from 0 in original order in that list
 /// (if circuit have 5 inputs and 1,3 are assigned to element index then inputs 0,2,4 have
 /// numberes 0,1,3 after removal).
