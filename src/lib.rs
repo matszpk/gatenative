@@ -6,6 +6,8 @@
 //! mapped to one bit of word of processor. For modern CPU a word can have 64 to 512 bits.
 //! The library uses vector processing instruction to run simulation efficiently on CPU.
 //!
+//! Important: CPU builder and CPU executor have been tested only on Linux.
+//!
 //! Additional feature is ability to write code to process passing and processing inputs before
 //! calling the simulation and write code to process outputs after calling the simulation.
 //! The code that process inputs called as 'populating code' and the code that process

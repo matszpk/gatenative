@@ -711,7 +711,7 @@ __attribute__((aligned(32))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_AVX2,
 };
 
-/// Configuration for Intel AVX512 extensions (beta test).
+/// Configuration for Intel AVX512 extensions (UNTESTED).
 pub const CLANG_WRITER_INTEL_AVX512: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,
@@ -803,7 +803,7 @@ __attribute__((aligned(64))) = {
     transform_config: &CLANG_TRANSFORM_INTEL_AVX512,
 };
 
-/// Configuration for ARM NEON extensions (beta test).
+/// Configuration for ARM NEON extensions (UNTESTED).
 pub const CLANG_WRITER_ARM_NEON: CLangWriterConfig<'_> = CLangWriterConfig {
     func_modifier: None,
     init_index: None,

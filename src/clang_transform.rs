@@ -727,7 +727,7 @@ __attribute__((aligned(32))) = {
     collect_constants: true,
 };
 
-/// Configuration for Intel AVX512 extensions (beta test).
+/// Configuration for Intel AVX512 extensions (UNTESTED).
 pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m512i",
     comp_type_bit_len: 512,
@@ -915,7 +915,7 @@ __attribute__((aligned(64))) = {
     collect_constants: true,
 };
 
-/// Configuration for ARM NEON extensions (beta test).
+/// Configuration for ARM NEON extensions (UNTESTED).
 pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32x4_t",
     comp_type_bit_len: 128,
