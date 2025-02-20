@@ -400,6 +400,23 @@ pub(crate) static GATE_SYS_DUMP_SOURCE: bool = match env::var("GATE_SYS_DUMP_SOU
     _ => false,
 };
 
+#[dynamic]
+pub(crate) static GATE_SYS_UNTESTED: bool = match env::var("GATE_SYS_UNTESTED")
+    .unwrap_or("0".to_string())
+    .to_lowercase()
+    .as_str()
+{
+    "0" => false,
+    "1" => true,
+    "false" => false,
+    "true" => true,
+    "off" => false,
+    "on" => true,
+    "no" => false,
+    "yes" => true,
+    _ => false,
+};
+
 pub(crate) fn dump_source_code(name: &str, source: &[u8]) {
     if *GATE_SYS_DUMP_SOURCE {
         eprintln!(

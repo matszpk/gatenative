@@ -79,10 +79,11 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
     let mut have_fp = false;
     let mut is_armv8 = false;
     let mut have_flags = false;
+    let untested = *utils::GATE_SYS_UNTESTED;
     for rl in file.lines() {
         let line = rl?;
         if line.starts_with("flags") || line.starts_with("Features") {
-            if line.find(" avx512").is_some() {
+            if line.find(" avx512").is_some() && untested {
                 return Ok(CPUExtension::IntelAVX512);
             } else if line.find(" avx2").is_some() {
                 return Ok(CPUExtension::IntelAVX2);
@@ -94,7 +95,7 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
                 return Ok(CPUExtension::IntelSSE);
             } else if line.find(" mmx").is_some() {
                 return Ok(CPUExtension::IntelMMX);
-            } else if line.find(" neon").is_some() {
+            } else if line.find(" neon").is_some() && untested {
                 return Ok(CPUExtension::ARMNEON);
             } else if line.find(" fp").is_some() {
                 have_fp = true;
@@ -201,7 +202,7 @@ fn get_build_config(cpu_ext: CPUExtension) -> BuildConfig<'static> {
 
 // shared library object
 
-/// It holds current value of `GATE_SYSCC` environment variable.
+/// It holds current value of `GATE_SYS_CC` environment variable.
 #[dynamic]
 pub static GATE_SYS_CC: String = env::var("GATE_SYS_CC").unwrap_or("clang".to_string());
 
@@ -1557,21 +1558,25 @@ mod tests {
             ))
             .unwrap()
         );
-        assert_eq!(
-            CPUExtension::IntelAVX512,
-            detect_cpu_from_file(&mut BufReader::new(
-                &b"flags\t\t: fpu mmx sse sse2 avx avx512f"[..]
-            ))
-            .unwrap()
-        );
+        if *utils::GATE_SYS_UNTESTED {
+            assert_eq!(
+                CPUExtension::IntelAVX512,
+                detect_cpu_from_file(&mut BufReader::new(
+                    &b"flags\t\t: fpu mmx sse sse2 avx avx512f"[..]
+                ))
+                .unwrap()
+            );
+        }
         assert_eq!(
             CPUExtension::NoExtension,
             detect_cpu_from_file(&mut BufReader::new(&b"Features\t: fp"[..])).unwrap()
         );
-        assert_eq!(
-            CPUExtension::ARMNEON,
-            detect_cpu_from_file(&mut BufReader::new(&b"Features\t: fp neon"[..])).unwrap()
-        );
+        if *utils::GATE_SYS_UNTESTED {
+            assert_eq!(
+                CPUExtension::ARMNEON,
+                detect_cpu_from_file(&mut BufReader::new(&b"Features\t: fp neon"[..])).unwrap()
+            );
+        }
         assert_eq!(
             CPUExtension::NoExtension,
             detect_cpu_from_file(&mut BufReader::new(

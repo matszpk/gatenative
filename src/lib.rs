@@ -110,6 +110,7 @@
 //! The library reads environment variable to get important setup:
 //! * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
 //! * `GATE_SYS_CC` - path to C compiler that will be used while building code for simulation.
+//! * `GATE_SYS_UNTESTED` - if set to 1 then enables untested features (AVX512 support or other).
 //!
 //! Example 1:
 //! ```
@@ -117,7 +118,7 @@
 //! use gategen::gatesim::*;
 //! use gategen::intvar::*;
 //! use gatenative::{cpu_build_exec::*, *};
-//! 
+//!
 //! // generate circuit
 //! fn mul_add_circuit() -> Circuit<u32> {
 //!     call32(|| {
@@ -132,7 +133,7 @@
 //!         r.to_translated_circuit(a.concat(b).concat(c).iter())
 //!     })
 //! }
-//! 
+//!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Create circuit.
 //!     let circuit = mul_add_circuit();
