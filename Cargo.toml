@@ -30,6 +30,10 @@ path = "examples/cpu_example3.rs"
 name = "cpu_example4"
 path = "examples/cpu_example4.rs"
 
+[[example]]
+name = "cpu_example5"
+path = "examples/cpu_example5.rs"
+
 [dependencies]
 thiserror = "1.0"
 static_init = "1.0"
