@@ -274,6 +274,10 @@ pub use rayon;
 /// `aggr_output_len` specifies length of destination in 32-bit words. That length shouldn't be
 /// exceeded.
 ///
+/// Some constraints to usage of pop_input_code and pop_input_code. If pop_input_code doesn't
+/// use extra buffer (no pop_from_buffer set) then aggr_output_code must be too. Similar
+/// constraint if pop_input_code uses extra buffer (if pop_from_buffer is set).
+///
 /// Interface for pop_input_code and aggr_output_code is simple.
 /// A variable `iX` refers to circuit's input X. A variable `oX` refers to circuit's output X.
 /// Defined `TYPE_NAME` defines name of Type In Code. `TYPE_LEN` is length of type in bits.
@@ -1159,11 +1163,13 @@ where
 ///
 /// Executor determines number of elements to process by input data length
 /// or circuit inputs assigned to element index if no input data needed.
+/// Special case if pop_input_code uses input data as additional buffer then
+/// number of elements is 2^(input_len()-arg_input_len).
 ///
 /// Executor provides additional methods to create data holders:
 /// `new_data`, `new_data_from_vec`, `new_data_input_elems` and `new_data_output_elems`.
 /// These methods simplify creation of data.
-/// Input data is in internal and output data generated internal form too if
+/// Input data is in internal form and output data generated internal form too if
 /// no that data are not used by pop_input_code or aggr_output_code.
 /// Additional buffer and input/output data are stored by in raw form and pop_input_code
 /// and aggr_output_code must decode/encode them.
