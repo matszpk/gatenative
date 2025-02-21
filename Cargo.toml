@@ -39,6 +39,10 @@ name = "cpu_example6"
 path = "examples/cpu_example6.rs"
 
 [[example]]
+name = "cpu_example7"
+path = "examples/cpu_example7.rs"
+
+[[example]]
 name = "opencl_example0"
 path = "examples/opencl_example0.rs"
 
@@ -65,6 +69,10 @@ path = "examples/opencl_example5.rs"
 [[example]]
 name = "opencl_example6"
 path = "examples/opencl_example6.rs"
+
+[[example]]
+name = "opencl_example7"
+path = "examples/opencl_example7.rs"
 
 [dependencies]
 thiserror = "1.0"
