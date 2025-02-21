@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into_iter()
         .map(|d| OpenCLBuilder::new(&d, None))
         .collect::<Vec<_>>();
-    // Create basic map builder.
+    // Create ParSeq mapper builder.
     let mut builder = CPUOpenCLParSeqMapperBuilder::new(cpu_builder, opencl_builders);
     // Put transform helpers to code
     builder.transform_helpers();
