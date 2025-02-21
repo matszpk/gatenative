@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let circuit = mul_add_circuit();
     // Create builder.
     let builder = CPUBuilder::new(None);
-    // Create basic map builder.
+    // Create basic mapper builder.
     let mut builder = CPUParBasicMapperBuilder::new(builder);
     // Add circuit to builder.
     builder.add_with_config(

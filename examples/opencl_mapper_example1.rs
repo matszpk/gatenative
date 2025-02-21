@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let circuit = mul_add_circuit();
     // Create builder.
     let builder = OpenCLBuilder::new(&device, None);
-    // Create basic map builder.
+    // Create basic mapper builder.
     let mut builder = OpenCLBasicMapperBuilder::new(builder);
     // Put transform helpers to code
     builder.transform_helpers();
