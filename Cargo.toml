@@ -79,8 +79,16 @@ name = "cpu_mapper_example0"
 path = "examples/cpu_mapper_example0.rs"
 
 [[example]]
+name = "cpu_mapper_example1"
+path = "examples/cpu_mapper_example1.rs"
+
+[[example]]
 name = "opencl_mapper_example0"
 path = "examples/opencl_mapper_example0.rs"
+
+[[example]]
+name = "opencl_mapper_example1"
+path = "examples/opencl_mapper_example1.rs"
 
 [dependencies]
 thiserror = "1.0"
