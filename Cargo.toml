@@ -90,6 +90,14 @@ path = "examples/opencl_mapper_example0.rs"
 name = "opencl_mapper_example1"
 path = "examples/opencl_mapper_example1.rs"
 
+[[example]]
+name = "cpu_parmapper_example0"
+path = "examples/cpu_parmapper_example0.rs"
+
+[[example]]
+name = "cpu_parmapper_example1"
+path = "examples/cpu_parmapper_example1.rs"
+
 [dependencies]
 thiserror = "1.0"
 static_init = "1.0"
