@@ -173,6 +173,8 @@
 //!     Ok(())
 //! }
 //! ```
+//!
+//! Other examples in 'examples' directory.
 use gatesim::Circuit;
 
 use std::collections::HashSet;
