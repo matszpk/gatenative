@@ -22,6 +22,7 @@ fn mul_add_circuit() -> Circuit<u32> {
     })
 }
 
+// Example that simulate circuits on CPU and OpenCL devices simultaneously.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let devices = get_all_devices(CL_DEVICE_TYPE_GPU)?
         .into_iter()
@@ -34,6 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let circuit = mul_add_circuit();
     // Create CPU builder.
     let cpu_builder = CPUBuilder::new(None);
+    // Create OpenCL builders.
     let opencl_builders = devices
         .into_iter()
         .map(|d| OpenCLBuilder::new(&d, None))
