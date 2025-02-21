@@ -36,7 +36,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     builder.add_with_config(
         "mul_add",
         circuit,
-        CodeConfig::new().single_buffer(true).inner_loop(Some(10)),
+        CodeConfig::new()
+            // Sets single buffer
+            .single_buffer(true)
+            // Set inner loop - executes 10 times circuit passing input as previous output.
+            .inner_loop(Some(10)),
     );
     let mut execs = builder.build()?;
     // Get input data transformer that converts 96-bit structure into 48-bit circuit input:
