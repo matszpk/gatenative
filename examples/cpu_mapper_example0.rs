@@ -56,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Make sum of array elements.
             sum + output.into_iter().map(|x| u64::from(x)).sum::<u64>()
         },
+        // No stop.
         |_| false,
     )?;
     println!("Sum: {}", output);
