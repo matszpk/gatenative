@@ -113,7 +113,7 @@
 //! * `GATE_SYS_UNTESTED` - if set to 1 then enables untested features (AVX512 support or other).
 //!
 //! Example 1:
-//! ```
+//! ```rust
 //! use gategen::boolvar::*;
 //! use gategen::gatesim::*;
 //! use gategen::intvar::*;

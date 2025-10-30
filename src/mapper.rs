@@ -5,7 +5,7 @@
 //! inner builder that builds and creates executor to run simulation execution.
 //!
 //! Example:
-//! ```
+//! ```rust
 //! use gategen::boolvar::*;
 //! use gategen::gatesim::*;
 //! use gategen::intvar::*;
