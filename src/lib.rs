@@ -515,7 +515,7 @@ pub struct CodeConfigCopy {
 
 impl CodeConfigCopy {
     /// Makes reference from this copy.
-    pub fn to_ref(&self) -> CodeConfig {
+    pub fn to_ref(&self) -> CodeConfig<'_> {
         CodeConfig {
             input_placement: self.input_placement.as_ref().map(|x| (x.0.as_slice(), x.1)),
             output_placement: self
