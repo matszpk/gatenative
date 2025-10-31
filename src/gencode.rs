@@ -173,6 +173,7 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    println!("NormalOrder0");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -395,6 +396,335 @@ where
                     }
                 }
                 stack.pop();
+            }
+        }
+    }
+
+    // for outputs just
+    for (o, _) in circuit.outputs().iter() {
+        if *o < input_len_t {
+            single_var_alloc(&mut var_alloc, &mut alloc_vars, *o);
+            let outlist = out_map.get(o).unwrap();
+            if single_buffer {
+                for oi in outlist {
+                    // check output mapping to not already inputs
+                    if let Some(out_p) = get_bit_place(output_placement, output_map, *oi) {
+                        if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                            // if input_bit under output placement is not read
+                            if !input_already_read[*input_bit] {
+                                // println!(
+                                //     "Not already alloc: {}, {} {}: {}",
+                                //     usize::try_from(*o).unwrap(),
+                                //     *oi,
+                                //     input_bit,
+                                //     input_already_read[*input_bit]
+                                // );
+                                // just input bit must be read now
+                                single_var_alloc(
+                                    &mut var_alloc,
+                                    &mut alloc_vars,
+                                    T::try_from(*input_bit).unwrap(),
+                                );
+                                input_already_read[*input_bit] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let Some(output_vars) = output_vars.as_mut() {
+                let mut use_normal = false;
+                let mut use_neg = false;
+                let circ_outputs = circuit.outputs();
+                let out_var =
+                    usize::try_from(alloc_vars[usize::try_from(*o).unwrap()].unwrap()).unwrap();
+                // check whether both normal and neg
+                for oi in outlist {
+                    if output_vars.contains_key(oi) {
+                        if circ_outputs[*oi].1 {
+                            use_neg = true;
+                        } else {
+                            use_normal = true;
+                        }
+                    }
+                }
+                // allocate neg_var (for negated out_var)
+                // It is using first occurred sign in output list ordered by
+                // circuit outputs index. Main goal is keeping sign of output
+                // if it can be changed by circuit conversion.
+                let mut first_neg = None;
+                let mut output_used_later = false;
+                for oi in outlist {
+                    if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        if first_neg.is_none() {
+                            first_neg = Some(circ_outputs[*oi].1);
+                        }
+                        if use_neg && use_normal {
+                            // it will be allocated later after releasing other variables
+                            outputs_awaits_alloc.insert(*oi, (out_var, !first_neg.unwrap()));
+                            if circ_outputs[*oi].1 == first_neg.unwrap() {
+                                // if first sign occurence
+                                *out_var_entry = (out_var, None);
+                            }
+                        } else {
+                            *out_var_entry = (out_var, None);
+                        }
+                        output_used_later = true;
+                    }
+                }
+                if !output_used_later {
+                    // if this output not used later then use in this
+                    single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
+                }
+            } else {
+                single_var_use(&mut var_alloc, &alloc_vars, var_usage, *o);
+            }
+        }
+    }
+
+    if !outputs_awaits_alloc.is_empty() {
+        // allocate now pending outputs
+        let mut second_var_for_outputs = BTreeMap::new();
+        for (_, (out_var, _)) in &outputs_awaits_alloc {
+            second_var_for_outputs.insert(out_var, None);
+        }
+        for (_, v) in &mut second_var_for_outputs {
+            *v = Some(usize::try_from(var_alloc.alloc()).unwrap());
+        }
+        let circ_outputs = circuit.outputs();
+        if let Some(output_vars) = output_vars.as_mut() {
+            for (oi, (out_var, second_neg)) in outputs_awaits_alloc.iter() {
+                if circ_outputs[*oi].1 == *second_neg {
+                    if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        *out_var_entry = (
+                            second_var_for_outputs.get(out_var).unwrap().unwrap(),
+                            Some(*out_var),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    (
+        alloc_vars
+            .into_iter()
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>(),
+        var_alloc.len(),
+        output_vars,
+    )
+}
+
+// input_map - input map after filtering arg inputs, elem inputs and other.
+// keep_output_vars - keep output variables to later usage.
+//          if supplied empty array then use all circuits outputs as aggr outputs.
+// pop_input - include rest of inputs (without arg inputs, elem inputs) to be loaded
+//    from populating code. If supplied empty array then use all circuit inputs as pop inputs.
+// returns: variable id after allocation: index - wire index (circuit input and gate outputs)
+//          value - id of allocated variable
+//          size of allocation (number of allocated variables)
+//          optional: map of output variables: key - circuit output number
+//                   value - (id of allocated variable for this circuit output,
+//                            optional: original variable for first sign occurred in
+//                            circuit output list)
+fn gen_var_allocs_wire_order<T, CT>(
+    circuit: &CT,
+    input_placement: Option<(&[usize], usize)>,
+    output_placement: Option<(&[usize], usize)>,
+    var_usage: &mut [T],
+    single_buffer: bool,
+    input_map: Option<&HashMap<usize, usize>>,
+    keep_output_vars: Option<&[usize]>,
+    pop_inputs: Option<&[usize]>,
+    output_map: Option<&HashMap<usize, usize>>,
+    inner_loop: bool,
+) -> (
+    Vec<T>,
+    usize,
+    Option<BTreeMap<usize, (usize, Option<usize>)>>,
+)
+where
+    CT: CircuitTrait<T>,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    println!("WireOrder0");
+    let single_buffer = single_buffer
+        && !(inner_loop
+            || (keep_output_vars.map(|x| x.is_empty()).unwrap_or(false)
+                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
+    let input_len_t = circuit.input_len();
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let output_len = circuit.outputs().len();
+    let gate_num = circuit.len();
+    let mut alloc_vars: Vec<Option<T>> = vec![None; input_len + gate_num];
+    let mut var_alloc = VarAllocator::<T>::new();
+    let mut output_vars = if let Some(vars) = keep_output_vars {
+        if vars.is_empty() {
+            Some(BTreeMap::from_iter((0..output_len).map(|i| (i, (0, None)))))
+        } else {
+            Some(BTreeMap::from_iter(
+                vars.into_iter().map(|i| (*i, (0, None))),
+            ))
+        }
+    } else if inner_loop {
+        Some(BTreeMap::from_iter((0..output_len).map(|i| (i, (0, None)))))
+    } else {
+        None
+    };
+
+    // out_map is list of circuit nodes with list of connected circuit outputs.
+    // key - node index (wire index), value - list of connected circuit outputs.
+    let out_map = {
+        let mut out_map = HashMap::<T, Vec<usize>>::new();
+        for (i, (o, _)) in circuit.outputs().iter().enumerate() {
+            if let Some(outlist) = out_map.get_mut(o) {
+                outlist.push(i);
+            } else {
+                out_map.insert(*o, vec![i]);
+            }
+        }
+        out_map
+    };
+    // conversion from input placement to original input bit
+    let input_orig_index_map =
+        get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
+
+    let mut input_already_read = vec![false; input_len];
+
+    // list of outputs awaits allocation for second value
+    let mut outputs_awaits_alloc = BTreeMap::new();
+
+    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    // if populated input then allocate variables as first to avoid next allocations
+    // if inner_loop allocate all variables as first to allow initialization
+    if inner_loop {
+        let pop_inputs = pop_inputs.unwrap_or(&[]);
+        for i in 0..input_len {
+            if is_in_input_map(i) || pop_inputs.iter().any(|x| *x == i) {
+                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+                input_already_read[i] = true;
+            }
+        }
+    } else if let Some(pop_inputs) = pop_inputs {
+        if !pop_inputs.is_empty() {
+            for i in pop_inputs {
+                single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(*i).unwrap());
+                input_already_read[*i] = true;
+            }
+        } else {
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    single_var_alloc(&mut var_alloc, &mut alloc_vars, T::try_from(i).unwrap());
+                    input_already_read[i] = true;
+                }
+            }
+        }
+    }
+
+    //
+    for node_index in 0..circuit.len() {
+        let gi_num = circuit.gate_input_num(node_index);
+        // allocate and use
+        // allocate circuit inputs now if not allocated
+        for ii in 0..gi_num {
+            let gi0t = circuit.gate_input(node_index, ii);
+            if gi0t < input_len_t {
+                let gi0 = usize::try_from(gi0t).unwrap();
+                if load_input_later(input_map, pop_inputs, gi0) && !input_already_read[gi0] {
+                    single_var_alloc(&mut var_alloc, &mut alloc_vars, gi0t);
+                    input_already_read[gi0] = true;
+                }
+            }
+        }
+        for ii in 0..gi_num {
+            single_var_use(
+                &mut var_alloc,
+                &alloc_vars,
+                var_usage,
+                circuit.gate_input(node_index, ii),
+            );
+        }
+        let tnode = T::try_from(node_index + input_len).unwrap();
+        single_var_alloc(&mut var_alloc, &mut alloc_vars, tnode);
+        if let Some(outlist) = out_map.get(&tnode) {
+            if single_buffer {
+                for oi in outlist {
+                    // check output mapping to not already inputs
+                    if let Some(out_p) = get_bit_place(output_placement, output_map, *oi) {
+                        if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                            // if input_bit under output placement is not read
+                            if !input_already_read[*input_bit] {
+                                // println!(
+                                //     "Not already alloc: {}, {} {}: {}",
+                                //     node_index + input_len,
+                                //     *oi,
+                                //     input_bit,
+                                //     input_already_read[*input_bit]
+                                // );
+                                // just input bit must be read now
+                                single_var_alloc(
+                                    &mut var_alloc,
+                                    &mut alloc_vars,
+                                    T::try_from(*input_bit).unwrap(),
+                                );
+                                input_already_read[*input_bit] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            // use output at this point
+            if let Some(output_vars) = output_vars.as_mut() {
+                let mut use_normal = false;
+                let mut use_neg = false;
+                let circ_outputs = circuit.outputs();
+                let out_var =
+                    usize::try_from(alloc_vars[usize::try_from(tnode).unwrap()].unwrap()).unwrap();
+                // check whether both normal and neg
+                for oi in outlist {
+                    if output_vars.contains_key(oi) {
+                        if circ_outputs[*oi].1 {
+                            use_neg = true;
+                        } else {
+                            use_normal = true;
+                        }
+                    }
+                }
+                // allocate neg_var (for negated out_var)
+                // It is using first occurred sign in output list ordered by
+                // circuit outputs index. Main goal is keeping sign of output
+                // if it can be changed by circuit conversion.
+                let mut first_neg = None;
+                let mut output_used_later = false;
+                for oi in outlist {
+                    if let Some(out_var_entry) = output_vars.get_mut(oi) {
+                        if first_neg.is_none() {
+                            first_neg = Some(circ_outputs[*oi].1);
+                        }
+                        if use_neg && use_normal {
+                            // it will be allocated later after releasing other variables
+                            outputs_awaits_alloc.insert(*oi, (out_var, !first_neg.unwrap()));
+                            if circ_outputs[*oi].1 == first_neg.unwrap() {
+                                // if first sign occurence
+                                *out_var_entry = (out_var, None);
+                            }
+                        } else {
+                            *out_var_entry = (out_var, None);
+                        }
+                        output_used_later = true;
+                    }
+                }
+                if !output_used_later {
+                    // if this output not used later then use in this
+                    single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
+                }
+            } else {
+                single_var_use(&mut var_alloc, &alloc_vars, var_usage, tnode);
             }
         }
     }
@@ -821,6 +1151,7 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
+    println!("NormalOrder1");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -1082,6 +1413,242 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
     }
 }
 
+fn gen_func_code_for_circuit_wire_order<FW: FuncWriter, T, CT>(
+    writer: &mut FW,
+    circuit: &CT,
+    input_placement: Option<(&[usize], usize)>,
+    output_placement: Option<(&[usize], usize)>,
+    var_allocs: &[T],
+    var_num: usize,
+    single_buffer: bool,
+    input_map: Option<&HashMap<usize, usize>>,
+    output_vars: Option<&BTreeMap<usize, (usize, Option<usize>)>>,
+    pop_inputs: Option<&[usize]>,
+    store_output_vars_always: bool,
+    output_map: Option<&HashMap<usize, usize>>,
+    inner_loop: bool,
+    have_aggr_code: bool,
+) where
+    CT: CircuitTrait<T>,
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    println!("WireOrder1");
+    // store_output_vars_always - aggr_to_buffer
+    let single_buffer = single_buffer
+        && !(inner_loop
+            || (output_vars.is_some()
+                && !store_output_vars_always
+                && pop_inputs.map(|x| x.is_empty()).unwrap_or(false)));
+    let input_len_t = circuit.input_len();
+    let input_len = usize::try_from(input_len_t).unwrap();
+    let gate_num = circuit.len();
+
+    // out_map is list of circuit nodes with list of connected circuit outputs.
+    // key - node index (wire index), value - list of connected circuit outputs.
+    let out_map = {
+        let mut out_map = HashMap::<T, Vec<(usize, bool)>>::new();
+        for (i, (o, n)) in circuit.outputs().iter().enumerate() {
+            if let Some(outlist) = out_map.get_mut(o) {
+                outlist.push((i, *n));
+            } else {
+                out_map.insert(*o, vec![(i, *n)]);
+            }
+        }
+        out_map
+    };
+
+    // conversion from input placement to original input bit
+    let input_orig_index_map =
+        get_input_orig_index_map(input_len, input_placement, single_buffer, input_map);
+    let mut used_inputs = vec![false; input_len];
+    let is_in_input_map = |i| input_map.map(|im| im.contains_key(&i)).unwrap_or(true);
+    let is_in_output_map = |i| output_map.map(|om| om.contains_key(&i)).unwrap_or(true);
+    // if populated input then allocate variables as first to avoid next allocations
+    // if inner_loop allocate all variables as first to allow initialization
+    if inner_loop {
+        let pop_input_empty = pop_inputs.map(|x| x.is_empty()).unwrap_or(false);
+        if !pop_input_empty {
+            // only if pop_input map is not empty (if not all pop_input from input)
+            writer.gen_if_loop_start();
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    writer.gen_load(usize::try_from(var_allocs[i]).unwrap(), i);
+                    used_inputs[i] = true;
+                }
+            }
+            writer.gen_end_if();
+        }
+    } else if let Some(pop_inputs) = pop_inputs {
+        if !pop_inputs.is_empty() {
+            for i in pop_inputs {
+                used_inputs[*i] = true;
+            }
+        } else {
+            for i in 0..input_len {
+                if is_in_input_map(i) {
+                    used_inputs[i] = true;
+                }
+            }
+        }
+    }
+
+    for node_index in 0..gate_num {
+        let gi_num = circuit.gate_input_num(node_index);
+        for ii in 0..gi_num {
+            let gi0 = usize::try_from(circuit.gate_input(node_index, ii)).unwrap();
+            if gi0 < input_len && !used_inputs[gi0] {
+                if load_input_later(input_map, pop_inputs, gi0) {
+                    writer.gen_load(usize::try_from(var_allocs[gi0]).unwrap(), gi0);
+                    used_inputs[gi0] = true;
+                }
+            }
+        }
+        let (instr_op, vnegs) = circuit.gate_op(node_index);
+        // dst and arg
+        let dst = usize::try_from(var_allocs[input_len + node_index]).unwrap();
+        let arg0 = usize::try_from(
+            var_allocs[usize::try_from(circuit.gate_input(node_index, 0)).unwrap()],
+        )
+        .unwrap();
+        let arg1 = usize::try_from(
+            var_allocs[usize::try_from(circuit.gate_input(node_index, 1)).unwrap()],
+        )
+        .unwrap();
+        if instr_op.arg_num() == 2 {
+            writer.gen_op(instr_op, vnegs, dst, arg0, arg1);
+        } else if instr_op.arg_num() == 3 {
+            writer.gen_op3(
+                instr_op,
+                dst,
+                arg0,
+                arg1,
+                usize::try_from(
+                    var_allocs[usize::try_from(circuit.gate_input(node_index, 2)).unwrap()],
+                )
+                .unwrap(),
+            );
+        } else {
+            panic!("Unsupported!");
+        }
+        let tnode = T::try_from(input_len + node_index).unwrap();
+        if let Some(outlist) = out_map.get(&tnode) {
+            for (oi, on) in outlist {
+                if single_buffer {
+                    // check output mapping to not already inputs
+                    if let Some(out_p) = get_bit_place(output_placement, output_map, *oi) {
+                        if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                            // if input_bit under output placement is not read
+                            if !used_inputs[*input_bit] {
+                                writer.gen_load(
+                                    usize::try_from(var_allocs[*input_bit]).unwrap(),
+                                    *input_bit,
+                                );
+                                used_inputs[*input_bit] = true;
+                            }
+                        }
+                    }
+                }
+                // if output then store
+                if is_in_output_map(*oi) && (store_output_vars_always || output_vars.is_none()) {
+                    writer.gen_store(
+                        *on,
+                        *oi,
+                        usize::try_from(var_allocs[input_len + node_index]).unwrap(),
+                    );
+                }
+            }
+        }
+    }
+
+    let mut out_negs = HashSet::new();
+    let mut out_negs_2 = HashSet::new();
+    for (oi, (o, on)) in circuit.outputs().iter().enumerate() {
+        if *o < input_len_t {
+            if single_buffer {
+                // check output mapping to not already inputs
+                if let Some(out_p) = get_bit_place(output_placement, output_map, oi) {
+                    if let Some(input_bit) = input_orig_index_map.get(&out_p) {
+                        // if input_bit under output placement is not read
+                        if !used_inputs[*input_bit] {
+                            writer.gen_load(
+                                usize::try_from(var_allocs[*input_bit]).unwrap(),
+                                *input_bit,
+                            );
+                            used_inputs[*input_bit] = true;
+                        }
+                    }
+                }
+            }
+            let ou = usize::try_from(*o).unwrap();
+            if !used_inputs[ou] {
+                writer.gen_load(usize::try_from(var_allocs[ou]).unwrap(), ou);
+                used_inputs[ou] = true;
+            }
+            if is_in_output_map(oi) && (store_output_vars_always || output_vars.is_none()) {
+                writer.gen_store(
+                    *on,
+                    oi,
+                    usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap(),
+                );
+            }
+        }
+    }
+    for (oi, (o, on)) in circuit.outputs().iter().enumerate() {
+        if let Some(output_vars) = output_vars {
+            if let Some(out_var_entry) = output_vars.get(&oi) {
+                if !out_negs.contains(&o) && *on && out_var_entry.1.is_none() {
+                    // only if negation neeeded and is first occurred sign.
+                    // negate output
+                    let v = usize::try_from(var_allocs[usize::try_from(*o).unwrap()]).unwrap();
+                    writer.gen_not(v, v);
+                    out_negs.insert(o);
+                }
+                if !out_negs_2.contains(&o) {
+                    if let Some(orig_var) = out_var_entry.1 {
+                        writer.gen_not(out_var_entry.0, orig_var);
+                        out_negs_2.insert(o);
+                    }
+                }
+            }
+        }
+    }
+    if inner_loop {
+        writer.gen_aggr_output_code();
+        writer.gen_if_loop_end();
+        if !have_aggr_code || store_output_vars_always {
+            for oi in 0..circuit.outputs().len() {
+                // if inner loop and if (not aggr_output_code without list)
+                //   and if not excluded
+                if let Some(output_vars) = output_vars {
+                    if let Some(out_var_entry) = output_vars.get(&oi) {
+                        if is_in_output_map(oi) {
+                            writer.gen_store(false, oi, out_var_entry.0);
+                        }
+                    }
+                }
+            }
+        }
+        writer.gen_else();
+        gen_copy_to_input(
+            writer,
+            input_len,
+            circuit.outputs().len(),
+            input_placement,
+            output_placement,
+            var_allocs,
+            var_num,
+            input_map,
+            output_map,
+            output_vars.unwrap(),
+        );
+        writer.gen_end_if();
+    }
+}
+
 /// Generates function code for single circuit including code configuration.
 ///
 /// This function generates code for circuit. It uses code writer to write that code.
@@ -1091,11 +1658,12 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
 /// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
 /// If `optimize_negs` is true then while generating negations will be optimized for
 /// standard boolean operations. `code_config` holds code configuration.
-pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+pub fn generate_code_with_config_and_wire_order<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     writer: &'a mut CW,
     name: &'a str,
     circuit: Circuit<T>,
     optimize_negs: bool,
+    wire_order: bool,
     code_config: CodeConfig<'a>,
 ) where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
@@ -1188,29 +1756,55 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
 
     if have_lop3 {
         let vlop3circuit = VLOP3Circuit::from(circuit.clone());
-        let (var_allocs, var_num, output_vars) = gen_var_allocs(
-            &vlop3circuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &mut gen_var_usage(&vlop3circuit),
-            code_config.single_buffer,
-            input_map.as_ref(),
-            if code_config.inner_loop.is_some() {
-                // enable all outputs as used after gate calculation
-                Some(&[])
-            } else if code_config.aggr_output_code.is_some() {
-                if code_config.aggr_to_buffer.is_some() {
-                    code_config.aggr_to_buffer
-                } else {
+        let (var_allocs, var_num, output_vars) = if wire_order {
+            gen_var_allocs_wire_order(
+                &vlop3circuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vlop3circuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
                     Some(&[])
-                }
-            } else {
-                None
-            },
-            pop_inputs,
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-        );
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        } else {
+            gen_var_allocs(
+                &vlop3circuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vlop3circuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
+                    Some(&[])
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        };
 
         let input_len = usize::try_from(circuit.input_len()).unwrap();
         let mut func_writer = writer.func_writer_with_config(
@@ -1224,49 +1818,94 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         );
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
-        gen_func_code_for_circuit(
-            &mut func_writer,
-            &vlop3circuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &var_allocs,
-            var_num,
-            code_config.single_buffer,
-            input_map.as_ref(),
-            output_vars.as_ref(),
-            pop_inputs,
-            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-            code_config.aggr_output_code.is_some(),
-        );
+        if wire_order {
+            gen_func_code_for_circuit_wire_order(
+                &mut func_writer,
+                &vlop3circuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        } else {
+            gen_func_code_for_circuit(
+                &mut func_writer,
+                &vlop3circuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        }
 
         func_writer.func_end();
     } else if impl_op || nimpl_op {
         let vcircuit = VCircuit::to_op_and_ximpl_circuit(circuit.clone(), nimpl_op);
-        let (var_allocs, var_num, output_vars) = gen_var_allocs(
-            &vcircuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &mut gen_var_usage(&vcircuit),
-            code_config.single_buffer,
-            input_map.as_ref(),
-            if code_config.inner_loop.is_some() {
-                // enable all outputs as used after gate calculation
-                Some(&[])
-            } else if code_config.aggr_output_code.is_some() {
-                if code_config.aggr_to_buffer.is_some() {
-                    code_config.aggr_to_buffer
-                } else {
+        let (var_allocs, var_num, output_vars) = if wire_order {
+            gen_var_allocs_wire_order(
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vcircuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
                     Some(&[])
-                }
-            } else {
-                None
-            },
-            pop_inputs,
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-        );
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        } else {
+            gen_var_allocs(
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vcircuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
+                    Some(&[])
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        };
 
         let input_len = usize::try_from(circuit.input_len()).unwrap();
         let mut func_writer = writer.func_writer_with_config(
@@ -1281,22 +1920,41 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
 
-        gen_func_code_for_circuit(
-            &mut func_writer,
-            &vcircuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &var_allocs,
-            var_num,
-            code_config.single_buffer,
-            input_map.as_ref(),
-            output_vars.as_ref(),
-            pop_inputs,
-            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-            code_config.aggr_output_code.is_some(),
-        );
+        if wire_order {
+            gen_func_code_for_circuit_wire_order(
+                &mut func_writer,
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        } else {
+            gen_func_code_for_circuit(
+                &mut func_writer,
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        }
 
         func_writer.func_end();
     } else {
@@ -1304,29 +1962,55 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         if optimize_negs {
             vcircuit.optimize_negs();
         }
-        let (var_allocs, var_num, output_vars) = gen_var_allocs(
-            &vcircuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &mut gen_var_usage(&vcircuit),
-            code_config.single_buffer,
-            input_map.as_ref(),
-            if code_config.inner_loop.is_some() {
-                // enable all outputs as used after gate calculation
-                Some(&[])
-            } else if code_config.aggr_output_code.is_some() {
-                if code_config.aggr_to_buffer.is_some() {
-                    code_config.aggr_to_buffer
-                } else {
+        let (var_allocs, var_num, output_vars) = if wire_order {
+            gen_var_allocs_wire_order(
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vcircuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
                     Some(&[])
-                }
-            } else {
-                None
-            },
-            pop_inputs,
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-        );
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        } else {
+            gen_var_allocs(
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &mut gen_var_usage(&vcircuit),
+                code_config.single_buffer,
+                input_map.as_ref(),
+                if code_config.inner_loop.is_some() {
+                    // enable all outputs as used after gate calculation
+                    Some(&[])
+                } else if code_config.aggr_output_code.is_some() {
+                    if code_config.aggr_to_buffer.is_some() {
+                        code_config.aggr_to_buffer
+                    } else {
+                        Some(&[])
+                    }
+                } else {
+                    None
+                },
+                pop_inputs,
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+            )
+        };
 
         let input_len = usize::try_from(circuit.input_len()).unwrap();
         let mut func_writer = writer.func_writer_with_config(
@@ -1341,25 +2025,115 @@ pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
         func_writer.func_start();
         func_writer.alloc_vars(var_num + usize::from(code_config.inner_loop.is_some()));
 
-        gen_func_code_for_circuit(
-            &mut func_writer,
-            &vcircuit,
-            code_config.input_placement,
-            code_config.output_placement,
-            &var_allocs,
-            var_num,
-            code_config.single_buffer,
-            input_map.as_ref(),
-            output_vars.as_ref(),
-            pop_inputs,
-            code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
-            output_map.as_ref(),
-            code_config.inner_loop.is_some(),
-            code_config.aggr_output_code.is_some(),
-        );
+        if wire_order {
+            gen_func_code_for_circuit_wire_order(
+                &mut func_writer,
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        } else {
+            gen_func_code_for_circuit(
+                &mut func_writer,
+                &vcircuit,
+                code_config.input_placement,
+                code_config.output_placement,
+                &var_allocs,
+                var_num,
+                code_config.single_buffer,
+                input_map.as_ref(),
+                output_vars.as_ref(),
+                pop_inputs,
+                code_config.aggr_output_code.is_some() && code_config.aggr_to_buffer.is_some(),
+                output_map.as_ref(),
+                code_config.inner_loop.is_some(),
+                code_config.aggr_output_code.is_some(),
+            );
+        }
 
         func_writer.func_end();
     }
+}
+
+/// Generates function code for single circuit.
+///
+/// This function generates code for circuit. It uses code writer to write that code.
+/// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
+/// NVIDIA LOP3 operations.
+///
+/// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
+/// If `optimize_negs` is true then while generating negations will be optimized for
+/// standard boolean operations. `input_placement` and `output_placement` are placements.
+/// `arg_inputs` is list of circuit inputs assigned to arg input.
+pub fn generate_code_with_wire_order<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+    writer: &'a mut CW,
+    name: &'a str,
+    circuit: Circuit<T>,
+    optimize_negs: bool,
+    wire_order: bool,
+    input_placement: Option<(&'a [usize], usize)>,
+    output_placement: Option<(&'a [usize], usize)>,
+    arg_inputs: Option<&'a [usize]>,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    generate_code_with_config_and_wire_order(
+        writer,
+        name,
+        circuit,
+        optimize_negs,
+        wire_order,
+        CodeConfig::new()
+            .input_placement(input_placement)
+            .output_placement(output_placement)
+            .arg_inputs(arg_inputs),
+    );
+}
+
+/// Generates function code for single circuit including code configuration.
+///
+/// This function generates code for circuit. It uses code writer to write that code.
+/// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
+/// NVIDIA LOP3 operations.
+///
+/// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
+/// If `optimize_negs` is true then while generating negations will be optimized for
+/// standard boolean operations. `code_config` holds code configuration.
+pub fn generate_code_with_config<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
+    writer: &'a mut CW,
+    name: &'a str,
+    circuit: Circuit<T>,
+    optimize_negs: bool,
+    code_config: CodeConfig<'a>,
+) where
+    T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+    T: Default + TryFrom<usize>,
+    <T as TryFrom<usize>>::Error: Debug,
+    usize: TryFrom<T>,
+    <usize as TryFrom<T>>::Error: Debug,
+{
+    generate_code_with_config_and_wire_order(
+        writer,
+        name,
+        circuit,
+        optimize_negs,
+        false,
+        code_config,
+    )
 }
 
 /// Generates function code for single circuit.
@@ -1387,16 +2161,16 @@ pub fn generate_code<'a, FW: FuncWriter, CW: CodeWriter<'a, FW>, T>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    generate_code_with_config(
+    generate_code_with_wire_order(
         writer,
         name,
         circuit,
         optimize_negs,
-        CodeConfig::new()
-            .input_placement(input_placement)
-            .output_placement(output_placement)
-            .arg_inputs(arg_inputs),
-    );
+        false,
+        input_placement,
+        output_placement,
+        arg_inputs,
+    )
 }
 
 #[cfg(test)]
@@ -2304,6 +3078,967 @@ mod tests {
                 ]))
             ),
             gen_var_allocs(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 4, 5, 6, 8]),
+                None,
+                None,
+                false,
+            )
+        );
+    }
+
+    fn gen_var_allocs_wire_order_old<T>(
+        circuit: &Circuit<T>,
+        input_placement: Option<(&[usize], usize)>,
+        output_placement: Option<(&[usize], usize)>,
+        var_usage: &mut [T],
+        single_buffer: bool,
+        input_map: Option<&HashMap<usize, usize>>,
+        keep_output_vars: Option<&[usize]>,
+        pop_inputs: Option<&[usize]>,
+    ) -> (Vec<T>, usize, Option<Vec<(usize, Option<usize>)>>)
+    where
+        T: Clone + Copy + Ord + PartialEq + Eq + Hash,
+        T: Default + TryFrom<usize>,
+        <T as TryFrom<usize>>::Error: Debug,
+        usize: TryFrom<T>,
+        <usize as TryFrom<T>>::Error: Debug,
+    {
+        let (v, l, m) = gen_var_allocs_wire_order(
+            circuit,
+            input_placement,
+            output_placement,
+            var_usage,
+            single_buffer,
+            input_map,
+            keep_output_vars,
+            pop_inputs,
+            None,
+            false,
+        );
+        (v, l, m.map(|x| x.values().copied().collect::<Vec<_>>()))
+    }
+
+    #[test]
+    fn test_gen_var_usage_and_var_allocs_wire_order() {
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 2, 0, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                None
+            )
+        );
+        // keep outputs
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(vec![(4, None), (0, None)])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+
+        // with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                Some(&[])
+            )
+        );
+
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true), (4, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(vec![(4, None), (0, None), (1, Some(4))])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+        // with various keep_output_vars
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([(0, (4, None)), (2, (0, Some(4)))]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([(1, (0, None)), (2, (4, None))]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 2]),
+                None,
+                None,
+                false,
+            )
+        );
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [(4, false), (7, true), (4, true), (7, false)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 2, 1, 1, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(vec![(4, None), (0, None), (2, Some(4)), (1, Some(0))])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+
+        // keep outputs with double outputs (with both normal and negated)
+        let circuit = Circuit::new(
+            3,
+            [
+                Gate::new_xor(0, 1),
+                Gate::new_xor(2, 3),
+                Gate::new_and(2, 3),
+                Gate::new_and(0, 1),
+                Gate::new_nor(5, 6),
+            ],
+            [
+                (4, false),
+                (7, true),
+                (4, true),
+                (7, false),
+                (7, true),
+                (4, false),
+            ],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(vec![
+                    (4, None),
+                    (0, None),
+                    (2, Some(4)),
+                    (1, Some(0)),
+                    (0, None),
+                    (4, None)
+                ])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+        // with various keep_output_vars
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (0, (4, None)),
+                    (2, (1, Some(4))),
+                    (3, (0, None)),
+                    (5, (4, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2, 3, 5]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (2, (4, None)),
+                    (3, (0, None)),
+                    (4, (1, Some(0))),
+                    (5, (2, Some(4)))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[2, 3, 4, 5]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (0, (4, None)),
+                    (2, (1, Some(4))),
+                    (5, (4, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[0, 2, 5]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 3, 1, 1, 3], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 3, 2, 4, 2, 0, 0],
+                5,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (3, (1, Some(0))),
+                    (4, (0, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 3, 4]),
+                None,
+                None,
+                false,
+            )
+        );
+
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(0, 2),
+                Gate::new_and(1, 2),
+                Gate::new_and(0, 3),
+                Gate::new_and(1, 3),
+                // add a1*b0 + a0*b1
+                Gate::new_xor(5, 6),
+                Gate::new_and(5, 6),
+                // add c(a1*b0 + a0*b1) + a1*b1
+                Gate::new_xor(7, 9),
+                Gate::new_and(7, 9),
+            ],
+            [(4, false), (8, true), (10, false), (11, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 2, 1, 3, 2, 1, 0, 2, 3, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        // single buffer with pop_input and aggr_output_code
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 2, 0, 1, 3, 0, 2, 0],
+                5,
+                Some(vec![(4, None), (3, None), (2, None), (0, None)])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                Some(&[]),
+                Some(&[])
+            )
+        );
+        //
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 2, 1, 3, 2, 1, 0, 2, 3, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                None
+            )
+        );
+        // keep outputs
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 3, 1, 4, 2, 1, 0, 3, 4, 0, 1, 0],
+                5,
+                Some(vec![(2, None), (4, None), (1, None), (0, None)])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None
+            )
+        );
+        // keep outputs with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 2, 0, 1, 3, 0, 2, 0],
+                5,
+                Some(vec![(4, None), (3, None), (2, None), (0, None)])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                Some(&[])
+            )
+        );
+
+        // read/write conflict
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(0, 1),
+                Gate::new_xor(0, 1),
+                Gate::new_nor(0, 1),
+                Gate::new_nor(2, 3),
+            ],
+            [(4, false), (5, true), (6, false), (7, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                None
+            )
+        );
+        //xxx
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 1, 0, 2, 2, 0, 0], 3, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        // with single_buffer, pop_input and keep_output_vars
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3, 4, 5, 0, 1],
+                6,
+                Some(vec![(4, None), (5, None), (0, None), (1, None)])
+            ),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                Some(&[]),
+                Some(&[0, 1, 2, 3])
+            )
+        );
+        // with placement
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 1, 2, 2, 0, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 1, 3, 2, 2, 0, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                Some((&[1, 2, 0, 3], 4)),
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 4, 3, 2, 2, 0, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![3, 3, 1, 1, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 0, 2, 2, 0, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                Some((&[1, 2, 0, 3], 4)),
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(2, 3),
+                Gate::new_xor(2, 3),
+                Gate::new_nor(2, 3),
+                Gate::new_nor(0, 1),
+            ],
+            [(4, false), (5, true), (6, false), (7, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 0, 1, 2, 2, 0, 0], 3, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                None
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 3, 3, 1, 1, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 4, 0, 1, 2, 2, 0, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+
+        let circuit = Circuit::new(
+            4,
+            [
+                Gate::new_and(2, 3),
+                Gate::new_xor(2, 3),
+                Gate::new_nor(0, 3),
+                Gate::new_and(4, 5),
+                Gate::new_nimpl(4, 6),
+                Gate::new_xor(5, 6),
+                Gate::new_xor(8, 9),
+                Gate::new_nimpl(9, 1),
+            ],
+            [(7, false), (8, true), (10, false), (11, true)],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                None
+            )
+        );
+        // with pop_input
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 2, 3, 4, 2, 0, 3, 3, 0, 2, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                Some(&[])
+            )
+        );
+        // with pop input 2
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![0, 1, 3, 2, 4, 3, 0, 2, 2, 0, 2, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                Some(&[0, 1, 3])
+            )
+        );
+        // with pop input 3
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![4, 0, 2, 1, 3, 2, 1, 4, 3, 1, 2, 0], 5, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                None,
+                Some(&[1, 3])
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None
+            )
+        );
+        // testcase with placements
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 3, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None,
+            )
+        );
+        // with output_map
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[3, 1], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None,
+                Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 1, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order(
+                &circuit,
+                Some((&[1, 2, 3, 0], 4)),
+                Some((&[1, 3], 4)),
+                &mut var_usage,
+                true,
+                None,
+                None,
+                None,
+                Some(&HashMap::from_iter([(0, 0), (3, 1)])),
+                false,
+            )
+        );
+        // testcase with placements and with input_map (some input are used as arg_input)
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 2, 2, 2, 1, 2, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 2, 0, 1, 2, 0, 1, 3, 2, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                Some((&[1, 0], 4)),
+                Some((&[3, 2, 1, 0], 4)),
+                &mut var_usage,
+                true,
+                Some(&HashMap::from_iter([(1, 0), (3, 1)])),
+                None,
+                None,
+            )
+        );
+
+        let circuit = Circuit::new(
+            6,
+            [
+                Gate::new_and(2, 3),
+                Gate::new_xor(2, 3),
+                Gate::new_nor(0, 3),
+                Gate::new_and(6, 7),
+                Gate::new_nimpl(6, 8),
+                Gate::new_xor(7, 9),
+                Gate::new_xor(10, 11),
+                Gate::new_nimpl(11, 1),
+            ],
+            [(4, false), (5, true), (12, false), (13, true)],
+        )
+        .unwrap();
+        // testcase with input_map (some input are used as arg_input)
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![3, 2, 0, 1, 0, 1, 2, 0, 1, 3, 1, 0, 1, 0], 4, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                Some((&[3, 2, 0, 1], 4)),
+                &mut var_usage,
+                true,
+                Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
+                None,
+                None,
+            )
+        );
+        // with pop_input and input_map
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 1, 2, 3, 1, 1, 2, 2, 1, 1, 1, 2, 1, 1], var_usage);
+        assert_eq!(
+            (vec![6, 0, 4, 1, 2, 3, 5, 4, 1, 6, 1, 4, 1, 0], 7, None),
+            gen_var_allocs_wire_order_old(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                Some(&HashMap::from_iter([(1, 0), (3, 1), (4, 2), (5, 3)])),
+                None,
+                Some(&[])
+            )
+        );
+
+        //xxx
+        let circuit = Circuit::new(
+            4,
+            [],
+            [
+                (0, false),
+                (1, true),
+                (2, false),
+                (3, true),
+                (1, false),
+                (2, true),
+                (3, true),
+                (2, false),
+                (1, true),
+            ],
+        )
+        .unwrap();
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 1, 2, 3],
+                6,
+                Some(BTreeMap::from_iter([
+                    (0, (0, None)),
+                    (1, (1, None)),
+                    (2, (2, None)),
+                    (3, (3, None)),
+                    (4, (4, Some(1))),
+                    (5, (5, Some(2))),
+                    (6, (3, None)),
+                    (7, (2, None)),
+                    (8, (1, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 0, 1, 2],
+                3,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (2, (1, None)),
+                    (4, (2, Some(0))),
+                    (7, (1, None)),
+                    (8, (0, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
+                &circuit,
+                None,
+                None,
+                &mut var_usage,
+                false,
+                None,
+                Some(&[1, 2, 4, 7, 8]),
+                None,
+                None,
+                false,
+            )
+        );
+        let mut var_usage = gen_var_usage(&circuit);
+        assert_eq!(vec![1, 3, 3, 2], var_usage);
+        assert_eq!(
+            (
+                vec![0, 0, 1, 2],
+                4,
+                Some(BTreeMap::from_iter([
+                    (1, (0, None)),
+                    (4, (3, Some(0))),
+                    (5, (1, None)),
+                    (6, (2, None)),
+                    (8, (0, None))
+                ]))
+            ),
+            gen_var_allocs_wire_order(
                 &circuit,
                 None,
                 None,

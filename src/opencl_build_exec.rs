@@ -10,7 +10,7 @@
 //! OpenCL finish command to finish all operations.
 
 use crate::clang_writer::*;
-use crate::gencode::generate_code_with_config;
+use crate::gencode::generate_code_with_config_and_wire_order;
 use crate::opencl_data_transform::*;
 use crate::utils::{dump_source_code, get_timestamp};
 use crate::*;
@@ -991,6 +991,9 @@ pub struct OpenCLBuilderConfig {
     /// Experimental and not recommended. Enables NVIDIA LOP3 instruction generation.
     /// Unfortunatelly, it doesn't improve perfomance.
     pub lop3: bool,
+    /// If set then ordering of instruction based on wire (input or gate) index, otherwise
+    /// ordering based on tree traversal from outputs to inputs.
+    pub wire_order: bool,
 }
 
 impl OpenCLBuilderConfig {
@@ -1001,6 +1004,7 @@ impl OpenCLBuilderConfig {
             group_vec: false,
             group_len: None,
             lop3: false,
+            wire_order: false,
         }
     }
     /// Sets optimizaton of negations.
@@ -1023,6 +1027,11 @@ impl OpenCLBuilderConfig {
         self.lop3 = lop3;
         self
     }
+    /// Sets wire_order.
+    pub fn wire_order(mut self, wire_order: bool) -> Self {
+        self.wire_order = wire_order;
+        self
+    }
 }
 
 /// Default CPU builder configuration.
@@ -1031,6 +1040,7 @@ pub const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConf
     group_vec: false,
     group_len: None,
     lop3: false, // now is disabled in default config
+    wire_order: false,
 };
 
 /// Main OpenCL builder.
@@ -1040,6 +1050,7 @@ pub struct OpenCLBuilder<'a> {
     entries: Vec<CircuitEntry>,
     writer: CLangWriter<'a>,
     optimize_negs: bool,
+    wire_order: bool,
     group_vec: bool,
     group_len: usize,
     context: Arc<Context>,
@@ -1101,6 +1112,7 @@ impl<'a> OpenCLBuilder<'a> {
             entries: vec![],
             writer,
             optimize_negs: config.optimize_negs,
+            wire_order: config.wire_order,
             group_vec: config.group_vec,
             group_len: config
                 .group_len
@@ -1140,6 +1152,7 @@ impl<'a> OpenCLBuilder<'a> {
             entries: vec![],
             writer,
             optimize_negs: config.optimize_negs,
+            wire_order: config.wire_order,
             group_vec: config.group_vec,
             group_len: config
                 .group_len
@@ -1217,11 +1230,12 @@ impl<'b, 'a>
             dont_clear_outputs: code_config.dont_clear_outputs,
             inner_loop: code_config.inner_loop,
         });
-        generate_code_with_config(
+        generate_code_with_config_and_wire_order(
             &mut self.writer,
             &name,
             circuit,
             self.optimize_negs,
+            self.wire_order,
             code_config,
         );
     }

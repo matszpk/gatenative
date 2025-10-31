@@ -15,7 +15,7 @@
 
 use crate::clang_writer::*;
 use crate::cpu_data_transform::*;
-use crate::gencode::generate_code_with_config;
+use crate::gencode::generate_code_with_config_and_wire_order;
 use crate::utils::{dump_source_code, get_timestamp};
 use crate::*;
 use libloading::{Library, Symbol};
@@ -394,6 +394,9 @@ pub struct CPUBuilderConfig {
     /// If set then value is length of longer vector types as processor words. It preferred to be
     /// a power of 2. In normal cases this property is not needed to be set.
     pub array_len: Option<usize>,
+    /// If set then ordering of instruction based on wire (input or gate) index, otherwise
+    /// ordering based on tree traversal from outputs to inputs.
+    pub wire_order: bool,
 }
 
 impl CPUBuilderConfig {
@@ -403,6 +406,7 @@ impl CPUBuilderConfig {
             optimize_negs: false,
             parallel: None,
             array_len: None,
+            wire_order: false,
         }
     }
     /// Sets optimize negations.
@@ -420,6 +424,11 @@ impl CPUBuilderConfig {
         self.array_len = array_len;
         self
     }
+    /// Sets wire_order.
+    pub fn wire_order(mut self, wire_order: bool) -> Self {
+        self.wire_order = wire_order;
+        self
+    }
 }
 
 /// Default CPU builder configuration.
@@ -427,6 +436,7 @@ pub const CPU_BUILDER_CONFIG_DEFAULT: CPUBuilderConfig = CPUBuilderConfig {
     optimize_negs: true,
     parallel: None,
     array_len: None,
+    wire_order: false,
 };
 
 /// Main CPU executor.
@@ -1297,6 +1307,7 @@ pub struct CPUBuilder<'a> {
     writer: CLangWriter<'a>,
     optimize_negs: bool,
     parallel: Option<usize>,
+    wire_order: bool,
 }
 
 impl<'a> CPUBuilder<'a> {
@@ -1326,6 +1337,7 @@ impl<'a> CPUBuilder<'a> {
             writer,
             optimize_negs: config.optimize_negs,
             parallel: config.parallel,
+            wire_order: config.wire_order,
         }
     }
 
@@ -1432,11 +1444,12 @@ impl<'b, 'a> Builder<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder, CP
             dont_clear_outputs: code_config.dont_clear_outputs,
             inner_loop: code_config.inner_loop,
         });
-        generate_code_with_config(
+        generate_code_with_config_and_wire_order(
             &mut self.writer,
             &name,
             circuit,
             self.optimize_negs,
+            self.wire_order,
             code_config,
         );
     }
