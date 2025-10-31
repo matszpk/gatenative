@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_with_config;
+use crate::gencode::*;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -1386,6 +1386,104 @@ fn test_clang_writer_elem_input() {
     v1 = input[ivn + 64];
     v0 = (v0 ^ v1);
     output[ovn + 14] = v0;
+}
+"##
+    );
+}
+
+#[test]
+fn test_clang_writer_elem_input_wire_order() {
+    let circuit = Circuit::new(
+        30,
+        (0..15).map(|i| Gate::new_xor(i, 15 + i)),
+        (0..15).map(|i| (30 + i, false)),
+    )
+    .unwrap();
+
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new().elem_inputs(Some(&(1..14).collect::<Vec<_>>())),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    const uint32_t zero = 0;
+    const uint32_t one = 0xffffffff;
+    const uint32_t elem_low_bit0 = 0xaaaaaaaa;
+    const uint32_t elem_low_bit1 = 0xcccccccc;
+    const uint32_t elem_low_bit2 = 0xf0f0f0f0;
+    const uint32_t elem_low_bit3 = 0xff00ff00;
+    const uint32_t elem_low_bit4 = 0xffff0000;
+    const unsigned int idxl = idx & 0xffffffff;
+    const unsigned int idxh = idx >> 32;
+    uint32_t v0;
+    uint32_t v1;
+    v0 = input[0];
+    v1 = input[2];
+    v0 = (v0 ^ v1);
+    output[0] = v0;
+    v0 = elem_low_bit0;
+    v1 = input[3];
+    v0 = (v0 ^ v1);
+    output[1] = v0;
+    v0 = elem_low_bit1;
+    v1 = input[4];
+    v0 = (v0 ^ v1);
+    output[2] = v0;
+    v0 = elem_low_bit2;
+    v1 = input[5];
+    v0 = (v0 ^ v1);
+    output[3] = v0;
+    v0 = elem_low_bit3;
+    v1 = input[6];
+    v0 = (v0 ^ v1);
+    output[4] = v0;
+    v0 = elem_low_bit4;
+    v1 = input[7];
+    v0 = (v0 ^ v1);
+    output[5] = v0;
+    v0 = ((idxl & 1) != 0) ? one : zero;
+    v1 = input[8];
+    v0 = (v0 ^ v1);
+    output[6] = v0;
+    v0 = ((idxl & 2) != 0) ? one : zero;
+    v1 = input[9];
+    v0 = (v0 ^ v1);
+    output[7] = v0;
+    v0 = ((idxl & 4) != 0) ? one : zero;
+    v1 = input[10];
+    v0 = (v0 ^ v1);
+    output[8] = v0;
+    v0 = ((idxl & 8) != 0) ? one : zero;
+    v1 = input[11];
+    v0 = (v0 ^ v1);
+    output[9] = v0;
+    v0 = ((idxl & 16) != 0) ? one : zero;
+    v1 = input[12];
+    v0 = (v0 ^ v1);
+    output[10] = v0;
+    v0 = ((idxl & 32) != 0) ? one : zero;
+    v1 = input[13];
+    v0 = (v0 ^ v1);
+    output[11] = v0;
+    v0 = ((idxl & 64) != 0) ? one : zero;
+    v1 = input[14];
+    v0 = (v0 ^ v1);
+    output[12] = v0;
+    v0 = ((idxl & 128) != 0) ? one : zero;
+    v1 = input[15];
+    v0 = (v0 ^ v1);
+    output[13] = v0;
+    v0 = input[1];
+    v1 = input[16];
+    v0 = (v0 ^ v1);
+    output[14] = v0;
 }
 "##
     );
