@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_with_config;
+use crate::gencode::*;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -73,6 +73,62 @@ fn test_clang_writer_loop_config() {
     v1 = v0;
     v0 = v2;
     v2 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .input_placement(Some((&[2, 3, 0, 1], 4)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[2];
+    v1 = input[3];
+    v2 = input[0];
+    v3 = input[1];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v3;
+    output[1] = v4;
+    output[2] = v2;
+    output[3] = v0;
+    } else {
+    v1 = v0;
+    v0 = v2;
+    v2 = v3;
+    v3 = v4;
     }
     } // loop
 }
@@ -185,6 +241,61 @@ fn test_clang_writer_loop_config() {
     v2 = v3;
     v3 = v6;
     v1 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .output_placement(Some((&[1, 2, 3, 0], 4)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[0];
+    v1 = input[1];
+    v2 = input[2];
+    v3 = input[3];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[1] = v3;
+    output[2] = v4;
+    output[3] = v2;
+    output[0] = v0;
+    } else {
+    v1 = v3;
+    v3 = v2;
+    v2 = v4;
     }
     } // loop
 }
@@ -303,6 +414,63 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .input_placement(Some((&[3, 0, 1, 2], 4)))
+            .output_placement(Some((&[1, 2, 3, 0], 4)))
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = input[3];
+    v1 = input[0];
+    v2 = input[1];
+    v3 = input[2];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[1] = v3;
+    output[2] = v4;
+    output[3] = v2;
+    output[0] = v0;
+    } else {
+    v1 = v0;
+    v0 = v2;
+    v2 = v3;
+    v3 = v4;
+    }
+    } // loop
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
     generate_code_with_config(
         &mut writer,
@@ -414,6 +582,59 @@ fn test_clang_writer_loop_config() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new().inner_loop(Some(10)).single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = output[0];
+    v1 = output[1];
+    v2 = output[2];
+    v3 = output[3];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v3;
+    output[1] = v4;
+    output[2] = v2;
+    output[3] = v0;
+    } else {
+    v5 = v0;
+    v0 = v3;
+    v3 = v5;
+    v1 = v4;
+    }
+    } // loop
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_SSE2.writer();
     generate_code_with_config(
         &mut writer,
@@ -518,6 +739,63 @@ fn test_clang_writer_loop_config() {
     v1 = v0;
     v0 = v2;
     v2 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .input_placement(Some((&[3, 0, 1, 2], 4)))
+            .output_placement(Some((&[1, 2, 3, 0], 4)))
+            .single_buffer(true)
+            .inner_loop(Some(10)),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+    if (iter == 0) {
+    v0 = output[3];
+    v1 = output[0];
+    v2 = output[1];
+    v3 = output[2];
+    }
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[1] = v3;
+    output[2] = v4;
+    output[3] = v2;
+    output[0] = v0;
+    } else {
+    v1 = v0;
+    v0 = v2;
+    v2 = v3;
+    v3 = v4;
     }
     } // loop
 }
@@ -634,6 +912,65 @@ fn test_clang_writer_loop_config() {
     v1 = v3;
     v3 = v0;
     v0 = v5;
+    }
+    } // loop
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "mulxx",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .inner_loop(Some(10))
+            .pop_input_code(Some("    i1 = ((TYPE_NAME*)input)[0];")),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_mulxx(const void* input,
+    uint32_t* output, size_t idx) {
+    const unsigned int iter_max = 10U;
+    unsigned int iter;
+    unsigned int stop = 0;
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    for (iter = 0; iter < iter_max && stop == 0; iter++) {
+#define i0 (v0)
+#define i1 (v1)
+#define i2 (v2)
+#define i3 (v3)
+    i1 = ((TYPE_NAME*)input)[0];
+#undef i0
+#undef i1
+#undef i2
+#undef i3
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v0 = ~(v0 | v3);
+    v3 = (v4 & v2);
+    v4 = (v4 & ~v0);
+    v0 = (v2 ^ v0);
+    v2 = (v4 ^ v0);
+    v0 = (v0 & ~v1);
+    v4 = ~v4;
+    v0 = ~v0;
+    if (iter == iter_max - 1 || stop != 0) {
+    output[0] = v3;
+    output[1] = v4;
+    output[2] = v2;
+    output[3] = v0;
+    } else {
+    v5 = v0;
+    v0 = v3;
+    v3 = v5;
+    v1 = v4;
     }
     } // loop
 }
