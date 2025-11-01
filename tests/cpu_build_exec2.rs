@@ -175,6 +175,7 @@ fn get_builder_configs() -> Vec<(
     use CPUExtension::*;
     let no_opt_neg_config = CPUBuilderConfig::new();
     let opt_neg_config = CPUBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = CPUBuilderConfig::new().wire_order(true);
     let array_len_8_config = CPUBuilderConfig::new().array_len(Some(8));
     let array_len_2_config = CPUBuilderConfig::new().array_len(Some(2));
 
@@ -184,6 +185,7 @@ fn get_builder_configs() -> Vec<(
         (NoExtension, &CLANG_WRITER_U64_TEST_LOP3, None),
         (NoExtension, &CLANG_WRITER_U64, Some(no_opt_neg_config)),
         (NoExtension, &CLANG_WRITER_U64, Some(opt_neg_config)),
+        (NoExtension, &CLANG_WRITER_U64, Some(wire_order_config)),
     ];
     #[cfg(target_pointer_width = "32")]
     configs.push((NoExtension, &CLANG_WRITER_U32, None));

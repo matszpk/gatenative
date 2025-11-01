@@ -234,6 +234,7 @@ fn gen_mul_add_input(word_len: usize) -> (Vec<u32>, Vec<u32>) {
 fn test_opencl_builder_and_exec() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -247,9 +248,14 @@ fn test_opencl_builder_and_exec() {
         (OpenCLBuilder::new(&device, Some(no_opt_neg_config.clone())).word_len() >> 5) as usize;
     let (mul_add_input, mul_add_output) = gen_mul_add_input(word_len);
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        wire_order_config,
+        opt_neg_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::new(
@@ -564,6 +570,7 @@ fn test_opencl_builder_and_exec() {
 fn test_opencl_builder_and_exec_with_arg_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -573,9 +580,14 @@ fn test_opencl_builder_and_exec_with_arg_input() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         // with arg_input
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
@@ -654,6 +666,7 @@ fn test_opencl_builder_and_exec_with_arg_input() {
 fn test_opencl_builder_and_exec_with_elem_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -663,9 +676,14 @@ fn test_opencl_builder_and_exec_with_elem_input() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         // with elem_index
         let circuit = translate_inputs_rev(mul_add_circuit(), MUL_ADD_INPUT_MAP);
@@ -1057,6 +1075,7 @@ const AGGR_OUTPUT_EXPECTED: [u32; 128] = [
 fn test_opencl_builder_and_exec_with_aggr_output() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -1066,9 +1085,14 @@ fn test_opencl_builder_and_exec_with_aggr_output() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
@@ -1415,6 +1439,7 @@ const COMB_AGGR_OUTPUT_CODE_WITH_HELPERS: &str = r##"{
 fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -1424,9 +1449,14 @@ fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
             .expect("No device in platform"),
     );
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let circuit = Circuit::<u32>::from_str(COMB_CIRCUIT).unwrap();
@@ -1458,6 +1488,7 @@ fn test_opencl_builder_and_exec_with_aggr_output_with_helpers() {
 fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -1533,9 +1564,14 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
         })
         .collect::<Vec<_>>();
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let comb_aggr_output_code = r##"{
@@ -2012,6 +2048,7 @@ fn test_opencl_builder_and_exec_with_aggr_output_to_buffer() {
 fn test_opencl_builder_and_exec_with_pop_input() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -2082,9 +2119,14 @@ fn test_opencl_builder_and_exec_with_pop_input() {
         })
         .collect::<Vec<_>>();
 
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let pop_input_code = r##"{
@@ -2612,6 +2654,7 @@ fn test_opencl_builder_and_exec_with_pop_input() {
 fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -2644,9 +2687,14 @@ fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
             circuit2_out[x as usize]
         })
         .collect::<Vec<_>>();
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         println!("Config: {}", config_num);
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
@@ -2690,6 +2738,7 @@ fn test_opencl_builder_and_exec_with_pop_input_with_helpers() {
 fn test_opencl_builder_and_exec_with_pop_from_buffer() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
 
     let device = Device::new(
@@ -2740,9 +2789,14 @@ fn test_opencl_builder_and_exec_with_pop_from_buffer() {
             circuit2_out[x as usize]
         })
         .collect::<Vec<_>>();
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         let mut builder = OpenCLBuilder::new(&device, Some(builder_config.clone()));
         let pop_input_code = r##"{

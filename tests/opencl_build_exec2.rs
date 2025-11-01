@@ -172,14 +172,20 @@ const ADDU16_CIRCUIT: &str = r##"    {
 fn test_opencl_builder_and_exec_inner_loop() {
     let no_opt_neg_config = OpenCLBuilderConfig::new();
     let opt_neg_config = OpenCLBuilderConfig::new().optimize_negs(true);
+    let wire_order_config = OpenCLBuilderConfig::new().wire_order(true);
     let lop3_config = OpenCLBuilderConfig::new().lop3(true);
     let device = Device::new(*get_all_devices(CL_DEVICE_TYPE_GPU).unwrap().get(0).unwrap());
 
     let addu16imm77_circuit = Circuit::<u32>::from_str(ADDIMMU16_77_CIRCUIT).unwrap();
     let addu16_circuit = Circuit::<u32>::from_str(ADDU16_CIRCUIT).unwrap();
-    for (config_num, builder_config) in [no_opt_neg_config, opt_neg_config, lop3_config]
-        .into_iter()
-        .enumerate()
+    for (config_num, builder_config) in [
+        no_opt_neg_config,
+        opt_neg_config,
+        wire_order_config,
+        lop3_config,
+    ]
+    .into_iter()
+    .enumerate()
     {
         const ITER_NUM: u32 = 12;
         const ITER2_NUM: u32 = 15;
