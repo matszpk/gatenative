@@ -173,7 +173,6 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("NormalOrder0");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -552,7 +551,6 @@ where
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("WireOrder0");
     let single_buffer = single_buffer
         && !(inner_loop
             || (keep_output_vars.map(|x| x.is_empty()).unwrap_or(false)
@@ -1151,7 +1149,6 @@ fn gen_func_code_for_circuit<FW: FuncWriter, T, CT>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("NormalOrder1");
     #[derive(Clone, Copy)]
     struct StackEntry {
         node: usize,
@@ -1436,7 +1433,6 @@ fn gen_func_code_for_circuit_wire_order<FW: FuncWriter, T, CT>(
     usize: TryFrom<T>,
     <usize as TryFrom<T>>::Error: Debug,
 {
-    println!("WireOrder1");
     // store_output_vars_always - aggr_to_buffer
     let single_buffer = single_buffer
         && !(inner_loop
