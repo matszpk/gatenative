@@ -1,4 +1,4 @@
-use crate::gencode::generate_code_with_config;
+use crate::gencode::*;
 use gatenative::clang_writer::*;
 use gatenative::*;
 use gatesim::*;
@@ -23,6 +23,36 @@ fn test_clang_writer_exclude_output() {
         "testcirc",
         circuit.clone(),
         false,
+        CodeConfig::new().exclude_outputs(Some(&[0])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[0] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        true,
         CodeConfig::new().exclude_outputs(Some(&[0])),
     );
     assert_eq!(
@@ -178,6 +208,36 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new().exclude_outputs(Some(&[1])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(const uint32_t* input,
+    uint32_t* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
     generate_code_with_config(
         &mut writer,
@@ -252,6 +312,43 @@ fn test_clang_writer_exclude_output() {
     output[3] = v3;
     v3 = output[1];
     v1 = ~(v3 | v1);
+    v2 = (v2 & ~v1);
+    v0 = (v0 ^ v1);
+    v1 = (v2 ^ v0);
+    v1 = output[2];
+    v0 = (v0 & ~v1);
+    output[1] = ~v0;
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[3, 1], 4)))
+            .exclude_outputs(Some(&[1, 2]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(uint32_t* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    v0 = output[3];
+    v1 = output[0];
+    v2 = (v0 & v1);
+    v0 = (v0 ^ v1);
+    v3 = output[1];
+    v1 = ~(v3 | v1);
+    v3 = (v2 & v0);
+    output[3] = v3;
     v2 = (v2 & ~v1);
     v0 = (v0 ^ v1);
     v1 = (v2 ^ v0);
@@ -378,6 +475,43 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .input_placement(Some((&[1, 2, 3, 0], 4)))
+            .output_placement(Some((&[1, 3], 4)))
+            .exclude_outputs(Some(&[1, 2]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(uint32_t* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    v0 = output[3];
+    v1 = output[0];
+    v2 = (v0 & v1);
+    v0 = (v0 ^ v1);
+    v3 = output[1];
+    v1 = ~(v3 | v1);
+    v3 = (v2 & v0);
+    output[1] = v3;
+    v2 = (v2 & ~v1);
+    v0 = (v0 ^ v1);
+    v1 = (v2 ^ v0);
+    v1 = output[2];
+    v0 = (v0 & ~v1);
+    output[3] = ~v0;
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
     generate_code_with_config(
         &mut writer,
@@ -437,6 +571,47 @@ fn test_clang_writer_exclude_output() {
         "xor",
         circuit.clone(),
         false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2]))
+            .exclude_outputs(Some(&[0, 2])),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(const uint32_t* input,
+    uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = input[0];
+    v1 = input[1];
+    v2 = (v0 ^ v1);
+    v3 = input[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[0] = ~v0;
+    v0 = ~v4;
+#define o0 (v4)
+#define o2 (v0)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        true,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
@@ -604,6 +779,39 @@ fn test_clang_writer_exclude_output() {
 }
 "##
     );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "testcirc",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .exclude_outputs(Some(&[1, 3]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_testcirc(uint32_t* output, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    v0 = output[0];
+    v1 = output[1];
+    v2 = (v0 ^ v1);
+    v3 = output[2];
+    output[2] = v2;
+    v4 = (v3 ^ v2);
+    output[0] = v4;
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    output[1] = ~v0;
+    v0 = ~(v2 | v0);
+}
+"##
+    );
     let mut writer = CLANG_WRITER_INTEL_MMX.writer();
     generate_code_with_config(
         &mut writer,
@@ -664,6 +872,53 @@ fn test_clang_writer_exclude_output() {
         "xor",
         circuit.clone(),
         false,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 2, 3, 5]))
+            .exclude_outputs(Some(&[0, 2, 5]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    unsigned int xxx = 1111;
+    v0 = output[0];
+    v1 = output[1];
+    v2 = (v0 ^ v1);
+    v3 = output[2];
+    v4 = (v3 ^ v2);
+    v2 = (v3 & v2);
+    v0 = (v0 & v1);
+    v0 = ~(v2 | v0);
+    output[0] = ~v0;
+    output[1] = v0;
+    output[2] = ~v0;
+    v1 = ~v4;
+#define o0 (v4)
+#define o2 (v1)
+#define o3 (v0)
+#define o5 (v4)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o2
+#undef o3
+#undef o5
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        true,
         CodeConfig::new()
             .init_code(Some("    unsigned int xxx = 1111;"))
             .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
@@ -869,6 +1124,61 @@ fn test_clang_writer_exclude_output() {
     v3 = (v4 & v2);
     v2 = (v2 ^ v3);
     v3 = (v5 ^ v2);
+    output[2] = v3;
+    v0 = (v2 & ~v0);
+    v3 = output[3];
+    output[3] = ~v0;
+    output[0] = ~v3;
+#define o0 (v1)
+#define o3 (v2)
+    ((TYPE_NAME*)output)[0] |= o0 ^ o2;
+#undef o0
+#undef o3
+}
+"##
+    );
+    let mut writer = CLANG_WRITER_U32.writer();
+    generate_code_with_config_and_wire_order(
+        &mut writer,
+        "xor",
+        circuit.clone(),
+        false,
+        true,
+        CodeConfig::new()
+            .init_code(Some("    unsigned int xxx = 1111;"))
+            .pop_input_code(Some("    ((TYPE_NAME*)input)[0] |= i0 ^ i2;"))
+            .pop_from_buffer(Some(&[1, 4]))
+            .aggr_output_code(Some("    ((TYPE_NAME*)output)[0] |= o0 ^ o2;"))
+            .aggr_to_buffer(Some(&[0, 3]))
+            .exclude_outputs(Some(&[0, 3]))
+            .single_buffer(true),
+    );
+    assert_eq!(
+        &String::from_utf8(writer.out()).unwrap(),
+        r##"void gate_sys_xor(uint32_t* output, void* buffer, size_t idx) {
+    uint32_t v0;
+    uint32_t v1;
+    uint32_t v2;
+    uint32_t v3;
+    uint32_t v4;
+    uint32_t v5;
+    unsigned int xxx = 1111;
+#define i1 (v0)
+#define i4 (v1)
+    ((TYPE_NAME*)input)[0] |= i0 ^ i2;
+#undef i1
+#undef i4
+    v2 = output[1];
+    v3 = output[2];
+    v4 = (v2 & v3);
+    v2 = (v2 ^ v3);
+    v5 = output[0];
+    v3 = ~(v5 | v3);
+    v5 = (v4 & v2);
+    v3 = (v4 & ~v3);
+    output[1] = ~v3;
+    v2 = (v2 ^ v5);
+    v3 = (v3 ^ v2);
     output[2] = v3;
     v0 = (v2 & ~v0);
     v3 = output[3];
