@@ -394,8 +394,9 @@ pub struct CPUBuilderConfig {
     /// If set then value is length of longer vector types as processor words. It preferred to be
     /// a power of 2. In normal cases this property is not needed to be set.
     pub array_len: Option<usize>,
-    /// If set then ordering of instruction based on wire (input or gate) index, otherwise
-    /// ordering based on tree traversal from outputs to inputs.
+    /// If set then ordering of instruction based on wire (input or gate) index
+    /// (original ordering), otherwise ordering based on tree traversal from outputs to inputs.
+    /// For many cases this option is not recommended.
     pub wire_order: bool,
 }
 

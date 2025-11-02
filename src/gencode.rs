@@ -1651,6 +1651,8 @@ fn gen_func_code_for_circuit_wire_order<FW: FuncWriter, T, CT>(
 /// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
 /// NVIDIA LOP3 operations.
 ///
+/// This version includes wire_order option orders instruction wire order (original order).
+///
 /// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
 /// If `optimize_negs` is true then while generating negations will be optimized for
 /// standard boolean operations. `code_config` holds code configuration.
@@ -2066,6 +2068,8 @@ pub fn generate_code_with_config_and_wire_order<'a, FW: FuncWriter, CW: CodeWrit
 /// This function generates code for circuit. It uses code writer to write that code.
 /// This function supports basic boolean operations, `IMPL` and `NIMPL` boolean operations and
 /// NVIDIA LOP3 operations.
+///
+/// This version includes wire_order option orders instruction wire order (original order).
 ///
 /// `writer` is code writer, `name` is name of function, `circuit` is circuit to simulate.
 /// If `optimize_negs` is true then while generating negations will be optimized for

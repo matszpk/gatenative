@@ -991,8 +991,9 @@ pub struct OpenCLBuilderConfig {
     /// Experimental and not recommended. Enables NVIDIA LOP3 instruction generation.
     /// Unfortunatelly, it doesn't improve perfomance.
     pub lop3: bool,
-    /// If set then ordering of instruction based on wire (input or gate) index, otherwise
-    /// ordering based on tree traversal from outputs to inputs.
+    /// If set then ordering of instruction based on wire (input or gate) index
+    /// (original ordering), otherwise ordering based on tree traversal from outputs to inputs.
+    /// For many cases this option is not recommended.
     pub wire_order: bool,
 }
 
