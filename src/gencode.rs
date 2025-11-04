@@ -13,9 +13,6 @@ use crate::vbinopcircuit::*;
 use crate::vcircuit::*;
 use crate::vlop3circuit::*;
 
-// TODO: Generate allocation and code in circuit order (in order of gate of circuit).
-// It can avoid many register allocations if outputs uses multiple gates many times!
-
 fn single_var_alloc<T>(var_alloc: &mut VarAllocator<T>, alloc_vars: &mut [Option<T>], var: T)
 where
     T: Clone + Copy + Ord + PartialEq + Eq + Hash,
