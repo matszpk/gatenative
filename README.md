@@ -109,7 +109,7 @@ Usage of data transformer is optional.
 The library reads environment variable to get important setup:
 * `GATE_SYS_DUMP_SOURCE` - if set to 1 then GateNative prints source code for simulation.
 * `GATE_SYS_CC` - path to C compiler that will be used while building code for simulation.
-* `GATE_SYS_UNTESTED` - if set to 1 then enables untested features (AVX512 support or other).
+* `GATE_SYS_UNTESTED` - if set to 1 then enables untested features (ARM NEON support or other).
 
 Example 1:
 ```rust
