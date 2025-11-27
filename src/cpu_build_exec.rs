@@ -116,8 +116,40 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
     Ok(CPUExtension::NoExtension)
 }
 
+fn detect_cpu_by_cpuidrs() -> CPUExtension {
+    use cpuidrs::*;
+    let cpuinfo = cpuidrs::get_cpu_info();
+    let untested = *utils::GATE_SYS_UNTESTED;
+    if untested && cpuinfo.has_feature(InstructionSet::AVX512F) {
+        CPUExtension::IntelAVX512
+    } else if cpuinfo.has_feature(InstructionSet::AVX2) {
+        CPUExtension::IntelAVX2
+    } else if cpuinfo.has_feature(InstructionSet::AVX) {
+        CPUExtension::IntelAVX
+    } else if cpuinfo.has_feature(InstructionSet::SSE2) {
+        CPUExtension::IntelSSE2
+    } else if cpuinfo.has_feature(InstructionSet::SSE) {
+        CPUExtension::IntelSSE
+    } else if cpuinfo.has_feature(InstructionSet::MMX) {
+        CPUExtension::IntelMMX
+    } else if untested && cpuinfo.has_feature(InstructionSet::NEON) {
+        CPUExtension::ARMNEON
+    } else {
+        CPUExtension::NoExtension
+    }
+}
+
 fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
-    detect_cpu_from_file(BufReader::new(File::open("/proc/cpuinfo")?))
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(file) = File::open("/proc/cpuinfo") {
+            detect_cpu_from_file(BufReader::new(file))
+        } else {
+            Ok(detect_cpu_by_cpuidrs())
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    Ok(detect_cpu_by_cpuidrs())
 }
 
 /// It holds currently recognized CPU instruction set extension.
