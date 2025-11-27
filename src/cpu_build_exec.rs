@@ -26,9 +26,13 @@ use thiserror::Error;
 use std::convert::Infallible;
 use std::env::{self, temp_dir};
 use std::fmt::Debug;
-use std::fs::{self, File};
+use std::fs;
+#[cfg(target_os = "linux")]
+use std::fs::File;
 use std::hash::Hash;
-use std::io::{self, BufRead, BufReader};
+use std::io;
+#[cfg(target_os = "linux")]
+use std::io::{BufRead, BufReader};
 use std::ops::Range;
 use std::path::PathBuf;
 use std::process::Command;
@@ -75,6 +79,7 @@ pub enum CPUExtension {
     ARMNEON,
 }
 
+#[cfg(target_os = "linux")]
 fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUError> {
     let mut have_fp = false;
     let mut is_armv8 = false;
