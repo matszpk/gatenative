@@ -83,7 +83,7 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
     for rl in file.lines() {
         let line = rl?;
         if line.starts_with("flags") || line.starts_with("Features") {
-            if line.find(" avx512").is_some() && untested {
+            if line.find(" avx512").is_some() {
                 return Ok(CPUExtension::IntelAVX512);
             } else if line.find(" avx2").is_some() {
                 return Ok(CPUExtension::IntelAVX2);
@@ -120,7 +120,7 @@ fn detect_cpu_by_cpuidrs() -> CPUExtension {
     use cpuidrs::*;
     let cpuinfo = cpuidrs::get_cpu_info();
     let untested = *utils::GATE_SYS_UNTESTED;
-    if untested && cpuinfo.has_feature(InstructionSet::AVX512F) {
+    if cpuinfo.has_feature(InstructionSet::AVX512F) {
         CPUExtension::IntelAVX512
     } else if cpuinfo.has_feature(InstructionSet::AVX2) {
         CPUExtension::IntelAVX2
