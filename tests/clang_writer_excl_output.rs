@@ -669,15 +669,15 @@ fn test_clang_writer_exclude_output() {
     __m128i v3;
     __m128i v4;
     unsigned int xxx = 1111;
-    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
+    v0 = _mm_load_si128((const __m128i*)&input[0]);
+    v1 = _mm_load_si128((const __m128i*)&input[1]);
     v2 = _mm_xor_si128(v0, v1);
-    v3 = _mm_loadu_si128((const __m128i*)&input[2]);
+    v3 = _mm_load_si128((const __m128i*)&input[2]);
     v4 = _mm_xor_si128(v3, v2);
     v2 = _mm_and_si128(v3, v2);
     v0 = _mm_and_si128(v0, v1);
     v0 = _mm_or_si128(v2, v0);
-    _mm_storeu_si128((__m128i*)&output[0], v0);
+    _mm_store_si128((__m128i*)&output[0], v0);
     v0 = _mm_xor_si128(v4, one);
 #define o0 (v4)
 #define o2 (v0)
@@ -982,17 +982,17 @@ fn test_clang_writer_exclude_output() {
     __m128 v3;
     __m128 v4;
     unsigned int xxx = 1111;
-    v0 = _mm_loadu_ps((const float*)&output[0]);
-    v1 = _mm_loadu_ps((const float*)&output[1]);
+    v0 = _mm_load_ps((const float*)&output[0]);
+    v1 = _mm_load_ps((const float*)&output[1]);
     v2 = _mm_xor_ps(v0, v1);
-    v3 = _mm_loadu_ps((const float*)&output[2]);
+    v3 = _mm_load_ps((const float*)&output[2]);
     v4 = _mm_xor_ps(v3, v2);
     v2 = _mm_and_ps(v3, v2);
     v0 = _mm_and_ps(v0, v1);
     v0 = _mm_or_ps(v2, v0);
-    _mm_storeu_ps((float*)&output[0], v0);
-    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v0, one));
-    _mm_storeu_ps((float*)&output[2], v0);
+    _mm_store_ps((float*)&output[0], v0);
+    _mm_store_ps((float*)&output[1], _mm_xor_ps(v0, one));
+    _mm_store_ps((float*)&output[2], v0);
     v1 = _mm_xor_ps(v4, one);
     v0 = _mm_xor_ps(v0, one);
 #define o0 (v4)
@@ -1223,22 +1223,22 @@ fn test_clang_writer_exclude_output() {
     ((TYPE_NAME*)input)[0] |= i0 ^ i2;
 #undef i1
 #undef i4
-    v2 = _mm_loadu_si128((const __m128i*)&output[1]);
-    v3 = _mm_loadu_si128((const __m128i*)&output[2]);
+    v2 = _mm_load_si128((const __m128i*)&output[1]);
+    v3 = _mm_load_si128((const __m128i*)&output[2]);
     v4 = _mm_and_si128(v2, v3);
-    v5 = _mm_loadu_si128((const __m128i*)&output[0]);
+    v5 = _mm_load_si128((const __m128i*)&output[0]);
     v5 = _mm_or_si128(v5, v3);
     v5 = _mm_and_si128(v4, v5);
-    _mm_storeu_si128((__m128i*)&output[1], _mm_xor_si128(v5, one));
+    _mm_store_si128((__m128i*)&output[1], _mm_xor_si128(v5, one));
     v2 = _mm_xor_si128(v2, v3);
     v3 = _mm_and_si128(v4, v2);
     v2 = _mm_xor_si128(v2, v3);
     v3 = _mm_xor_si128(v5, v2);
-    _mm_storeu_si128((__m128i*)&output[2], v3);
+    _mm_store_si128((__m128i*)&output[2], v3);
     v0 = _mm_andnot_si128(v0, v2);
-    v3 = _mm_loadu_si128((const __m128i*)&output[3]);
-    _mm_storeu_si128((__m128i*)&output[3], _mm_xor_si128(v0, one));
-    _mm_storeu_si128((__m128i*)&output[0], _mm_xor_si128(v3, one));
+    v3 = _mm_load_si128((const __m128i*)&output[3]);
+    _mm_store_si128((__m128i*)&output[3], _mm_xor_si128(v0, one));
+    _mm_store_si128((__m128i*)&output[0], _mm_xor_si128(v3, one));
 #define o0 (v1)
 #define o3 (v2)
     ((TYPE_NAME*)output)[0] |= o0 ^ o2;

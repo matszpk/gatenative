@@ -1707,40 +1707,40 @@ fn test_clang_transform_gen_output_transform() {
     assert_eq!(
         r##"#define OUTPUT_TRANSFORM_B32(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31) \
 {\
-    uint32_t temps[128];\
+    uint32_t temps[128] __attribute__((aligned(16)));\
     unsigned int i;\
-    _mm_storeu_ps((float*)(temps + 0), (S0));\
-    _mm_storeu_ps((float*)(temps + 4), (S1));\
-    _mm_storeu_ps((float*)(temps + 8), (S2));\
-    _mm_storeu_ps((float*)(temps + 12), (S3));\
-    _mm_storeu_ps((float*)(temps + 16), (S4));\
-    _mm_storeu_ps((float*)(temps + 20), (S5));\
-    _mm_storeu_ps((float*)(temps + 24), (S6));\
-    _mm_storeu_ps((float*)(temps + 28), (S7));\
-    _mm_storeu_ps((float*)(temps + 32), (S8));\
-    _mm_storeu_ps((float*)(temps + 36), (S9));\
-    _mm_storeu_ps((float*)(temps + 40), (S10));\
-    _mm_storeu_ps((float*)(temps + 44), (S11));\
-    _mm_storeu_ps((float*)(temps + 48), (S12));\
-    _mm_storeu_ps((float*)(temps + 52), (S13));\
-    _mm_storeu_ps((float*)(temps + 56), (S14));\
-    _mm_storeu_ps((float*)(temps + 60), (S15));\
-    _mm_storeu_ps((float*)(temps + 64), (S16));\
-    _mm_storeu_ps((float*)(temps + 68), (S17));\
-    _mm_storeu_ps((float*)(temps + 72), (S18));\
-    _mm_storeu_ps((float*)(temps + 76), (S19));\
-    _mm_storeu_ps((float*)(temps + 80), (S20));\
-    _mm_storeu_ps((float*)(temps + 84), (S21));\
-    _mm_storeu_ps((float*)(temps + 88), (S22));\
-    _mm_storeu_ps((float*)(temps + 92), (S23));\
-    _mm_storeu_ps((float*)(temps + 96), (S24));\
-    _mm_storeu_ps((float*)(temps + 100), (S25));\
-    _mm_storeu_ps((float*)(temps + 104), (S26));\
-    _mm_storeu_ps((float*)(temps + 108), (S27));\
-    _mm_storeu_ps((float*)(temps + 112), (S28));\
-    _mm_storeu_ps((float*)(temps + 116), (S29));\
-    _mm_storeu_ps((float*)(temps + 120), (S30));\
-    _mm_storeu_ps((float*)(temps + 124), (S31));\
+    _mm_store_ps((float*)(temps + 0), (S0));\
+    _mm_store_ps((float*)(temps + 4), (S1));\
+    _mm_store_ps((float*)(temps + 8), (S2));\
+    _mm_store_ps((float*)(temps + 12), (S3));\
+    _mm_store_ps((float*)(temps + 16), (S4));\
+    _mm_store_ps((float*)(temps + 20), (S5));\
+    _mm_store_ps((float*)(temps + 24), (S6));\
+    _mm_store_ps((float*)(temps + 28), (S7));\
+    _mm_store_ps((float*)(temps + 32), (S8));\
+    _mm_store_ps((float*)(temps + 36), (S9));\
+    _mm_store_ps((float*)(temps + 40), (S10));\
+    _mm_store_ps((float*)(temps + 44), (S11));\
+    _mm_store_ps((float*)(temps + 48), (S12));\
+    _mm_store_ps((float*)(temps + 52), (S13));\
+    _mm_store_ps((float*)(temps + 56), (S14));\
+    _mm_store_ps((float*)(temps + 60), (S15));\
+    _mm_store_ps((float*)(temps + 64), (S16));\
+    _mm_store_ps((float*)(temps + 68), (S17));\
+    _mm_store_ps((float*)(temps + 72), (S18));\
+    _mm_store_ps((float*)(temps + 76), (S19));\
+    _mm_store_ps((float*)(temps + 80), (S20));\
+    _mm_store_ps((float*)(temps + 84), (S21));\
+    _mm_store_ps((float*)(temps + 88), (S22));\
+    _mm_store_ps((float*)(temps + 92), (S23));\
+    _mm_store_ps((float*)(temps + 96), (S24));\
+    _mm_store_ps((float*)(temps + 100), (S25));\
+    _mm_store_ps((float*)(temps + 104), (S26));\
+    _mm_store_ps((float*)(temps + 108), (S27));\
+    _mm_store_ps((float*)(temps + 112), (S28));\
+    _mm_store_ps((float*)(temps + 116), (S29));\
+    _mm_store_ps((float*)(temps + 120), (S30));\
+    _mm_store_ps((float*)(temps + 124), (S31));\
     for (i = 0; i < 4; i++) {\
     const unsigned int ib = i * 32;\
     uint32_t t0v0;\
@@ -1940,24 +1940,24 @@ fn test_clang_transform_gen_output_transform() {
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
-    uint32_t temps[64];\
+    uint32_t temps[64] __attribute__((aligned(16)));\
     unsigned int i;\
-    _mm_storeu_ps((float*)(temps + 0), (S0));\
-    _mm_storeu_ps((float*)(temps + 4), (S1));\
-    _mm_storeu_ps((float*)(temps + 8), (S2));\
-    _mm_storeu_ps((float*)(temps + 12), (S3));\
-    _mm_storeu_ps((float*)(temps + 16), (S4));\
-    _mm_storeu_ps((float*)(temps + 20), (S5));\
-    _mm_storeu_ps((float*)(temps + 24), (S6));\
-    _mm_storeu_ps((float*)(temps + 28), (S7));\
-    _mm_storeu_ps((float*)(temps + 32), (S8));\
-    _mm_storeu_ps((float*)(temps + 36), (S9));\
-    _mm_storeu_ps((float*)(temps + 40), (S10));\
-    _mm_storeu_ps((float*)(temps + 44), (S11));\
-    _mm_storeu_ps((float*)(temps + 48), (S12));\
-    _mm_storeu_ps((float*)(temps + 52), (S13));\
-    _mm_storeu_ps((float*)(temps + 56), (S14));\
-    _mm_storeu_ps((float*)(temps + 60), (S15));\
+    _mm_store_ps((float*)(temps + 0), (S0));\
+    _mm_store_ps((float*)(temps + 4), (S1));\
+    _mm_store_ps((float*)(temps + 8), (S2));\
+    _mm_store_ps((float*)(temps + 12), (S3));\
+    _mm_store_ps((float*)(temps + 16), (S4));\
+    _mm_store_ps((float*)(temps + 20), (S5));\
+    _mm_store_ps((float*)(temps + 24), (S6));\
+    _mm_store_ps((float*)(temps + 28), (S7));\
+    _mm_store_ps((float*)(temps + 32), (S8));\
+    _mm_store_ps((float*)(temps + 36), (S9));\
+    _mm_store_ps((float*)(temps + 40), (S10));\
+    _mm_store_ps((float*)(temps + 44), (S11));\
+    _mm_store_ps((float*)(temps + 48), (S12));\
+    _mm_store_ps((float*)(temps + 52), (S13));\
+    _mm_store_ps((float*)(temps + 56), (S14));\
+    _mm_store_ps((float*)(temps + 60), (S15));\
     for (i = 0; i < 4; i++) {\
     const unsigned int ib = i * 32;\
     uint32_t t0v0;\
@@ -2077,14 +2077,14 @@ fn test_clang_transform_gen_output_transform() {
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
-    uint32_t temps[24];\
+    uint32_t temps[24] __attribute__((aligned(16)));\
     unsigned int i;\
-    _mm_storeu_ps((float*)(temps + 0), (S0));\
-    _mm_storeu_ps((float*)(temps + 4), (S1));\
-    _mm_storeu_ps((float*)(temps + 8), (S2));\
-    _mm_storeu_ps((float*)(temps + 12), (S3));\
-    _mm_storeu_ps((float*)(temps + 16), (S4));\
-    _mm_storeu_ps((float*)(temps + 20), (S5));\
+    _mm_store_ps((float*)(temps + 0), (S0));\
+    _mm_store_ps((float*)(temps + 4), (S1));\
+    _mm_store_ps((float*)(temps + 8), (S2));\
+    _mm_store_ps((float*)(temps + 12), (S3));\
+    _mm_store_ps((float*)(temps + 16), (S4));\
+    _mm_store_ps((float*)(temps + 20), (S5));\
     for (i = 0; i < 4; i++) {\
     const unsigned int ib = i * 32;\
     uint32_t t0v0;\
@@ -2154,9 +2154,9 @@ fn test_clang_transform_gen_output_transform() {
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
-    uint32_t temps[4];\
+    uint32_t temps[4] __attribute__((aligned(16)));\
     unsigned int i;\
-    _mm_storeu_ps((float*)(temps + 0), (S0));\
+    _mm_store_ps((float*)(temps + 0), (S0));\
     for (i = 0; i < 4; i++) {\
     const unsigned int ib = i * 32;\
     ((D)[0 + ib]) = (temps[0 + i] & 0x1U);\
@@ -2442,38 +2442,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c11));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c10), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c11));\
-    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v17, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v17, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v32, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v32, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v26, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v26, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v22, t0v20));\
-    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v22, t0v20));\
-    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v18, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v18, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v27, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v27, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v25, t0v31));\
-    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v25, t0v31));\
-    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v28, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v28, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v13, t0v19));\
-    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v13, t0v19));\
-    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v15, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v15, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v9, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v9, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v17, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v17, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v32, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v32, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v26, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v26, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v22, t0v20));\
+    _mm_store_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v22, t0v20));\
+    _mm_store_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v18, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v18, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v27, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v27, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v25, t0v31));\
+    _mm_store_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v25, t0v31));\
+    _mm_store_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v28, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v28, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v13, t0v19));\
+    _mm_store_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v13, t0v19));\
+    _mm_store_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v15, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v15, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v9, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v9, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -2650,38 +2650,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c10));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c9), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c10));\
-    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v31, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v31, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v16, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v16, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v9, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v9, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v13, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v13, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v31, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v31, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v16, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v16, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v9, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v9, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v13, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v13, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -2814,38 +2814,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c8));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c7), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c8));\
-    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v17, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v17, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v29, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v29, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v18, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v18, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v30, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v30, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v31, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v31, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v7, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v7, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v5, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v5, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v9, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v9, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v21, t0v27));\
-    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v21, t0v27));\
-    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v10, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v10, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v22, t0v28));\
-    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v22, t0v28));\
-    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v6, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v6, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v17, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v17, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v29, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v29, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v18, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v18, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v30, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v30, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v31, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v31, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v7, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v7, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v5, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v5, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v20, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v20, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v9, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v9, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v21, t0v27));\
+    _mm_store_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v21, t0v27));\
+    _mm_store_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v10, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v10, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v22, t0v28));\
+    _mm_store_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v22, t0v28));\
+    _mm_store_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v6, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v6, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v2, t0v0));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -2950,38 +2950,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v29, c2));\
     t0v29 = _mm_or_si128(_mm_and_si128(t0v30, c1), _mm_slli_epi64(t0v31, 32));\
     t0v30 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v31, c2));\
-    _mm_storeu_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v1));\
-    _mm_storeu_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v1));\
-    _mm_storeu_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v3, t0v5));\
-    _mm_storeu_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v3, t0v5));\
-    _mm_storeu_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v7, t0v9));\
-    _mm_storeu_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v7, t0v9));\
-    _mm_storeu_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v11, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v11, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v15, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v15, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v0, t0v2));\
-    _mm_storeu_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v0, t0v2));\
-    _mm_storeu_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v4, t0v6));\
-    _mm_storeu_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v4, t0v6));\
-    _mm_storeu_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v8, t0v10));\
-    _mm_storeu_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v8, t0v10));\
-    _mm_storeu_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v12, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v12, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v16, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v16, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[0])), _mm_unpacklo_epi64(t0v32, t0v1));\
+    _mm_store_si128((__m128i*)&((dest[16])), _mm_unpackhi_epi64(t0v32, t0v1));\
+    _mm_store_si128((__m128i*)&((dest[1])), _mm_unpacklo_epi64(t0v3, t0v5));\
+    _mm_store_si128((__m128i*)&((dest[17])), _mm_unpackhi_epi64(t0v3, t0v5));\
+    _mm_store_si128((__m128i*)&((dest[2])), _mm_unpacklo_epi64(t0v7, t0v9));\
+    _mm_store_si128((__m128i*)&((dest[18])), _mm_unpackhi_epi64(t0v7, t0v9));\
+    _mm_store_si128((__m128i*)&((dest[3])), _mm_unpacklo_epi64(t0v11, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[19])), _mm_unpackhi_epi64(t0v11, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[4])), _mm_unpacklo_epi64(t0v15, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[20])), _mm_unpackhi_epi64(t0v15, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[5])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[21])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[6])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[22])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[7])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[23])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[8])), _mm_unpacklo_epi64(t0v0, t0v2));\
+    _mm_store_si128((__m128i*)&((dest[24])), _mm_unpackhi_epi64(t0v0, t0v2));\
+    _mm_store_si128((__m128i*)&((dest[9])), _mm_unpacklo_epi64(t0v4, t0v6));\
+    _mm_store_si128((__m128i*)&((dest[25])), _mm_unpackhi_epi64(t0v4, t0v6));\
+    _mm_store_si128((__m128i*)&((dest[10])), _mm_unpacklo_epi64(t0v8, t0v10));\
+    _mm_store_si128((__m128i*)&((dest[26])), _mm_unpackhi_epi64(t0v8, t0v10));\
+    _mm_store_si128((__m128i*)&((dest[11])), _mm_unpacklo_epi64(t0v12, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[27])), _mm_unpackhi_epi64(t0v12, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[12])), _mm_unpacklo_epi64(t0v16, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[28])), _mm_unpackhi_epi64(t0v16, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[13])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[29])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[14])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[30])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[15])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[31])), _mm_unpackhi_epi64(t0v28, t0v30));\
 }
 "##,
         transform.out()
@@ -2995,40 +2995,40 @@ fn test_clang_transform_gen_output_transform() {
         r##"#define OUTPUT_TRANSFORM_B32(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22, S23, S24, S25, S26, S27, S28, S29, S30, S31) \
 {\
     __m128i* dest = (__m128i*)(D);\
-    __m128i temps[64];\
+    __m128i temps[64] __attribute__((aligned(32)));\
     unsigned int i;\
-    _mm256_storeu_ps((float*)(temps + 0), (S0));\
-    _mm256_storeu_ps((float*)(temps + 2), (S1));\
-    _mm256_storeu_ps((float*)(temps + 4), (S2));\
-    _mm256_storeu_ps((float*)(temps + 6), (S3));\
-    _mm256_storeu_ps((float*)(temps + 8), (S4));\
-    _mm256_storeu_ps((float*)(temps + 10), (S5));\
-    _mm256_storeu_ps((float*)(temps + 12), (S6));\
-    _mm256_storeu_ps((float*)(temps + 14), (S7));\
-    _mm256_storeu_ps((float*)(temps + 16), (S8));\
-    _mm256_storeu_ps((float*)(temps + 18), (S9));\
-    _mm256_storeu_ps((float*)(temps + 20), (S10));\
-    _mm256_storeu_ps((float*)(temps + 22), (S11));\
-    _mm256_storeu_ps((float*)(temps + 24), (S12));\
-    _mm256_storeu_ps((float*)(temps + 26), (S13));\
-    _mm256_storeu_ps((float*)(temps + 28), (S14));\
-    _mm256_storeu_ps((float*)(temps + 30), (S15));\
-    _mm256_storeu_ps((float*)(temps + 32), (S16));\
-    _mm256_storeu_ps((float*)(temps + 34), (S17));\
-    _mm256_storeu_ps((float*)(temps + 36), (S18));\
-    _mm256_storeu_ps((float*)(temps + 38), (S19));\
-    _mm256_storeu_ps((float*)(temps + 40), (S20));\
-    _mm256_storeu_ps((float*)(temps + 42), (S21));\
-    _mm256_storeu_ps((float*)(temps + 44), (S22));\
-    _mm256_storeu_ps((float*)(temps + 46), (S23));\
-    _mm256_storeu_ps((float*)(temps + 48), (S24));\
-    _mm256_storeu_ps((float*)(temps + 50), (S25));\
-    _mm256_storeu_ps((float*)(temps + 52), (S26));\
-    _mm256_storeu_ps((float*)(temps + 54), (S27));\
-    _mm256_storeu_ps((float*)(temps + 56), (S28));\
-    _mm256_storeu_ps((float*)(temps + 58), (S29));\
-    _mm256_storeu_ps((float*)(temps + 60), (S30));\
-    _mm256_storeu_ps((float*)(temps + 62), (S31));\
+    _mm256_store_ps((float*)(temps + 0), (S0));\
+    _mm256_store_ps((float*)(temps + 2), (S1));\
+    _mm256_store_ps((float*)(temps + 4), (S2));\
+    _mm256_store_ps((float*)(temps + 6), (S3));\
+    _mm256_store_ps((float*)(temps + 8), (S4));\
+    _mm256_store_ps((float*)(temps + 10), (S5));\
+    _mm256_store_ps((float*)(temps + 12), (S6));\
+    _mm256_store_ps((float*)(temps + 14), (S7));\
+    _mm256_store_ps((float*)(temps + 16), (S8));\
+    _mm256_store_ps((float*)(temps + 18), (S9));\
+    _mm256_store_ps((float*)(temps + 20), (S10));\
+    _mm256_store_ps((float*)(temps + 22), (S11));\
+    _mm256_store_ps((float*)(temps + 24), (S12));\
+    _mm256_store_ps((float*)(temps + 26), (S13));\
+    _mm256_store_ps((float*)(temps + 28), (S14));\
+    _mm256_store_ps((float*)(temps + 30), (S15));\
+    _mm256_store_ps((float*)(temps + 32), (S16));\
+    _mm256_store_ps((float*)(temps + 34), (S17));\
+    _mm256_store_ps((float*)(temps + 36), (S18));\
+    _mm256_store_ps((float*)(temps + 38), (S19));\
+    _mm256_store_ps((float*)(temps + 40), (S20));\
+    _mm256_store_ps((float*)(temps + 42), (S21));\
+    _mm256_store_ps((float*)(temps + 44), (S22));\
+    _mm256_store_ps((float*)(temps + 46), (S23));\
+    _mm256_store_ps((float*)(temps + 48), (S24));\
+    _mm256_store_ps((float*)(temps + 50), (S25));\
+    _mm256_store_ps((float*)(temps + 52), (S26));\
+    _mm256_store_ps((float*)(temps + 54), (S27));\
+    _mm256_store_ps((float*)(temps + 56), (S28));\
+    _mm256_store_ps((float*)(temps + 58), (S29));\
+    _mm256_store_ps((float*)(temps + 60), (S30));\
+    _mm256_store_ps((float*)(temps + 62), (S31));\
     for (i = 0; i < 2; i++) {\
     const unsigned int ib = i * 32;\
     const __m128i c0 = (*(const __m128i*)(transform_const_tbl + 4*0));\
@@ -3076,38 +3076,38 @@ fn test_clang_transform_gen_output_transform() {
     __m128i t0v30;\
     __m128i t0v31;\
     __m128i t0v32;\
-    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
-    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
-    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
-    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
-    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
-    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
-    t0v6 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
-    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c1));\
-    t0v8 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
-    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c1));\
-    t0v10 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
-    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c1));\
-    t0v12 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
-    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c1));\
-    t0v14 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
-    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c1));\
-    t0v16 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[32 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[34 + i])), c0), 1));\
-    t0v17 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[32 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[34 + i])), c1));\
-    t0v18 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[36 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[38 + i])), c0), 1));\
-    t0v19 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[36 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[38 + i])), c1));\
-    t0v20 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[40 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[42 + i])), c0), 1));\
-    t0v21 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[40 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[42 + i])), c1));\
-    t0v22 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[44 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[46 + i])), c0), 1));\
-    t0v23 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[44 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[46 + i])), c1));\
-    t0v24 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[48 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[50 + i])), c0), 1));\
-    t0v25 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[48 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[50 + i])), c1));\
-    t0v26 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[52 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[54 + i])), c0), 1));\
-    t0v27 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[52 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[54 + i])), c1));\
-    t0v28 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[56 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[58 + i])), c0), 1));\
-    t0v29 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[56 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[58 + i])), c1));\
-    t0v30 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[60 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[62 + i])), c0), 1));\
-    t0v31 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[60 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[62 + i])), c1));\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v6 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[14 + i])), c1));\
+    t0v8 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[18 + i])), c1));\
+    t0v10 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[22 + i])), c1));\
+    t0v12 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[26 + i])), c1));\
+    t0v14 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[30 + i])), c1));\
+    t0v16 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[32 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[34 + i])), c0), 1));\
+    t0v17 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[32 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[34 + i])), c1));\
+    t0v18 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[36 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[38 + i])), c0), 1));\
+    t0v19 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[36 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[38 + i])), c1));\
+    t0v20 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[40 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[42 + i])), c0), 1));\
+    t0v21 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[40 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[42 + i])), c1));\
+    t0v22 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[44 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[46 + i])), c0), 1));\
+    t0v23 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[44 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[46 + i])), c1));\
+    t0v24 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[48 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[50 + i])), c0), 1));\
+    t0v25 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[48 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[50 + i])), c1));\
+    t0v26 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[52 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[54 + i])), c0), 1));\
+    t0v27 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[52 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[54 + i])), c1));\
+    t0v28 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[56 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[58 + i])), c0), 1));\
+    t0v29 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[56 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[58 + i])), c1));\
+    t0v30 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[60 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[62 + i])), c0), 1));\
+    t0v31 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[60 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[62 + i])), c1));\
     t0v32 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
     t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
     t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
@@ -3268,61 +3268,61 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c11));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c10), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c11));\
-    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v17, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v17, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v32, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v32, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v26, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v26, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v22, t0v20));\
-    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v22, t0v20));\
-    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v18, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v18, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v27, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v27, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v25, t0v31));\
-    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v25, t0v31));\
-    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v28, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v28, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v13, t0v19));\
-    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v13, t0v19));\
-    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v15, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v15, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v9, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v9, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v17, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v17, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v32, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v32, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v26, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v26, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v22, t0v20));\
+    _mm_store_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v22, t0v20));\
+    _mm_store_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v18, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v18, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v27, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v27, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v25, t0v31));\
+    _mm_store_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v25, t0v31));\
+    _mm_store_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v28, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v28, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v13, t0v19));\
+    _mm_store_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v13, t0v19));\
+    _mm_store_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v15, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v15, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v9, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v9, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
     }\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
     __m128i* dest = (__m128i*)(D);\
-    __m128i temps[32];\
+    __m128i temps[32] __attribute__((aligned(32)));\
     unsigned int i;\
-    _mm256_storeu_ps((float*)(temps + 0), (S0));\
-    _mm256_storeu_ps((float*)(temps + 2), (S1));\
-    _mm256_storeu_ps((float*)(temps + 4), (S2));\
-    _mm256_storeu_ps((float*)(temps + 6), (S3));\
-    _mm256_storeu_ps((float*)(temps + 8), (S4));\
-    _mm256_storeu_ps((float*)(temps + 10), (S5));\
-    _mm256_storeu_ps((float*)(temps + 12), (S6));\
-    _mm256_storeu_ps((float*)(temps + 14), (S7));\
-    _mm256_storeu_ps((float*)(temps + 16), (S8));\
-    _mm256_storeu_ps((float*)(temps + 18), (S9));\
-    _mm256_storeu_ps((float*)(temps + 20), (S10));\
-    _mm256_storeu_ps((float*)(temps + 22), (S11));\
-    _mm256_storeu_ps((float*)(temps + 24), (S12));\
-    _mm256_storeu_ps((float*)(temps + 26), (S13));\
-    _mm256_storeu_ps((float*)(temps + 28), (S14));\
-    _mm256_storeu_ps((float*)(temps + 30), (S15));\
+    _mm256_store_ps((float*)(temps + 0), (S0));\
+    _mm256_store_ps((float*)(temps + 2), (S1));\
+    _mm256_store_ps((float*)(temps + 4), (S2));\
+    _mm256_store_ps((float*)(temps + 6), (S3));\
+    _mm256_store_ps((float*)(temps + 8), (S4));\
+    _mm256_store_ps((float*)(temps + 10), (S5));\
+    _mm256_store_ps((float*)(temps + 12), (S6));\
+    _mm256_store_ps((float*)(temps + 14), (S7));\
+    _mm256_store_ps((float*)(temps + 16), (S8));\
+    _mm256_store_ps((float*)(temps + 18), (S9));\
+    _mm256_store_ps((float*)(temps + 20), (S10));\
+    _mm256_store_ps((float*)(temps + 22), (S11));\
+    _mm256_store_ps((float*)(temps + 24), (S12));\
+    _mm256_store_ps((float*)(temps + 26), (S13));\
+    _mm256_store_ps((float*)(temps + 28), (S14));\
+    _mm256_store_ps((float*)(temps + 30), (S15));\
     for (i = 0; i < 2; i++) {\
     const unsigned int ib = i * 32;\
     const __m128i c8 = (*(const __m128i*)(transform_const2_tbl + 4*4));\
@@ -3369,22 +3369,22 @@ fn test_clang_transform_gen_output_transform() {
     __m128i t0v30;\
     __m128i t0v31;\
     __m128i t0v32;\
-    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
-    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
-    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
-    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
-    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
-    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
-    t0v6 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
-    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[14 + i])), c1));\
-    t0v8 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
-    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[18 + i])), c1));\
-    t0v10 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
-    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[22 + i])), c1));\
-    t0v12 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
-    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[26 + i])), c1));\
-    t0v14 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
-    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[30 + i])), c1));\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v6 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[12 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[14 + i])), c0), 1));\
+    t0v7 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[12 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[14 + i])), c1));\
+    t0v8 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[16 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[18 + i])), c0), 1));\
+    t0v9 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[16 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[18 + i])), c1));\
+    t0v10 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[20 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[22 + i])), c0), 1));\
+    t0v11 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[20 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[22 + i])), c1));\
+    t0v12 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[24 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[26 + i])), c0), 1));\
+    t0v13 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[24 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[26 + i])), c1));\
+    t0v14 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[28 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[30 + i])), c0), 1));\
+    t0v15 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[28 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[30 + i])), c1));\
     t0v16 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
     t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
     t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
@@ -3497,51 +3497,51 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c10));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c9), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c10));\
-    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v31, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v31, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v16, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v16, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v9, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v9, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v13, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v13, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v31, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v31, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v16, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v16, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v10, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v6, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v9, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v9, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v13, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v13, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v7, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v5, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
     }\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
     __m128i* dest = (__m128i*)(D);\
-    __m128i temps[12];\
+    __m128i temps[12] __attribute__((aligned(32)));\
     unsigned int i;\
-    _mm256_storeu_ps((float*)(temps + 0), (S0));\
-    _mm256_storeu_ps((float*)(temps + 2), (S1));\
-    _mm256_storeu_ps((float*)(temps + 4), (S2));\
-    _mm256_storeu_ps((float*)(temps + 6), (S3));\
-    _mm256_storeu_ps((float*)(temps + 8), (S4));\
-    _mm256_storeu_ps((float*)(temps + 10), (S5));\
+    _mm256_store_ps((float*)(temps + 0), (S0));\
+    _mm256_store_ps((float*)(temps + 2), (S1));\
+    _mm256_store_ps((float*)(temps + 4), (S2));\
+    _mm256_store_ps((float*)(temps + 6), (S3));\
+    _mm256_store_ps((float*)(temps + 8), (S4));\
+    _mm256_store_ps((float*)(temps + 10), (S5));\
     for (i = 0; i < 2; i++) {\
     const unsigned int ib = i * 32;\
     const __m128i c6 = (*(const __m128i*)(transform_const2_tbl + 4*3));\
@@ -3586,12 +3586,12 @@ fn test_clang_transform_gen_output_transform() {
     __m128i t0v30;\
     __m128i t0v31;\
     __m128i t0v32;\
-    t0v0 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
-    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[2 + i])), c1));\
-    t0v2 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
-    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[6 + i])), c1));\
-    t0v4 = _mm_or_si128(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
-    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_loadu_si128((const __m128i*)&(temps[10 + i])), c1));\
+    t0v0 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c0), 1));\
+    t0v1 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[0 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[2 + i])), c1));\
+    t0v2 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c0), 1));\
+    t0v3 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[4 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[6 + i])), c1));\
+    t0v4 = _mm_or_si128(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c0), _mm_slli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c0), 1));\
+    t0v5 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(_mm_load_si128((const __m128i*)&(temps[8 + i])), c1), 1), _mm_and_si128(_mm_load_si128((const __m128i*)&(temps[10 + i])), c1));\
     t0v6 = _mm_or_si128(_mm_and_si128(t0v0, c2), _mm_slli_epi16(_mm_and_si128(t0v2, c2), 2));\
     t0v0 = _mm_or_si128(_mm_srli_epi16(_mm_and_si128(t0v0, c3), 2), _mm_and_si128(t0v2, c3));\
     t0v2 = _mm_or_si128(_mm_and_si128(t0v1, c2), _mm_slli_epi16(_mm_and_si128(t0v3, c2), 2));\
@@ -3672,46 +3672,46 @@ fn test_clang_transform_gen_output_transform() {
     t0v2 = _mm_or_si128(_mm_srli_epi64(t0v3, 32), _mm_and_si128(t0v2, c8));\
     t0v3 = _mm_or_si128(_mm_and_si128(t0v0, c7), _mm_slli_epi64(t0v1, 32));\
     t0v0 = _mm_or_si128(_mm_srli_epi64(t0v0, 32), _mm_and_si128(t0v1, c8));\
-    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v11));\
-    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v17, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v17, t0v23));\
-    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v29, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v29, t0v12));\
-    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v18, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v18, t0v24));\
-    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v30, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v30, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v31, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v31, t0v8));\
-    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v7, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v7, t0v3));\
-    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v5, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v5, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v9, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v9, t0v15));\
-    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v21, t0v27));\
-    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v21, t0v27));\
-    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v10, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v10, t0v16));\
-    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v22, t0v28));\
-    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v22, t0v28));\
-    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v6, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v6, t0v4));\
-    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
-    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v11));\
+    _mm_store_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v17, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v17, t0v23));\
+    _mm_store_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v29, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v29, t0v12));\
+    _mm_store_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v18, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v18, t0v24));\
+    _mm_store_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v30, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v30, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v31, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v31, t0v8));\
+    _mm_store_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v7, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v7, t0v3));\
+    _mm_store_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v5, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v5, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v20, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v20, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v9, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v9, t0v15));\
+    _mm_store_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v21, t0v27));\
+    _mm_store_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v21, t0v27));\
+    _mm_store_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v10, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v10, t0v16));\
+    _mm_store_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v22, t0v28));\
+    _mm_store_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v22, t0v28));\
+    _mm_store_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v6, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v6, t0v4));\
+    _mm_store_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v2, t0v0));\
+    _mm_store_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v2, t0v0));\
     }\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
     __m128i* dest = (__m128i*)(D);\
-    __m128i temps[2];\
+    __m128i temps[2] __attribute__((aligned(32)));\
     unsigned int i;\
-    _mm256_storeu_ps((float*)(temps + 0), (S0));\
+    _mm256_store_ps((float*)(temps + 0), (S0));\
     for (i = 0; i < 2; i++) {\
     const unsigned int ib = i * 32;\
     const __m128i c0 = (*(const __m128i*)(transform_const2_tbl + 4*0));\
@@ -3814,38 +3814,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v28 = _mm_or_si128(_mm_srli_epi64(t0v28, 32), _mm_and_si128(t0v29, c2));\
     t0v29 = _mm_or_si128(_mm_and_si128(t0v30, c1), _mm_slli_epi64(t0v31, 32));\
     t0v30 = _mm_or_si128(_mm_srli_epi64(t0v30, 32), _mm_and_si128(t0v31, c2));\
-    _mm_storeu_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v1));\
-    _mm_storeu_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v1));\
-    _mm_storeu_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v3, t0v5));\
-    _mm_storeu_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v3, t0v5));\
-    _mm_storeu_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v7, t0v9));\
-    _mm_storeu_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v7, t0v9));\
-    _mm_storeu_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v11, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v11, t0v13));\
-    _mm_storeu_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v15, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v15, t0v17));\
-    _mm_storeu_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
-    _mm_storeu_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
-    _mm_storeu_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
-    _mm_storeu_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v0, t0v2));\
-    _mm_storeu_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v0, t0v2));\
-    _mm_storeu_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v4, t0v6));\
-    _mm_storeu_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v4, t0v6));\
-    _mm_storeu_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v8, t0v10));\
-    _mm_storeu_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v8, t0v10));\
-    _mm_storeu_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v12, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v12, t0v14));\
-    _mm_storeu_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v16, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v16, t0v18));\
-    _mm_storeu_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
-    _mm_storeu_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
-    _mm_storeu_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
-    _mm_storeu_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[0 + ib])), _mm_unpacklo_epi64(t0v32, t0v1));\
+    _mm_store_si128((__m128i*)&((dest[16 + ib])), _mm_unpackhi_epi64(t0v32, t0v1));\
+    _mm_store_si128((__m128i*)&((dest[1 + ib])), _mm_unpacklo_epi64(t0v3, t0v5));\
+    _mm_store_si128((__m128i*)&((dest[17 + ib])), _mm_unpackhi_epi64(t0v3, t0v5));\
+    _mm_store_si128((__m128i*)&((dest[2 + ib])), _mm_unpacklo_epi64(t0v7, t0v9));\
+    _mm_store_si128((__m128i*)&((dest[18 + ib])), _mm_unpackhi_epi64(t0v7, t0v9));\
+    _mm_store_si128((__m128i*)&((dest[3 + ib])), _mm_unpacklo_epi64(t0v11, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[19 + ib])), _mm_unpackhi_epi64(t0v11, t0v13));\
+    _mm_store_si128((__m128i*)&((dest[4 + ib])), _mm_unpacklo_epi64(t0v15, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[20 + ib])), _mm_unpackhi_epi64(t0v15, t0v17));\
+    _mm_store_si128((__m128i*)&((dest[5 + ib])), _mm_unpacklo_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[21 + ib])), _mm_unpackhi_epi64(t0v19, t0v21));\
+    _mm_store_si128((__m128i*)&((dest[6 + ib])), _mm_unpacklo_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[22 + ib])), _mm_unpackhi_epi64(t0v23, t0v25));\
+    _mm_store_si128((__m128i*)&((dest[7 + ib])), _mm_unpacklo_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[23 + ib])), _mm_unpackhi_epi64(t0v27, t0v29));\
+    _mm_store_si128((__m128i*)&((dest[8 + ib])), _mm_unpacklo_epi64(t0v0, t0v2));\
+    _mm_store_si128((__m128i*)&((dest[24 + ib])), _mm_unpackhi_epi64(t0v0, t0v2));\
+    _mm_store_si128((__m128i*)&((dest[9 + ib])), _mm_unpacklo_epi64(t0v4, t0v6));\
+    _mm_store_si128((__m128i*)&((dest[25 + ib])), _mm_unpackhi_epi64(t0v4, t0v6));\
+    _mm_store_si128((__m128i*)&((dest[10 + ib])), _mm_unpacklo_epi64(t0v8, t0v10));\
+    _mm_store_si128((__m128i*)&((dest[26 + ib])), _mm_unpackhi_epi64(t0v8, t0v10));\
+    _mm_store_si128((__m128i*)&((dest[11 + ib])), _mm_unpacklo_epi64(t0v12, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[27 + ib])), _mm_unpackhi_epi64(t0v12, t0v14));\
+    _mm_store_si128((__m128i*)&((dest[12 + ib])), _mm_unpacklo_epi64(t0v16, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[28 + ib])), _mm_unpackhi_epi64(t0v16, t0v18));\
+    _mm_store_si128((__m128i*)&((dest[13 + ib])), _mm_unpacklo_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[29 + ib])), _mm_unpackhi_epi64(t0v20, t0v22));\
+    _mm_store_si128((__m128i*)&((dest[14 + ib])), _mm_unpacklo_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[30 + ib])), _mm_unpackhi_epi64(t0v24, t0v26));\
+    _mm_store_si128((__m128i*)&((dest[15 + ib])), _mm_unpacklo_epi64(t0v28, t0v30));\
+    _mm_store_si128((__m128i*)&((dest[31 + ib])), _mm_unpackhi_epi64(t0v28, t0v30));\
     }\
 }
 "##,
@@ -4127,38 +4127,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c9));\
     t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c8), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c9));\
-    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v29, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v29, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v32, t0v26, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v32, t0v26, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v22, t0v21, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v22, t0v21, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v27, t0v11, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v27, t0v11, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v31, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v31, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v28, t0v19, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v28, t0v19, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v16, t0v14, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v16, t0v14, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v30, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v30, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v24, t0v20, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v24, t0v20, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v18, t0v12, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v18, t0v12, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v25, t0v23, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v25, t0v23, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v13, t0v15, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v13, t0v15, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v9, t0v7, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v9, t0v7, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v29, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v29, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v32, t0v26, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v32, t0v26, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v22, t0v21, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v22, t0v21, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v27, t0v11, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v27, t0v11, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v31, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v31, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v28, t0v19, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v28, t0v19, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v16, t0v14, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v16, t0v14, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v30, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v30, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v24, t0v20, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v24, t0v20, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v18, t0v12, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v18, t0v12, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v25, t0v23, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v25, t0v23, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v13, t0v15, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v13, t0v15, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v9, t0v7, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v9, t0v7, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -4367,38 +4367,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v5, (64)>>3), _mm256_and_si256(t0v4, c10));\
     t0v5 = _mm256_or_si256(_mm256_and_si256(t0v2, c9), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c10));\
-    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v29, t0v31, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v29, t0v31, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v16, t0v11, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v16, t0v11, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v18, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v18, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v30, t0v14, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v30, t0v14, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v19, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v19, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v12, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v12, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v9, t0v20, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v9, t0v20, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v13, t0v7, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v13, t0v7, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v29, t0v31, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v29, t0v31, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v16, t0v11, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v16, t0v11, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v6, t0v18, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v6, t0v18, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v30, t0v14, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v30, t0v14, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v8, t0v5, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v8, t0v5, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v17, t0v19, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v17, t0v19, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v12, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v12, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v10, t0v3, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v10, t0v3, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v9, t0v20, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v9, t0v20, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v13, t0v7, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v13, t0v7, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -4563,38 +4563,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v4 = _mm256_or_si256(_mm256_srli_si256(t0v6, (64)>>3), _mm256_and_si256(t0v4, c8));\
     t0v6 = _mm256_or_si256(_mm256_and_si256(t0v2, c7), _mm256_slli_si256(t0v0, (64)>>3));\
     t0v0 = _mm256_or_si256(_mm256_srli_si256(t0v2, (64)>>3), _mm256_and_si256(t0v0, c8));\
-    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v23, t0v29, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v23, t0v29, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v24, t0v30, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v24, t0v30, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v25, t0v31, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v25, t0v31, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v7, t0v14, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v7, t0v14, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v26, t0v15, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v26, t0v15, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v27, t0v16, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v27, t0v16, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v28, t0v6, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v28, t0v6, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v11, t0v17, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v11, t0v17, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v12, t0v18, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v12, t0v18, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v13, t0v19, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v13, t0v19, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v8, t0v3, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v8, t0v3, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v5, t0v20, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v5, t0v20, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v9, t0v21, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v9, t0v21, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v10, t0v22, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v10, t0v22, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v1, t0v32, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v1, t0v32, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v23, t0v29, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v23, t0v29, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v24, t0v30, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v24, t0v30, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v25, t0v31, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v25, t0v31, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v7, t0v14, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v7, t0v14, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v26, t0v15, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v26, t0v15, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v27, t0v16, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v27, t0v16, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v28, t0v6, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v28, t0v6, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v11, t0v17, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v11, t0v17, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v12, t0v18, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v12, t0v18, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v13, t0v19, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v13, t0v19, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v8, t0v3, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v8, t0v3, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v5, t0v20, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v5, t0v20, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v9, t0v21, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v9, t0v21, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v10, t0v22, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v10, t0v22, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v4, t0v0, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v4, t0v0, 0x31));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -4731,38 +4731,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v24 = _mm256_or_si256(_mm256_srli_si256(t0v24, (64)>>3), _mm256_and_si256(t0v26, c2));\
     t0v26 = _mm256_or_si256(_mm256_and_si256(t0v28, c1), _mm256_slli_si256(t0v30, (64)>>3));\
     t0v28 = _mm256_or_si256(_mm256_srli_si256(t0v28, (64)>>3), _mm256_and_si256(t0v30, c2));\
-    _mm256_storeu_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v31, t0v32, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v31, t0v32, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v5, t0v9, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v5, t0v9, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v13, t0v17, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v13, t0v17, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v29, t0v2, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v29, t0v2, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v6, t0v10, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v6, t0v10, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v14, t0v18, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v14, t0v18, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v1, t0v3, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v1, t0v3, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v7, t0v11, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v7, t0v11, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v19, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v19, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v0, t0v4, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v0, t0v4, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v8, t0v12, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v8, t0v12, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v16, t0v20, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v16, t0v20, 0x31));\
-    _mm256_storeu_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
-    _mm256_storeu_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[0])), _mm256_permute2x128_si256(t0v31, t0v32, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[16])), _mm256_permute2x128_si256(t0v31, t0v32, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[1])), _mm256_permute2x128_si256(t0v5, t0v9, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[17])), _mm256_permute2x128_si256(t0v5, t0v9, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[2])), _mm256_permute2x128_si256(t0v13, t0v17, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[18])), _mm256_permute2x128_si256(t0v13, t0v17, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[3])), _mm256_permute2x128_si256(t0v21, t0v25, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[19])), _mm256_permute2x128_si256(t0v21, t0v25, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[4])), _mm256_permute2x128_si256(t0v29, t0v2, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[20])), _mm256_permute2x128_si256(t0v29, t0v2, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[5])), _mm256_permute2x128_si256(t0v6, t0v10, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[21])), _mm256_permute2x128_si256(t0v6, t0v10, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[6])), _mm256_permute2x128_si256(t0v14, t0v18, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[22])), _mm256_permute2x128_si256(t0v14, t0v18, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[7])), _mm256_permute2x128_si256(t0v22, t0v26, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[23])), _mm256_permute2x128_si256(t0v22, t0v26, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[8])), _mm256_permute2x128_si256(t0v1, t0v3, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[24])), _mm256_permute2x128_si256(t0v1, t0v3, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[9])), _mm256_permute2x128_si256(t0v7, t0v11, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[25])), _mm256_permute2x128_si256(t0v7, t0v11, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[10])), _mm256_permute2x128_si256(t0v15, t0v19, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[26])), _mm256_permute2x128_si256(t0v15, t0v19, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[11])), _mm256_permute2x128_si256(t0v23, t0v27, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[27])), _mm256_permute2x128_si256(t0v23, t0v27, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[12])), _mm256_permute2x128_si256(t0v0, t0v4, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[28])), _mm256_permute2x128_si256(t0v0, t0v4, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[13])), _mm256_permute2x128_si256(t0v8, t0v12, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[29])), _mm256_permute2x128_si256(t0v8, t0v12, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[14])), _mm256_permute2x128_si256(t0v16, t0v20, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[30])), _mm256_permute2x128_si256(t0v16, t0v20, 0x31));\
+    _mm256_store_si256((__m256i*)&((dest[15])), _mm256_permute2x128_si256(t0v24, t0v28, 0x20));\
+    _mm256_store_si256((__m256i*)&((dest[31])), _mm256_permute2x128_si256(t0v24, t0v28, 0x31));\
 }
 "##,
         transform.out()
@@ -5075,38 +5075,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v7 = _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v7);\
     t0v9 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
-    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
-    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
-    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
-    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
-    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
-    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v16));\
-    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v16));\
-    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
-    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
-    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
-    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
-    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
-    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
-    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
-    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
-    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v26));\
-    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v26));\
-    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
-    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
-    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
-    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
-    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
-    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
-    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
-    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
-    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
-    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
-    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
-    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
-    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
-    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
+    _mm512_store_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
+    _mm512_store_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
+    _mm512_store_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_store_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v32, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_store_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
+    _mm512_store_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
+    _mm512_store_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v16));\
+    _mm512_store_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v16));\
+    _mm512_store_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_store_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_store_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_store_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_store_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
+    _mm512_store_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
+    _mm512_store_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
+    _mm512_store_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
+    _mm512_store_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v26));\
+    _mm512_store_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v26));\
+    _mm512_store_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
+    _mm512_store_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
+    _mm512_store_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_store_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_store_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_store_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_store_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_store_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_store_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_store_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_store_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
+    _mm512_store_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v23, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
+    _mm512_store_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_store_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B16(D, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15) \
 {\
@@ -5345,38 +5345,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v7 = _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v7);\
     t0v13 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
-    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
-    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
-    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
-    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
-    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
-    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
-    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
-    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
-    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
-    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
-    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
-    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
-    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
-    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
-    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
-    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
-    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
-    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
-    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
-    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
-    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
-    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
-    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
-    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
-    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
-    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
-    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
-    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
-    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
-    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
-    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
+    _mm512_store_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_store_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_store_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v31));\
+    _mm512_store_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v31));\
+    _mm512_store_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_store_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_store_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_store_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_store_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_store_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_store_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
+    _mm512_store_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
+    _mm512_store_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_store_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_store_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v13));\
+    _mm512_store_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v13));\
+    _mm512_store_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
+    _mm512_store_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
+    _mm512_store_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v11));\
+    _mm512_store_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v11));\
+    _mm512_store_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_store_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v6, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_store_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_store_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_store_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_store_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v17, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_store_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_store_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_store_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
+    _mm512_store_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
+    _mm512_store_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_store_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B6(D, S0, S1, S2, S3, S4, S5) \
 {\
@@ -5571,38 +5571,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v10 = _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v22);\
     t0v22 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v0);\
     t0v0 = _mm512_permutex2var_epi64(t0v4, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v0);\
-    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
-    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
-    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
-    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
-    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v14));\
-    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v14));\
-    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v27));\
-    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v27));\
-    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
-    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
-    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
-    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
-    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
-    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
-    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
-    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
-    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
-    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
-    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
-    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
-    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
-    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
-    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
-    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
-    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v12));\
-    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v12));\
-    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
-    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
-    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
-    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
-    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
-    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
+    _mm512_store_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_store_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_store_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v30));\
+    _mm512_store_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v29, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v30));\
+    _mm512_store_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v14));\
+    _mm512_store_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v14));\
+    _mm512_store_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v27));\
+    _mm512_store_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v27));\
+    _mm512_store_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
+    _mm512_store_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v28, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
+    _mm512_store_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_store_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v18, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_store_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_store_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v8, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_store_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_store_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v21, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_store_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_store_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_store_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v25));\
+    _mm512_store_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v25));\
+    _mm512_store_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v15));\
+    _mm512_store_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v7, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v15));\
+    _mm512_store_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
+    _mm512_store_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
+    _mm512_store_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v12));\
+    _mm512_store_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v12));\
+    _mm512_store_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_store_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_store_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v9));\
+    _mm512_store_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v5, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v9));\
+    _mm512_store_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v0));\
+    _mm512_store_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v0));\
 }
 #define OUTPUT_TRANSFORM_B1(D, S0) \
 {\
@@ -5769,38 +5769,38 @@ fn test_clang_transform_gen_output_transform() {
     t0v16 = _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v20);\
     t0v20 = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*2)), t0v28);\
     t0v24 = _mm512_permutex2var_epi64(t0v24, (*(const __m512i*)(transform_const3_tbl + 8*3)), t0v28);\
-    _mm512_storeu_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
-    _mm512_storeu_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
-    _mm512_storeu_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
-    _mm512_storeu_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
-    _mm512_storeu_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
-    _mm512_storeu_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
-    _mm512_storeu_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
-    _mm512_storeu_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
-    _mm512_storeu_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
-    _mm512_storeu_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
-    _mm512_storeu_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
-    _mm512_storeu_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
-    _mm512_storeu_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v4));\
-    _mm512_storeu_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v4));\
-    _mm512_storeu_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
-    _mm512_storeu_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
-    _mm512_storeu_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
-    _mm512_storeu_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
-    _mm512_storeu_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
-    _mm512_storeu_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
-    _mm512_storeu_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
-    _mm512_storeu_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
-    _mm512_storeu_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
-    _mm512_storeu_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
-    _mm512_storeu_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v7));\
-    _mm512_storeu_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v7));\
-    _mm512_storeu_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
-    _mm512_storeu_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
-    _mm512_storeu_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v8));\
-    _mm512_storeu_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v8));\
-    _mm512_storeu_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
-    _mm512_storeu_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
+    _mm512_store_epi64(&((dest[0])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v32));\
+    _mm512_store_epi64(&((dest[16])), _mm512_permutex2var_epi64(t0v30, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v32));\
+    _mm512_store_epi64(&((dest[1])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v17));\
+    _mm512_store_epi64(&((dest[17])), _mm512_permutex2var_epi64(t0v9, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v17));\
+    _mm512_store_epi64(&((dest[2])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v29));\
+    _mm512_store_epi64(&((dest[18])), _mm512_permutex2var_epi64(t0v25, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v29));\
+    _mm512_store_epi64(&((dest[3])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v18));\
+    _mm512_store_epi64(&((dest[19])), _mm512_permutex2var_epi64(t0v10, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v18));\
+    _mm512_store_epi64(&((dest[4])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v3));\
+    _mm512_store_epi64(&((dest[20])), _mm512_permutex2var_epi64(t0v26, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v3));\
+    _mm512_store_epi64(&((dest[5])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v19));\
+    _mm512_store_epi64(&((dest[21])), _mm512_permutex2var_epi64(t0v11, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v19));\
+    _mm512_store_epi64(&((dest[6])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v4));\
+    _mm512_store_epi64(&((dest[22])), _mm512_permutex2var_epi64(t0v27, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v4));\
+    _mm512_store_epi64(&((dest[7])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v20));\
+    _mm512_store_epi64(&((dest[23])), _mm512_permutex2var_epi64(t0v12, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v20));\
+    _mm512_store_epi64(&((dest[8])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v5));\
+    _mm512_store_epi64(&((dest[24])), _mm512_permutex2var_epi64(t0v31, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v5));\
+    _mm512_store_epi64(&((dest[9])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v21));\
+    _mm512_store_epi64(&((dest[25])), _mm512_permutex2var_epi64(t0v13, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v21));\
+    _mm512_store_epi64(&((dest[10])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v6));\
+    _mm512_store_epi64(&((dest[26])), _mm512_permutex2var_epi64(t0v2, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v6));\
+    _mm512_store_epi64(&((dest[11])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v22));\
+    _mm512_store_epi64(&((dest[27])), _mm512_permutex2var_epi64(t0v14, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v22));\
+    _mm512_store_epi64(&((dest[12])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v7));\
+    _mm512_store_epi64(&((dest[28])), _mm512_permutex2var_epi64(t0v1, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v7));\
+    _mm512_store_epi64(&((dest[13])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v23));\
+    _mm512_store_epi64(&((dest[29])), _mm512_permutex2var_epi64(t0v15, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v23));\
+    _mm512_store_epi64(&((dest[14])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v8));\
+    _mm512_store_epi64(&((dest[30])), _mm512_permutex2var_epi64(t0v0, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v8));\
+    _mm512_store_epi64(&((dest[15])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*4)), t0v24));\
+    _mm512_store_epi64(&((dest[31])), _mm512_permutex2var_epi64(t0v16, (*(const __m512i*)(transform_const3_tbl + 8*5)), t0v24));\
 }
 "##,
         transform.out()

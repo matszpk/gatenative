@@ -220,6 +220,7 @@ mod vlop3circuit;
 mod vlop3circuit2;
 mod vlop3circuit3;
 
+pub use aligned_vec;
 pub use gatesim;
 pub use libloading;
 pub use opencl3;

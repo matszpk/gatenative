@@ -1341,7 +1341,7 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
         let mut builder = DivBuilder::new(builder, 20);
         let pop_input_code = r##"{
     unsigned int i;
-    uint32_t inp[TYPE_LEN];
+    uint32_t inp[TYPE_LEN] TALIGN_ATTR;
     const uint32_t* params = (const uint32_t*)buffer;
     const uint32_t p0 = params[0];
     const uint32_t p1 = params[1];
@@ -1355,7 +1355,7 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
 }"##;
         let pop_input_code_2 = r##"{
     unsigned int i;
-    uint32_t inp[TYPE_LEN];
+    uint32_t inp[TYPE_LEN] TALIGN_ATTR;
     const uint32_t* params = (const uint32_t*)buffer;
     const uint32_t p0 = params[0];
     const uint32_t p1 = params[1];
@@ -1367,7 +1367,7 @@ fn test_cpu_div_builder_and_exec_with_pop_from_buffer() {
 }"##;
         let pop_input_code_3 = r##"{
     unsigned int i;
-    uint32_t inp[TYPE_LEN];
+    uint32_t inp[TYPE_LEN] TALIGN_ATTR;
     const uint32_t* params = (const uint32_t*)buffer;
     const uint32_t p0 = params[0];
     const uint32_t p1 = params[1];
@@ -1596,7 +1596,7 @@ fn test_cpu_div_builder_and_exec_with_aggr_output_to_buffer() {
         let mut builder = DivBuilder::new(builder, 20);
         let comb_aggr_output_code = r##"{
     unsigned int i;
-    uint32_t out[TYPE_LEN];
+    uint32_t out[TYPE_LEN] TALIGN_ATTR;
     uint32_t* output_u32 = (uint32_t*)buffer;
     OUTPUT_TRANSFORM_B12(out, o0, o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11);
     for (i = 0; i < TYPE_LEN; i++) {
@@ -1606,7 +1606,7 @@ fn test_cpu_div_builder_and_exec_with_aggr_output_to_buffer() {
 }"##;
         let comb_aggr_output_code_2 = r##"{
     unsigned int i;
-    uint32_t out[TYPE_LEN];
+    uint32_t out[TYPE_LEN] TALIGN_ATTR;
     uint32_t* output_u32 = (uint32_t*)buffer;
     OUTPUT_TRANSFORM_B10(out, o0, o1, o2, o3, o4, o6, o7, o9, o10, o11);
     for (i = 0; i < TYPE_LEN; i++) {

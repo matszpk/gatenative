@@ -458,8 +458,8 @@ __attribute__((aligned(16))) = {
             "",
         ],
     },
-    load_op: Some("_mm_loadu_ps((const float*)&{})"),
-    store_op: Some("_mm_storeu_ps((float*)&{}, {})"),
+    load_op: Some("_mm_load_ps((const float*)&{})"),
+    store_op: Some("_mm_store_ps((float*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[4]; \
     _mm_storeu_ps((float*)temp, (X)); \
     (D) = temp[(I)]; \
@@ -534,8 +534,8 @@ __attribute__((aligned(16))) = {
             "",
         ],
     },
-    load_op: Some("_mm_loadu_si128((const __m128i*)&{})"),
-    store_op: Some("_mm_storeu_si128((__m128i*)&{}, {})"),
+    load_op: Some("_mm_load_si128((const __m128i*)&{})"),
+    store_op: Some("_mm_store_si128((__m128i*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[4]; \
     _mm_storeu_si128((__m128i*)temp, (X)); \
     (D) = temp[(I)]; \
@@ -614,8 +614,8 @@ __attribute__((aligned(32))) = {
             "",
         ],
     },
-    load_op: Some("_mm256_loadu_ps((const float*)&{})"),
-    store_op: Some("_mm256_storeu_ps((float*)&{}, {})"),
+    load_op: Some("_mm256_load_ps((const float*)&{})"),
+    store_op: Some("_mm256_store_ps((float*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[8]; \
     _mm256_storeu_ps((float*)temp, (X)); \
     (D) = temp[(I)]; \
@@ -694,8 +694,8 @@ __attribute__((aligned(32))) = {
             "",
         ],
     },
-    load_op: Some("_mm256_loadu_si256((const __m256i*)&{})"),
-    store_op: Some("_mm256_storeu_si256((__m256i*)&{}, {})"),
+    load_op: Some("_mm256_load_si256((const __m256i*)&{})"),
+    store_op: Some("_mm256_store_si256((__m256i*)&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[8]; \
     _mm256_storeu_si256((__m256i*)temp, (X)); \
     (D) = temp[(I)]; \
@@ -786,8 +786,8 @@ __attribute__((aligned(64))) = {
             "",
         ],
     },
-    load_op: Some("_mm512_loadu_epi64(&{})"),
-    store_op: Some("_mm512_storeu_epi64(&{}, {})"),
+    load_op: Some("_mm512_load_epi64(&{})"),
+    store_op: Some("_mm512_store_epi64(&{}, {})"),
     get_u32_op: r##"{ uint32_t temp[16]; \
     _mm512_storeu_si512(temp, (X)); \
     (D) = temp[(I)]; \

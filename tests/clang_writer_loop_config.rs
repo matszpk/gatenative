@@ -161,10 +161,10 @@ fn test_clang_writer_loop_config() {
     __m128i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_si128((const __m128i*)&input[2]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[3]);
-    v2 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v3 = _mm_loadu_si128((const __m128i*)&input[1]);
+    v0 = _mm_load_si128((const __m128i*)&input[2]);
+    v1 = _mm_load_si128((const __m128i*)&input[3]);
+    v2 = _mm_load_si128((const __m128i*)&input[0]);
+    v3 = _mm_load_si128((const __m128i*)&input[1]);
     }
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
@@ -177,10 +177,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm_xor_si128(v3, one);
     v2 = _mm_xor_si128(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v5);
-    _mm_storeu_si128((__m128i*)&output[1], v3);
-    _mm_storeu_si128((__m128i*)&output[2], v2);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[0], v5);
+    _mm_store_si128((__m128i*)&output[1], v3);
+    _mm_store_si128((__m128i*)&output[2], v2);
+    _mm_store_si128((__m128i*)&output[3], v0);
     } else {
     v1 = v0;
     v0 = v2;
@@ -328,10 +328,10 @@ fn test_clang_writer_loop_config() {
     __m128 v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_ps((const float*)&input[0]);
-    v1 = _mm_loadu_ps((const float*)&input[1]);
-    v2 = _mm_loadu_ps((const float*)&input[2]);
-    v3 = _mm_loadu_ps((const float*)&input[3]);
+    v0 = _mm_load_ps((const float*)&input[0]);
+    v1 = _mm_load_ps((const float*)&input[1]);
+    v2 = _mm_load_ps((const float*)&input[2]);
+    v3 = _mm_load_ps((const float*)&input[3]);
     }
     v4 = _mm_and_ps(v2, v3);
     v2 = _mm_xor_ps(v2, v3);
@@ -344,10 +344,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm_xor_ps(v3, one);
     v2 = _mm_xor_ps(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_ps((float*)&output[1], v5);
-    _mm_storeu_ps((float*)&output[2], v3);
-    _mm_storeu_ps((float*)&output[3], v2);
-    _mm_storeu_ps((float*)&output[0], v0);
+    _mm_store_ps((float*)&output[1], v5);
+    _mm_store_ps((float*)&output[2], v3);
+    _mm_store_ps((float*)&output[3], v2);
+    _mm_store_ps((float*)&output[0], v0);
     } else {
     v6 = v2;
     v2 = v3;
@@ -659,10 +659,10 @@ fn test_clang_writer_loop_config() {
     __m128i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_si128((const __m128i*)&output[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&output[1]);
-    v2 = _mm_loadu_si128((const __m128i*)&output[2]);
-    v3 = _mm_loadu_si128((const __m128i*)&output[3]);
+    v0 = _mm_load_si128((const __m128i*)&output[0]);
+    v1 = _mm_load_si128((const __m128i*)&output[1]);
+    v2 = _mm_load_si128((const __m128i*)&output[2]);
+    v3 = _mm_load_si128((const __m128i*)&output[3]);
     }
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
@@ -675,10 +675,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm_xor_si128(v3, one);
     v2 = _mm_xor_si128(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v5);
-    _mm_storeu_si128((__m128i*)&output[1], v3);
-    _mm_storeu_si128((__m128i*)&output[2], v2);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[0], v5);
+    _mm_store_si128((__m128i*)&output[1], v3);
+    _mm_store_si128((__m128i*)&output[2], v2);
+    _mm_store_si128((__m128i*)&output[3], v0);
     } else {
     v1 = v3;
     v3 = v0;
@@ -829,10 +829,10 @@ fn test_clang_writer_loop_config() {
     __m256i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm256_loadu_si256((const __m256i*)&output[3]);
-    v1 = _mm256_loadu_si256((const __m256i*)&output[0]);
-    v2 = _mm256_loadu_si256((const __m256i*)&output[1]);
-    v3 = _mm256_loadu_si256((const __m256i*)&output[2]);
+    v0 = _mm256_load_si256((const __m256i*)&output[3]);
+    v1 = _mm256_load_si256((const __m256i*)&output[0]);
+    v2 = _mm256_load_si256((const __m256i*)&output[1]);
+    v3 = _mm256_load_si256((const __m256i*)&output[2]);
     }
     v4 = _mm256_and_si256(v2, v3);
     v2 = _mm256_xor_si256(v2, v3);
@@ -845,10 +845,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm256_xor_si256(v3, one);
     v2 = _mm256_xor_si256(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_si256((__m256i*)&output[1], v5);
-    _mm256_storeu_si256((__m256i*)&output[2], v3);
-    _mm256_storeu_si256((__m256i*)&output[3], v2);
-    _mm256_storeu_si256((__m256i*)&output[0], v0);
+    _mm256_store_si256((__m256i*)&output[1], v5);
+    _mm256_store_si256((__m256i*)&output[2], v3);
+    _mm256_store_si256((__m256i*)&output[3], v2);
+    _mm256_store_si256((__m256i*)&output[0], v0);
     } else {
     v1 = v0;
     v0 = v2;
@@ -1023,10 +1023,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm_xor_si128(v3, one);
     v2 = _mm_xor_si128(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v5);
-    _mm_storeu_si128((__m128i*)&output[1], v3);
-    _mm_storeu_si128((__m128i*)&output[2], v2);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[0], v5);
+    _mm_store_si128((__m128i*)&output[1], v3);
+    _mm_store_si128((__m128i*)&output[2], v2);
+    _mm_store_si128((__m128i*)&output[3], v0);
     } else {
     v1 = v3;
     v3 = v0;
@@ -1137,10 +1137,10 @@ fn test_clang_writer_loop_config() {
     __m128i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
-    v2 = _mm_loadu_si128((const __m128i*)&input[2]);
-    v3 = _mm_loadu_si128((const __m128i*)&input[3]);
+    v0 = _mm_load_si128((const __m128i*)&input[0]);
+    v1 = _mm_load_si128((const __m128i*)&input[1]);
+    v2 = _mm_load_si128((const __m128i*)&input[2]);
+    v3 = _mm_load_si128((const __m128i*)&input[3]);
     }
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
@@ -1154,10 +1154,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm_xor_si128(v3, one);
     v2 = _mm_xor_si128(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v5);
-    _mm_storeu_si128((__m128i*)&output[1], v4);
-    _mm_storeu_si128((__m128i*)&output[2], v2);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[0], v5);
+    _mm_store_si128((__m128i*)&output[1], v4);
+    _mm_store_si128((__m128i*)&output[2], v2);
+    _mm_store_si128((__m128i*)&output[3], v0);
     } else {
     v3 = v0;
     v1 = v4;
@@ -1257,10 +1257,10 @@ fn test_clang_writer_loop_config() {
     __m256 v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm256_loadu_ps((const float*)&input[3]);
-    v1 = _mm256_loadu_ps((const float*)&input[2]);
-    v2 = _mm256_loadu_ps((const float*)&input[1]);
-    v3 = _mm256_loadu_ps((const float*)&input[0]);
+    v0 = _mm256_load_ps((const float*)&input[3]);
+    v1 = _mm256_load_ps((const float*)&input[2]);
+    v2 = _mm256_load_ps((const float*)&input[1]);
+    v3 = _mm256_load_ps((const float*)&input[0]);
     }
     v4 = _mm256_and_ps(v2, v3);
     v2 = _mm256_xor_ps(v2, v3);
@@ -1274,10 +1274,10 @@ fn test_clang_writer_loop_config() {
     v3 = _mm256_xor_ps(v3, one);
     v2 = _mm256_xor_ps(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_ps((float*)&output[2], v5);
-    _mm256_storeu_ps((float*)&output[3], v3);
-    _mm256_storeu_ps((float*)&output[0], v2);
-    _mm256_storeu_ps((float*)&output[1], v0);
+    _mm256_store_ps((float*)&output[2], v5);
+    _mm256_store_ps((float*)&output[3], v3);
+    _mm256_store_ps((float*)&output[0], v2);
+    _mm256_store_ps((float*)&output[1], v0);
     } else {
     v6 = v0;
     v0 = v3;
@@ -1503,14 +1503,14 @@ fn test_clang_writer_loop_config() {
     __m128i v14;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
-    v2 = _mm_loadu_si128((const __m128i*)&input[2]);
-    v3 = _mm_loadu_si128((const __m128i*)&input[3]);
-    v4 = _mm_loadu_si128((const __m128i*)&input[4]);
-    v5 = _mm_loadu_si128((const __m128i*)&input[5]);
-    v6 = _mm_loadu_si128((const __m128i*)&input[6]);
-    v7 = _mm_loadu_si128((const __m128i*)&input[7]);
+    v0 = _mm_load_si128((const __m128i*)&input[0]);
+    v1 = _mm_load_si128((const __m128i*)&input[1]);
+    v2 = _mm_load_si128((const __m128i*)&input[2]);
+    v3 = _mm_load_si128((const __m128i*)&input[3]);
+    v4 = _mm_load_si128((const __m128i*)&input[4]);
+    v5 = _mm_load_si128((const __m128i*)&input[5]);
+    v6 = _mm_load_si128((const __m128i*)&input[6]);
+    v7 = _mm_load_si128((const __m128i*)&input[7]);
     }
     v8 = ((arg & 1) != 0) ? one : zero;
     v9 = _mm_xor_si128(v8, v2);
@@ -1550,14 +1550,14 @@ fn test_clang_writer_loop_config() {
     v1 = _mm_andnot_si128(v6, v1);
     v1 = _mm_xor_si128(v7, v1);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v9);
-    _mm_storeu_si128((__m128i*)&output[1], v8);
-    _mm_storeu_si128((__m128i*)&output[2], v3);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
-    _mm_storeu_si128((__m128i*)&output[4], v2);
-    _mm_storeu_si128((__m128i*)&output[5], v4);
-    _mm_storeu_si128((__m128i*)&output[6], v5);
-    _mm_storeu_si128((__m128i*)&output[7], v1);
+    _mm_store_si128((__m128i*)&output[0], v9);
+    _mm_store_si128((__m128i*)&output[1], v8);
+    _mm_store_si128((__m128i*)&output[2], v3);
+    _mm_store_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[4], v2);
+    _mm_store_si128((__m128i*)&output[5], v4);
+    _mm_store_si128((__m128i*)&output[6], v5);
+    _mm_store_si128((__m128i*)&output[7], v1);
     } else {
     v6 = v5;
     v5 = v4;
@@ -2196,14 +2196,14 @@ fn test_clang_writer_loop_config() {
 #undef i12
 #undef i13
     if (iter == 0) {
-    v0 = _mm256_loadu_ps((const float*)&input[0]);
-    v1 = _mm256_loadu_ps((const float*)&input[1]);
-    v2 = _mm256_loadu_ps((const float*)&input[2]);
-    v3 = _mm256_loadu_ps((const float*)&input[3]);
-    v4 = _mm256_loadu_ps((const float*)&input[4]);
-    v5 = _mm256_loadu_ps((const float*)&input[5]);
-    v10 = _mm256_loadu_ps((const float*)&input[6]);
-    v11 = _mm256_loadu_ps((const float*)&input[7]);
+    v0 = _mm256_load_ps((const float*)&input[0]);
+    v1 = _mm256_load_ps((const float*)&input[1]);
+    v2 = _mm256_load_ps((const float*)&input[2]);
+    v3 = _mm256_load_ps((const float*)&input[3]);
+    v4 = _mm256_load_ps((const float*)&input[4]);
+    v5 = _mm256_load_ps((const float*)&input[5]);
+    v10 = _mm256_load_ps((const float*)&input[6]);
+    v11 = _mm256_load_ps((const float*)&input[7]);
     }
     v12 = ((arg & 1) != 0) ? one : zero;
     v13 = _mm256_xor_ps(v12, v2);
@@ -2239,14 +2239,14 @@ fn test_clang_writer_loop_config() {
     v2 = _mm256_andnot_ps(v6, v2);
     v2 = _mm256_xor_ps(v5, v2);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_ps((float*)&output[0], v13);
-    _mm256_storeu_ps((float*)&output[1], v12);
-    _mm256_storeu_ps((float*)&output[2], v14);
-    _mm256_storeu_ps((float*)&output[3], v0);
-    _mm256_storeu_ps((float*)&output[4], v1);
-    _mm256_storeu_ps((float*)&output[5], v4);
-    _mm256_storeu_ps((float*)&output[6], v3);
-    _mm256_storeu_ps((float*)&output[7], v2);
+    _mm256_store_ps((float*)&output[0], v13);
+    _mm256_store_ps((float*)&output[1], v12);
+    _mm256_store_ps((float*)&output[2], v14);
+    _mm256_store_ps((float*)&output[3], v0);
+    _mm256_store_ps((float*)&output[4], v1);
+    _mm256_store_ps((float*)&output[5], v4);
+    _mm256_store_ps((float*)&output[6], v3);
+    _mm256_store_ps((float*)&output[7], v2);
     } else {
     v10 = v3;
     v3 = v0;
@@ -2699,14 +2699,14 @@ fn test_clang_writer_loop_config() {
 #undef i12
 #undef i13
     if (iter == 0) {
-    v0 = _mm_loadu_ps((const float*)&input[3]);
-    v1 = _mm_loadu_ps((const float*)&input[4]);
-    v2 = _mm_loadu_ps((const float*)&input[1]);
-    v3 = _mm_loadu_ps((const float*)&input[0]);
-    v4 = _mm_loadu_ps((const float*)&input[5]);
-    v5 = _mm_loadu_ps((const float*)&input[6]);
-    v10 = _mm_loadu_ps((const float*)&input[7]);
-    v11 = _mm_loadu_ps((const float*)&input[2]);
+    v0 = _mm_load_ps((const float*)&input[3]);
+    v1 = _mm_load_ps((const float*)&input[4]);
+    v2 = _mm_load_ps((const float*)&input[1]);
+    v3 = _mm_load_ps((const float*)&input[0]);
+    v4 = _mm_load_ps((const float*)&input[5]);
+    v5 = _mm_load_ps((const float*)&input[6]);
+    v10 = _mm_load_ps((const float*)&input[7]);
+    v11 = _mm_load_ps((const float*)&input[2]);
     }
     v12 = elem_low_bit0;
     v13 = _mm_xor_ps(v12, v2);
@@ -2742,14 +2742,14 @@ fn test_clang_writer_loop_config() {
     v2 = _mm_andnot_ps(v6, v2);
     v2 = _mm_xor_ps(v5, v2);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_ps((float*)&output[0], v13);
-    _mm_storeu_ps((float*)&output[1], v12);
-    _mm_storeu_ps((float*)&output[2], v14);
-    _mm_storeu_ps((float*)&output[3], v0);
-    _mm_storeu_ps((float*)&output[4], v1);
-    _mm_storeu_ps((float*)&output[5], v4);
-    _mm_storeu_ps((float*)&output[6], v3);
-    _mm_storeu_ps((float*)&output[7], v2);
+    _mm_store_ps((float*)&output[0], v13);
+    _mm_store_ps((float*)&output[1], v12);
+    _mm_store_ps((float*)&output[2], v14);
+    _mm_store_ps((float*)&output[3], v0);
+    _mm_store_ps((float*)&output[4], v1);
+    _mm_store_ps((float*)&output[5], v4);
+    _mm_store_ps((float*)&output[6], v3);
+    _mm_store_ps((float*)&output[7], v2);
     } else {
     v10 = v2;
     v5 = v3;
@@ -2948,14 +2948,14 @@ fn test_clang_writer_loop_config() {
 #undef i12
 #undef i13
     if (iter == 0) {
-    v0 = _mm256_loadu_ps((const float*)&output[3]);
-    v1 = _mm256_loadu_ps((const float*)&output[4]);
-    v2 = _mm256_loadu_ps((const float*)&output[1]);
-    v3 = _mm256_loadu_ps((const float*)&output[0]);
-    v4 = _mm256_loadu_ps((const float*)&output[5]);
-    v5 = _mm256_loadu_ps((const float*)&output[6]);
-    v10 = _mm256_loadu_ps((const float*)&output[7]);
-    v11 = _mm256_loadu_ps((const float*)&output[2]);
+    v0 = _mm256_load_ps((const float*)&output[3]);
+    v1 = _mm256_load_ps((const float*)&output[4]);
+    v2 = _mm256_load_ps((const float*)&output[1]);
+    v3 = _mm256_load_ps((const float*)&output[0]);
+    v4 = _mm256_load_ps((const float*)&output[5]);
+    v5 = _mm256_load_ps((const float*)&output[6]);
+    v10 = _mm256_load_ps((const float*)&output[7]);
+    v11 = _mm256_load_ps((const float*)&output[2]);
     }
     v12 = elem_low_bit0;
     v13 = _mm256_xor_ps(v12, v2);
@@ -2991,14 +2991,14 @@ fn test_clang_writer_loop_config() {
     v2 = _mm256_andnot_ps(v6, v2);
     v2 = _mm256_xor_ps(v5, v2);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm256_storeu_ps((float*)&output[0], v13);
-    _mm256_storeu_ps((float*)&output[1], v12);
-    _mm256_storeu_ps((float*)&output[2], v14);
-    _mm256_storeu_ps((float*)&output[3], v0);
-    _mm256_storeu_ps((float*)&output[4], v1);
-    _mm256_storeu_ps((float*)&output[5], v4);
-    _mm256_storeu_ps((float*)&output[6], v3);
-    _mm256_storeu_ps((float*)&output[7], v2);
+    _mm256_store_ps((float*)&output[0], v13);
+    _mm256_store_ps((float*)&output[1], v12);
+    _mm256_store_ps((float*)&output[2], v14);
+    _mm256_store_ps((float*)&output[3], v0);
+    _mm256_store_ps((float*)&output[4], v1);
+    _mm256_store_ps((float*)&output[5], v4);
+    _mm256_store_ps((float*)&output[6], v3);
+    _mm256_store_ps((float*)&output[7], v2);
     } else {
     v10 = v2;
     v5 = v3;

@@ -18,6 +18,7 @@ use crate::cpu_data_transform::*;
 use crate::gencode::generate_code_with_config_and_wire_order;
 use crate::utils::{dump_source_code, get_timestamp};
 use crate::*;
+use aligned_vec::{avec, AVec, CACHELINE_ALIGN};
 use libloading::{Library, Symbol};
 use rayon::prelude::*;
 use static_init::dynamic;
@@ -341,7 +342,7 @@ impl<'a> DataWriter for CPUDataWriter<'a> {
 ///
 /// See more in [DataHolder].
 pub struct CPUDataHolder {
-    buffer: Vec<u32>,
+    buffer: AVec<u32>,
     range: Range<usize>,
 }
 
@@ -351,16 +352,37 @@ impl CPUDataHolder {
     pub fn new(data: Vec<u32>) -> Self {
         let len = data.len();
         Self {
-            buffer: data,
+            buffer: AVec::from_slice(CACHELINE_ALIGN, &data),
             range: 0..len,
+        }
+    }
+    /// Creates new CPU data holder with data from vector.
+    #[inline]
+    pub fn new_aligned(data: AVec<u32>) -> Option<Self> {
+        if data.alignment() == CACHELINE_ALIGN {
+            let len = data.len();
+            Some(Self {
+                buffer: data,
+                range: 0..len,
+            })
+        } else {
+            None
         }
     }
     /// Creates new CPU data holder with data from slice.
     pub fn new_from_slice(data: &[u32]) -> Self {
         let len = data.len();
         Self {
-            buffer: data.to_vec(),
+            buffer: AVec::from_slice(CACHELINE_ALIGN, &data),
             range: 0..len,
+        }
+    }
+
+    pub fn release_aligned(self) -> AVec<u32> {
+        if self.range.start == 0 && self.range.end == self.buffer.len() {
+            self.buffer
+        } else {
+            AVec::from_slice(CACHELINE_ALIGN, &self.buffer[self.range.clone()])
         }
     }
 }
@@ -400,7 +422,7 @@ impl<'a> DataHolder<'a, CPUDataReader<'a>, CPUDataWriter<'a>> for CPUDataHolder 
     }
     fn release(self) -> Vec<u32> {
         if self.range.start == 0 && self.range.end == self.buffer.len() {
-            self.buffer
+            self.buffer.to_vec()
         } else {
             self.buffer[self.range.clone()].to_vec()
         }
@@ -814,9 +836,9 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
             0
         };
         let mut output = if self.aggregated_output {
-            vec![0; self.aggr_output_len.unwrap()]
+            avec![[CACHELINE_ALIGN]| 0; self.aggr_output_len.unwrap()]
         } else {
-            vec![0; num * real_output_words]
+            avec![[CACHELINE_ALIGN]| 0; num * real_output_words]
         };
         self.call_execute_internal(
             num,
@@ -828,7 +850,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         )?;
         let out_len = output.len();
         Ok(CPUDataHolder {
-            buffer: output.into(),
+            buffer: output,
             range: 0..out_len,
         })
     }
@@ -1040,7 +1062,7 @@ impl<'a> Executor<'a, CPUDataReader<'a>, CPUDataWriter<'a>, CPUDataHolder> for C
         } else {
             0
         };
-        let mut output = vec![0; num * real_output_words];
+        let mut output = avec![[CACHELINE_ALIGN]| 0; num * real_output_words];
         let mut buffer_w = buffer.get_mut();
         let buffer = buffer_w.get_mut();
         self.call_execute_buffer_internal(

@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     const uint32_t param_b = params[1];
     const uint32_t param_c = params[2];
     size_t i;
-    uint32_t temp[TYPE_LEN];
+    uint32_t temp[TYPE_LEN] TALIGN_ATTR;
     // generate values of function: (x xor param_a) + (x and param_b) + (x or param_c).
     for (i = 0; i < TYPE_LEN; i++) {
         const uint32_t id = idx*TYPE_LEN + i;

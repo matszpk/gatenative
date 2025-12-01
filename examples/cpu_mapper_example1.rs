@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     size_t i, j;
     // buf are accumulators
     uint32_t* buf = (uint32_t*)output;
-    uint32_t temp[TYPE_LEN];
+    uint32_t temp[TYPE_LEN] TALIGN_ATTR;
     // transform to 32-bit word array.
     OUTPUT_TRANSFORM_B10(temp, o0, o1, o2, o3, o4, o5, o6, o7, o8, o9);
     for (i = 0; i < TYPE_LEN; i += 16)

@@ -155,10 +155,10 @@ fn test_clang_writer_loop_basic() {
     __m128i v6;
     for (iter = 0; iter < iter_max && stop == 0; iter++) {
     if (iter == 0) {
-    v0 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
-    v2 = _mm_loadu_si128((const __m128i*)&input[2]);
-    v3 = _mm_loadu_si128((const __m128i*)&input[3]);
+    v0 = _mm_load_si128((const __m128i*)&input[0]);
+    v1 = _mm_load_si128((const __m128i*)&input[1]);
+    v2 = _mm_load_si128((const __m128i*)&input[2]);
+    v3 = _mm_load_si128((const __m128i*)&input[3]);
     }
     v4 = _mm_and_si128(v2, v3);
     v2 = _mm_xor_si128(v2, v3);
@@ -171,10 +171,10 @@ fn test_clang_writer_loop_basic() {
     v3 = _mm_xor_si128(v3, one);
     v2 = _mm_xor_si128(v2, one);
     if (iter == iter_max - 1 || stop != 0) {
-    _mm_storeu_si128((__m128i*)&output[0], v5);
-    _mm_storeu_si128((__m128i*)&output[1], v3);
-    _mm_storeu_si128((__m128i*)&output[2], v2);
-    _mm_storeu_si128((__m128i*)&output[3], v0);
+    _mm_store_si128((__m128i*)&output[0], v5);
+    _mm_store_si128((__m128i*)&output[1], v3);
+    _mm_store_si128((__m128i*)&output[2], v2);
+    _mm_store_si128((__m128i*)&output[3], v0);
     } else {
     v1 = v3;
     v3 = v0;

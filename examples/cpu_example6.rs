@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     const uint32_t param_b = params[1];
     const uint32_t param_c = params[2];
     size_t i;
-    uint32_t temp[TYPE_LEN];
+    uint32_t temp[TYPE_LEN] TALIGN_ATTR;
     // generate values of function: (x xor param_a) + (x and param_b) + (x or param_c).
     for (i = 0; i < TYPE_LEN; i++) {
         const uint32_t id = idx*TYPE_LEN + i;
@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 r##"{
     size_t i;
     uint32_t* buffer_u32 = (uint32_t*)buffer;
-    uint32_t out_table[TYPE_LEN];
+    uint32_t out_table[TYPE_LEN] TALIGN_ATTR;
     OUTPUT_TRANSFORM_B16(out_table, o32, o33, o34, o35, o36, o37, o38, o39,
                         o40, o41, o42, o43, o44, o45, o46, o47);
     for (i = 0; i < TYPE_LEN; i++)

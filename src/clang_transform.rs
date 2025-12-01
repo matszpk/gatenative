@@ -35,6 +35,7 @@ struct FinalType<'a> {
 pub struct CLangTransformConfig<'a> {
     comp_type_name: &'a str,
     comp_type_bit_len: u32,
+    alignment: Option<usize>,
     // if final_type is not supplied then final type is comp_type.
     final_type: Option<FinalType<'a>>,
     // all operations defined for comp_type
@@ -59,6 +60,7 @@ pub struct CLangTransformConfig<'a> {
 pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32_t",
     comp_type_bit_len: 32,
+    alignment: None,
     final_type: None,
     load_op: None,
     store_op: None,
@@ -90,7 +92,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
     ],
-    init_defs: "",
+    init_defs: "#define TALIGN_ATTR\n#define TALIGN (8)\n",
     zero: "0U",
     constant_defs: [
         "0x55555555U",
@@ -122,6 +124,7 @@ pub const CLANG_TRANSFORM_U32: CLangTransformConfig<'_> = CLangTransformConfig {
 pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint64_t",
     comp_type_bit_len: 64,
+    alignment: None,
     final_type: None,
     load_op: Some("(*((const uint64_t*)({})))"),
     store_op: Some("*((uint64_t*)({})) = {}"),
@@ -153,7 +156,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
     ],
-    init_defs: "",
+    init_defs: "#define TALIGN_ATTR\n#define TALIGN (8)\n",
     zero: "0ULL",
     constant_defs: [
         "0x5555555555555555ULL",
@@ -191,6 +194,7 @@ pub const CLANG_TRANSFORM_U64: CLangTransformConfig<'_> = CLangTransformConfig {
 pub const CLANG_TRANSFORM_INTEL_MMX: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m64",
     comp_type_bit_len: 64,
+    alignment: None,
     final_type: None,
     load_op: Some("(*((const __m64*)({})))"),
     store_op: Some("*((__m64*)({})) = {}"),
@@ -261,6 +265,8 @@ static const unsigned int transform_const2_tbl[5*2] = {
     0x000000ffU, 0x000000ffU,
     0x0000ffffU, 0x0000ffffU
 };
+#define TALIGN_ATTR
+#define TALIGN (8)
 "##,
     zero: "_mm_setzero_si64()",
     constant_defs: [
@@ -299,11 +305,12 @@ static const unsigned int transform_const2_tbl[5*2] = {
 pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32_t",
     comp_type_bit_len: 32,
+    alignment: Some(16),
     final_type: Some(FinalType {
         // __m128 type
         final_type_bit_len: 128,
-        load_op: Some("_mm_loadu_ps((const float*){})"),
-        store_op: Some("_mm_storeu_ps((float*){}, {})"),
+        load_op: Some("_mm_load_ps((const float*){})"),
+        store_op: Some("_mm_store_ps((float*){}, {})"),
     }),
     load_op: None,
     store_op: None,
@@ -335,7 +342,7 @@ pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformCo
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
     ],
-    init_defs: "",
+    init_defs: "#define TALIGN_ATTR __attribute__((aligned(16)))\n#define TALIGN (16)\n",
     zero: "0U",
     constant_defs: [
         "0x55555555U",
@@ -367,9 +374,10 @@ pub const CLANG_TRANSFORM_INTEL_SSE: CLangTransformConfig<'_> = CLangTransformCo
 pub const CLANG_TRANSFORM_INTEL_SSE2: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m128i",
     comp_type_bit_len: 128,
+    alignment: Some(16),
     final_type: None,
-    load_op: Some("_mm_loadu_si128((const __m128i*){})"),
-    store_op: Some("_mm_storeu_si128((__m128i*){}, {})"),
+    load_op: Some("_mm_load_si128((const __m128i*){})"),
+    store_op: Some("_mm_store_si128((__m128i*){}, {})"),
     and_op: "_mm_and_si128({}, {})",
     or_op: "_mm_or_si128({}, {})",
     shift_op: [
@@ -441,6 +449,8 @@ __attribute__((aligned(16))) = {
     0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
 };
+#define TALIGN_ATTR __attribute__((aligned(16)))
+#define TALIGN (16)
 "##,
     zero: "_mm_setzero_si128()",
     constant_defs: [
@@ -479,14 +489,15 @@ __attribute__((aligned(16))) = {
 pub const CLANG_TRANSFORM_INTEL_AVX: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m128i",
     comp_type_bit_len: 128,
+    alignment: Some(32),
     final_type: Some(FinalType {
         // __m256 type
         final_type_bit_len: 256,
-        load_op: Some("_mm256_loadu_ps((const float*){})"),
-        store_op: Some("_mm256_storeu_ps((float*){}, {})"),
+        load_op: Some("_mm256_load_ps((const float*){})"),
+        store_op: Some("_mm256_store_ps((float*){}, {})"),
     }),
-    load_op: Some("_mm_loadu_si128((const __m128i*){})"),
-    store_op: Some("_mm_storeu_si128((__m128i*){}, {})"),
+    load_op: Some("_mm_load_si128((const __m128i*){})"),
+    store_op: Some("_mm_store_si128((__m128i*){}, {})"),
     and_op: "_mm_and_si128({}, {})",
     or_op: "_mm_or_si128({}, {})",
     shift_op: [
@@ -558,6 +569,8 @@ __attribute__((aligned(16))) = {
     0x000000ffU, 0x000000ffU, 0x000000ffU, 0x000000ffU,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
 };
+#define TALIGN_ATTR __attribute__((aligned(32)))
+#define TALIGN (32)
 "##,
     zero: "_mm_setzero_si128()",
     constant_defs: [
@@ -596,9 +609,10 @@ __attribute__((aligned(16))) = {
 pub const CLANG_TRANSFORM_INTEL_AVX2: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m256i",
     comp_type_bit_len: 256,
+    alignment: Some(32),
     final_type: None,
-    load_op: Some("_mm256_loadu_si256((const __m256i*){})"),
-    store_op: Some("_mm256_storeu_si256((__m256i*){}, {})"),
+    load_op: Some("_mm256_load_si256((const __m256i*){})"),
+    store_op: Some("_mm256_store_si256((__m256i*){}, {})"),
     and_op: "_mm256_and_si256({}, {})",
     or_op: "_mm256_or_si256({}, {})",
     shift_op: [
@@ -693,6 +707,8 @@ __attribute__((aligned(32))) = {
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU,
     0x0000ffffU, 0x0000ffffU, 0x0000ffffU, 0x0000ffffU
 };
+#define TALIGN_ATTR __attribute__((aligned(32)))
+#define TALIGN (32)
 "##,
     zero: "_mm256_setzero_si256()",
     constant_defs: [
@@ -731,9 +747,10 @@ __attribute__((aligned(32))) = {
 pub const CLANG_TRANSFORM_INTEL_AVX512: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "__m512i",
     comp_type_bit_len: 512,
+    alignment: Some(64),
     final_type: None,
-    load_op: Some("_mm512_loadu_epi64({})"),
-    store_op: Some("_mm512_storeu_epi64({}, {})"),
+    load_op: Some("_mm512_load_epi64({})"),
+    store_op: Some("_mm512_store_epi64({}, {})"),
     and_op: "_mm512_and_epi64({}, {})",
     or_op: "_mm512_or_epi64({}, {})",
     shift_op: [
@@ -881,6 +898,8 @@ __attribute__((aligned(64))) = {
     0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30,
     1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31
 };
+#define TALIGN_ATTR __attribute__((aligned(64)))
+#define TALIGN (64)
 "##,
     zero: "_mm512_setzero_si512()",
     constant_defs: [
@@ -919,6 +938,7 @@ __attribute__((aligned(64))) = {
 pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint32x4_t",
     comp_type_bit_len: 128,
+    alignment: Some(16),
     final_type: None,
     load_op: None,
     store_op: None,
@@ -974,7 +994,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
         None,
         None,
     ],
-    init_defs: "",
+    init_defs: "#define TALIGN_ATTR __attribute__((aligned(16)))\n#define TALIGN (16)\n",
     zero: "{ 0U, 0U, 0U, 0U }",
     constant_defs: [
         "{ 0x55555555U, 0x55555555U, 0x55555555U, 0x55555555U }",
@@ -1012,6 +1032,7 @@ pub const CLANG_TRANSFORM_ARM_NEON: CLangTransformConfig<'_> = CLangTransformCon
 pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformConfig {
     comp_type_name: "uint",
     comp_type_bit_len: 32,
+    alignment: None,
     final_type: None,
     load_op: None,
     store_op: None,
@@ -1043,7 +1064,7 @@ pub const CLANG_TRANSFORM_OPENCL_U32: CLangTransformConfig<'_> = CLangTransformC
         None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
         None, None, None, None, None,
     ],
-    init_defs: "",
+    init_defs: "#define TALIGN_ATTR\n#define TALIGN (8)\n",
     zero: "0U",
     constant_defs: [
         "0x55555555U",
@@ -1647,6 +1668,14 @@ impl<'a> CLangTransform<'a> {
         }
     }
 
+    pub fn alignment_attr(&self) -> String {
+        if let Some(a) = self.config.alignment {
+            format!(" __attribute__((aligned({})))", a)
+        } else {
+            String::new()
+        }
+    }
+
     /// Generates input transform with given prefix with `bits` length in bits.
     pub fn gen_input_transform_with_prefix(&mut self, bits: usize, prefix: &'a str) {
         let (inputs, temps) = if let Some(final_type) = self.config.final_type.as_ref() {
@@ -1701,11 +1730,13 @@ impl<'a> CLangTransform<'a> {
         .unwrap();
         self.out.write_str("{\\\n").unwrap();
         if let Some(final_type) = self.config.final_type.as_ref() {
+            let align_str = self.alignment_attr();
             writeln!(
                 &mut self.out,
-                "    {} temps[{}];\\",
+                "    {} temps[{}]{};\\",
                 self.config.comp_type_name,
-                bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+                bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize,
+                align_str
             )
             .unwrap();
             self.out.write_str("    unsigned int i;\\\n").unwrap();
@@ -1991,11 +2022,13 @@ impl<'a> CLangTransform<'a> {
             .unwrap();
         }
         if let Some(final_type) = self.config.final_type.as_ref() {
+            let align_str = self.alignment_attr();
             writeln!(
                 &mut self.out,
-                "    {} temps[{}];\\",
+                "    {} temps[{}]{};\\",
                 self.config.comp_type_name,
-                bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize
+                bits * (final_type.final_type_bit_len / self.config.comp_type_bit_len) as usize,
+                align_str
             )
             .unwrap();
             self.out.write_str("    unsigned int i;\\\n").unwrap();

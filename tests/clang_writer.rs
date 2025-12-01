@@ -721,20 +721,20 @@ void gate_sys_func1(const __m128* input,
     __m128 v2;
     __m128 v3;
     __m128 v4;
-    v2 = _mm_loadu_ps((const float*)&input[0]);
-    v1 = _mm_loadu_ps((const float*)&input[1]);
-    v0 = _mm_loadu_ps((const float*)&input[2]);
+    v2 = _mm_load_ps((const float*)&input[0]);
+    v1 = _mm_load_ps((const float*)&input[1]);
+    v0 = _mm_load_ps((const float*)&input[2]);
     v2 = _mm_and_ps(v0, v1);
     v1 = _mm_or_ps(v2, v1);
     v3 = _mm_xor_ps(v0, v1);
     v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
-    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v3, one));
+    _mm_store_ps((float*)&output[1], _mm_xor_ps(v3, one));
     v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
     v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
     v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_xor_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_andnot_ps(v4, v2);
-    _mm_storeu_ps((float*)&output[0], v4);
+    _mm_store_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE, false, false)
@@ -778,20 +778,20 @@ void gate_sys_func1(const __m128i* input,
     __m128i v2;
     __m128i v3;
     __m128i v4;
-    v2 = _mm_loadu_si128((const __m128i*)&input[0]);
-    v1 = _mm_loadu_si128((const __m128i*)&input[1]);
-    v0 = _mm_loadu_si128((const __m128i*)&input[2]);
+    v2 = _mm_load_si128((const __m128i*)&input[0]);
+    v1 = _mm_load_si128((const __m128i*)&input[1]);
+    v0 = _mm_load_si128((const __m128i*)&input[2]);
     v2 = _mm_and_si128(v0, v1);
     v1 = _mm_or_si128(v2, v1);
     v3 = _mm_xor_si128(v0, v1);
     v3 = _mm_xor_si128(_mm_and_si128(v0, v1), one);
-    _mm_storeu_si128((__m128i*)&output[1], _mm_xor_si128(v3, one));
+    _mm_store_si128((__m128i*)&output[1], _mm_xor_si128(v3, one));
     v2 = _mm_xor_si128(_mm_or_si128(v2, v3), one);
     v4 = _mm_xor_si128(_mm_xor_si128(v1, v3), one);
     v4 = _mm_and_si128(v4, _mm_xor_si128(v1, one));
     v4 = _mm_xor_si128(v4, _mm_xor_si128(v1, one));
     v4 = _mm_andnot_si128(v4, v2);
-    _mm_storeu_si128((__m128i*)&output[0], v4);
+    _mm_store_si128((__m128i*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_SSE2, false, false)
@@ -836,20 +836,20 @@ void gate_sys_func1(const __m128* input,
     __m128 v2;
     __m128 v3;
     __m128 v4;
-    v2 = _mm_loadu_ps((const float*)&input[0]);
-    v1 = _mm_loadu_ps((const float*)&input[1]);
-    v0 = _mm_loadu_ps((const float*)&input[2]);
+    v2 = _mm_load_ps((const float*)&input[0]);
+    v1 = _mm_load_ps((const float*)&input[1]);
+    v0 = _mm_load_ps((const float*)&input[2]);
     v2 = _mm_and_ps(v0, v1);
     v1 = _mm_or_ps(v2, v1);
     v3 = _mm_xor_ps(v0, v1);
     v3 = _mm_xor_ps(_mm_and_ps(v0, v1), one);
-    _mm_storeu_ps((float*)&output[1], _mm_xor_ps(v3, one));
+    _mm_store_ps((float*)&output[1], _mm_xor_ps(v3, one));
     v2 = _mm_xor_ps(_mm_or_ps(v2, v3), one);
     v4 = _mm_xor_ps(_mm_xor_ps(v1, v3), one);
     v4 = _mm_and_ps(v4, _mm_xor_ps(v1, one));
     v4 = _mm_xor_ps(v1, one);
     v4 = _mm_andnot_ps(v4, v2);
-    _mm_storeu_ps((float*)&output[0], v4);
+    _mm_store_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code_with_not(&CLANG_WRITER_INTEL_SSE, false, false)
@@ -897,20 +897,20 @@ void gate_sys_func1(const __m256* input,
     __m256 v2;
     __m256 v3;
     __m256 v4;
-    v2 = _mm256_loadu_ps((const float*)&input[0]);
-    v1 = _mm256_loadu_ps((const float*)&input[1]);
-    v0 = _mm256_loadu_ps((const float*)&input[2]);
+    v2 = _mm256_load_ps((const float*)&input[0]);
+    v1 = _mm256_load_ps((const float*)&input[1]);
+    v0 = _mm256_load_ps((const float*)&input[2]);
     v2 = _mm256_and_ps(v0, v1);
     v1 = _mm256_or_ps(v2, v1);
     v3 = _mm256_xor_ps(v0, v1);
     v3 = _mm256_xor_ps(_mm256_and_ps(v0, v1), one);
-    _mm256_storeu_ps((float*)&output[1], _mm256_xor_ps(v3, one));
+    _mm256_store_ps((float*)&output[1], _mm256_xor_ps(v3, one));
     v2 = _mm256_xor_ps(_mm256_or_ps(v2, v3), one);
     v4 = _mm256_xor_ps(_mm256_xor_ps(v1, v3), one);
     v4 = _mm256_and_ps(v4, _mm256_xor_ps(v1, one));
     v4 = _mm256_xor_ps(v4, _mm256_xor_ps(v1, one));
     v4 = _mm256_andnot_ps(v4, v2);
-    _mm256_storeu_ps((float*)&output[0], v4);
+    _mm256_store_ps((float*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX, false, false)
@@ -958,20 +958,20 @@ void gate_sys_func1(const __m256i* input,
     __m256i v2;
     __m256i v3;
     __m256i v4;
-    v2 = _mm256_loadu_si256((const __m256i*)&input[0]);
-    v1 = _mm256_loadu_si256((const __m256i*)&input[1]);
-    v0 = _mm256_loadu_si256((const __m256i*)&input[2]);
+    v2 = _mm256_load_si256((const __m256i*)&input[0]);
+    v1 = _mm256_load_si256((const __m256i*)&input[1]);
+    v0 = _mm256_load_si256((const __m256i*)&input[2]);
     v2 = _mm256_and_si256(v0, v1);
     v1 = _mm256_or_si256(v2, v1);
     v3 = _mm256_xor_si256(v0, v1);
     v3 = _mm256_xor_si256(_mm256_and_si256(v0, v1), one);
-    _mm256_storeu_si256((__m256i*)&output[1], _mm256_xor_si256(v3, one));
+    _mm256_store_si256((__m256i*)&output[1], _mm256_xor_si256(v3, one));
     v2 = _mm256_xor_si256(_mm256_or_si256(v2, v3), one);
     v4 = _mm256_xor_si256(_mm256_xor_si256(v1, v3), one);
     v4 = _mm256_and_si256(v4, _mm256_xor_si256(v1, one));
     v4 = _mm256_xor_si256(v4, _mm256_xor_si256(v1, one));
     v4 = _mm256_andnot_si256(v4, v2);
-    _mm256_storeu_si256((__m256i*)&output[0], v4);
+    _mm256_store_si256((__m256i*)&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX2, false, false)
@@ -1031,20 +1031,20 @@ void gate_sys_func1(const __m512i* input,
     __m512i v2;
     __m512i v3;
     __m512i v4;
-    v2 = _mm512_loadu_epi64(&input[0]);
-    v1 = _mm512_loadu_epi64(&input[1]);
-    v0 = _mm512_loadu_epi64(&input[2]);
+    v2 = _mm512_load_epi64(&input[0]);
+    v1 = _mm512_load_epi64(&input[1]);
+    v0 = _mm512_load_epi64(&input[2]);
     v2 = _mm512_and_epi64(v0, v1);
     v1 = _mm512_or_epi64(v2, v1);
     v3 = _mm512_xor_epi64(v0, v1);
     v3 = _mm512_xor_epi64(_mm512_and_epi64(v0, v1), one);
-    _mm512_storeu_epi64(&output[1], _mm512_xor_epi64(v3, one));
+    _mm512_store_epi64(&output[1], _mm512_xor_epi64(v3, one));
     v2 = _mm512_xor_epi64(_mm512_or_epi64(v2, v3), one);
     v4 = _mm512_xor_epi64(_mm512_xor_epi64(v1, v3), one);
     v4 = _mm512_and_epi64(v4, _mm512_xor_epi64(v1, one));
     v4 = _mm512_xor_epi64(v4, _mm512_xor_epi64(v1, one));
     v4 = _mm512_andnot_epi64(v4, v2);
-    _mm512_storeu_epi64(&output[0], v4);
+    _mm512_store_epi64(&output[0], v4);
 }
 "##,
         write_test_code(&CLANG_WRITER_INTEL_AVX512, false, false)
