@@ -86,7 +86,7 @@ impl<'a> Drop for OpenCLDataReader<'a> {
     }
 }
 
-/// CPU Data writer.
+/// OpenCL Data writer.
 ///
 /// See more in [DataWriter].
 pub struct OpenCLDataWriter<'a> {
@@ -146,7 +146,7 @@ impl<'a> Drop for OpenCLDataWriter<'a> {
     }
 }
 
-/// CPU Data holder.
+/// OpenCL Data holder.
 ///
 /// See more in [DataHolder].
 pub struct OpenCLDataHolder {
