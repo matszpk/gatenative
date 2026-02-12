@@ -3193,5 +3193,40 @@ fn test_cpu_data_holder() {
                 assert_eq!(exp, *x, "1: {} {}", config_num, i);
             }
         }
+
+        // copy from/to slice
+        let mut data = execs[0].new_data_from_vec((10..110).collect::<Vec<_>>());
+        data.set_range(2..93);
+        let mut cp = vec![0u32; 93 - 2];
+        data.copy_to_slice(&mut cp);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 93 - 2);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(10 + 2 + i).unwrap(),
+                    *x,
+                    "d1: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
+        assert_eq!(cp, (10 + 2..10 + 93).collect::<Vec<_>>());
+        let mut cp2 = (77..168).collect::<Vec<_>>();
+        data.copy_from_slice(&mut cp2);
+        {
+            let rd = data.get();
+            assert_eq!(rd.get().len(), 93 - 2);
+            for (i, x) in rd.get().iter().enumerate() {
+                assert_eq!(
+                    u32::try_from(77 + i).unwrap(),
+                    *x,
+                    "d2: {} {}",
+                    config_num,
+                    i
+                );
+            }
+        }
     }
 }

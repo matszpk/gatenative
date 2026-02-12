@@ -242,6 +242,28 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
         self.cmd_queue.finish().unwrap();
         new
     }
+    fn copy_from_slice(&mut self, data: &[u32]) {
+        assert_eq!(data.len(), self.range.end - self.range.start);
+        unsafe {
+            self.cmd_queue
+                .enqueue_write_buffer(
+                    &mut self.buffer,
+                    CL_BLOCKING,
+                    4 * self.range.start,
+                    data,
+                    &[],
+                )
+                .unwrap();
+        }
+    }
+    fn copy_to_slice(&self, data: &mut [u32]) {
+        assert_eq!(data.len(), self.range.end - self.range.start);
+        unsafe {
+            self.cmd_queue
+                .enqueue_read_buffer(&self.buffer, CL_BLOCKING, 4 * self.range.start, data, &[])
+                .unwrap();
+        }
+    }
     fn fill(&mut self, value: u32) {
         unsafe {
             self.cmd_queue

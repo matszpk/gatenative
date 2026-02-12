@@ -1030,6 +1030,10 @@ pub trait DataHolder<'a, DR: DataReader, DW: DataWriter> {
         F: FnMut(&mut [u32]) -> Out;
     /// Make copy of DataHolder with data that holds Data holder.
     fn copy(&self) -> Self;
+    /// Make copy from slice to DataHolder
+    fn copy_from_slice(&mut self, data: &[u32]);
+    /// Make copy to slice from DataHolder.
+    fn copy_to_slice(&self, data: &mut [u32]);
     /// Fills data in data holder by given 32-bit value.
     fn fill(&mut self, value: u32);
     /// Release data from data holder.
@@ -1118,6 +1122,12 @@ where
     fn copy(&self) -> Self {
         let c = self.child.copy();
         Self::new(0..c.len(), c)
+    }
+    fn copy_from_slice(&mut self, data: &[u32]) {
+        self.child.copy_from_slice(data);
+    }
+    fn copy_to_slice(&self, data: &mut [u32]) {
+        self.child.copy_to_slice(data);
     }
     fn fill(&mut self, value: u32) {
         self.child.fill(value)
