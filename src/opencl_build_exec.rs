@@ -271,7 +271,7 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
                     &mut self.buffer,
                     &[value],
                     self.range.start * 4,
-                    self.range.end * 4,
+                    (self.range.end - self.range.start) * 4,
                     &[],
                 )
                 .unwrap();
