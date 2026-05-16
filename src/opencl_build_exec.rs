@@ -9,6 +9,8 @@
 //! Every operation (simulation execution, reading and writing data) will be finished with
 //! OpenCL finish command to finish all operations.
 
+// TODO: Fix OpenCLDataHolder - for zero length ranges.
+
 use crate::clang_writer::*;
 use crate::gencode::generate_code_with_config_and_wire_order;
 use crate::opencl_data_transform::*;
@@ -227,69 +229,79 @@ impl<'a> DataHolder<'a, OpenCLDataReader<'a>, OpenCLDataWriter<'a>> for OpenCLDa
             self.cmd_queue.clone(),
             CL_MEM_READ_WRITE,
         );
-        unsafe {
-            self.cmd_queue
-                .enqueue_copy_buffer(
-                    &self.buffer,
-                    &mut new.buffer,
-                    self.range.start * 4,
-                    0,
-                    len * 4,
-                    &[],
-                )
-                .unwrap();
+        if len != 0 {
+            unsafe {
+                self.cmd_queue
+                    .enqueue_copy_buffer(
+                        &self.buffer,
+                        &mut new.buffer,
+                        self.range.start * 4,
+                        0,
+                        len * 4,
+                        &[],
+                    )
+                    .unwrap();
+            }
+            self.cmd_queue.finish().unwrap();
         }
-        self.cmd_queue.finish().unwrap();
         new
     }
     fn copy_from_slice(&mut self, data: &[u32]) {
         assert_eq!(data.len(), self.range.end - self.range.start);
-        unsafe {
-            self.cmd_queue
-                .enqueue_write_buffer(
-                    &mut self.buffer,
-                    CL_BLOCKING,
-                    4 * self.range.start,
-                    data,
-                    &[],
-                )
-                .unwrap();
+        if data.len() != 0 {
+            unsafe {
+                self.cmd_queue
+                    .enqueue_write_buffer(
+                        &mut self.buffer,
+                        CL_BLOCKING,
+                        4 * self.range.start,
+                        data,
+                        &[],
+                    )
+                    .unwrap();
+            }
         }
     }
     fn copy_to_slice(&self, data: &mut [u32]) {
         assert_eq!(data.len(), self.range.end - self.range.start);
-        unsafe {
-            self.cmd_queue
-                .enqueue_read_buffer(&self.buffer, CL_BLOCKING, 4 * self.range.start, data, &[])
-                .unwrap();
+        if data.len() != 0 {
+            unsafe {
+                self.cmd_queue
+                    .enqueue_read_buffer(&self.buffer, CL_BLOCKING, 4 * self.range.start, data, &[])
+                    .unwrap();
+            }
         }
     }
     fn fill(&mut self, value: u32) {
-        unsafe {
-            self.cmd_queue
-                .enqueue_fill_buffer(
-                    &mut self.buffer,
-                    &[value],
-                    self.range.start * 4,
-                    (self.range.end - self.range.start) * 4,
-                    &[],
-                )
-                .unwrap();
+        if self.len() != 0 {
+            unsafe {
+                self.cmd_queue
+                    .enqueue_fill_buffer(
+                        &mut self.buffer,
+                        &[value],
+                        self.range.start * 4,
+                        (self.range.end - self.range.start) * 4,
+                        &[],
+                    )
+                    .unwrap();
+            }
+            self.cmd_queue.finish().unwrap();
         }
-        self.cmd_queue.finish().unwrap();
     }
     fn release(self) -> Vec<u32> {
         let mut out = vec![0u32; self.len()];
-        unsafe {
-            self.cmd_queue
-                .enqueue_read_buffer(
-                    &self.buffer,
-                    CL_BLOCKING,
-                    4 * self.range.start,
-                    &mut out[..],
-                    &[],
-                )
-                .unwrap();
+        if !out.is_empty() {
+            unsafe {
+                self.cmd_queue
+                    .enqueue_read_buffer(
+                        &self.buffer,
+                        CL_BLOCKING,
+                        4 * self.range.start,
+                        &mut out[..],
+                        &[],
+                    )
+                    .unwrap();
+            }
         }
         out
     }
@@ -1057,7 +1069,7 @@ impl OpenCLBuilderConfig {
     }
 }
 
-/// Default CPU builder configuration.
+/// Default OpenCL builder configuration.
 pub const OPENCL_BUILDER_CONFIG_DEFAULT: OpenCLBuilderConfig = OpenCLBuilderConfig {
     optimize_negs: true,
     group_vec: false,

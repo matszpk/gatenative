@@ -3409,5 +3409,15 @@ fn test_opencl_data_holder() {
                 );
             }
         }
+        //
+        // empties
+        let mut data = execs[0].new_data(10);
+        data.set_range(5..5);
+        data.release();
+        let mut data = execs[0].new_data(10);
+        let mut out = [];
+        data.set_range(5..5);
+        data.copy_to_slice(&mut out);
+        data.copy_from_slice(&out);
     }
 }
