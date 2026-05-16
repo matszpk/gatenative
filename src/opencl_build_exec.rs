@@ -9,8 +9,6 @@
 //! Every operation (simulation execution, reading and writing data) will be finished with
 //! OpenCL finish command to finish all operations.
 
-// TODO: Fix OpenCLDataHolder - for zero length ranges.
-
 use crate::clang_writer::*;
 use crate::gencode::generate_code_with_config_and_wire_order;
 use crate::opencl_data_transform::*;
