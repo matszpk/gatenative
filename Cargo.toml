@@ -2,7 +2,7 @@
 name = "gatenative"
 authors = ["Mateusz Szpakowski"]
 license = "Apache-2.0"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 description = "The library to execute natively Gate circuits."
 repository = "https://github.com/matszpk/gatenative"
@@ -113,7 +113,7 @@ gatesim = "0.1.0"
 gate_calc_log_bits = "0.1.0"
 [dev-dependencies]
 gateutil = "0.1.0"
-gategen = "0.2.0"
+gategen2 = "0.1.0"
 
 [package.metadata.docs.rs]
 all-features = true

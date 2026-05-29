@@ -114,9 +114,9 @@
 //!
 //! Example 1:
 //! ```rust
-//! use gategen::boolvar::*;
-//! use gategen::gatesim::*;
-//! use gategen::intvar::*;
+//! use gategen2::boolvar::*;
+//! use gategen2::gatesim::*;
+//! use gategen2::intvar::*;
 //! use gatenative::{cpu_build_exec::*, *};
 //!
 //! // generate circuit

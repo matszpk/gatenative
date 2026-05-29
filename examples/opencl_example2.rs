@@ -1,6 +1,6 @@
-use gategen::boolvar::*;
-use gategen::gatesim::*;
-use gategen::intvar::*;
+use gategen2::boolvar::*;
+use gategen2::gatesim::*;
+use gategen2::intvar::*;
 use gatenative::{opencl_build_exec::*, *};
 use opencl3::device::{get_all_devices, Device, CL_DEVICE_TYPE_GPU};
 
