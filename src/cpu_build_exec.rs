@@ -121,27 +121,38 @@ fn detect_cpu_from_file(file: impl BufRead) -> Result<CPUExtension, DetectCPUErr
     Ok(CPUExtension::NoExtension)
 }
 
-fn detect_cpu_by_cpuidrs() -> CPUExtension {
-    use cpuidrs::*;
-    let cpuinfo = cpuidrs::get_cpu_info();
-    let untested = *utils::GATE_SYS_UNTESTED;
-    if cpuinfo.has_feature(InstructionSet::AVX512F) {
-        CPUExtension::IntelAVX512
-    } else if cpuinfo.has_feature(InstructionSet::AVX2) {
-        CPUExtension::IntelAVX2
-    } else if cpuinfo.has_feature(InstructionSet::AVX) {
-        CPUExtension::IntelAVX
-    } else if cpuinfo.has_feature(InstructionSet::SSE2) {
-        CPUExtension::IntelSSE2
-    } else if cpuinfo.has_feature(InstructionSet::SSE) {
-        CPUExtension::IntelSSE
-    } else if cpuinfo.has_feature(InstructionSet::MMX) {
-        CPUExtension::IntelMMX
-    } else if untested && cpuinfo.has_feature(InstructionSet::NEON) {
-        CPUExtension::ARMNEON
-    } else {
+fn detect_cpu_by_cpuid() -> CPUExtension {
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        #[cfg(target_arch = "x86")]
+        use std::arch::x86::__cpuid_count;
+        #[cfg(target_arch = "x86_64")]
+        use std::arch::x86_64::__cpuid_count;
+        let max_basic_leaf = __cpuid_count(0, 0).eax;
+        if max_basic_leaf >= 7 {
+            let extfeat = __cpuid_count(7, 0);
+            if (extfeat.ebx & (1 << 16)) != 0 {
+                return CPUExtension::IntelAVX512;
+            } else if (extfeat.ebx & (1 << 5)) != 0 {
+                return CPUExtension::IntelAVX2;
+            }
+        }
+        if max_basic_leaf >= 1 {
+            let feat = __cpuid_count(1, 0);
+            if (feat.ecx & (1 << 28)) != 0 {
+                return CPUExtension::IntelAVX;
+            } else if (feat.edx & (1 << 26)) != 0 {
+                return CPUExtension::IntelSSE2;
+            } else if (feat.edx & (1 << 25)) != 0 {
+                return CPUExtension::IntelSSE;
+            } else if (feat.edx & (1 << 23)) != 0 {
+                return CPUExtension::IntelMMX;
+            }
+        }
         CPUExtension::NoExtension
     }
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    CPUExtension::NoExtension
 }
 
 fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
@@ -150,11 +161,11 @@ fn detect_cpu() -> Result<CPUExtension, DetectCPUError> {
         if let Ok(file) = File::open("/proc/cpuinfo") {
             detect_cpu_from_file(BufReader::new(file))
         } else {
-            Ok(detect_cpu_by_cpuidrs())
+            Ok(detect_cpu_by_cpuid())
         }
     }
     #[cfg(not(target_os = "linux"))]
-    Ok(detect_cpu_by_cpuidrs())
+    Ok(detect_cpu_by_cpuid())
 }
 
 /// It holds currently recognized CPU instruction set extension.
