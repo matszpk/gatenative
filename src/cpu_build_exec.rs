@@ -128,9 +128,11 @@ fn detect_cpu_by_cpuid() -> CPUExtension {
         use std::arch::x86::__cpuid_count;
         #[cfg(target_arch = "x86_64")]
         use std::arch::x86_64::__cpuid_count;
-        let max_basic_leaf = __cpuid_count(0, 0).eax;
+        #[allow(unused_unsafe)]
+        let max_basic_leaf = unsafe { __cpuid_count(0, 0).eax };
         if max_basic_leaf >= 7 {
-            let extfeat = __cpuid_count(7, 0);
+            #[allow(unused_unsafe)]
+            let extfeat = unsafe { __cpuid_count(7, 0) };
             if (extfeat.ebx & (1 << 16)) != 0 {
                 return CPUExtension::IntelAVX512;
             } else if (extfeat.ebx & (1 << 5)) != 0 {
@@ -138,7 +140,8 @@ fn detect_cpu_by_cpuid() -> CPUExtension {
             }
         }
         if max_basic_leaf >= 1 {
-            let feat = __cpuid_count(1, 0);
+            #[allow(unused_unsafe)]
+            let feat = unsafe { __cpuid_count(1, 0) };
             if (feat.ecx & (1 << 28)) != 0 {
                 return CPUExtension::IntelAVX;
             } else if (feat.edx & (1 << 26)) != 0 {
